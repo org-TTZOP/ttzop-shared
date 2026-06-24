@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="be">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Гульня "Lines" (5 у рад)</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f0f2f5;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+        }
+
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        #score-board {
+            font-size: 24px;
+            font-weight: bold;
+            margin-bottom: 20px;
+            color: #4a4a4a;
+        }
+
+        #grid {
+            display: grid;
+            grid-template-columns: repeat(9, 50px);
+            grid-template-rows: repeat(9, 50px);
+            gap: 2px;
+            background-color: #ccc;
+            border: 4px solid #333;
+            border-radius: 4px;
+        }
+
+        .cell {
+            width: 50px;
+            height: 50px;
+            background-color: #fff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            box-sizing: border-box;
+        }
+
+        .cell.selected {
+            background-color: #e0e0e0;
+            border: 2px dashed #666;
+        }
+
+        .ball {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            box-shadow: inset -5px -5px 10px rgba(0,0,0,0.3), 2px 2px 5px rgba(0,0,0,0.2);
+            transition: transform 0.1s ease;
+        }
+
+        /* Колеры шарыкаў */
+        .red { background-color: #ff3b30; }
+        .blue { background-color: #007aff; }
+        .green { background-color: #34c759; }
+        .yellow { background-color: #ffcc00; }
+        .purple { background-color: #af52de; }
+
+        #game-over {
+            display: none;
+            position: absolute;
+            background: rgba(0, 0, 0, 0.85);
+            color: white;
+            padding: 30px;
+            border-radius: 10px;
+            text-align: center;
+            font-size: 24px;
+        }
+
+        button {
+            margin-top: 15px;
+            padding: 10px 20px;
+            font-size: 16px;
+            cursor: pointer;
+            border: none;
+            background-color: #007aff;
+            color: white;
+            border-radius: 5px;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Гульня "Lines"</h1>
+    <div id="score-board">Балы: <span id="score">0</span></div>
+
+    <div id="grid"></div>
+
+    <div id="game-over">
+        <div>Гульня скончана!</div>
+        <button onclick="resetGame()">Пачаць зноў</button>
+    </div>
+
+    <script>
+        const SIZE = 9;
+        const COLORS = ['red', 'blue', 'green', 'yellow', 'purple'];
+        let grid = [];
+        let score = 0;
+        let selectedCell = null;
+
+        const gridElement = document.getElementById('grid');
+        const scoreElement = document.getElementById('score');
+        const gameOverElement = document.getElementById('game-over');
+
+        // Ініцыялізацыя гульні
+        function initGame() {
+            gridElement.innerHTML = '';
+            grid = Array(SIZE).fill(null).map(() => Array(SIZE).fill(null));
+            score = 0;
+            scoreElement.innerText = score;
+            gameOverElement.style.display = 'none';
+            selectedCell = null;
+
+            // Стыварэнне ячэек у DOM
+            for (let r = 0; r < SIZE; r++) {
+                for (let c = 0; c < SIZE; c++) {
+                    const cell = document.createElement('div');
+                    cell.classList.add('cell');
+                    cell.dataset.row = r;
+                    cell.dataset.col = c;
+                    cell.addEventListener('click', onCellClick);
+                    gridElement.appendChild(cell);
+                }
+            }
+
+            // Дадаем першыя шарыкі
+            generateBalls(5);
+            drawGrid();
+        }
+
+        // Клік па клетцы
+        function onCellClick(e) {
+            const cell = e.currentTarget;
+            const r = parseInt(cell.dataset.row);
+            const c = parseInt(cell.dataset.col);
+
+            if (grid[r][c]) {
+                // Калі націснулі на шарык — выбіраем яго
+                if (selectedCell) {
+                    getCellElement(selectedCell.r, selectedCell.c).classList.remove('selected');
+                }
+                selectedCell = { r, c };
+                cell.classList.add('selected');
+            } else if (selectedCell) {
+                // Калі шарык выбраны і націснулі на пустую клетку — спрабуем перамясціць
+                if (hasPath(selectedCell.r, selectedCell.c, r, c)) {
+                    grid[r][c] = grid[selectedCell.r][selectedCell.c];
+                    grid[selectedCell.r][selectedCell.c] = null;
+                    
+                    getCellElement(selectedCell.r, selectedCell.c).classList.remove('selected');
+                    const color = grid[r][c];
+                    selectedCell = null;
+
+                    // Правяраем, ці сабралася лінія пасля ходу гульца
+                    const linesCleared = checkLines();
+
+                    if (!linesCleared) {
+                        // Калі лінія не сабралася, з'яўляюцца 3 новыя шарыкі
+                        generateBalls(3);
+                        checkLines(); // Правяраем лініі яшчэ раз для новых шарыкаў
+                    }
+
+                    drawGrid();
+
+                    if (isGameOver()) {
+                        gameOverElement.style.style.display = 'block';
+                    }
+                }
+            }
+        }
+
+        // Генерацыя новых шарыкаў
+        function generateBalls(count) {
+            const emptyCells = [];
+            for (let r = 0; r < SIZE; r++) {
+                for (let c = 0; c < SIZE; c++) {
+                    if (!grid[r][c]) emptyCells.push({ r, c });
+                }
+            }
+
+            if (emptyCells.length === 0) return;
+
+            const ballsToPlace = Math.min(count, emptyCells.length);
+            for (let i = 0; i < ballsToPlace; i++) {
+                const randomIndex = Math.floor(Math.random() * emptyCells.length);
+                const { r, c } = emptyCells.splice(randomIndex, 1)[0];
+                const randomColor = COLORS[Math.floor(Math.random() * COLORS.length)];
+                grid[r][c] = randomColor;
+            }
+        }
+
+        // Адмалёўка поля
+        function drawGrid() {
+            for (let r = 0; r < SIZE; r++) {
+                for (let c = 0; c < SIZE; c++) {
+                    const cell = getCellElement(r, c);
+                    cell.innerHTML = '';
+                    if (grid[r][c]) {
+                        const ball = document.createElement('div');
+                        ball.classList.add('ball', grid[r][c]);
+                        cell.appendChild(ball);
+                    }
+                }
+            }
+        }
+
+        // Пошук шляху (Алгарытм Лі / Хвалявы BFS)
+        function hasPath(startR, startC, endR, endC) {
+            const queue = [{ r: startR, c: startC }];
+            const visited = Array(SIZE).fill(null).map(() => Array(SIZE).fill(false));
+            visited[startR][startC] = true;
+
+            const dr = [-1, 1, 0, 0];
+            const dc = [0, 0, -1, 1];
+
+            while (queue.length > 0) {
+                const curr = queue.shift();
+
+                if (curr.r === endR && curr.c === endC) return true;
+
+                for (let i = 0; i < 4; i++) {
+                    const nr = curr.r + dr[i];
+                    const nc = curr.c + dc[i];
+
+                    if (nr >= 0 && nr < SIZE && nc >= 0 && nc < SIZE) {
+                        if (!grid[nr][nc] && !visited[nr][nc]) {
+                            visited[nr][nc] = true;
+                            queue.push({ r: nr, c: nc });
+                        }
+                    }
+                }
+            }
+            return false;
+        }
+
+        // Праверка і выдаленне ліній (ад 5 штук)
+        function checkLines() {
+            let toRemove = Array(SIZE).fill(null).map(() => Array(SIZE).fill(false));
+            let hasCleared = false;
+
+            // Напрамкі: гарызанталь, вертыкаль, дыяганаль управа-ўніз, дыяганаль улева-ўніз
+            const directions = [
+                { dr: 0, dc: 1 },
+                { dr: 1, dc: 0 },
+                { dr: 1, dc: 1 },
+                { dr: 1, dc: -1 }
+            ];
+
+            for (let r = 0; r < SIZE; r++) {
+                for (let c = 0; c < SIZE; c++) {
+                    if (!grid[r][c]) continue;
+
+                    const color = grid[r][c];
+
+                    for (const { dr, dc } of directions) {
+                        let matchCount = 1;
+                        let cellsInLine = [{ r, c }];
+
+                        // Спрабуем ісці наперад па кірунку
+                        let nr = r + dr;
+                        let nc = c + dc;
+                        while (nr >= 0 && nr < SIZE && nc >= 0 && nc < SIZE && grid[nr][nc] === color) {
+                            cellsInLine.push({ r: nr, c: nc });
+                            matchCount++;
+                            nr += dr;
+                            nc += dc;
+                        }
+
+                        // Калі знайшлі 5 або больш у рад
+                        if (matchCount >= 5) {
+                            for (const cell of cellsInLine) {
+                                toRemove[cell.r][cell.c] = true;
+                            }
+                            hasCleared = true;
+                        }
+                    }
+                }
+            }
+
+            // Выдаляем шарыкі і лічым балы
+            if (hasCleared) {
+                let deletedCount = 0;
+                for (let r = 0; r < SIZE; r++) {
+                    for (let c = 0; c < SIZE; c++) {
+                        if (toRemove[r][c]) {
+                            grid[r][c] = null;
+                            deletedCount++;
+                        }
+                    }
+                }
+                score += deletedCount * 2; // па 2 балы за кожны шарык
+                scoreElement.innerText = score;
+            }
+
+            return hasCleared;
+        }
+
+        function isGameOver() {
+            for (let r = 0; r < SIZE; r++) {
+                for (let c = 0; c < SIZE; c++) {
+                    if (!grid[r][c]) return false;
+                }
+            }
+            return true;
+        }
+
+        function getCellElement(r, c) {
+            return gridElement.children[r * SIZE + c];
+        }
+
+        function resetGame() {
+            initGame();
+        }
+
+        // Запуск пры загрузцы
+        initGame();
+    </script>
+</body>
+</html>

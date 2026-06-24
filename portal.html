@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="be">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Client portal</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@600;700&family=Manrope:wght@400;600;700&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg: #0f1117; --surface: #1a1f2e; --surface2: #222840;
+      --border: #2a2f45; --text: #e2e8f0; --muted: #6b7280;
+      --accent: #f97316; --error: #ef4444; --success: #22c55e;
+      --radius: 10px;
+    }
+    html { min-height: 100%; background: var(--bg); }
+    body { min-height: 100vh; display: flex; align-items: center; justify-content: center; background: radial-gradient(ellipse at 30% 50%, #1a1f35 0%, var(--bg) 70%); font-family: 'Manrope', sans-serif; color: var(--text); padding: 20px; }
+    .login-box { width: 100%; max-width: 420px; padding: 48px 40px; background: var(--surface); border: 1px solid var(--border); border-radius: 16px; box-shadow: 0 32px 80px rgba(0,0,0,0.5); }
+    .login-logo { font-family: 'Unbounded', sans-serif; font-size: 1.4rem; font-weight: 700; color: var(--accent); margin-bottom: 8px; }
+    .login-sub { color: var(--muted); font-size: 0.9rem; margin-bottom: 36px; }
+    .field-label { display: block; font-size: 0.8rem; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 8px; }
+    .field-input { width: 100%; padding: 12px 16px; background: var(--surface2); border: 1.5px solid var(--border); border-radius: var(--radius); color: var(--text); font-family: 'Manrope', sans-serif; font-size: 1rem; transition: border-color 0.2s; margin-bottom: 20px; outline: none; }
+    .field-input:focus { border-color: var(--accent); }
+    .btn-primary { width: 100%; padding: 14px; background: var(--accent); color: #fff; border: none; border-radius: var(--radius); font-family: 'Unbounded', sans-serif; font-size: 0.85rem; font-weight: 600; cursor: pointer; transition: opacity 0.2s, transform 0.1s; }
+    .btn-primary:hover { opacity: 0.9; transform: translateY(-1px); }
+    .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+    .error-msg { color: var(--error); font-size: 0.85rem; margin-top: 12px; text-align: center; min-height: 20px; }
+    .back-link { background: none; border: none; color: var(--muted); font-size: 13px; cursor: pointer; margin-top: 14px; padding: 4px; text-decoration: underline; font-family: 'Manrope', sans-serif; display: block; text-align: center; }
+    .back-link:hover { color: var(--text); }
+    .order-card { background: var(--surface2); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px; margin-bottom: 10px; }
+    .order-id { font-weight: 700; font-size: 0.9rem; margin-bottom: 6px; }
+    .order-badge { display: inline-block; font-size: 0.78rem; border-radius: 5px; padding: 2px 8px; margin-bottom: 6px; }
+    .order-row { font-size: 0.83rem; color: var(--muted); margin-top: 4px; }
+    .order-row a { color: var(--accent); text-decoration: none; }
+    .step { display: none; }
+    .step.active { display: block; }
+  </style>
+</head>
+<body>
+<div class="login-box">
+  <div class="login-logo" id="portal-logo">TTZOP</div>
+  <div class="login-sub" id="portal-sub"></div>
+
+  <!-- Step 1: Email -->
+  <div class="step active" id="step-email">
+    <label class="field-label">Email</label>
+    <input class="field-input" type="email" id="portal-email" placeholder="you@example.com" />
+    <button class="btn-primary" id="s1-btn" onclick="portalSendCode()"></button>
+    <div class="error-msg" id="s1-msg"></div>
+  </div>
+
+  <!-- Step 2: Code -->
+  <div class="step" id="step-code">
+    <div style="color:var(--muted);font-size:0.87rem;margin-bottom:24px" id="s2-desc"></div>
+    <label class="field-label" id="s2-label"></label>
+    <input class="field-input" type="text" id="portal-code" maxlength="6" inputmode="numeric" />
+    <button class="btn-primary" id="s2-btn" onclick="portalVerifyCode()"></button>
+    <div class="error-msg" id="s2-msg"></div>
+    <button class="back-link" id="s2-back" onclick="showStep('email')"></button>
+  </div>
+
+  <!-- Step 3: Orders -->
+  <div class="step" id="step-orders">
+    <div style="font-family:'Unbounded',sans-serif;font-size:1rem;font-weight:600;margin-bottom:20px" id="my-orders-title"></div>
+    <div id="portal-orders"></div>
+    <button class="back-link" id="s3-logout" onclick="showStep('email')" style="margin-top:20px"></button>
+  </div>
+</div>
+
+<script>
+const PORTAL_T = {
+  be: { title:'Партал кліента', get_code:'Атрымаць код', code_label:'Код з email', code_ph:'6-значны код', confirm:'Пацвердзіць', back:'← Назад', my_orders:'Мае заказы', logout:'← Выйсці', err_enter_email:'Увядзіце email', err_not_found:'Гэты email не знойдзены ў базе заказаў.', code_sent:'Код адпраўлены на {email}. Дзейнічае 15 хвілін.', err_conn:'Памылка сувязі. Паспрабуйце яшчэ раз.', err_enter_code:'Увядзіце 6-значны код', err_wrong_code:'Няправільны код. Паспрабуйце яшчэ раз.', no_orders:'Заказаў пакуль няма.', order_prefix:'Заказ #', paid_until:'Аплачана да:' , privacy_text: "Калі ласка, азнаёмцеся з палітыкай прыватнасці і пацвердзіце згоду.", privacy_link: "Палітыка прыватнасці", privacy_accept: "Пацвярджаю", privacy_thanks: "Дзякуй! Згода захавана." },
+  en: { title:'Client portal', get_code:'Get code', code_label:'Code from email', code_ph:'6-digit code', confirm:'Confirm', back:'← Back', my_orders:'My orders', logout:'← Log out', err_enter_email:'Enter email', err_not_found:'This email is not found in the order database.', code_sent:'Code sent to {email}. Valid for 15 minutes.', err_conn:'Connection error. Please try again.', err_enter_code:'Enter the 6-digit code', err_wrong_code:'Incorrect code. Please try again.', no_orders:'No orders yet.', order_prefix:'Order #', paid_until:'Paid until:' , privacy_text: "Please review the privacy policy and confirm your consent.", privacy_link: "Privacy policy", privacy_accept: "I agree", privacy_thanks: "Thank you! Consent saved." },
+  uk: { title:'Портал клієнта', get_code:'Отримати код', code_label:'Код з email', code_ph:'6-значний код', confirm:'Підтвердити', back:'← Назад', my_orders:'Мої замовлення', logout:'← Вийти', err_enter_email:'Введіть email', err_not_found:'Цей email не знайдено в базі замовлень.', code_sent:'Код відправлено на {email}. Діє 15 хвилин.', err_conn:'Помилка з\'єднання. Спробуйте ще раз.', err_enter_code:'Введіть 6-значний код', err_wrong_code:'Невірний код. Спробуйте ще раз.', no_orders:'Замовлень поки немає.', order_prefix:'Замовлення #', paid_until:'Оплачено до:' , privacy_text: "Будь ласка, ознайомтеся з політикою конфіденційності та підтвердьте згоду.", privacy_link: "Політика конфіденційності", privacy_accept: "Підтверджую", privacy_thanks: "Дякуємо! Згоду збережено." },
+  ru: { title:'Портал клиента', get_code:'Получить код', code_label:'Код из email', code_ph:'6-значный код', confirm:'Подтвердить', back:'← Назад', my_orders:'Мои заказы', logout:'← Выйти', err_enter_email:'Введите email', err_not_found:'Этот email не найден в базе заказов.', code_sent:'Код отправлен на {email}. Действует 15 минут.', err_conn:'Ошибка соединения. Попробуйте ещё раз.', err_enter_code:'Введите 6-значный код', err_wrong_code:'Неверный код. Попробуйте ещё раз.', no_orders:'Заказов пока нет.', order_prefix:'Заказ #', paid_until:'Оплачено до:' , privacy_text: "Пожалуйста, ознакомьтесь с политикой конфиденциальности и подтвердите согласие.", privacy_link: "Политика конфиденциальности", privacy_accept: "Подтверждаю", privacy_thanks: "Спасибо! Согласие сохранено." },
+  pl: { title:'Portal klienta', get_code:'Pobierz kod', code_label:'Kod z email', code_ph:'Kod 6-cyfrowy', confirm:'Potwierdź', back:'← Wstecz', my_orders:'Moje zamówienia', logout:'← Wyloguj się', err_enter_email:'Wprowadź email', err_not_found:'Ten email nie został znaleziony w bazie zamówień.', code_sent:'Kod wysłany na {email}. Ważny przez 15 minut.', err_conn:'Błąd połączenia. Spróbuj ponownie.', err_enter_code:'Wprowadź 6-cyfrowy kod', err_wrong_code:'Nieprawidłowy kod. Spróbuj ponownie.', no_orders:'Brak zamówień.', order_prefix:'Zamówienie #', paid_until:'Opłacone do:' , privacy_text: "Prosimy o zapoznanie się z polityką prywatności i potwierdzenie zgody.", privacy_link: "Polityka prywatności", privacy_accept: "Potwierdzam", privacy_thanks: "Dziękujemy! Zgoda zapisana." },
+  de: { title:'Kundenportal', get_code:'Code erhalten', code_label:'Code aus E-Mail', code_ph:'6-stelliger Code', confirm:'Bestätigen', back:'← Zurück', my_orders:'Meine Bestellungen', logout:'← Abmelden', err_enter_email:'E-Mail eingeben', err_not_found:'Diese E-Mail wurde in der Bestelldatenbank nicht gefunden.', code_sent:'Code an {email} gesendet. Gültig für 15 Minuten.', err_conn:'Verbindungsfehler. Bitte erneut versuchen.', err_enter_code:'Geben Sie den 6-stelligen Code ein', err_wrong_code:'Falscher Code. Bitte erneut versuchen.', no_orders:'Noch keine Bestellungen.', order_prefix:'Bestellung #', paid_until:'Bezahlt bis:' , privacy_text: "Bitte lesen Sie die Datenschutzerklärung und bestätigen Sie Ihre Zustimmung.", privacy_link: "Datenschutzerklärung", privacy_accept: "Ich stimme zu", privacy_thanks: "Danke! Zustimmung gespeichert." },
+  fr: { title:'Portail client', get_code:'Recevoir le code', code_label:'Code par email', code_ph:'Code à 6 chiffres', confirm:'Confirmer', back:'← Retour', my_orders:'Mes commandes', logout:'← Se déconnecter', err_enter_email:"Saisir l'email", err_not_found:"Cet email n'est pas trouvé dans la base de commandes.", code_sent:'Code envoyé à {email}. Valide pendant 15 minutes.', err_conn:'Erreur de connexion. Veuillez réessayer.', err_enter_code:'Saisissez le code à 6 chiffres', err_wrong_code:'Code incorrect. Veuillez réessayer.', no_orders:"Aucune commande pour l'instant.", order_prefix:'Commande #', paid_until:"Payé jusqu'au :" , privacy_text: "Veuillez consulter la politique de confidentialité et confirmer votre consentement.", privacy_link: "Politique de confidentialité", privacy_accept: "J’accepte", privacy_thanks: "Merci ! Consentement enregistré." },
+  es: { title:'Portal del cliente', get_code:'Obtener código', code_label:'Código del email', code_ph:'Código de 6 dígitos', confirm:'Confirmar', back:'← Volver', my_orders:'Mis pedidos', logout:'← Cerrar sesión', err_enter_email:'Introduce el email', err_not_found:'Este email no está en la base de pedidos.', code_sent:'Código enviado a {email}. Válido durante 15 minutos.', err_conn:'Error de conexión. Por favor, inténtelo de nuevo.', err_enter_code:'Introduce el código de 6 dígitos', err_wrong_code:'Código incorrecto. Por favor, inténtelo de nuevo.', no_orders:'Aún no hay pedidos.', order_prefix:'Pedido #', paid_until:'Pagado hasta:' , privacy_text: "Por favor, revise la política de privacidad y confirme su consentimiento.", privacy_link: "Política de privacidad", privacy_accept: "Acepto", privacy_thanks: "¡Gracias! Consentimiento guardado." },
+  it: { title:'Portale cliente', get_code:'Ricevi codice', code_label:"Codice dall'email", code_ph:'Codice a 6 cifre', confirm:'Conferma', back:'← Indietro', my_orders:'I miei ordini', logout:'← Esci', err_enter_email:'Inserisci email', err_not_found:'Questa email non è nella base degli ordini.', code_sent:'Codice inviato a {email}. Valido per 15 minuti.', err_conn:'Errore di connessione. Riprova.', err_enter_code:'Inserisci il codice a 6 cifre', err_wrong_code:'Codice errato. Riprova.', no_orders:'Ancora nessun ordine.', order_prefix:'Ordine #', paid_until:'Pagato fino al:' , privacy_text: "Si prega di consultare l’informativa sulla privacy e confermare il consenso.", privacy_link: "Informativa sulla privacy", privacy_accept: "Accetto", privacy_thanks: "Grazie! Consenso salvato." },
+  pt: { title:'Portal do cliente', get_code:'Obter código', code_label:'Código do email', code_ph:'Código de 6 dígitos', confirm:'Confirmar', back:'← Voltar', my_orders:'Meus pedidos', logout:'← Sair', err_enter_email:'Insira o email', err_not_found:'Este email não foi encontrado na base de pedidos.', code_sent:'Código enviado para {email}. Válido por 15 minutos.', err_conn:'Erro de conexão. Tente novamente.', err_enter_code:'Insira o código de 6 dígitos', err_wrong_code:'Código incorreto. Tente novamente.', no_orders:'Ainda não há pedidos.', order_prefix:'Pedido #', paid_until:'Pago até:' , privacy_text: "Por favor, revise a política de privacidade e confirme o seu consentimento.", privacy_link: "Política de privacidade", privacy_accept: "Aceito", privacy_thanks: "Obrigado! Consentimento salvo." },
+  zh: { title:'客户门户', get_code:'获取验证码', code_label:'邮件验证码', code_ph:'6位验证码', confirm:'确认', back:'← 返回', my_orders:'我的订单', logout:'← 退出登录', err_enter_email:'请输入邮箱', err_not_found:'此邮箱在订单数据库中未找到。', code_sent:'验证码已发送至 {email}。有效期15分钟。', err_conn:'连接错误，请重试。', err_enter_code:'请输入6位验证码', err_wrong_code:'验证码错误，请重试。', no_orders:'暂无订单。', order_prefix:'订单 #', paid_until:'已付款至：' , privacy_text: "请阅读隐私政策并确认您的同意。", privacy_link: "隐私政策", privacy_accept: "我同意", privacy_thanks: "谢谢！已保存您的同意。" },
+  ar: { title:'بوابة العميل', get_code:'الحصول على الرمز', code_label:'الرمز من البريد الإلكتروني', code_ph:'رمز من 6 أرقام', confirm:'تأكيد', back:'رجوع →', my_orders:'طلباتي', logout:'خروج →', err_enter_email:'أدخل البريد الإلكتروني', err_not_found:'هذا البريد الإلكتروني غير موجود في قاعدة الطلبات.', code_sent:'تم إرسال الرمز إلى {email}. صالح لمدة 15 دقيقة.', err_conn:'خطأ في الاتصال. يرجى المحاولة مجدداً.', err_enter_code:'أدخل الرمز المكون من 6 أرقام', err_wrong_code:'رمز غير صحيح. يرجى المحاولة مجدداً.', no_orders:'لا توجد طلبات حتى الآن.', order_prefix:'طلب #', paid_until:'مدفوع حتى:' , privacy_text: "يرجى الاطلاع على سياسة الخصوصية وتأكيد موافقتك.", privacy_link: "سياسة الخصوصية", privacy_accept: "أوافق", privacy_thanks: "شكراً! تم حفظ الموافقة." },
+  hu: { title:'Ügyfélportál', get_code:'Kód kérése', code_label:'Kód az emailből', code_ph:'6 jegyű kód', confirm:'Megerősítés', back:'← Vissza', my_orders:'Rendeléseim', logout:'← Kijelentkezés', err_enter_email:'Adja meg az e-mailt', err_not_found:'Ez az email nem található a rendelési adatbázisban.', code_sent:'Kód elküldve ide: {email}. 15 percig érvényes.', err_conn:'Kapcsolódási hiba. Kérjük, próbálja újra.', err_enter_code:'Adja meg a 6 jegyű kódot', err_wrong_code:'Hibás kód. Kérjük, próbálja újra.', no_orders:'Még nincsenek rendelések.', order_prefix:'Rendelés #', paid_until:'Fizetve eddig:' , privacy_text: "Kérjük, olvassa el az adatvédelmi szabályzatot és erősítse meg hozzájárulását.", privacy_link: "Adatvédelmi szabályzat", privacy_accept: "Elfogadom", privacy_thanks: "Köszönjük! Hozzájárulás mentve." },
+};
+
+const STATUS_T = {
+  be: { new:'🆕 Новы', reviewing:'👀 Разглядаецца', confirmed:'✅ Пацверджаны', in_progress:'⚙️ У працы', awaiting_payment:'💳 Чакае аплаты', paid:'✔️ Аплачаны', completed:'🚀 Завершаны', cancelled:'❌ Адменены' },
+  en: { new:'🆕 New', reviewing:'👀 Under review', confirmed:'✅ Confirmed', in_progress:'⚙️ In progress', awaiting_payment:'💳 Awaiting payment', paid:'✔️ Paid', completed:'🚀 Completed', cancelled:'❌ Cancelled' },
+  uk: { new:'🆕 Новий', reviewing:'👀 Розглядається', confirmed:'✅ Підтверджений', in_progress:'⚙️ В роботі', awaiting_payment:'💳 Очікує оплати', paid:'✔️ Оплачений', completed:'🚀 Завершений', cancelled:'❌ Скасований' },
+  ru: { new:'🆕 Новый', reviewing:'👀 Рассматривается', confirmed:'✅ Подтверждён', in_progress:'⚙️ В работе', awaiting_payment:'💳 Ожидает оплаты', paid:'✔️ Оплачен', completed:'🚀 Завершён', cancelled:'❌ Отменён' },
+  pl: { new:'🆕 Nowy', reviewing:'👀 W trakcie rozpatrzenia', confirmed:'✅ Potwierdzony', in_progress:'⚙️ W toku', awaiting_payment:'💳 Oczekuje na płatność', paid:'✔️ Opłacony', completed:'🚀 Zakończony', cancelled:'❌ Anulowany' },
+  de: { new:'🆕 Neu', reviewing:'👀 In Prüfung', confirmed:'✅ Bestätigt', in_progress:'⚙️ In Bearbeitung', awaiting_payment:'💳 Zahlung ausstehend', paid:'✔️ Bezahlt', completed:'🚀 Abgeschlossen', cancelled:'❌ Storniert' },
+  fr: { new:'🆕 Nouveau', reviewing:"👀 En cours d'examen", confirmed:'✅ Confirmé', in_progress:'⚙️ En cours', awaiting_payment:'💳 Paiement en attente', paid:'✔️ Payé', completed:'🚀 Terminé', cancelled:'❌ Annulé' },
+  es: { new:'🆕 Nuevo', reviewing:'👀 En revisión', confirmed:'✅ Confirmado', in_progress:'⚙️ En proceso', awaiting_payment:'💳 Esperando pago', paid:'✔️ Pagado', completed:'🚀 Completado', cancelled:'❌ Cancelado' },
+  it: { new:'🆕 Nuovo', reviewing:'👀 In revisione', confirmed:'✅ Confermato', in_progress:'⚙️ In lavorazione', awaiting_payment:'💳 In attesa di pagamento', paid:'✔️ Pagato', completed:'🚀 Completato', cancelled:'❌ Annullato' },
+  pt: { new:'🆕 Novo', reviewing:'👀 Em análise', confirmed:'✅ Confirmado', in_progress:'⚙️ Em andamento', awaiting_payment:'💳 Aguardando pagamento', paid:'✔️ Pago', completed:'🚀 Concluído', cancelled:'❌ Cancelado' },
+  zh: { new:'🆕 新建', reviewing:'👀 审核中', confirmed:'✅ 已确认', in_progress:'⚙️ 进行中', awaiting_payment:'💳 等待付款', paid:'✔️ 已付款', completed:'🚀 已完成', cancelled:'❌ 已取消' },
+  ar: { new:'🆕 جديد', reviewing:'👀 قيد المراجعة', confirmed:'✅ مؤكد', in_progress:'⚙️ قيد التنفيذ', awaiting_payment:'💳 بانتظار الدفع', paid:'✔️ مدفوع', completed:'🚀 مكتمل', cancelled:'❌ ملغى' },
+  hu: { new:'🆕 Új', reviewing:'👀 Elbírálás alatt', confirmed:'✅ Megerősítve', in_progress:'⚙️ Folyamatban', awaiting_payment:'💳 Fizetésre vár', paid:'✔️ Fizetve', completed:'🚀 Befejezve', cancelled:'❌ Törölve' },
+};
+
+const STATUS_COLORS = {
+  new: '#6b7280', reviewing: '#a78bfa', confirmed: '#22c55e',
+  in_progress: '#3b82f6', awaiting_payment: '#f59e0b',
+  paid: '#22c55e', completed: '#f97316', cancelled: '#ef4444',
+};
+
+const API = 'https://ttzop-api.truetensites.workers.dev';
+const REPO = (() => {
+  const h = location.hostname;
+  if (h === 'localhost' || h.endsWith('.pages.dev')) return 'ttzop-test';
+  const parts = h.split('.');
+  return parts.length >= 3 ? parts[0] : 'ttzop-test';
+})();
+
+document.getElementById('portal-logo').textContent = REPO.toUpperCase();
+
+let PT = PORTAL_T.be;
+let ST = STATUS_T.be;
+let portalEmail = '';
+let portalToken = '';
+
+function detectPortalLang() {
+  const saved = localStorage.getItem('ttzop_lang');
+  if (saved && PORTAL_T[saved]) return saved;
+  const nav = navigator.language?.split('-')[0];
+  if (nav && PORTAL_T[nav]) return nav;
+  return 'be';
+}
+
+function applyPortalLang() {
+  const lang = detectPortalLang();
+  PT = PORTAL_T[lang] || PORTAL_T.be;
+  ST = STATUS_T[lang] || STATUS_T.be;
+  const isRtl = lang === 'ar';
+  document.documentElement.lang = lang;
+  document.documentElement.dir = isRtl ? 'rtl' : 'ltr';
+  document.title = PT.title;
+  document.getElementById('portal-sub').textContent = PT.title;
+  document.getElementById('s1-btn').textContent = PT.get_code;
+  document.getElementById('s2-label').textContent = PT.code_label;
+  document.getElementById('portal-code').placeholder = PT.code_ph;
+  document.getElementById('s2-btn').textContent = PT.confirm;
+  document.getElementById('s2-back').textContent = PT.back;
+  document.getElementById('my-orders-title').textContent = PT.my_orders;
+  document.getElementById('s3-logout').textContent = PT.logout;
+}
+
+function showStep(step) {
+  document.querySelectorAll('.step').forEach(s => s.classList.remove('active'));
+  document.getElementById('step-' + step).classList.add('active');
+}
+
+function setMsg(id, text) {
+  document.getElementById(id).textContent = text;
+}
+
+async function portalSendCode() {
+  const email = document.getElementById('portal-email').value.trim();
+  if (!email) { setMsg('s1-msg', PT.err_enter_email); return; }
+  const btn = document.getElementById('s1-btn');
+  btn.disabled = true; btn.textContent = '...';
+  setMsg('s1-msg', '');
+  try {
+    const res = await fetch(API, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'portal_send_code', repo: REPO, email, lang: detectPortalLang() })
+    });
+    const data = await res.json();
+    if (data.error === 'not_found') {
+      setMsg('s1-msg', PT.err_not_found);
+      btn.disabled = false; btn.textContent = PT.get_code; return;
+    }
+    portalEmail = email;
+    document.getElementById('s2-desc').textContent = PT.code_sent.replace('{email}', email);
+    showStep('code');
+  } catch {
+    setMsg('s1-msg', PT.err_conn);
+  }
+  btn.disabled = false; btn.textContent = PT.get_code;
+}
+
+async function portalVerifyCode() {
+  const code = document.getElementById('portal-code').value.trim();
+  if (code.length !== 6) { setMsg('s2-msg', PT.err_enter_code); return; }
+  const btn = document.getElementById('s2-btn');
+  btn.disabled = true; btn.textContent = '...';
+  setMsg('s2-msg', '');
+  try {
+    const res = await fetch(API, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'portal_verify_code', repo: REPO, email: portalEmail, code })
+    });
+    if (!res.ok) { setMsg('s2-msg', PT.err_wrong_code); btn.disabled = false; btn.textContent = PT.confirm; return; }
+    const data = await res.json();
+    portalToken = data.token || '';
+    renderOrders(data);
+    showStep('orders');
+  } catch {
+    setMsg('s2-msg', PT.err_conn);
+  }
+  btn.disabled = false; btn.textContent = PT.confirm;
+}
+
+function renderOrders(data) {
+  const el = document.getElementById('portal-orders');
+  const { orders } = data;
+  // GDPR: банер прыняцця актуальнай версіі палітыкі (электронная згода даганяе вусную/старую)
+  const banner = (data.privacyAccepted === false && data.privacyVersion) ? `
+    <div id="privacy-banner" style="border:1px solid rgba(245,158,11,0.4);background:rgba(245,158,11,0.08);border-radius:10px;padding:16px;margin-bottom:16px;font-size:0.85rem;line-height:1.5">
+      <div style="margin-bottom:10px">${PT.privacy_text}</div>
+      <a href="content/privacy/privacy_versions/v${data.privacyVersion}.html" target="_blank" style="color:var(--accent)">${PT.privacy_link} ↗</a>
+      <button class="btn-primary" style="margin-top:12px;padding:10px" onclick="portalAcceptPrivacy()">${PT.privacy_accept}</button>
+      <div class="error-msg" id="privacy-msg" style="min-height:0;margin-top:6px"></div>
+    </div>` : '';
+  if (!orders || orders.length === 0) {
+    el.innerHTML = banner + `<div style="color:var(--muted);font-size:0.87rem">${PT.no_orders}</div>`;
+    return;
+  }
+  el.innerHTML = banner + orders.map(o => {
+    const label = ST[o.status] || o.status;
+    const color = STATUS_COLORS[o.status] || '#6b7280';
+    const siteUrl = o.desiredSubdomain ? `https://${o.desiredSubdomain}.ttzop.com` : null;
+    const untilStr = o.until ? (() => { const [y,m,d] = o.until.split('-'); return `${d}.${m}.${y}`; })() : null;
+    return `<div class="order-card">
+      <div class="order-id">${PT.order_prefix}${o.id}</div>
+      <div><span class="order-badge" style="background:${color}22;color:${color}">${label}</span></div>
+      ${siteUrl ? `<div class="order-row">🌐 <a href="${siteUrl}" target="_blank">${siteUrl}</a></div>` : ''}
+      ${untilStr ? `<div class="order-row">${PT.paid_until} <b style="color:var(--text)">${untilStr}</b></div>` : ''}
+    </div>`;
+  }).join('');
+}
+
+async function portalAcceptPrivacy() {
+  try {
+    const res = await fetch(API, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'portal_accept_privacy', repo: REPO, token: portalToken })
+    });
+    const d = res.ok ? await res.json() : {};
+    if (d.ok) {
+      const b = document.getElementById('privacy-banner');
+      if (b) b.innerHTML = `<div style="color:var(--success);font-size:0.87rem">${PT.privacy_thanks}</div>`;
+    } else {
+      setMsg('privacy-msg', PT.err_conn);
+    }
+  } catch { setMsg('privacy-msg', PT.err_conn); }
+}
+
+applyPortalLang();
+
+document.getElementById('portal-code').addEventListener('keydown', e => { if (e.key === 'Enter') portalVerifyCode(); });
+document.getElementById('portal-email').addEventListener('keydown', e => { if (e.key === 'Enter') portalSendCode(); });
+</script>
+</body>
+</html>

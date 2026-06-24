@@ -1,0 +1,11 @@
+{
+  "_comment": "Запісвайце сюды калі перайменоўваеце палі ў settings.default.json",
+  "_format": "новае_поле: старое_поле",
+  "_example": "калі workingHours перайменавалі ў hours — запішыце: hours: workingHours",
+
+  "rename_rules": {
+   
+
+    
+  }
+}

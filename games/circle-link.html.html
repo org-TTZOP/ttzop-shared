@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="be">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Злучы пункты</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #121213;
+            color: #ffffff;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+            user-select: none;
+        }
+
+        h1 {
+            margin-bottom: 5px;
+            font-size: 28px;
+        }
+
+        p {
+            color: #aaaaaa;
+            margin-bottom: 20px;
+            font-size: 14px;
+            text-align: center;
+            max-width: 340px;
+        }
+
+        #game-container {
+            width: 320px;
+            height: 320px;
+            background: #1a1a1a;
+            border: 4px solid #333;
+            border-radius: 8px;
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            grid-template-rows: repeat(5, 1fr);
+            padding: 5px;
+            box-sizing: border-box;
+        }
+
+        .cell {
+            border: 1px solid #2a2a2a;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+        }
+
+        .dot {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            z-index: 2;
+        }
+
+        /* Зафарбоўка ліній гульца */
+        .path-red { background-color: rgba(255, 59, 48, 0.35); }
+        .path-blue { background-color: rgba(0, 122, 255, 0.35); }
+        .path-green { background-color: rgba(52, 199, 89, 0.35); }
+
+        .dot-red { background-color: #ff3b30; box-shadow: 0 0 12px #ff3b30; }
+        .dot-blue { background-color: #007aff; box-shadow: 0 0 12px #007aff; }
+        .dot-green { background-color: #34c759; box-shadow: 0 0 12px #34c759; }
+
+        #win-message {
+            display: none;
+            margin-top: 20px;
+            font-size: 22px;
+            font-weight: bold;
+            color: #34c759;
+            text-align: center;
+        }
+
+        .btn {
+            margin-top: 15px;
+            background: #8f7a66;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: bold;
+        }
+        .btn:hover { background: #9f8a76; }
+    </style>
+</head>
+<body>
+
+    <h1>Злучы каляровыя пункты</h1>
+    <p>Трэба злучыць пары аднолькавых колераў (Чырвоны з Чырвоным, Сіні з Сінім, Зялёны з Зялёным) так, каб лініі не перасякаліся!</p>
+
+    <div id="game-container"></div>
+
+    <div id="win-message">Выдатна! Перамога!</div>
+    <button class="btn" onclick="resetGame()">Скінуць лініі</button>
+
+    <script>
+        const SIZE = 5; // Поле 5х5
+        let isDrawing = false;
+        let currentColor = null;
+        let currentPath = [];
+        
+        // Мапа поля: R - Чырвоны, B - Сіні, G - Зялёны
+        let gridData = [
+            ['R',  0,   0,  'B',  0 ],
+            [ 0,   0,   0,   0,   0 ],
+            ['G',  0,   0,   0,  'R'],
+            [ 0,   0,   0,   0,   0 ],
+            [ 0,  'B',  0,  'G',  0 ]
+        ];
+
+        const COLOR_MAP = { 'R': 'red', 'B': 'blue', 'G': 'green' };
+        let playerPaths = Array(SIZE).fill(null).map(() => Array(SIZE).fill(null));
+
+        const container = document.getElementById('game-container');
+        const winMessage = document.getElementById('win-message');
+
+        function initGame() {
+            container.innerHTML = '';
+            playerPaths = Array(SIZE).fill(null).map(() => Array(SIZE).fill(null));
+            winMessage.style.display = 'none';
+
+            for (let r = 0; r < SIZE; r++) {
+                for (let c = 0; c < SIZE; c++) {
+                    const cell = document.createElement('div');
+                    cell.classList.add('cell');
+                    cell.dataset.row = r;
+                    cell.dataset.col = c;
+
+                    if (gridData[r][c] !== 0) {
+                        const dot = document.createElement('div');
+                        dot.classList.add('dot', `dot-${COLOR_MAP[gridData[r][c]]}`);
+                        cell.appendChild(dot);
+                        playerPaths[r][c] = COLOR_MAP[gridData[r][c]];
+                    }
+
+                    // Падзеі мышы
+                    cell.addEventListener('mousedown', startDrawing);
+                    cell.addEventListener('mouseenter', draw);
+                    
+                    // Падзеі тачу
+                    cell.addEventListener('touchstart', (e) => {
+                        e.preventDefault();
+                        const touch = e.touches[0];
+                        const target = document.elementFromPoint(touch.clientX, touch.clientY);
+                        if (target && target.closest('.cell')) startDrawing({ currentTarget: target.closest('.cell') });
+                    });
+                    cell.addEventListener('touchmove', (e) => {
+                        e.preventDefault();
+                        const touch = e.touches[0];
+                        const target = document.elementFromPoint(touch.clientX, touch.clientY);
+                        if (target && target.closest('.cell')) draw({ currentTarget: target.closest('.cell') });
+                    });
+
+                    container.appendChild(cell);
+                }
+            }
+        }
+
+        window.addEventListener('mouseup', stopDrawing);
+        window.addEventListener('touchend', stopDrawing);
+
+        function startDrawing(e) {
+            const r = parseInt(e.currentTarget.dataset.row);
+            const c = parseInt(e.currentTarget.dataset.col);
+            
+            if (gridData[r][c] !== 0) {
+                isDrawing = true;
+                currentColor = COLOR_MAP[gridData[r][c]];
+                currentPath = [{r, c}];
+                clearColorPath(currentColor);
+            }
+        }
+
+        function draw(e) {
+            if (!isDrawing) return;
+            
+            const r = parseInt(e.currentTarget.dataset.row);
+            const c = parseInt(e.currentTarget.dataset.col);
+            const last = currentPath[currentPath.length - 1];
+
+            const isNeighbor = (Math.abs(r - last.r) + Math.abs(c - last.c)) === 1;
+            
+            if (isNeighbor) {
+                if (gridData[r][c] !== 0 && COLOR_MAP[gridData[r][c]] !== currentColor) return;
+
+                playerPaths[r][c] = currentColor;
+                currentPath.push({r, c});
+                renderPaths();
+
+                // Фініш
+                if (gridData[r][c] !== 0 && COLOR_MAP[gridData[r][c]] === currentColor && (r !== currentPath[0].r || c !== currentPath[0].c)) {
+                    stopDrawing();
+                    checkWin();
+                }
+            }
+        }
+
+        function stopDrawing() {
+            isDrawing = false;
+            currentColor = null;
+            currentPath = [];
+        }
+
+        function clearColorPath(color) {
+            for (let r = 0; r < SIZE; r++) {
+                for (let c = 0; c < SIZE; c++) {
+                    if (gridData[r][c] === 0 && playerPaths[r][c] === color) {
+                        playerPaths[r][c] = null;
+                    }
+                }
+            }
+            renderPaths();
+        }
+
+        function renderPaths() {
+            for (let r = 0; r < SIZE; r++) {
+                for (let c = 0; c < SIZE; c++) {
+                    const cell = container.children[r * SIZE + c];
+                    cell.classList.remove('path-red', 'path-blue', 'path-green');
+                    if (playerPaths[r][c] && gridData[r][c] === 0) {
+                        cell.classList.add(`path-${playerPaths[r][c]}`);
+                    }
+                }
+            }
+        }
+
+        function checkWin() {
+            // Правяраем, ці ўсе 3 лініі паспяхова дайшлі ад старта да фінішу
+            // Просты тэст: калі на полі няма пустых клетак, і ўсе колеры на месцы
+            let totalFilled = 0;
+            for (let r = 0; r < SIZE; r++) {
+                for (let c = 0; c < SIZE; c++) {
+                    if (playerPaths[r][c] !== null) totalFilled++;
+                }
+            }
+
+            if (totalFilled === SIZE * SIZE) {
+                setTimeout(() => {
+                    winMessage.style.display = 'block';
+                }, 100);
+            }
+        }
+
+        function resetGame() {
+            initGame();
+        }
+
+        initGame();
+    </script>
+</body>
+</html>

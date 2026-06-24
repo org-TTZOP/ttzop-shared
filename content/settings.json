@@ -1,0 +1,139 @@
+{
+  "web3formsKey": "ВАШ_КЛЮЧ_TUT",
+  "theme": "steel",
+  "mapLat": "53.9045",
+  "phone": "+375 29 123-45-67",
+  "mapLng": "27.5615",
+  "mapZoom": "16",
+  "currency": {
+    "code": "BYN",
+    "symbol": "Br"
+  },
+  "email_routing": [
+    {
+      "address": "ivanov@gmail.com",
+      "labels": {
+        "be": "Заказы і запісы",
+        "en": "Orders & Bookings"
+      }
+    },
+    {
+      "address": "petrov@gmail.com",
+      "labels": {
+        "be": "Агульныя пытанні",
+        "en": "General enquiries"
+      }
+    },
+    {
+      "address": "",
+      "labels": {
+        "be": "Бухгалтарыя",
+        "en": "Accounting"
+      }
+    }
+  ],
+  "languages": [
+    {
+      "code": "be",
+      "label": "BE",
+      "name": "be",
+      "dateFormat": "DD.MM.YYYY",
+      "active": true
+    },
+    {
+      "code": "en",
+      "label": "EN",
+      "name": "English",
+      "dateFormat": "DD.MM.YYYY",
+      "active": true
+    }
+  ],
+  "i18n": {
+    "be": {
+      "companyName": "АўтаСэрвіс Мінск",
+      "address": "г. Мінск, вул. Гаражная, 5",
+      "heroTitle": "Прафесійны рамонт аўтамабіляў",
+      "heroSubtitle": "Якасна, хутка, з гарантыяй. Любая складанасць.",
+      "hero_btn_primary": "Запісацца",
+      "hero_btn_secondary": "Нашы паслугі",
+      "nav_services": "Паслугі",
+      "nav_about": "Пра нас",
+      "nav_gallery": "Галерэя",
+      "nav_contact": "Кантакты",
+      "services_title": "Нашы паслугі",
+      "services_subtitle": "Выконваем любы рамонт",
+      "advantages_title": "Чаму выбіраюць нас",
+      "about_title": "Пра нас",
+      "about_text": "Мы працуем з 2010 года і абслугоўваем аўтамабілі любых марак.",
+      "how_title": "Як мы працуем",
+      "promo_title": "Акцыі і спецпрапановы",
+      "gallery_title": "Галерэя работ",
+      "testimonials_title": "Водгукі кліентаў",
+      "prices_title": "Кошты паслуг",
+      "prices_col_service": "Паслуга",
+      "prices_col_price": "Кошт",
+      "brands_title": "Маркі з якімі працуем",
+      "certs_title": "Сертыфікаты і ліцэнзіі",
+      "clients_title": "Нашы партнёры",
+      "blog_title": "Карысныя артыкулы",
+      "faq_title": "Частыя пытанні",
+      "contact_title": "Кантакты",
+      "form_title": "Запісацца на сэрвіс",
+      "form_name": "Ваша імя",
+      "form_phone": "Тэлефон",
+      "form_car": "Марка і мадэль аўто",
+      "form_message": "Апішыце праблему",
+      "form_submit": "Адправіць заяўку",
+      "footer_desc": "Прафесійны аўтасэрвіс",
+      "footer_nav": "Навігацыя",
+      "footer_contacts": "Кантакты",
+      "footer_legal": "Дакументы",
+      "footer_privacy": "Палітыка прыватнасці",
+      "maps_btn": "Адкрыць у Google Maps",
+      "workingHours": "Пн–Пт 8:00–19:00, Сб 9:00–15:00"
+    },
+    "en": {
+      "companyName": "AutoService Minsk",
+      "address": "Minsk, Garazhnaya str., 5",
+      "workingHours": "Mon–Fri 8:00–19:00, Sat 9:00–15:00",
+      "heroTitle": "Professional Car Repair",
+      "heroSubtitle": "Quality, fast, with warranty. Any complexity.",
+      "hero_btn_primary": "Book Now",
+      "hero_btn_secondary": "Our Services",
+      "nav_services": "Services",
+      "nav_about": "About us",
+      "nav_gallery": "Gallery",
+      "nav_contact": "Contacts",
+      "services_title": "Our Services",
+      "services_subtitle": "We handle any repair",
+      "advantages_title": "Why Choose Us",
+      "about_title": "About Us",
+      "about_text": "We have been working since 2010 and service cars of all makes.",
+      "how_title": "How We Work",
+      "promo_title": "Promotions & Special Offers",
+      "gallery_title": "Our Work Gallery",
+      "testimonials_title": "Customer Reviews",
+      "prices_title": "Price List",
+      "prices_col_service": "Service",
+      "prices_col_price": "Price",
+      "brands_title": "Brands We Work With",
+      "certs_title": "Certificates & Licences",
+      "clients_title": "Our Partners",
+      "blog_title": "Useful Articles",
+      "faq_title": "Frequently Asked Questions",
+      "contact_title": "Contact Us",
+      "form_title": "Book a Service",
+      "form_name": "Your name",
+      "form_phone": "Phone",
+      "form_car": "Car make and model",
+      "form_message": "Describe the issue",
+      "form_submit": "Send Request",
+      "footer_desc": "Professional auto service",
+      "footer_nav": "Navigation",
+      "footer_contacts": "Contacts",
+      "footer_legal": "Legal",
+      "footer_privacy": "Privacy Policy",
+      "maps_btn": "Open in Google Maps"
+    }
+  }
+}

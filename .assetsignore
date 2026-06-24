@@ -1,0 +1,13 @@
+.git
+.github
+CLAUDE.md
+README.md
+wrangler.jsonc
+merge-settings.py
+migrate-to-i18n.py
+test-results
+content/clients
+content/auth.json
+content/consents.json
+content/migrations.json
+content/settings-template.json

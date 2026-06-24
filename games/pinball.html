@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="be">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Рэтра Пінбол</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #121213;
+            color: white;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+            user-select: none;
+            overflow: hidden;
+        }
+
+        h1 { margin: 0 0 5px 0; font-size: 26px; color: #00ffcc; }
+        p { margin: 0 0 15px 0; color: #888; font-size: 13px; text-align: center; }
+
+        .info {
+            display: flex;
+            justify-content: space-between;
+            width: 360px;
+            font-size: 18px;
+            font-weight: bold;
+            background: #1e1e1f;
+            padding: 8px 15px;
+            border-radius: 6px;
+            box-sizing: border-box;
+            border: 1px solid #333;
+            margin-bottom: 10px;
+        }
+
+        canvas {
+            background-color: #18181a;
+            border: 4px solid #333;
+            border-radius: 8px;
+        }
+
+        .controls {
+            margin-top: 15px;
+            display: flex;
+            gap: 10px;
+        }
+
+        .btn {
+            background: #00ffcc;
+            color: #121213;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 15px;
+            font-weight: bold;
+        }
+        .btn:hover { background: #00cc99; }
+        .btn-launch { background: #ff3b30; color: white; }
+        .btn-launch:hover { background: #d32f2f; }
+    </style>
+</head>
+<body>
+
+    <h1>Рэтра Пінбол</h1>
+    <p>◄ / ► — кіраванне лапкамі. Утрымлівайце кнопку для сціскання пружыны.</p>
+    
+    <div class="info">
+        <div>Балы: <span id="score">0</span></div>
+        <div>Шары: <span id="balls">3</span></div>
+    </div>
+
+    <canvas id="pinballCanvas" width="360" height="500"></canvas>
+
+    <div class="controls">
+        <button class="btn btn-launch" id="launchBtn">Сціснуць пружыну</button>
+        <button class="btn" onclick="resetGame()">Новая гульня</button>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('pinballCanvas');
+        const ctx = canvas.getContext('2d');
+
+        let score = 0;
+        let ballsLeft = 3;
+        const scoreElement = document.getElementById('score');
+        const ballsElement = document.getElementById('balls');
+
+        const GRAVITY = 0.15;
+        
+        // Шарык
+        let ball = { x: 345, y: 440, vx: 0, vy: 0, radius: 8, isDead: false };
+        
+        // Пружына
+        let spring = { height: 35, maxHeight: 35, minHeight: 10, charge: 0, isCharging: false };
+
+        // Лапкі (Фліперы)
+        let leftFlipper = { x: 90, y: 430, w: 60, h: 10, isUp: false };
+        let rightFlipper = { x: 210, y: 430, w: 60, h: 10, isUp: false };
+
+        // Бамперы
+        const bumpers = [
+            { x: 110, y: 130, r: 20, color: '#ff0055', score: 50 },
+            { x: 230, y: 130, r: 20, color: '#ff0055', score: 50 },
+            { x: 170, y: 190, r: 25, color: '#00ffcc', score: 100 },
+            { x: 70, y: 260, r: 15, color: '#ffcc00', score: 30 },
+            { x: 270, y: 260, r: 15, color: '#ffcc00', score: 30 }
+        ];
+
+        // Лункі
+        const pockets = [
+            { x: 110, y: 330, r: 15, score: 200, label: 'x2' },
+            { x: 170, y: 310, r: 15, score: 500, label: 'x5' },
+            { x: 230, y: 330, r: 15, score: 200, label: 'x2' }
+        ];
+
+        // Слухачы клавіятуры
+        window.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowLeft') leftFlipper.isUp = true;
+            if (e.key === 'ArrowRight') rightFlipper.isUp = true;
+        });
+
+        window.addEventListener('keyup', (e) => {
+            if (e.key === 'ArrowLeft') leftFlipper.isUp = false;
+            if (e.key === 'ArrowRight') rightFlipper.isUp = false;
+        });
+
+        // Мышка / Тач для пружыны
+        const launchBtn = document.getElementById('launchBtn');
+        launchBtn.addEventListener('mousedown', () => { spring.isCharging = true; });
+        window.addEventListener('mouseup', releaseSpring);
+        launchBtn.addEventListener('touchstart', (e) => { e.preventDefault(); spring.isCharging = true; });
+        window.addEventListener('touchend', releaseSpring);
+
+        // Тапы для кіравання на тэлефоне
+        canvas.addEventListener('touchstart', (e) => {
+            const rect = canvas.getBoundingClientRect();
+            const touchX = e.touches[0].clientX - rect.left;
+            if (touchX < canvas.width / 2) leftFlipper.isUp = true;
+            else rightFlipper.isUp = true;
+        });
+        canvas.addEventListener('touchend', () => {
+            leftFlipper.isUp = false;
+            rightFlipper.isUp = false;
+        });
+
+        function releaseSpring() {
+            if (spring.isCharging) {
+                spring.isCharging = false;
+                if (ball.x > 320 && ball.y > 400) {
+                    ball.vy = -spring.charge * 3.2; // ПАВЯЛІЧАНА: Імпульс стрэлу стаў значна мацнейшым!
+                    ball.vx = -1.5; // Скіроўваем шарык трохі налева ў арку
+                }
+                spring.charge = 0;
+                spring.height = spring.maxHeight;
+            }
+        }
+
+        function update() {
+            if (spring.isCharging) {
+                if (spring.height > spring.minHeight) {
+                    spring.height -= 0.6;
+                    spring.charge += 0.4;
+                }
+            } else {
+                if (spring.height < spring.maxHeight) spring.height += 2;
+            }
+
+            if (ball.isDead) return;
+
+            ball.vy += GRAVITY;
+            ball.x += ball.vx;
+            ball.y += ball.vy;
+
+            // Упор для пружыны
+            if (ball.x > 330 && ball.y > 440) {
+                ball.y = 440;
+                ball.vy = 0;
+                ball.vx = 0;
+            }
+
+            // Унутраная сценка калідора запуску
+            if (ball.x > 325 && ball.x < 335 && ball.y > 140) {
+                if (ball.vx > 0) { ball.x = 325; ball.vx *= -0.7; }
+            }
+
+            // Адскокі ад межаў экрана
+            if (ball.x - ball.radius < 0) { ball.x = ball.radius; ball.vx *= -0.7; }
+            if (ball.x + ball.radius > canvas.width) { ball.x = canvas.width - ball.radius; ball.vx *= -0.7; }
+            if (ball.y - ball.radius < 0) { ball.y = ball.radius; ball.vy *= -0.7; }
+
+            // Верхняя акруглая арка
+            if (ball.y < 160) {
+                let distToCenter = Math.hypot(ball.x - 170, ball.y - 140);
+                if (distToCenter > 155) {
+                    // Калі шарык вылятае па калідоры, арка накіроўвае яго налева
+                    let angle = Math.atan2(ball.y - 140, ball.x - 170);
+                    ball.x = 170 + Math.cos(angle) * 153;
+                    ball.y = 140 + Math.sin(angle) * 153;
+                    ball.vx *= -0.8;
+                    ball.vy *= -0.8;
+                }
+            }
+
+            // Калізіі з бамперамі
+            bumpers.forEach(b => {
+                let dist = Math.hypot(ball.x - b.x, ball.y - b.y);
+                if (dist < ball.radius + b.r) {
+                    let nx = (ball.x - b.x) / dist;
+                    let ny = (ball.y - b.y) / dist;
+                    ball.vx = nx * 5.5; 
+                    ball.vy = ny * 5.5;
+                    score += b.score;
+                    scoreElement.innerText = score;
+                }
+            });
+
+            // Калізіі з лункамі
+            pockets.forEach(p => {
+                let dist = Math.hypot(ball.x - p.x, ball.y - p.y);
+                if (dist < p.r + 2) {
+                    score += p.score;
+                    scoreElement.innerText = score;
+                    resetBall();
+                }
+            });
+
+            // Левая лапка
+            if (ball.x > leftFlipper.x && ball.x < leftFlipper.x + leftFlipper.w &&
+                ball.y + ball.radius > (leftFlipper.isUp ? leftFlipper.y - 15 : leftFlipper.y) &&
+                ball.y - ball.radius < leftFlipper.y + leftFlipper.h) {
+                ball.vy = leftFlipper.isUp ? -7.5 : -3;
+                ball.vx += leftFlipper.isUp ? 2 : 0.5;
+                ball.y = leftFlipper.y - ball.radius - 2;
+            }
+
+            // Правая лапка
+            if (ball.x > rightFlipper.x && ball.x < rightFlipper.x + rightFlipper.w &&
+                ball.y + ball.radius > (rightFlipper.isUp ? rightFlipper.y - 15 : rightFlipper.y) &&
+                ball.y - ball.radius < rightFlipper.y + rightFlipper.h) {
+                ball.vy = rightFlipper.isUp ? -7.5 : -3;
+                ball.vx -= rightFlipper.isUp ? 2 : 0.5;
+                ball.y = rightFlipper.y - ball.radius - 2;
+            }
+
+            // Падзенне
+            if (ball.y > canvas.height) {
+                ballsLeft--;
+                ballsElement.innerText = ballsLeft;
+                if (ballsLeft <= 0) {
+                    ball.isDead = true;
+                } else {
+                    resetBall();
+                }
+            }
+        }
+
+        function resetBall() {
+            ball.x = 345;
+            ball.y = 440;
+            ball.vx = 0;
+            ball.vy = 0;
+        }
+
+        function draw() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // Лінія калідора і верхняя арка
+            ctx.strokeStyle = '#333';
+            ctx.lineWidth = 4;
+            ctx.beginPath();
+            ctx.moveTo(330, 500);
+            ctx.lineTo(330, 140);
+            ctx.arc(170, 140, 160, 0, Math.PI, true);
+            ctx.stroke();
+
+            // Лункі
+            pockets.forEach(p => {
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+                ctx.fillStyle = '#000';
+                ctx.fill();
+                ctx.fillStyle = '#fff';
+                ctx.font = '10px Arial';
+                ctx.textAlign = 'center';
+                ctx.fillText(p.label, p.x, p.y + 4);
+            });
+
+            // Бамперы
+            bumpers.forEach(b => {
+                ctx.beginPath();
+                ctx.arc(b.x, b.y, b.r, 0, Math.PI * 2);
+                ctx.fillStyle = b.color;
+                ctx.fill();
+            });
+
+            // Пружына
+            ctx.fillStyle = '#555';
+            ctx.fillRect(335, 500 - spring.height, 20, spring.height);
+
+            // Левая лапка
+            ctx.fillStyle = '#00ffcc';
+            ctx.save();
+            ctx.translate(leftFlipper.x, leftFlipper.y);
+            if (leftFlipper.isUp) ctx.rotate(-0.3);
+            ctx.fillRect(0, 0, leftFlipper.w, leftFlipper.h);
+            ctx.restore();
+
+            // Правая лапка
+            ctx.save();
+            ctx.translate(rightFlipper.x + rightFlipper.w, rightFlipper.y);
+            if (rightFlipper.isUp) ctx.rotate(0.3);
+            ctx.fillRect(-rightFlipper.w, 0, rightFlipper.w, rightFlipper.h);
+            ctx.restore();
+
+            // Шарык
+            if (!ball.isDead) {
+                ctx.beginPath();
+                ctx.arc(ball.x, ball.y, ball.radius, 0, Math.PI * 2);
+                ctx.fillStyle = '#ffffff';
+                ctx.fill();
+            } else {
+                ctx.fillStyle = '#ff3b30';
+                ctx.font = '24px Arial';
+                ctx.textAlign = 'center';
+                ctx.fillText('ГУЛЬНЯ СКОНЧАНА', canvas.width / 2, canvas.height / 2);
+            }
+        }
+
+        function resetGame() {
+            score = 0;
+            ballsLeft = 3;
+            scoreElement.innerText = score;
+            ballsElement.innerText = ballsLeft;
+            ball.isDead = false;
+            resetBall();
+        }
+
+        function loop() {
+            update();
+            draw();
+            requestAnimationFrame(loop);
+        }
+
+        loop();
+    </script>
+</body>
+</html>

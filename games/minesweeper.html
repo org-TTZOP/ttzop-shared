@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="be">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Гульня Сапёр</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #121213;
+            color: white;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+            user-select: none;
+        }
+
+        h1 { margin: 0 0 10px 0; font-size: 32px; color: #f44336; }
+
+        .info-panel {
+            display: flex;
+            justify-content: space-between;
+            width: 320px;
+            margin-bottom: 15px;
+            font-size: 18px;
+            font-weight: bold;
+            background: #222;
+            padding: 8px 15px;
+            border-radius: 6px;
+            box-sizing: border-box;
+            border: 1px solid #333;
+        }
+
+        #grid {
+            display: grid;
+            grid-template-columns: repeat(10, 1fr);
+            grid-template-rows: repeat(10, 1fr);
+            gap: 2px;
+            width: 320px;
+            height: 320px;
+            background-color: #333;
+            padding: 4px;
+            border-radius: 6px;
+            box-sizing: border-box;
+            position: relative;
+        }
+
+        .cell {
+            background-color: #444;
+            border-radius: 2px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 16px;
+            cursor: pointer;
+        }
+
+        .cell:hover { background-color: #555; }
+
+        .cell.revealed {
+            background-color: #222;
+            cursor: default;
+        }
+
+        /* Колеры для лічбаў */
+        .num-1 { color: #2196f3; }
+        .num-2 { color: #4caf50; }
+        .num-3 { color: #f44336; }
+        .num-4 { color: #9c27b0; }
+        .num-5 { color: #ff9800; }
+        .num-6 { color: #00bcd4; }
+        .num-7 { color: #e91e63; }
+        .num-8 { color: #ffffff; }
+
+        .cell.mine { background-color: #f44336; }
+
+        .btn {
+            margin-top: 20px;
+            background: #8f7a66;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 15px;
+            font-weight: bold;
+        }
+        .btn:hover { background: #9f8a76; }
+
+        #overlay {
+            display: none;
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.85);
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            border-radius: 6px;
+            z-index: 10;
+        }
+        #overlay h2 { margin: 0 0 10px 0; font-size: 26px; }
+    </style>
+</head>
+<body>
+
+    <h1>Сапёр</h1>
+    
+    <div class="info-panel">
+        <div>Міны: <span id="mines-count">15</span></div>
+        <div>Статус: <span id="status">😊</span></div>
+    </div>
+
+    <div id="grid">
+        <div id="overlay">
+            <h2 id="overlay-title">Вы прайгралі!</h2>
+            <button class="btn" onclick="initGame()">Згуляць зноў</button>
+        </div>
+    </div>
+
+    <button class="btn" onclick="initGame()">Новая гульня</button>
+
+ <script>
+        const SIZE = 10;
+        const MINE_COUNT = 15;
+        let board = [];
+        let revealedCount = 0;
+        let gameOver = false;
+
+        const gridElement = document.getElementById('grid');
+        const minesCountElement = document.getElementById('mines-count');
+        const statusElement = document.getElementById('status');
+        const overlay = document.getElementById('overlay');
+        const overlayTitle = document.getElementById('overlay-title');
+
+        // Ініцыялізацыя поля ў DOM
+        function createDOMGrid() {
+            gridElement.innerHTML = ''; // Ачышчаем перад стварэннем
+            // Дадаем overlay назад у grid
+            gridElement.appendChild(overlay);
+
+            for (let r = 0; r < SIZE; r++) {
+                for (let c = 0; c < SIZE; c++) {
+                    const cell = document.createElement('div');
+                    cell.classList.add('cell');
+                    cell.dataset.row = r;
+                    cell.dataset.col = c;
+                    
+                    // КІРАВАННЕ МЫШКАЙ (для кампутараў)
+                    cell.addEventListener('click', (e) => {
+                        // Ігнаруем звычайны клік, калі гэта быў тачскрын, каб пазбегнуць дублявання
+                        if (e.pointerType === 'touch') return; 
+                        revealCell(r, c);
+                    });
+                    
+                    cell.addEventListener('contextmenu', (e) => {
+                        e.preventDefault(); // Блакуем сістэмнае меню
+                        toggleFlag(r, c);
+                        return false;
+                    });
+
+                    // КІРАВАННЕ ТАЧС КРЫНАМ (для тэлефонаў)
+                    let touchTimer = null;
+                    let isLongTouch = false;
+
+                    cell.addEventListener('touchstart', (e) => {
+                        isLongTouch = false;
+                        // Запускаем таймер на 500 мс (паўсекунды) для доўгага націскання
+                        touchTimer = setTimeout(() => {
+                            toggleFlag(r, c);
+                            isLongTouch = true; // Пазначаем, што гэта быў доўгі тач (сцяжок)
+                        }, 500);
+                    }, { passive: true });
+
+                    cell.addEventListener('touchend', (e) => {
+                        // Калі палец прыбралі раней, чым за паўсекунды — гэта звычайны клік
+                        if (touchTimer) {
+                            clearTimeout(touchTimer);
+                            touchTimer = null;
+                        }
+                        
+                        // Калі гэта быў НЕ доўгі тач, то адкрываем клетку
+                        if (!isLongTouch) {
+                            revealCell(r, c);
+                        }
+                    });
+
+                    cell.addEventListener('touchmove', () => {
+                        // Калі карыстальнік пачаў гартаць экран — адмяняем клік
+                        if (touchTimer) {
+                            clearTimeout(touchTimer);
+                            touchTimer = null;
+                        }
+                    }, { passive: true });
+
+                    gridElement.appendChild(cell);
+                }
+            }
+        }
+
+        function initGame() {
+            board = [];
+            revealedCount = 0;
+            gameOver = false;
+            statusElement.innerText = '😊';
+            minesCountElement.innerText = MINE_COUNT;
+            overlay.style.display = 'none';
+
+            for (let r = 0; r < SIZE; r++) {
+                board[r] = [];
+                for (let c = 0; c < SIZE; c++) {
+                    board[r][c] = {
+                        isMine: false,
+                        isRevealed: false,
+                        isFlagged: false,
+                        neighborMines: 0
+                    };
+                }
+            }
+
+            let minesPlaced = 0;
+            while (minesPlaced < MINE_COUNT) {
+                let r = Math.floor(Math.random() * SIZE);
+                let c = Math.floor(Math.random() * SIZE);
+                if (!board[r][c].isMine) {
+                    board[r][c].isMine = true;
+                    minesPlaced++;
+                }
+            }
+
+            for (let r = 0; r < SIZE; r++) {
+                for (let c = 0; c < SIZE; c++) {
+                    if (board[r][c].isMine) continue;
+                    let count = 0;
+                    for (let dr = -1; dr <= 1; dr++) {
+                        for (let dc = -1; dc <= 1; dc++) {
+                            let nr = r + dr;
+                            let nc = c + dc;
+                            if (nr >= 0 && nr < SIZE && nc >= 0 && nc < SIZE) {
+                                if (board[nr][nc].isMine) count++;
+                            }
+                        }
+                    }
+                    board[r][c].neighborMines = count;
+                }
+            }
+
+            // Чысцім клеткі візуальна
+            const cells = gridElement.querySelectorAll('.cell');
+            cells.forEach(cell => {
+                cell.className = 'cell';
+                cell.innerText = '';
+            });
+        }
+
+        function revealCell(r, c) {
+            if (gameOver || board[r][c].isRevealed || board[r][c].isFlagged) return;
+
+            board[r][c].isRevealed = true;
+            revealedCount++;
+            
+            const cellElement = gridElement.querySelector(`.cell[data-row="${r}"][data-col="${c}"]`);
+            if (!cellElement) return;
+            
+            cellElement.classList.add('revealed');
+
+            if (board[r][c].isMine) {
+                cellElement.classList.add('mine');
+                cellElement.innerText = '💣';
+                endGame(false);
+                return;
+            }
+
+            if (board[r][c].neighborMines > 0) {
+                cellElement.innerText = board[r][c].neighborMines;
+                cellElement.classList.add(`num-${board[r][c].neighborMines}`);
+            } else {
+                for (let dr = -1; dr <= 1; dr++) {
+                    for (let dc = -1; dc <= 1; dc++) {
+                        let nr = r + dr;
+                        let nc = c + dc;
+                        if (nr >= 0 && nr < SIZE && nc >= 0 && nc < SIZE) {
+                            revealCell(nr, nc);
+                        }
+                    }
+                }
+            }
+
+            if (revealedCount === SIZE * SIZE - MINE_COUNT) {
+                endGame(true);
+            }
+        }
+
+        // Выразная логіка: паставіць/зняць сцяжок
+        function toggleFlag(r, c) {
+            if (gameOver || board[r][c].isRevealed) return;
+
+            const cellElement = gridElement.querySelector(`.cell[data-row="${r}"][data-col="${c}"]`);
+            if (!cellElement) return;
+
+            // Пераключаем стан у масіве (калі быў true — стане false, і наадварот)
+            board[r][c].isFlagged = !board[r][c].isFlagged;
+
+            if (board[r][c].isFlagged) {
+                cellElement.innerText = '🚩'; // Малюем сцяжок
+            } else {
+                cellElement.innerText = ''; // Выдаляем сцяжок
+            }
+
+            // Лічыльнік засталых мін
+            let flags = 0;
+            for (let row of board) {
+                for (let cell of row) {
+                    if (cell.isFlagged) flags++;
+                }
+            }
+            minesCountElement.innerText = Math.max(0, MINE_COUNT - flags);
+        }
+
+        function endGame(isWin) {
+            gameOver = true;
+            statusElement.innerText = isWin ? '😎' : '😵';
+            
+            for (let r = 0; r < SIZE; r++) {
+                for (let c = 0; c < SIZE; c++) {
+                    if (board[r][c].isMine) {
+                        const cellElement = gridElement.querySelector(`.cell[data-row="${r}"][data-col="${c}"]`);
+                        if (cellElement) cellElement.innerText = '💣';
+                    }
+                }
+            }
+
+            setTimeout(() => {
+                overlayTitle.innerText = isWin ? 'Вы выйгралі!' : 'Вы прайгралі!';
+                overlayTitle.style.color = isWin ? '#4caf50' : '#f44336';
+                overlay.style.display = 'flex';
+            }, 500);
+        }
+
+        // Запуск
+        createDOMGrid();
+        initGame();
+    </script>
+    </body>
+</html>

@@ -1,0 +1,58 @@
+backend:
+  name: github
+  repo: org-TTZOP/ttzop-test
+  branch: main
+
+media_folder: "assets/images/uploads"
+public_folder: "/assets/images/uploads"
+
+locale: "be"
+
+collections:
+  - name: "settings"
+    label: "⚙️ Агульныя налады"
+    files:
+      - label: "Налады сайта"
+        name: "settings"
+        file: "content/settings.json"
+        format: json
+        fields:
+          - { label: "Тэма", name: "theme", widget: "select", options: ["steel", "carbon", "light", "green"], default: "steel" }
+          - { label: "Двухмоўнасць", name: "enableMultilang", widget: "boolean", default: true }
+          - { label: "Назва кампаніі", name: "companyName_local", widget: "string" }
+          - { label: "Company name (EN)", name: "companyName_en", widget: "string" }
+          - { label: "Тэлефон", name: "phone", widget: "string" }
+          - { label: "Адрас", name: "address_local", widget: "string" }
+          - { label: "Address (EN)", name: "address_en", widget: "string" }
+          - { label: "Гадзіны працы", name: "workingHours", widget: "string" }
+          - { label: "Загаловак Hero", name: "heroTitle_local", widget: "string" }
+          - { label: "Hero title (EN)", name: "heroTitle_en", widget: "string" }
+          - { label: "Падзагаловак Hero", name: "heroSubtitle_local", widget: "string" }
+          - { label: "Hero subtitle (EN)", name: "heroSubtitle_en", widget: "string" }
+          - { label: "Кнопка 1", name: "hero_btn_primary_local", widget: "string" }
+          - { label: "Кнопка 2", name: "hero_btn_secondary_local", widget: "string" }
+          - { label: "Шырата (карта)", name: "mapLat", widget: "string" }
+          - { label: "Даўгата (карта)", name: "mapLng", widget: "string" }
+          - { label: "Ключ Web3Forms", name: "web3formsKey", widget: "string" }
+
+  - name: "sections"
+    label: "📋 Секцыі сайта"
+    files:
+      - label: "Уключыць/выключыць секцыі"
+        name: "sections"
+        file: "content/sections.json"
+        format: json
+        fields:
+          - { label: "Парадак секцый", name: "sections_order", widget: "list", field: { label: "Секцыя", name: "item", widget: "string" } }
+          - { label: "Перавагі", name: "advantages_enabled", widget: "boolean" }
+          - { label: "Акцыі", name: "promotions_enabled", widget: "boolean" }
+          - { label: "Галерэя", name: "gallery_enabled", widget: "boolean" }
+          - { label: "Водгукі", name: "testimonials_enabled", widget: "boolean" }
+          - { label: "Як мы працуем", name: "howWeWork_enabled", widget: "boolean" }
+          - { label: "Аб нас", name: "about_enabled", widget: "boolean" }
+          - { label: "Брэнды", name: "brands_enabled", widget: "boolean" }
+          - { label: "FAQ", name: "faq_enabled", widget: "boolean" }
+          - { label: "Сертыфікаты", name: "certificates_enabled", widget: "boolean" }
+          - { label: "Партнёры", name: "clients_enabled", widget: "boolean" }
+          - { label: "Прайс-ліст", name: "prices_enabled", widget: "boolean" }
+          - { label: "Блог", name: "blog_enabled", widget: "boolean" }

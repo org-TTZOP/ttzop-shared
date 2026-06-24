@@ -1,0 +1,16 @@
+# Ідэнтыфікатары з CLAUDE.md, якіх ЗАКОНАМЕРНА няма ў файлах шаблона.
+# (check-canon.sh прапускае гэтыя радкі.) Каментары (# ...) ігнаруюцца.
+
+# — Worker-сакрэты (жывуць у канфігу Cloudflare Worker / parent workers.js, не ў шаблоне)
+GITHUB_TOKEN
+RESEND_API_KEY
+CLOUDFLARE_API_TOKEN
+CLOUDFLARE_ACCOUNT_ID
+CLOUDFLARE_ZONE_ID
+
+# — Яўна выдаленыя/легасі назвы, згаданыя ў каноне толькі як нататка «выдалена»
+_settingsTrash
+ENTITY_CONFIG
+_formActive
+_formCurrent
+_formReorder

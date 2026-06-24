@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="be">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Гульня Пятнашка</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #1a1a1a;
+            color: white;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+            user-select: none;
+        }
+
+        h1 { margin-bottom: 10px; font-size: 32px; }
+        
+        .info-container {
+            display: flex;
+            justify-content: space-between;
+            width: 320px;
+            margin-bottom: 15px;
+            font-size: 16px;
+            color: #aaa;
+        }
+
+        #grid-container {
+            width: 320px;
+            height: 320px;
+            background-color: #333;
+            border-radius: 8px;
+            padding: 10px;
+            box-sizing: border-box;
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            grid-template-rows: repeat(4, 1fr);
+            gap: 8px;
+            position: relative;
+        }
+
+        .tile {
+            background-color: #8f7a66;
+            color: #f9f6f2;
+            font-size: 24px;
+            font-weight: bold;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: background 0.1s;
+        }
+
+        .tile:hover {
+            background-color: #9f8a76;
+        }
+
+        .tile.empty {
+            background-color: transparent;
+            cursor: default;
+        }
+
+        .btn {
+            margin-top: 25px;
+            background: #444;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 15px;
+            font-weight: bold;
+        }
+        .btn:hover { background: #555; }
+
+        #win-overlay {
+            display: none;
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0, 0, 0, 0.85);
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            border-radius: 8px;
+            z-index: 10;
+        }
+
+        #win-overlay h2 {
+            color: #34c759;
+            font-size: 28px;
+            margin: 0 0 10px 0;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Пятнашка</h1>
+    
+    <div class="info-container">
+        <div>Хады: <span id="moves">0</span></div>
+        <div>Час: <span id="time">00:00</span></div>
+    </div>
+
+    <div id="grid-container">
+        <div id="win-overlay">
+            <h2>Перамога!</h2>
+            <p id="win-details"></p>
+            <button class="btn" onclick="resetGame()">Яшчэ раз</button>
+        </div>
+    </div>
+
+    <button class="btn" onclick="resetGame()">Перамяшаць</button>
+
+    <script>
+        const SIZE = 4;
+        let board = [];
+        let moves = 0;
+        let timer = null;
+        let seconds = 0;
+        let gameActive = false;
+
+        const container = document.getElementById('grid-container');
+        const movesElement = document.getElementById('moves');
+        const timeElement = document.getElementById('time');
+        const winOverlay = document.getElementById('win-overlay');
+        const winDetails = document.getElementById('win-details');
+
+        // Ініцыялізацыя клетак у DOM
+        function createGrid() {
+            for (let i = 0; i < SIZE * SIZE; i++) {
+                const tile = document.createElement('div');
+                tile.classList.add('tile');
+                tile.addEventListener('click', () => tileClick(i));
+                container.appendChild(tile);
+            }
+        }
+
+        // Праверка, ці з'яўляецца расклад вырашальным
+        function isSolvable(arr) {
+            let inversions = 0;
+            let emptyRow = 0;
+            
+            for (let i = 0; i < arr.length; i++) {
+                if (arr[i] === 0) {
+                    emptyRow = Math.floor(i / SIZE) + 1;
+                    continue;
+                }
+                for (let j = i + 1; j < arr.length; j++) {
+                    if (arr[j] !== 0 && arr[i] > arr[j]) {
+                        inversions++;
+                    }
+                }
+            }
+            // Для поля 4х4 правіла такое: парнасць інверсій + нумар радка пустой клеткі знізу павінна быць няпарнай
+            let rowFromBottom = SIZE - emptyRow + 1;
+            return (inversions + rowFromBottom) % 2 === 0;
+        }
+
+        function resetGame() {
+            moves = 0;
+            seconds = 0;
+            movesElement.innerText = moves;
+            timeElement.innerText = "00:00";
+            winOverlay.style.display = 'none';
+            clearInterval(timer);
+            
+            // Генерацыя вырашальнага раскладу
+            do {
+                board = Array.from({length: SIZE * SIZE - 1}, (_, i) => i + 1);
+                board.push(0); // 0 — гэта пустая клетка
+                // Перамешваем
+                for (let i = board.length - 2; i > 0; i--) {
+                    const j = Math.floor(Math.random() * (i + 1));
+                    [board[i], board[j]] = [board[j], board[i]];
+                }
+                // Выпадкова закінем пустую клетку ў любое месца
+                const emptyIdx = Math.floor(Math.random() * (SIZE * SIZE));
+                const zeroIdx = board.indexOf(0);
+                [board[zeroIdx], board[emptyIdx]] = [board[emptyIdx], board[zeroIdx]];
+
+            } while (!isSolvable(board) || isCorrect()); // Паўтараць, пакуль не будзе вырашальным і пакуль не сабралася само
+
+            gameActive = true;
+            updateDOM();
+            startTimer();
+        }
+
+        function startTimer() {
+            timer = setInterval(() => {
+                seconds++;
+                const mins = String(Math.floor(seconds / 60)).padStart(2, '0');
+                const secs = String(seconds % 60).padStart(2, '0');
+                timeElement.innerText = `${mins}:${secs}`;
+            }, 1000);
+        }
+
+        function updateDOM() {
+            const tiles = container.querySelectorAll('.tile');
+            board.forEach((val, idx) => {
+                const tile = tiles[idx];
+                tile.className = 'tile';
+                if (val === 0) {
+                    tile.classList.add('empty');
+                    tile.innerText = '';
+                } else {
+                    tile.innerText = val;
+                }
+            });
+        }
+
+        function tileClick(idx) {
+            if (!gameActive) return;
+
+            const emptyIdx = board.indexOf(0);
+            
+            const r = Math.floor(idx / SIZE);
+            const c = idx % SIZE;
+            const er = Math.floor(emptyIdx / SIZE);
+            const ec = emptyIdx % SIZE;
+
+            // Клетка можа рухацца толькі калі яна суседняя з пустой
+            const isNeighbor = (Math.abs(r - er) + Math.abs(c - ec)) === 1;
+
+            if (isNeighbor) {
+                // Мяняем месцамі
+                board[emptyIdx] = board[idx];
+                board[idx] = 0;
+                moves++;
+                movesElement.innerText = moves;
+                updateDOM();
+
+                if (isCorrect()) {
+                    endGame();
+                }
+            }
+        }
+
+        // Правяраем, ці стаяць лічбы па парадку
+        function isCorrect() {
+            for (let i = 0; i < board.length - 1; i++) {
+                if (board[i] !== i + 1) return false;
+            }
+            return board[board.length - 1] === 0;
+        }
+
+        function endGame() {
+            gameActive = false;
+            clearInterval(timer);
+            winDetails.innerText = `Зроблена хадоў: ${moves} за час ${timeElement.innerText}`;
+            winOverlay.style.display = 'flex';
+        }
+
+        // Запуск гульні пры загрузцы
+        createGrid();
+        resetGame();
+    </script>
+</body>
+</html>

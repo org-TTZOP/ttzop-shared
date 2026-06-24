@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="be" data-theme="steel">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="">
+  <title></title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@400;600;700&family=Manrope:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+  <link rel="stylesheet" href="assets/css/themes.css">
+  <link rel="stylesheet" href="assets/css/style.css">
+</head>
+<body>
+
+<!-- ========== NAVBAR ========== -->
+<nav class="navbar" id="navbar">
+  <div class="container navbar-inner">
+    <a class="navbar-logo" href="#hero" id="site-logo">Назва</a>
+    <ul class="navbar-menu" id="navbar-menu">
+      <li><a href="#services"  data-i18n="nav_services">Паслугі</a></li>
+      <li><a href="#about"     data-i18n="nav_about">Пра нас</a></li>
+      <li><a href="#files"   data-i18n="nav_files">Галерэя</a></li>
+      <li><a href="#contact"   data-i18n="nav_contact">Кантакты</a></li>
+    </ul>
+    <div class="navbar-actions">
+      <div id="site-lang-picker"></div>
+      <button class="navbar-burger" id="burger" aria-label="Меню">&#9776;</button>
+    </div>
+  </div>
+</nav>
+
+<!-- ========== 1. HERO ========== -->
+<section id="hero" class="hero s-dark">
+  <div class="container hero-inner">
+    <div class="hero-meta">
+      <span id="hero-phone"></span>
+      <span id="hero-hours"></span>
+    </div>
+    <h1 class="hero-title" id="hero-title"></h1>
+    <p class="hero-subtitle" id="hero-subtitle"></p>
+    <div class="hero-btns">
+      <a href="#contact" class="btn btn-primary" id="hero-btn-primary"></a>
+      <a href="#services" class="btn btn-outline" id="hero-btn-secondary"></a>
+    </div>
+  </div>
+</section>
+
+<!-- ========== 2. ПАСЛУГІ ========== -->
+<section id="services" class="s-light section">
+  <div class="container">
+    <h2 class="section-title" data-i18n="services_title">Нашы паслугі</h2>
+    <p class="section-subtitle text-muted" data-i18n="services_subtitle">Выконваем любы рамонт</p>
+    <div class="grid grid-3" id="services-grid"></div>
+  </div>
+</section>
+
+<!-- ========== 3. ПЕРАВАГІ ========== -->
+<section id="advantages" class="s-alt section">
+  <div class="container">
+    <h2 class="section-title" data-i18n="advantages_title">Чаму выбіраюць нас</h2>
+    <div class="grid grid-3" id="advantages-grid"></div>
+  </div>
+</section>
+
+<!-- ========== 4. ПРА НАС ========== -->
+<section id="about" class="s-light section">
+  <div class="container about-inner">
+    <div class="about-content">
+      <h2 class="section-title" data-i18n="about_title">Пра нас</h2>
+      <p class="about-text" id="about-text"></p>
+    </div>
+    <div class="about-image">
+      <img src="assets/images/about.jpg" alt="" loading="lazy">
+    </div>
+  </div>
+</section>
+
+<!-- ========== 5. ЯК МЫ ПРАЦУЕМ ========== -->
+<section id="howWeWork" class="s-alt section">
+  <div class="container">
+    <h2 class="section-title" data-i18n="how_title">Як мы працуем</h2>
+    <div class="how-steps" id="how-grid"></div>
+  </div>
+</section>
+
+<!-- ========== 6. АКЦЫІ ========== -->
+<section id="promotions" class="s-light section">
+  <div class="container">
+    <h2 class="section-title" data-i18n="promo_title">Акцыі і спецпрапановы</h2>
+    <div class="grid grid-2" id="promo-grid"></div>
+  </div>
+</section>
+
+<!-- ========== 7. ГАЛЕРЭЯ ========== -->
+<section id="files" class="s-alt section">
+  <div class="container">
+    <h2 class="section-title" data-i18n="files_title">Галерэя работ</h2>
+    <div class="tile-grid" id="files-grid"></div>
+  </div>
+</section>
+
+<!-- ========== 8. ВОДГУКІ ========== -->
+<section id="testimonials" class="s-light section">
+  <div class="container">
+    <h2 class="section-title" data-i18n="testimonials_title">Водгукі кліентаў</h2>
+    <div class="grid grid-3" id="testimonials-grid"></div>
+  </div>
+</section>
+
+<!-- ========== 9. КОШТЫ ========== -->
+<section id="prices" class="s-alt section">
+  <div class="container">
+    <h2 class="section-title" data-i18n="prices_title">Кошты паслуг</h2>
+    <table class="prices-table">
+      <thead>
+        <tr>
+          <th data-i18n="prices_col_service">Паслуга</th>
+          <th data-i18n="prices_col_price">Кошт</th>
+        </tr>
+      </thead>
+      <tbody id="prices-body"></tbody>
+    </table>
+  </div>
+</section>
+
+<!-- ========== 10. МАРКІ ========== -->
+<section id="brands" class="s-light section">
+  <div class="container">
+    <h2 class="section-title" data-i18n="brands_title">Маркі з якімі працуем</h2>
+    <div class="brands-grid" id="brands-grid"></div>
+  </div>
+</section>
+
+<!-- ========== 11. СЕРТЫФІКАТЫ ========== -->
+<section id="certificates" class="s-alt section">
+  <div class="container">
+    <h2 class="section-title" data-i18n="certs_title">Сертыфікаты і ліцэнзіі</h2>
+    <div class="tile-grid" id="certs-grid"></div>
+  </div>
+</section>
+
+<!-- ========== 12. ПАРТНЁРЫ ========== -->
+<section id="clients" class="s-light section">
+  <div class="container">
+    <h2 class="section-title" data-i18n="clients_title">Нашы партнёры</h2>
+    <div class="brands-grid" id="clients-grid"></div>
+  </div>
+</section>
+
+<!-- ========== 13. БЛОГhttps ========== -->
+<section id="blog" class="s-alt section">
+  <div class="container">
+    <h2 class="section-title" data-i18n="blog_title">Карысныя артыкулы</h2>
+    <div class="grid grid-3" id="blog-grid"></div>
+  </div>
+</section>
+
+<!-- ========== 14. FAQ ========== -->
+<section id="faq" class="s-light section">
+  <div class="container">
+    <h2 class="section-title" data-i18n="faq_title">Частыя пытанні</h2>
+    <div class="faq-list" id="faq-list"></div>
+  </div>
+</section>
+
+<!-- ========== 15. КАНТАКТЫ + ФОРМА ========== -->
+<section id="contact" class="s-alt section">
+  <div class="container">
+    <h2 class="section-title" data-i18n="contact_title">Кантакты</h2>
+    <div class="contact-layout">
+
+      <!-- Інфармацыя -->
+      <div class="contact-info">
+        <div class="contact-item">
+          <span class="contact-icon">📍</span>
+          <span id="contact-address"></span>
+        </div>
+        <div class="contact-item">
+          <span class="contact-icon">📞</span>
+          <span id="contact-phone"></span>
+        </div>
+        <div class="contact-item">
+          <span class="contact-icon">🕐</span>
+          <span id="contact-hours"></span>
+        </div>
+        <!-- Email маршрутызацыя -->
+        <div id="contact-emails"></div>
+      </div>
+
+      <!-- Форма запісу -->
+      <div class="contact-form-wrap">
+        <h3 data-i18n="form_title">Запісацца на сэрвіс</h3>
+        <form id="booking-form" action="https://api.web3forms.com/submit" method="POST">
+          <input type="hidden" name="access_key" id="w3f-key">
+          <input type="hidden" name="subject" value="Новая заяўка з сайта">
+          <input type="text"     name="name"    required
+                 data-i18n-placeholder="form_name"    placeholder="Ваша імя">
+          <input type="tel"      name="phone"   required
+                 data-i18n-placeholder="form_phone"   placeholder="Тэлефон">
+          <input type="text"     name="car"
+                 data-i18n-placeholder="form_car"     placeholder="Марка і мадэль аўто">
+          <textarea name="message" rows="4"
+                 data-i18n-placeholder="form_message" placeholder="Апішыце праблему"></textarea>
+          <button type="submit" class="btn btn-primary" data-i18n="form_submit">Адправіць заяўку</button>
+        </form>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- ========== 16. КАРТА ========== -->
+<section id="map" class="s-light map-section">
+  <div id="map-container"></div>
+  <div class="container" style="text-align:center; padding-top:16px;">
+    <a id="google-maps-link" href="#" target="_blank" class="btn btn-outline">
+      🗺️ <span data-i18n="maps_btn">Адкрыць у Google Maps</span>
+    </a>
+  </div>
+</section>
+
+<!-- ========== FOOTER ========== -->
+<footer class="footer s-dark">
+  <div class="container footer-inner">
+
+    <div class="footer-col">
+      <div class="footer-logo" id="footer-logo"></div>
+      <p class="footer-desc text-muted" data-i18n="footer_desc">Прафесійны аўтасэрвіс</p>
+      <p class="footer-phone" id="footer-phone"></p>
+      <p class="footer-hours text-muted" id="footer-hours"></p>
+    </div>
+
+    <div class="footer-col">
+      <h4 data-i18n="footer_nav">Навігацыя</h4>
+      <ul>
+        <li><a href="#services" data-i18n="nav_services">Паслугі</a></li>
+        <li><a href="#about"    data-i18n="nav_about">Пра нас</a></li>
+        <li><a href="#files"  data-i18n="nav_files">Галерэя</a></li>
+        <li><a href="#contact"  data-i18n="nav_contact">Кантакты</a></li>
+      </ul>
+    </div>
+
+    <div class="footer-col">
+      <h4 data-i18n="footer_contacts">Кантакты</h4>
+      <div id="footer-emails"></div>
+    </div>
+
+    <div class="footer-col">
+      <h4 data-i18n="footer_legal">Дакументы</h4>
+      <ul>
+        <li><a href="/privacy" data-i18n="footer_privacy">Палітыка прыватнасці</a></li>
+        <li><a href="/portal.html" data-i18n="footer_portal">Мае заказы</a></li>
+        <li><a href="/admin" target="_blank" rel="noopener" style="opacity:0.4;font-size:1.1rem" title="Admin">⚙</a></li>
+      </ul>
+    </div>
+
+  </div>
+  <div class="footer-bottom">
+    <p id="footer-copy"></p>
+  </div>
+</footer>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="assets/js/main.js"></script>
+</body>
+</html>

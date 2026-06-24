@@ -1,0 +1,157 @@
+name: Deploy Template to Clients
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      targets:
+        description: 'Каго абнаўляць'
+        required: true
+        type: choice
+        options:
+          - only-test
+          - selected
+          - all-clients
+          - all-including-test
+        default: only-test
+      selected_clients:
+        description: 'Канкрэтныя кліенты (праз коску, напр: ttzop-client0001,ttzop-client0002)'
+        required: false
+        type: string
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      # ----------------------------------------
+      # КРОК 1: Спампоўваем ttzop-template
+      # ----------------------------------------
+      - name: Checkout ttzop-template
+        uses: actions/checkout@v4
+        with:
+          path: template
+          fetch-depth: 1
+
+      # ----------------------------------------
+      # КРОК 2: Галоўны крок — разгортванне
+      # ----------------------------------------
+      - name: Deploy to clients
+        env:
+          GH_TOKEN: ${{ secrets.DEPLOY_TOKEN }}
+          EVENT_NAME: ${{ github.event_name }}
+          INPUT_TARGET: ${{ github.event.inputs.targets }}
+          INPUT_SELECTED: ${{ github.event.inputs.selected_clients }}
+        run: |
+          git config --global user.email "deploy@ttzop.com"
+          git config --global user.name "TTZOP Deploy Bot"
+
+          GITHUB_USER="org-TTZOP"
+
+          # ====================================
+          # СПІС КЛІЕНТАЎ — дадавайце тут
+          # ====================================
+          ALL_CLIENTS=(
+            # (пуста — ttzop-test2 выдалены 2026-06-24; дадавайце новых кліентаў тут)
+          )
+
+          # Вызначаем каго абнаўляць
+          if [ "$EVENT_NAME" == "push" ]; then
+            TARGETS=("ttzop-test")
+            echo ">>> Аўтаматычны push — толькі ttzop-test"
+          elif [ "$INPUT_TARGET" == "only-test" ]; then
+            TARGETS=("ttzop-test")
+            echo ">>> Толькі ttzop-test"
+          elif [ "$INPUT_TARGET" == "selected" ]; then
+            IFS=',' read -ra TARGETS <<< "$INPUT_SELECTED"
+            echo ">>> Выбраныя: ${TARGETS[@]}"
+          elif [ "$INPUT_TARGET" == "all-clients" ]; then
+            TARGETS=("${ALL_CLIENTS[@]}")
+            echo ">>> Усе кліенты (без ttzop-test)"
+          elif [ "$INPUT_TARGET" == "all-including-test" ]; then
+            TARGETS=("ttzop-test" "${ALL_CLIENTS[@]}")
+            echo ">>> Усе уключаючы ttzop-test"
+          fi
+
+          # Файлы шаблону якія капіруюцца (content/ НЕ ўваходзіць, акрамя сістэмных!)
+          TEMPLATE_FILES=(
+            "index.html"
+            "portal.html"
+            "assets/css/style.css"
+            "assets/css/themes.css"
+            "assets/js/main.js"
+            "content/settings-template.json"
+            "content/migrations.json"
+            "merge-settings.py"
+            ".assetsignore"
+          )
+
+          ROOT_DIR=$(pwd)
+
+          for CLIENT in "${TARGETS[@]}"; do
+            echo ""
+            echo "=== Абнаўленне: $CLIENT ==="
+
+            FOLDER_NAME="client-$CLIENT"
+
+            if ! git clone --depth=1 "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_USER}/${CLIENT}.git" "$FOLDER_NAME"; then
+              echo "  ❌ Памылка кланавання $CLIENT. Праверце DEPLOY_TOKEN ці назву рэпазіторыя."
+              continue
+            fi
+
+            # Капіруем файлы шаблону
+            for FILE in "${TEMPLATE_FILES[@]}"; do
+              if [ -f "template/$FILE" ]; then
+                mkdir -p "$FOLDER_NAME/$(dirname $FILE)"
+                cp "template/$FILE" "$FOLDER_NAME/$FILE"
+                echo "  ✓ $FILE"
+              else
+                echo "  ⚠️ $FILE не знойдзены, прапускаем"
+              fi
+            done
+
+            # Капіруем адмінку
+            if [ -d "template/admin" ]; then
+              mkdir -p "$FOLDER_NAME/admin"
+              cp -r template/admin/. "$FOLDER_NAME/admin/"
+              echo "  ✓ admin/"
+            fi
+
+            # Капіруем Pages Functions (middleware блакіроўкі прыватных файлаў)
+            if [ -d "template/functions" ]; then
+              mkdir -p "$FOLDER_NAME/functions"
+              cp -r template/functions/. "$FOLDER_NAME/functions/"
+              echo "  ✓ functions/"
+            fi
+
+            # Merge settings.json з міграцыямі
+            if [ -f "template/content/settings-template.json" ] && [ -f "$FOLDER_NAME/content/settings.json" ]; then
+              echo "  → Merge settings.json..."
+              python3 template/merge-settings.py \
+                "template/content/settings-template.json" \
+                "$FOLDER_NAME/content/settings.json"
+            else
+              if [ ! -f "template/content/settings-template.json" ]; then
+                echo "  ⚠️ settings-template.json не знойдзены — merge прапушчаны"
+              fi
+            fi
+
+            # Commit і push
+            cd "$FOLDER_NAME"
+            git add .
+
+            if git diff --staged --quiet; then
+              echo "  — Змен няма"
+            else
+              git commit -m "template update: $(date '+%Y-%m-%d %H:%M')"
+              if git push; then
+                echo "  ✓ Гатова!"
+              else
+                echo "  ❌ Памылка git push для $CLIENT"
+              fi
+            fi
+
+            cd "$ROOT_DIR"
+            rm -rf "$FOLDER_NAME"
+          done

@@ -1,0 +1,330 @@
+/* ================================================
+   TTZOP — 4 тэмы × светлы/цёмны варыянт секцыі
+   Файл: assets/css/themes.css
+   ================================================ */
+
+/* ------------------------------------------------
+   АГУЛЬНЫЯ ЗМЕННЫЯ (аднолькавыя для ўсіх тэм)
+   ------------------------------------------------ */
+:root {
+  --font-main:    'Inter', 'Segoe UI', Arial, sans-serif;
+  --font-heading: 'Inter', 'Segoe UI', Arial, sans-serif;
+
+  --radius-sm:  6px;
+  --radius-md:  10px;
+  --radius-lg:  16px;
+
+  --transition: 0.2s ease;
+
+  --section-padding: 64px 20px;
+}
+
+/* ================================================
+   ТЭМА 1 — СТАЛЬ (сіне-цёмная, акцэнт сіні)
+   ================================================ */
+[data-theme="steel"] {
+  --color-primary:     #2563eb;
+  --color-primary-hover: #1d4ed8;
+  --color-accent:      #60a5fa;
+
+  /* Светлы варыянт секцыі */
+  --light-bg:          #f1f4f9;
+  --light-bg-card:     #ffffff;
+  --light-text:        #1a2744;
+  --light-text-muted:  #4b6080;
+  --light-border:      #dde3ef;
+
+  /* Цёмны варыянт секцыі */
+  --dark-bg:           #1a2744;
+  --dark-bg-card:      #243258;
+  --dark-text:         #e8eef8;
+  --dark-text-muted:   #9fb3d4;
+  --dark-border:       #2e4070;
+
+  /* Навігацыя */
+  --nav-bg:            #1a2744;
+  --nav-text:          #e8eef8;
+  --nav-text-hover:    #60a5fa;
+
+  /* Кнопкі */
+  --btn-bg:            #2563eb;
+  --btn-text:          #ffffff;
+  --btn-bg-hover:      #1d4ed8;
+
+  --btn-outline-border: #2563eb;
+  --btn-outline-text:   #2563eb;
+  --btn-outline-hover-bg: #2563eb;
+  --btn-outline-hover-text: #ffffff;
+
+  /* Footer */
+  --footer-bg:         #111827;
+  --footer-text:       #9fb3d4;
+  --footer-text-hover: #60a5fa;
+}
+
+/* ================================================
+   ТЭМА 2 — КАРБОН (чорная, акцэнт чырвона-аранжавы)
+   ================================================ */
+[data-theme="carbon"] {
+  --color-primary:     #e53e00;
+  --color-primary-hover: #c73600;
+  --color-accent:      #ff6b35;
+
+  --light-bg:          #1c1c1c;
+  --light-bg-card:     #2a2a2a;
+  --light-text:        #f0f0f0;
+  --light-text-muted:  #a0a0a0;
+  --light-border:      #3a3a3a;
+
+  --dark-bg:           #111111;
+  --dark-bg-card:      #1c1c1c;
+  --dark-text:         #ffffff;
+  --dark-text-muted:   #888888;
+  --dark-border:       #2a2a2a;
+
+  --nav-bg:            #000000;
+  --nav-text:          #f0f0f0;
+  --nav-text-hover:    #e53e00;
+
+  --btn-bg:            #e53e00;
+  --btn-text:          #ffffff;
+  --btn-bg-hover:      #c73600;
+
+  --btn-outline-border: #e53e00;
+  --btn-outline-text:   #e53e00;
+  --btn-outline-hover-bg: #e53e00;
+  --btn-outline-hover-text: #ffffff;
+
+  --footer-bg:         #000000;
+  --footer-text:       #888888;
+  --footer-text-hover: #e53e00;
+}
+
+/* ================================================
+   ТЭМА 3 — СВЕТЛАЯ (белая, акцэнт цёмна-сіні)
+   ================================================ */
+[data-theme="light"] {
+  --color-primary:     #1a1a2e;
+  --color-primary-hover: #16213e;
+  --color-accent:      #4a90d9;
+
+  --light-bg:          #ffffff;
+  --light-bg-card:     #f8fafc;
+  --light-text:        #1a1a2e;
+  --light-text-muted:  #64748b;
+  --light-border:      #e2e8f0;
+
+  --dark-bg:           #1a1a2e;
+  --dark-bg-card:      #243058;
+  --dark-text:         #f8fafc;
+  --dark-text-muted:   #94a3b8;
+  --dark-border:       #2e3f6e;
+
+  --nav-bg:            #ffffff;
+  --nav-text:          #1a1a2e;
+  --nav-text-hover:    #4a90d9;
+
+  --btn-bg:            #1a1a2e;
+  --btn-text:          #ffffff;
+  --btn-bg-hover:      #16213e;
+
+  --btn-outline-border: #1a1a2e;
+  --btn-outline-text:   #1a1a2e;
+  --btn-outline-hover-bg: #1a1a2e;
+  --btn-outline-hover-text: #ffffff;
+
+  --footer-bg:         #0f172a;
+  --footer-text:       #94a3b8;
+  --footer-text-hover: #4a90d9;
+}
+
+/* ================================================
+   ТЭМА 4 — ЗЯЛЁНАЯ (зялёна-цёмная, акцэнт зялёны)
+   ================================================ */
+[data-theme="green"] {
+  --color-primary:     #16a34a;
+  --color-primary-hover: #15803d;
+  --color-accent:      #4ade80;
+
+  --light-bg:          #f0fdf4;
+  --light-bg-card:     #ffffff;
+  --light-text:        #14532d;
+  --light-text-muted:  #4a7c59;
+  --light-border:      #bbf7d0;
+
+  --dark-bg:           #14532d;
+  --dark-bg-card:      #166534;
+  --dark-text:         #f0fdf4;
+  --dark-text-muted:   #86efac;
+  --dark-border:       #15803d;
+
+  --nav-bg:            #14532d;
+  --nav-text:          #f0fdf4;
+  --nav-text-hover:    #4ade80;
+
+  --btn-bg:            #16a34a;
+  --btn-text:          #ffffff;
+  --btn-bg-hover:      #15803d;
+
+  --btn-outline-border: #16a34a;
+  --btn-outline-text:   #16a34a;
+  --btn-outline-hover-bg: #16a34a;
+  --btn-outline-hover-text: #ffffff;
+
+  --footer-bg:         #052e16;
+  --footer-text:       #86efac;
+  --footer-text-hover: #4ade80;
+}
+
+/* ================================================
+   СІСТЭМА СВЕТЛЫ/ЦЁМНЫ ФАРБАВАННЯ СЕКЦЫЙ
+   Кожная секцыя атрымлівае клас .s-light або .s-dark
+   ================================================ */
+
+.s-light {
+  background-color: var(--light-bg);
+  color: var(--light-text);
+}
+
+.s-light .card {
+  background-color: var(--light-bg-card);
+  border: 1px solid var(--light-border);
+  border-radius: var(--radius-md);
+}
+
+.s-light .text-muted {
+  color: var(--light-text-muted);
+}
+
+.s-light .section-border {
+  border-color: var(--light-border);
+}
+
+.s-dark {
+  background-color: var(--dark-bg);
+  color: var(--dark-text);
+}
+
+.s-dark .card {
+  background-color: var(--dark-bg-card);
+  border: 1px solid var(--dark-border);
+  border-radius: var(--radius-md);
+}
+
+.s-dark .text-muted {
+  color: var(--dark-text-muted);
+}
+
+.s-dark .section-border {
+  border-color: var(--dark-border);
+}
+
+/* ================================================
+   КНОПКІ — аднолькавая структура для ўсіх тэм
+   ================================================ */
+
+.btn {
+  display: inline-block;
+  padding: 12px 28px;
+  border-radius: var(--radius-sm);
+  font-size: 15px;
+  font-weight: 500;
+  cursor: pointer;
+  text-decoration: none;
+  transition: background-color var(--transition), color var(--transition);
+  border: 2px solid transparent;
+}
+
+.btn-primary {
+  background-color: var(--btn-bg);
+  color: var(--btn-text);
+  border-color: var(--btn-bg);
+}
+
+.btn-primary:hover {
+  background-color: var(--btn-bg-hover);
+  border-color: var(--btn-bg-hover);
+}
+
+.btn-outline {
+  background-color: transparent;
+  color: var(--btn-outline-text);
+  border-color: var(--btn-outline-border);
+}
+
+.btn-outline:hover {
+  background-color: var(--btn-outline-hover-bg);
+  color: var(--btn-outline-hover-text);
+}
+
+/* ================================================
+   НАВІГАЦЫЯ
+   ================================================ */
+
+.navbar {
+  background-color: var(--nav-bg);
+  padding: 0 20px;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+.navbar a {
+  color: var(--nav-text);
+  text-decoration: none;
+  transition: color var(--transition);
+}
+
+.navbar a:hover {
+  color: var(--nav-text-hover);
+}
+
+/* ================================================
+   FOOTER
+   ================================================ */
+
+.footer {
+  background-color: var(--footer-bg);
+  color: var(--footer-text);
+  padding: var(--section-padding);
+}
+
+.footer a {
+  color: var(--footer-text);
+  text-decoration: none;
+  transition: color var(--transition);
+}
+
+.footer a:hover {
+  color: var(--footer-text-hover);
+}
+
+/* ================================================
+   АГУЛЬНЫЯ СТЫЛІ СЕКЦЫЙ
+   ================================================ */
+
+section {
+  padding: var(--section-padding);
+}
+
+.section-title {
+  font-size: clamp(24px, 4vw, 36px);
+  font-weight: 700;
+  margin-bottom: 12px;
+  line-height: 1.2;
+}
+
+.section-subtitle {
+  font-size: clamp(15px, 2vw, 18px);
+  margin-bottom: 40px;
+  opacity: 0.8;
+}
+
+.container {
+  max-width: 1100px;
+  margin: 0 auto;
+}
+
+.grid-2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 24px; }
+.grid-3 { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 24px; }
+.grid-4 { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 20px; }

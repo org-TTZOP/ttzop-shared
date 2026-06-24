@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html lang="be">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Алмазікі (Тры ў рад)</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #121213;
+            color: white;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+            user-select: none;
+            overflow: hidden;
+        }
+
+        h1 { margin: 0 0 5px 0; font-size: 28px; color: #ffeb3b; text-shadow: 0 0 10px rgba(255,235,59,0.3); }
+
+        .info-panel {
+            display: flex;
+            justify-content: space-between;
+            width: 340px;
+            margin-bottom: 15px;
+            font-size: 18px;
+            font-weight: bold;
+            background: #222;
+            padding: 8px 15px;
+            border-radius: 6px;
+            box-sizing: border-box;
+            border: 1px solid #333;
+        }
+
+        #game-board {
+            width: 340px;
+            height: 340px;
+            background-color: #1a1a1a;
+            border: 4px solid #333;
+            border-radius: 8px;
+            display: grid;
+            grid-template-columns: repeat(8, 1fr);
+            grid-template-rows: repeat(8, 1fr);
+            gap: 2px;
+            padding: 4px;
+            box-sizing: border-box;
+            position: relative;
+        }
+
+        .cell {
+            background: #252526;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            position: relative;
+            transition: background 0.2s;
+        }
+
+        .cell:hover { background: #333; }
+        .cell.selected { background: #555; box-shadow: inset 0 0 8px #fff; }
+
+        /* Стылізацыя алмазаў праз CSS */
+        .gem {
+            width: 80%;
+            height: 80%;
+            transition: all 0.2s ease;
+        }
+
+        /* Чырвоны рубін (Ромб) */
+        .gem-1 {
+            background: #ff3b30;
+            transform: rotate(45deg) scale(0.8);
+            box-shadow: 0 0 8px #ff3b30;
+        }
+        /* Сіні сапфір (Квадрат) */
+        .gem-2 {
+            background: #007aff;
+            border-radius: 4px;
+            box-shadow: 0 0 8px #007aff;
+        }
+        /* Зялёны ізумруд (Шасцікутнік/Круг) */
+        .gem-3 {
+            background: #34c759;
+            border-radius: 50%;
+            box-shadow: 0 0 8px #34c759;
+        }
+        /* Жоўты тапаз (Трыкутнік) */
+        .gem-4 {
+            width: 0; height: 0;
+            border-left: 15px solid transparent;
+            border-right: 15px solid transparent;
+            border-bottom: 26px solid #ffcc00;
+            filter: drop-shadow(0 0 5px #ffcc00);
+        }
+        /* Фіялетавы аметыст */
+        .gem-5 {
+            background: #af52de;
+            border-radius: 20% 80% 20% 80%;
+            box-shadow: 0 0 8px #af52de;
+        }
+
+        .btn {
+            margin-top: 20px;
+            background: #8f7a66;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 15px;
+            font-weight: bold;
+        }
+        .btn:hover { background: #9f8a76; }
+
+        #game-over-overlay {
+            display: none;
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.9);
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            border-radius: 4px;
+            z-index: 10;
+        }
+        #game-over-overlay h2 { color: #ff3b30; margin-bottom: 10px; }
+    </style>
+</head>
+<body>
+
+    <h1>Алмазікі</h1>
+    
+    <div class="info-panel">
+        <div>Балы: <span id="score">0</span></div>
+        <div>Час: <span id="timer">60</span>с</div>
+    </div>
+
+    <div id="game-board">
+        <div id="game-over-overlay">
+            <h2>Час выйшаў!</h2>
+            <p id="final-score">Вы набралі: 0 балаў</p>
+            <button class="btn" onclick="startGame()">Згуляць зноў</button>
+        </div>
+    </div>
+
+    <button class="btn" onclick="startGame()">Новая гульня</button>
+    
+    <script>
+        const BOARD_SIZE = 8;
+        const GEM_TYPES = 5; 
+        let board = [];
+        let score = 0;
+        let timeLeft = 60;
+        let gameTimer = null;
+        let selectedCell = null;
+        let isRefilling = false;
+
+        const boardElement = document.getElementById('game-board');
+        const scoreElement = document.getElementById('score');
+        const timerElement = document.getElementById('timer');
+        const overlay = document.getElementById('game-over-overlay');
+        const finalScoreElement = document.getElementById('final-score');
+
+        // Стварэнне пустой сеткі ў DOM (адзін раз)
+        function createDOMBoard() {
+            for (let r = 0; r < BOARD_SIZE; r++) {
+                for (let c = 0; c < BOARD_SIZE; c++) {
+                    const cell = document.createElement('div');
+                    cell.classList.add('cell');
+                    cell.dataset.row = r;
+                    cell.dataset.col = c;
+                    cell.addEventListener('click', onCellClick);
+                    boardElement.appendChild(cell);
+                }
+            }
+        }
+
+        function startGame() {
+            score = 0;
+            timeLeft = 60;
+            selectedCell = null;
+            isRefilling = false;
+            scoreElement.innerText = score;
+            timerElement.innerText = timeLeft;
+            overlay.style.display = 'none';
+            
+            clearInterval(gameTimer);
+            initBoardData();
+            
+            gameTimer = setInterval(() => {
+                timeLeft--;
+                timerElement.innerText = timeLeft;
+                if (timeLeft <= 0) {
+                    endGame();
+                }
+            }, 1000);
+        }
+
+        // Запаўненне масіва і сачэнне, каб на старце не было гатовых тройкаў
+        function initBoardData() {
+            board = [];
+            for (let r = 0; r < BOARD_SIZE; r++) {
+                board[r] = [];
+                for (let c = 0; c < BOARD_SIZE; c++) {
+                    let type;
+                    do {
+                        type = Math.floor(Math.random() * GEM_TYPES) + 1;
+                    } while (
+                        (c >= 2 && board[r][c-1] === type && board[r][c-2] === type) ||
+                        (r >= 2 && board[r-1][c] === type && board[r-2][c] === type)
+                    );
+                    board[r][c] = type;
+                }
+            }
+            drawBoard();
+        }
+
+        function drawBoard() {
+            const cells = boardElement.querySelectorAll('.cell');
+            cells.forEach(cell => {
+                const r = parseInt(cell.dataset.row);
+                const c = parseInt(cell.dataset.col);
+                cell.innerHTML = '';
+                cell.classList.remove('selected');
+                
+                if (board[r][c] !== 0) {
+                    const gem = document.createElement('div');
+                    gem.classList.add('gem', `gem-${board[r][c]}`);
+                    cell.appendChild(gem);
+                }
+            });
+        }
+
+        function onCellClick(e) {
+            if (timeLeft <= 0 || isRefilling) return;
+
+            const cell = e.currentTarget;
+            const r = parseInt(cell.dataset.row);
+            const c = parseInt(cell.dataset.col);
+
+            if (!selectedCell) {
+                selectedCell = { r, c, element: cell };
+                cell.classList.add('selected');
+            } else {
+                const prev = selectedCell;
+                const dRow = Math.abs(r - prev.r);
+                const dCol = Math.abs(c - prev.c);
+
+                // Калі клікнулі на суседнюю клетку (па вертыкалі ці гарызанталі)
+                if ((dRow === 1 && dCol === 0) || (dRow === 0 && dCol === 1)) {
+                    swapGems(prev.r, prev.c, r, c);
+                }
+                
+                prev.element.classList.remove('selected');
+                selectedCell = null;
+            }
+        }
+
+        function swapGems(r1, c1, r2, c2) {
+            // Мяняем у масіве
+            let temp = board[r1][c1];
+            board[r1][c1] = board[r2][c2];
+            board[r2][c2] = temp;
+
+            // Правяраем, ці ўтварыліся супадзенні
+            let matches = checkMatches();
+            
+            if (matches.length > 0) {
+                isRefilling = true;
+                handleMatches(matches);
+            } else {
+                // Калі камбінацыі няма — вяртаем назад
+                let temp2 = board[r1][c1];
+                board[r1][c1] = board[r2][c2];
+                board[r2][c2] = temp2;
+                drawBoard();
+            }
+        }
+
+        // Шукаем лініі ад 3 і больш камянёў
+        function checkMatches() {
+            let matches = [];
+            let matchedArray = Array(BOARD_SIZE).fill(null).map(() => Array(BOARD_SIZE).fill(false));
+
+            // Гарызантальныя
+            for (let r = 0; r < BOARD_SIZE; r++) {
+                for (let c = 0; c < BOARD_SIZE - 2; c++) {
+                    let val = board[r][c];
+                    if (val !== 0 && board[r][c+1] === val && board[r][c+2] === val) {
+                        matchedArray[r][c] = true;
+                        matchedArray[r][c+1] = true;
+                        matchedArray[r][c+2] = true;
+                    }
+                }
+            }
+
+            // Вертыкальныя
+            for (let c = 0; c < BOARD_SIZE; c++) {
+                for (let r = 0; r < BOARD_SIZE - 2; r++) {
+                    let val = board[r][c];
+                    if (val !== 0 && board[r+1][c] === val && board[r+2][c] === val) {
+                        matchedArray[r][c] = true;
+                        matchedArray[r+1][c] = true;
+                        matchedArray[r+2][c] = true;
+                    }
+                }
+            }
+
+            // Збіраем каардынаты для выдалення
+            for (let r = 0; r < BOARD_SIZE; r++) {
+                for (let c = 0; c < BOARD_SIZE; c++) {
+                    if (matchedArray[r][c]) matches.push({r, c});
+                }
+            }
+            return matches;
+        }
+
+        function handleMatches(matches) {
+            // Выдаляем алмазы (ставім 0) і налічваем балы
+            matches.forEach(m => {
+                board[m.r][m.c] = 0;
+            });
+            score += matches.length * 10;
+            scoreElement.innerText = score;
+            drawBoard();
+
+            // Праз імгненне робім падзенне камянёў зверху
+            setTimeout(() => {
+                dropGems();
+                fillEmptySpaces();
+                drawBoard();
+
+                // Правяраем, ці не ўтварыліся новыя тройкі пасля падзення (каскад)
+                let newMatches = checkMatches();
+                if (newMatches.length > 0) {
+                    handleMatches(newMatches);
+                } else {
+                    isRefilling = false;
+                }
+            }, 250);
+        }
+
+        // Логіка зруху камянёў уніз на пустыя месцы
+        function dropGems() {
+            for (let c = 0; c < BOARD_SIZE; c++) {
+                for (let r = BOARD_SIZE - 1; r > 0; r--) {
+                    if (board[r][c] === 0) {
+                        // Шукаем жывы камень вышэй
+                        let lookupRow = r - 1;
+                        while (lookupRow >= 0 && board[lookupRow][c] === 0) {
+                            lookupRow--;
+                        }
+                        if (lookupRow >= 0) {
+                            board[r][c] = board[lookupRow][c];
+                            board[lookupRow][c] = 0;
+                        }
+                    }
+                }
+            }
+        }
+
+        // Запаўненне самых верхніх пустых клетак новымі выпадковымі алмазамі
+        function fillEmptySpaces() {
+            for (let r = 0; r < BOARD_SIZE; r++) {
+                for (let c = 0; c < BOARD_SIZE; c++) {
+                    if (board[r][c] === 0) {
+                        board[r][c] = Math.floor(Math.random() * GEM_TYPES) + 1;
+                    }
+                }
+            }
+        }
+
+        function endGame() {
+            clearInterval(gameTimer);
+            finalScoreElement.innerText = `Вы набралі: ${score} балаў!`;
+            overlay.style.display = 'flex';
+        }
+
+        // Першы старт
+        createDOMBoard();
+        startGame();
+    </script>
+</body>
+</html>

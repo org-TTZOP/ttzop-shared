@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="be">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Злучы пункты ў крузе</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #1a1a1a;
+            color: white;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+            user-select: none;
+            overflow: hidden;
+        }
+
+        h1 { margin-bottom: 5px; font-size: 26px; }
+        p { color: #aaa; font-size: 14px; margin-bottom: 20px; text-align: center; max-width: 400px;}
+
+        #canvas-container {
+            position: relative;
+            width: 400px;
+            height: 400px;
+        }
+
+        canvas {
+            background-color: #222;
+            border-radius: 50%;
+            border: 5px solid #444;
+            box-shadow: 0 0 20px rgba(0,0,0,0.5);
+            cursor: pointer;
+        }
+
+        .btn {
+            margin-top: 25px;
+            background: #8f7a66;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 15px;
+            font-weight: bold;
+        }
+        .btn:hover { background: #9f8a76; }
+        
+        #win-message {
+            display: none;
+            position: absolute;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 32px;
+            font-weight: bold;
+            color: #34c759;
+            text-shadow: 0 0 10px rgba(0,0,0,0.8);
+            pointer-events: none;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Злучы пункты</h1>
+    <p>Малюйце лініі мышкай або пальцам. Злучыце пары аднолькавага колеру так, каб яны не перасякаліся!</p>
+
+    <div id="canvas-container">
+        <canvas id="gameCanvas" width="400" height="400"></canvas>
+        <div id="win-message">ПЕРАМОГА!</div>
+    </div>
+
+    <button class="btn" onclick="resetGame()">Новая гульня</button>
+
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        const winMessage = document.getElementById('win-message');
+
+        const RADIUS = 15; 
+        let dots = [];
+        let lines = []; 
+        let currentLine = null; 
+        let isDrawing = false;
+
+        const COLORS = [
+            { id: 1, name: '#ff3b30' }, 
+            { id: 2, name: '#007aff' }, 
+            { id: 3, name: '#34c759' }  
+        ];
+
+        function generateDots() {
+            dots = [];
+            lines = [];
+            currentLine = null;
+            winMessage.style.display = 'none';
+
+            const cx = canvas.width / 2;
+            const cy = canvas.height / 2;
+            const maxDist = (canvas.width / 2) - 40; 
+
+            COLORS.forEach(color => {
+                for (let i = 0; i < 2; i++) {
+                    let x, y, valid = false;
+                    
+                    while (!valid) {
+                        const angle = Math.random() * Math.PI * 2;
+                        const dist = Math.random() * maxDist;
+                        x = cx + Math.cos(angle) * dist;
+                        y = cy + Math.sin(angle) * dist;
+
+                        valid = true;
+                        for (let d of dots) {
+                            const dDist = Math.hypot(d.x - x, d.y - y);
+                            if (dDist < RADIUS * 4) { valid = false; break; }
+                        }
+                    }
+
+                    dots.push({
+                        x, y, 
+                        color: color.name, 
+                        colorId: color.id, 
+                        connected: false,
+                        scale: 1, 
+                        pulseDir: 1
+                    });
+                }
+            });
+        }
+
+        function draw() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // 1. Малюем гатовыя лініі
+            lines.forEach(line => {
+                ctx.beginPath();
+                ctx.strokeStyle = line.color;
+                ctx.lineWidth = 6;
+                ctx.lineCap = 'round';
+                ctx.lineJoin = 'round';
+                line.path.forEach((pt, idx) => {
+                    if (idx === 0) ctx.moveTo(pt.x, pt.y);
+                    else ctx.lineTo(pt.x, pt.y);
+                });
+                ctx.stroke();
+            });
+
+            // 2. Малюем лінію ў працэсе
+            if (currentLine && currentLine.path.length > 0) {
+                ctx.beginPath();
+                ctx.strokeStyle = currentLine.color;
+                ctx.lineWidth = 6;
+                ctx.lineCap = 'round';
+                ctx.lineJoin = 'round';
+                currentLine.path.forEach((pt, idx) => {
+                    if (idx === 0) ctx.moveTo(pt.x, pt.y);
+                    else ctx.lineTo(pt.x, pt.y);
+                });
+                ctx.stroke();
+            }
+
+            // 3. Малюем кропкі
+            dots.forEach(dot => {
+                ctx.beginPath();
+                if (dot.connected) {
+                    dot.scale += 0.02 * dot.pulseDir;
+                    if (dot.scale > 1.3 || dot.scale < 0.95) dot.pulseDir *= -1;
+                } else {
+                    dot.scale = 1;
+                }
+
+                ctx.arc(dot.x, dot.y, RADIUS * dot.scale, 0, Math.PI * 2);
+                ctx.fillStyle = dot.color;
+                ctx.shadowColor = dot.color;
+                ctx.shadowBlur = dot.connected ? 15 : 5;
+                ctx.fill();
+                ctx.shadowBlur = 0; 
+            });
+        }
+
+        function checkIntersection(line1, line2) {
+            for (let i = 0; i < line1.length - 1; i++) {
+                for (let j = 0; j < line2.length - 1; j++) {
+                    if (segmentsIntersect(line1[i], line1[i+1], line2[j], line2[j+1])) {
+                        return true;
+                    }
+                }
+            }
+            return false;
+        }
+
+        function segmentsIntersect(p1, p2, p3, p4) {
+            const d = (p4.y - p3.y) * (p2.x - p1.x) - (p4.x - p3.x) * (p2.y - p1.y);
+            if (d === 0) return false;
+            const ua = ((p4.x - p3.x) * (p1.y - p3.y) - (p4.y - p3.y) * (p1.x - p3.x)) / d;
+            const ub = ((p2.x - p1.x) * (p1.y - p3.y) - (p2.y - p1.y) * (p1.x - p3.x)) / d;
+            return (ua >= 0 && ua <= 1 && ub >= 0 && ub <= 1);
+        }
+
+        function getCoords(e) {
+            const rect = canvas.getBoundingClientRect();
+            const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+            const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+            return {
+                x: clientX - rect.left,
+                y: clientY - rect.top
+            };
+        }
+
+        function handleStart(e) {
+            const pos = getCoords(e);
+            const hitDot = dots.find(d => !d.connected && Math.hypot(d.x - pos.x, d.y - pos.y) < RADIUS * 1.8);
+
+            if (hitDot) {
+                isDrawing = true;
+                currentLine = {
+                    color: hitDot.color,
+                    colorId: hitDot.colorId,
+                    path: [{ x: hitDot.x, y: hitDot.y }],
+                    startDot: hitDot
+                };
+            }
+        }
+
+        function handleMove(e) {
+            if (!isDrawing || !currentLine) return;
+            const pos = getCoords(e);
+            
+            currentLine.path.push(pos);
+
+            const hitDot = dots.find(d => d.colorId === currentLine.colorId && d !== currentLine.startDot && Math.hypot(d.x - pos.x, d.y - pos.y) < RADIUS * 1.5);
+
+            if (hitDot) {
+                currentLine.path.push({ x: hitDot.x, y: hitDot.y });
+                
+                let intersects = false;
+                for (let existingLine of lines) {
+                    if (checkIntersection(currentLine.path, existingLine.path)) {
+                        intersects = true;
+                        break;
+                    }
+                }
+
+                if (!intersects) {
+                    currentLine.startDot.connected = true;
+                    hitDot.connected = true;
+                    lines.push({ color: currentLine.color, path: currentLine.path });
+                    
+                    if (dots.every(d => d.connected)) {
+                        winMessage.style.display = 'block';
+                    }
+                }
+                
+                isDrawing = false;
+                currentLine = null;
+            }
+        }
+
+        function handleEnd() {
+            isDrawing = false;
+            currentLine = null;
+        }
+
+        canvas.addEventListener('mousedown', handleStart);
+        canvas.addEventListener('mousemove', handleMove);
+        window.addEventListener('mouseup', handleEnd);
+
+        canvas.addEventListener('touchstart', (e) => { e.preventDefault(); handleStart(e); });
+        canvas.addEventListener('touchmove', (e) => { e.preventDefault(); handleMove(e); });
+        window.addEventListener('touchend', handleEnd);
+
+        function resetGame() {
+            generateDots();
+        }
+
+        // Запуск
+        generateDots();
+        setInterval(draw, 1000 / 60); 
+    </script>
+</body>
+</html>

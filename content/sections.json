@@ -1,0 +1,32 @@
+{
+  "sections_order": [
+    "services",
+    "advantages",
+    "about",
+    "howWeWork",
+    "promotions",
+    "files",
+    "testimonials",
+    "prices",
+    "brands",
+    "certificates",
+    "clients",
+    "blog",
+    "faq",
+    "contacts"
+  ],
+
+  "advantages_enabled": true,
+  "promotions_enabled": false,
+  "files_enabled": true,
+  "testimonials_enabled": true,
+  "howWeWork_enabled": true,
+  "about_enabled": true,
+  "brands_enabled": false,
+  "faq_enabled": true,
+  "certificates_enabled": false,
+  "clients_enabled": false,
+  "prices_enabled": true,
+  "blog_enabled": false
+}
+
