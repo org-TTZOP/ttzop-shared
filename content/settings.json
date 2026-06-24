@@ -135,5 +135,12 @@
       "footer_privacy": "Privacy Policy",
       "maps_btn": "Open in Google Maps"
     }
-  }
+  },
+  "banking": {
+    "accountHolder": "",
+    "bankName": "",
+    "iban": "",
+    "bic": ""
+  },
+  "contactEmail": ""
 }
