@@ -2250,7 +2250,8 @@ async function _loginAvatarFetch(email) {
       document.getElementById('reset-form').style.display = 'block';
       document.getElementById('resend-code-btn').style.display = 'block';
       document.querySelector('#reset-form .login-sub').textContent = t('first_login_subtitle');
-      document.getElementById('reset-info').textContent = t('first_login_info');
+      // Падказка «на які email прышоў код» (маскіравана, толькі код-флоў — воркер аддае emailHint пры firstLogin)
+      document.getElementById('reset-info').textContent = t('first_login_info') + (data.emailHint ? ` ${t('code_sent_to')} ${data.emailHint}` : '');
     }
   } catch(e) {}
 })();
