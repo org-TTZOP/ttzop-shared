@@ -2516,7 +2516,7 @@ async function loadSections() {
     const st = get(); if (st.data?.nodes) return;
     if (st._buildFn) { st._buildFn(); return; } // секцыя-праекцыя (Загаловак): будуецца лакальна з settings, не з API (без хука была вечна пустая)
     if (!st._loadAction) return;
-    try { const r = await fetch(API, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ action: st._loadAction, repo: REPO, password, ...(st._loadParams || {}) }) }); st.data = r.ok ? await r.json() : { nodes: [] }; }
+    try { const r = await fetch(API, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ action: st._loadAction, repo: REPO, password, ...(st._loadParams || {}) }) }); st.data = (r.ok ? await r.json() : null) || { nodes: [] }; } // ФІКС: свежы сайт → read вяртае null → st.data быў null → крах 'st.data.nodes'
     catch { st.data = { nodes: [] }; }
     if (!st.data.nodes) st.data.nodes = [];
     st._normalizeFn?.(st.data);
