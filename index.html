@@ -16,19 +16,18 @@
 <!-- ========== NAVBAR ========== -->
 <nav class="navbar" id="navbar">
   <div class="container navbar-inner">
-    <a class="navbar-logo" href="#hero" id="site-logo">Назва</a>
-    <ul class="navbar-menu" id="navbar-menu">
-      <li><a href="#services"  data-i18n="nav_services">Паслугі</a></li>
-      <li><a href="#about"     data-i18n="nav_about">Пра нас</a></li>
-      <li><a href="#files"   data-i18n="nav_files">Галерэя</a></li>
-      <li><a href="#contact"   data-i18n="nav_contact">Кантакты</a></li>
-    </ul>
+    <button class="navbar-burger" id="burger" aria-label="Меню">&#9776;</button><!-- злева, бачны на ЎСІХ экранах (логіка як у панэлі) -->
+    <a class="navbar-logo" href="#hero"><span id="site-logo-img"></span><span id="site-logo">Назва</span> <span id="site-version" style="font-size:1rem;font-family:var(--font-main);font-weight:700"></span></a><!-- site-logo-img: выява лагатыпа (main.js ← settings.company.logo); site-version: версія білда (admin/version.js), яркая па просьбе карыстальніка -->
+
+    <ul class="navbar-menu" id="navbar-menu"><!-- 🧱 будуецца дынамічна з уключаных секцый (buildSiteNav) --></ul>
     <div class="navbar-actions">
+      <a href="#" id="nav-cart" onclick="openCartModal();return false" style="display:none;text-decoration:none;font-size:1rem;white-space:nowrap;position:relative;cursor:pointer" title="">🛒 <span class="cart-count" style="display:inline-block;min-width:16px;height:16px;padding:0 4px;border-radius:8px;background:#f97316;color:#fff;font-size:0.68rem;line-height:16px;text-align:center;font-weight:700;vertical-align:middle">0</span></a><!-- 🛒 кошык у навбары: колькасць у бэйджы; клік → мадалка кошыка (замяніў ніжні cart-bar) -->
+      <a href="/portal.html" id="nav-cabinet" onclick="if(window.toggleCabinetMenu){toggleCabinetMenu(event);return false}" style="text-decoration:none;font-size:0.88rem;white-space:nowrap;cursor:pointer" title="">👤 <span data-i18n="nav_cabinet">Кабінет</span></a><!-- 👤 Кабінет: клік → выпадаючае меню (💬 Чат · 👤 Кабінет · 🚪 Выйсці); href — fallback без JS -->
       <div id="site-lang-picker"></div>
-      <button class="navbar-burger" id="burger" aria-label="Меню">&#9776;</button>
     </div>
   </div>
 </nav>
+<div id="nav-backdrop"></div><!-- зацямненне пад мабільным drawer навігацыі (як #sidebar-backdrop у панэлі) -->
 
 <!-- ========== 1. HERO ========== -->
 <section id="hero" class="hero s-dark">
@@ -46,123 +45,10 @@
   </div>
 </section>
 
-<!-- ========== 2. ПАСЛУГІ ========== -->
-<section id="services" class="s-light section">
-  <div class="container">
-    <h2 class="section-title" data-i18n="services_title">Нашы паслугі</h2>
-    <p class="section-subtitle text-muted" data-i18n="services_subtitle">Выконваем любы рамонт</p>
-    <div class="grid grid-3" id="services-grid"></div>
-  </div>
-</section>
-
-<!-- ========== 3. ПЕРАВАГІ ========== -->
-<section id="advantages" class="s-alt section">
-  <div class="container">
-    <h2 class="section-title" data-i18n="advantages_title">Чаму выбіраюць нас</h2>
-    <div class="grid grid-3" id="advantages-grid"></div>
-  </div>
-</section>
-
-<!-- ========== 4. ПРА НАС ========== -->
-<section id="about" class="s-light section">
-  <div class="container about-inner">
-    <div class="about-content">
-      <h2 class="section-title" data-i18n="about_title">Пра нас</h2>
-      <p class="about-text" id="about-text"></p>
-    </div>
-    <div class="about-image">
-      <img src="assets/images/about.jpg" alt="" loading="lazy">
-    </div>
-  </div>
-</section>
-
-<!-- ========== 5. ЯК МЫ ПРАЦУЕМ ========== -->
-<section id="howWeWork" class="s-alt section">
-  <div class="container">
-    <h2 class="section-title" data-i18n="how_title">Як мы працуем</h2>
-    <div class="how-steps" id="how-grid"></div>
-  </div>
-</section>
-
-<!-- ========== 6. АКЦЫІ ========== -->
-<section id="promotions" class="s-light section">
-  <div class="container">
-    <h2 class="section-title" data-i18n="promo_title">Акцыі і спецпрапановы</h2>
-    <div class="grid grid-2" id="promo-grid"></div>
-  </div>
-</section>
-
-<!-- ========== 7. ГАЛЕРЭЯ ========== -->
-<section id="files" class="s-alt section">
-  <div class="container">
-    <h2 class="section-title" data-i18n="files_title">Галерэя работ</h2>
-    <div class="tile-grid" id="files-grid"></div>
-  </div>
-</section>
-
-<!-- ========== 8. ВОДГУКІ ========== -->
-<section id="testimonials" class="s-light section">
-  <div class="container">
-    <h2 class="section-title" data-i18n="testimonials_title">Водгукі кліентаў</h2>
-    <div class="grid grid-3" id="testimonials-grid"></div>
-  </div>
-</section>
-
-<!-- ========== 9. КОШТЫ ========== -->
-<section id="prices" class="s-alt section">
-  <div class="container">
-    <h2 class="section-title" data-i18n="prices_title">Кошты паслуг</h2>
-    <table class="prices-table">
-      <thead>
-        <tr>
-          <th data-i18n="prices_col_service">Паслуга</th>
-          <th data-i18n="prices_col_price">Кошт</th>
-        </tr>
-      </thead>
-      <tbody id="prices-body"></tbody>
-    </table>
-  </div>
-</section>
-
-<!-- ========== 10. МАРКІ ========== -->
-<section id="brands" class="s-light section">
-  <div class="container">
-    <h2 class="section-title" data-i18n="brands_title">Маркі з якімі працуем</h2>
-    <div class="brands-grid" id="brands-grid"></div>
-  </div>
-</section>
-
-<!-- ========== 11. СЕРТЫФІКАТЫ ========== -->
-<section id="certificates" class="s-alt section">
-  <div class="container">
-    <h2 class="section-title" data-i18n="certs_title">Сертыфікаты і ліцэнзіі</h2>
-    <div class="tile-grid" id="certs-grid"></div>
-  </div>
-</section>
-
-<!-- ========== 12. ПАРТНЁРЫ ========== -->
-<section id="clients" class="s-light section">
-  <div class="container">
-    <h2 class="section-title" data-i18n="clients_title">Нашы партнёры</h2>
-    <div class="brands-grid" id="clients-grid"></div>
-  </div>
-</section>
-
-<!-- ========== 13. БЛОГhttps ========== -->
-<section id="blog" class="s-alt section">
-  <div class="container">
-    <h2 class="section-title" data-i18n="blog_title">Карысныя артыкулы</h2>
-    <div class="grid grid-3" id="blog-grid"></div>
-  </div>
-</section>
-
-<!-- ========== 14. FAQ ========== -->
-<section id="faq" class="s-light section">
-  <div class="container">
-    <h2 class="section-title" data-i18n="faq_title">Частыя пытанні</h2>
-    <div class="faq-list" id="faq-list"></div>
-  </div>
-</section>
+<!-- ========== 🧱 ДЫНАМІЧНЫЯ СЕКЦЫІ ========== -->
+<!-- Усе кантэнт-секцыі рэндэрацца тут са спіса `sections` (renderDynamicSections):
+     любы лік, любы тып, любы парадак. Дадаць секцыю = запіс у спіс, нуль кода. -->
+<main id="site-sections"></main>
 
 <!-- ========== 15. КАНТАКТЫ + ФОРМА ========== -->
 <section id="contact" class="s-alt section">
@@ -188,9 +74,15 @@
         <div id="contact-emails"></div>
       </div>
 
-      <!-- Форма запісу -->
+      <!-- Форма запісу / чат кабінета -->
       <div class="contact-form-wrap">
         <h3 data-i18n="form_title">Запісацца на сэрвіс</h3>
+        <!-- 💬 CTA у чат Кабінета (дэфолт; заяўкі трапляюць у панэль, не толькі на пошту) -->
+        <div id="contact-chat-cta" style="display:none">
+          <p style="opacity:0.8;margin-bottom:16px" data-i18n="contact_chat_desc">Напішыце нам у чаце — адкажам там жа, а копія адказу прыйдзе вам на пошту.</p>
+          <a href="/portal.html" class="btn btn-primary" onclick="if(window.openCabinet){openCabinet();return false}">💬 <span data-i18n="contact_chat_btn">Напісаць у чат</span></a>
+        </div>
+        <!-- Web3Forms-канал АДКЛЮЧАНЫ па змаўчанні (вяртанне: settings.contactForm.web3 = true), код пакінуты знарок -->
         <form id="booking-form" action="https://api.web3forms.com/submit" method="POST">
           <input type="hidden" name="access_key" id="w3f-key">
           <input type="hidden" name="subject" value="Новая заяўка з сайта">
@@ -198,7 +90,9 @@
                  data-i18n-placeholder="form_name"    placeholder="Ваша імя">
           <input type="tel"      name="phone"   required
                  data-i18n-placeholder="form_phone"   placeholder="Тэлефон">
-          <input type="text"     name="car"
+          <!-- дадатковае поле формы: паказваецца толькі калі settings.contactForm.car !== false
+               (санацыя v4.449: аўтасэрвіс-спецыфіка ва ўніверсальным шаблоне — цяпер наладжвальна) -->
+          <input type="text"     name="car"    id="form-car-field"
                  data-i18n-placeholder="form_car"     placeholder="Марка і мадэль аўто">
           <textarea name="message" rows="4"
                  data-i18n-placeholder="form_message" placeholder="Апішыце праблему"></textarea>
@@ -233,12 +127,7 @@
 
     <div class="footer-col">
       <h4 data-i18n="footer_nav">Навігацыя</h4>
-      <ul>
-        <li><a href="#services" data-i18n="nav_services">Паслугі</a></li>
-        <li><a href="#about"    data-i18n="nav_about">Пра нас</a></li>
-        <li><a href="#files"  data-i18n="nav_files">Галерэя</a></li>
-        <li><a href="#contact"  data-i18n="nav_contact">Кантакты</a></li>
-      </ul>
+      <ul id="footer-nav"><!-- 🧱 будуецца дынамічна (buildSiteNav), сінхронна з уключанымі секцыямі --></ul>
     </div>
 
     <div class="footer-col">
@@ -250,7 +139,7 @@
       <h4 data-i18n="footer_legal">Дакументы</h4>
       <ul>
         <li><a href="/privacy" data-i18n="footer_privacy">Палітыка прыватнасці</a></li>
-        <li><a href="/portal.html" data-i18n="footer_portal">Мае заказы</a></li>
+        <li><a href="/portal.html" data-i18n="footer_portal" onclick="if(window.openCabinet){openCabinet();return false}">Мае заказы</a></li>
         <li><a href="/admin" target="_blank" rel="noopener" style="opacity:0.4;font-size:1.1rem" title="Admin">⚙</a></li>
       </ul>
     </div>
@@ -258,10 +147,13 @@
   </div>
   <div class="footer-bottom">
     <p id="footer-copy"></p>
+    <div id="footer-social" style="margin-top:6px"></div><!-- К3b: сацсеткі з секцыі «Футэр» (Структура сайта) -->
   </div>
 </footer>
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="admin/version.js"></script><!-- APP_VERSION — адзіная крыніца версіі (тая ж, што ў панэлі) -->
+<script src="assets/js/reader.js"></script><!-- 📄 універсальны чытач дакумента (навіны/фактура/справаздачы) -->
 <script src="assets/js/main.js"></script>
 </body>
 </html>

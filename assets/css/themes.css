@@ -7,8 +7,10 @@
    АГУЛЬНЫЯ ЗМЕННЫЯ (аднолькавыя для ўсіх тэм)
    ------------------------------------------------ */
 :root {
-  --font-main:    'Inter', 'Segoe UI', Arial, sans-serif;
-  --font-heading: 'Inter', 'Segoe UI', Arial, sans-serif;
+  /* Шрыфты САПРАЎДЫ падключаныя ў <head> (Google Fonts): Unbounded — загалоўкі, Manrope — тэкст.
+     (Санацыя v4.449: раней тут стаяў 'Inter', які НЕ падключаны → сайт падаў у сістэмны Arial) */
+  --font-main:    'Manrope', 'Segoe UI', Arial, sans-serif;
+  --font-heading: 'Unbounded', 'Manrope', Arial, sans-serif;
 
   --radius-sm:  6px;
   --radius-md:  10px;
@@ -17,6 +19,18 @@
   --transition: 0.2s ease;
 
   --section-padding: 64px 20px;
+
+  /* ── АЛІАСЫ ЛЕГАСІ-ІМЁНАЎ (санацыя v4.449) ──
+     style.css і інлайн-стылі main.js (кошык-бар, мадалы) гістарычна чакаюць гэтыя імёны.
+     Аліасы спасылаюцца на тэмавыя зменныя → аўтаматычна мяняюцца з [data-theme] і палітрай.
+     НЕ выдаляць, пакуль спажыўцы не пераведзены на прамыя --light-*/--color-* імёны. */
+  --text-main:    var(--light-text);
+  --text-muted:   var(--light-text-muted);
+  --text-light:   var(--dark-text);
+  --card-bg:      var(--light-bg-card);
+  --border-color: var(--light-border);
+  --accent:       var(--color-primary);   /* main.js: кошык-бар, кнопкі карткі паслугі */
+  --surface:      var(--dark-bg-card);    /* main.js: фон кошык-бара */
 }
 
 /* ================================================
@@ -177,6 +191,201 @@
 }
 
 /* ================================================
+   ТЭМА 5 — «ЦЭХ» (цёмна-зялёная атмасфера начнога цэха;
+   пара да дызайн-прэсэта «Цэх», але працуе і асобна)
+   ================================================ */
+[data-theme="workshop"] {
+  --color-primary:     #1e9e46;
+  --color-primary-hover: #178a3a;
+  --color-accent:      #43d977;
+
+  --light-bg:          #101712;
+  --light-bg-card:     #17211a;
+  --light-text:        #eef3ee;
+  --light-text-muted:  #93a398;
+  --light-border:      #24312a;
+
+  --dark-bg:           #0a0f0c;
+  --dark-bg-card:      #131a15;
+  --dark-text:         #f2f7f2;
+  --dark-text-muted:   #8fa094;
+  --dark-border:       #222d26;
+
+  --nav-bg:            #0a0f0c;
+  --nav-text:          #eef3ee;
+  --nav-text-hover:    #43d977;
+
+  --btn-bg:            #43d977;
+  --btn-text:          #06130a;
+  --btn-bg-hover:      #35c467;
+
+  --btn-outline-border: rgba(238,243,238,0.35);
+  --btn-outline-text:   #eef3ee;
+  --btn-outline-hover-bg: #43d977;
+  --btn-outline-hover-text: #06130a;
+
+  --footer-bg:         #060907;
+  --footer-text:       #8fa094;
+  --footer-text-hover: #43d977;
+}
+
+/* ================================================
+   ТЭМА 6 — «МАРШРУТ» (папяровая карта падарожжа;
+   пара да дызайн-прэсэта «Маршрут», працуе і асобна)
+   ================================================ */
+[data-theme="route"] {
+  --color-primary:     #2c5d63;
+  --color-primary-hover: #234c51;
+  --color-accent:      #b4522c;
+
+  --light-bg:          #f6f1e7;
+  --light-bg-card:     #fffdf7;
+  --light-text:        #2b2418;
+  --light-text-muted:  #7d7261;
+  --light-border:      #ddd2bc;
+
+  --dark-bg:           #2b2418;
+  --dark-bg-card:      #3a3122;
+  --dark-text:         #f6f1e7;
+  --dark-text-muted:   #c4b699;
+  --dark-border:       #4a3f2d;
+
+  --nav-bg:            #fffdf7;
+  --nav-text:          #2b2418;
+  --nav-text-hover:    #b4522c;
+
+  --btn-bg:            #b4522c;
+  --btn-text:          #f6f1e7;
+  --btn-bg-hover:      #9c4423;
+
+  --btn-outline-border: #2b2418;
+  --btn-outline-text:   #2b2418;
+  --btn-outline-hover-bg: #2b2418;
+  --btn-outline-hover-text: #f6f1e7;
+
+  --footer-bg:         #2b2418;
+  --footer-text:       #c4b699;
+  --footer-text-hover: #b4522c;
+}
+
+/* ================================================
+   ТЭМА 7 — «АФІША» (начны горад з фарбамі захаду;
+   пара да дызайн-прэсэта «Афіша», працуе і асобна)
+   ================================================ */
+[data-theme="poster"] {
+  --color-primary:     #ff5d73;
+  --color-primary-hover: #e94b62;
+  --color-accent:      #ffb347;
+
+  --light-bg:          #0f1222;
+  --light-bg-card:     #181c33;
+  --light-text:        #f2f3fa;
+  --light-text-muted:  #9aa0bd;
+  --light-border:      #262b47;
+
+  --dark-bg:           #0a0c1a;
+  --dark-bg-card:      #141830;
+  --dark-text:         #f6f7fc;
+  --dark-text-muted:   #8f95b2;
+  --dark-border:       #222642;
+
+  --nav-bg:            #0f1222;
+  --nav-text:          #f2f3fa;
+  --nav-text-hover:    #ffb347;
+
+  --btn-bg:            #ffb347;
+  --btn-text:          #1a1206;
+  --btn-bg-hover:      #f5a532;
+
+  --btn-outline-border: rgba(242,243,250,0.35);
+  --btn-outline-text:   #f2f3fa;
+  --btn-outline-hover-bg: #ffb347;
+  --btn-outline-hover-text: #1a1206;
+
+  --footer-bg:         #0a0c1a;
+  --footer-text:       #8f95b2;
+  --footer-text-hover: #ffb347;
+}
+
+/* ================================================
+   ТЭМА 8 — «ПРАТАКОЛ» (папера і чарнільна-зялёны, editorial;
+   пара да дызайн-прэсэта «Пратакол», працуе і асобна)
+   ================================================ */
+[data-theme="protocol"] {
+  --color-primary:     #132b1c;
+  --color-primary-hover: #1e7a3c;
+  --color-accent:      #1e7a3c;
+
+  --light-bg:          #f7f6f0;
+  --light-bg-card:     #fffef8;
+  --light-text:        #132b1c;
+  --light-text-muted:  #5c6b5f;
+  --light-border:      #d9d6c8;
+
+  --dark-bg:           #132b1c;
+  --dark-bg-card:      #1c3a27;
+  --dark-text:         #f7f6f0;
+  --dark-text-muted:   #9fb3a5;
+  --dark-border:       #2a4a35;
+
+  --nav-bg:            #f7f6f0;
+  --nav-text:          #132b1c;
+  --nav-text-hover:    #1e7a3c;
+
+  --btn-bg:            #132b1c;
+  --btn-text:          #f7f6f0;
+  --btn-bg-hover:      #1e7a3c;
+
+  --btn-outline-border: #132b1c;
+  --btn-outline-text:   #132b1c;
+  --btn-outline-hover-bg: #132b1c;
+  --btn-outline-hover-text: #f7f6f0;
+
+  --footer-bg:         #132b1c;
+  --footer-text:       #9fb3a5;
+  --footer-text-hover: #4ade80;
+}
+
+/* ================================================
+   ТЭМА 9 — «ШТАМП» (папера/лайм/зялёны друк, bold-плакат;
+   пара да дызайн-прэсэта «Штамп», працуе і асобна)
+   ================================================ */
+[data-theme="stamp"] {
+  --color-primary:     #1e9e46;
+  --color-primary-hover: #178a3a;
+  --color-accent:      #d8f24b;
+
+  --light-bg:          #fbfbf4;
+  --light-bg-card:     #ffffff;
+  --light-text:        #101408;
+  --light-text-muted:  #4a4f3d;
+  --light-border:      #101408;
+
+  --dark-bg:           #101408;
+  --dark-bg-card:      #1c2210;
+  --dark-text:         #fbfbf4;
+  --dark-text-muted:   #b9bfa5;
+  --dark-border:       #33391f;
+
+  --nav-bg:            #fbfbf4;
+  --nav-text:          #101408;
+  --nav-text-hover:    #1e9e46;
+
+  --btn-bg:            #101408;
+  --btn-text:          #d8f24b;
+  --btn-bg-hover:      #1e9e46;
+
+  --btn-outline-border: #101408;
+  --btn-outline-text:   #101408;
+  --btn-outline-hover-bg: #d8f24b;
+  --btn-outline-hover-text: #101408;
+
+  --footer-bg:         #101408;
+  --footer-text:       #b9bfa5;
+  --footer-text-hover: #d8f24b;
+}
+
+/* ================================================
    СІСТЭМА СВЕТЛЫ/ЦЁМНЫ ФАРБАВАННЯ СЕКЦЫЙ
    Кожная секцыя атрымлівае клас .s-light або .s-dark
    ================================================ */
@@ -217,6 +426,28 @@
 
 .s-dark .section-border {
   border-color: var(--dark-border);
+}
+
+/* .s-alt — «альтэрнатыўны светлы» для чаргавання секцый (санацыя v4.449: клас даўно
+   ў index.html, але стыляў НЕ МЕЎ → секцыі не чаргаваліся). Фон = картачны тон тэмы,
+   карткі ўнутры інвертуюцца на асноўны фон — кантраст захоўваецца ў любой тэме. */
+.s-alt {
+  background-color: var(--light-bg-card);
+  color: var(--light-text);
+}
+
+.s-alt .card {
+  background-color: var(--light-bg);
+  border: 1px solid var(--light-border);
+  border-radius: var(--radius-md);
+}
+
+.s-alt .text-muted {
+  color: var(--light-text-muted);
+}
+
+.s-alt .section-border {
+  border-color: var(--light-border);
 }
 
 /* ================================================
@@ -299,32 +530,6 @@
   color: var(--footer-text-hover);
 }
 
-/* ================================================
-   АГУЛЬНЫЯ СТЫЛІ СЕКЦЫЙ
-   ================================================ */
-
-section {
-  padding: var(--section-padding);
-}
-
-.section-title {
-  font-size: clamp(24px, 4vw, 36px);
-  font-weight: 700;
-  margin-bottom: 12px;
-  line-height: 1.2;
-}
-
-.section-subtitle {
-  font-size: clamp(15px, 2vw, 18px);
-  margin-bottom: 40px;
-  opacity: 0.8;
-}
-
-.container {
-  max-width: 1100px;
-  margin: 0 auto;
-}
-
-.grid-2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 24px; }
-.grid-3 { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 24px; }
-.grid-4 { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 20px; }
+/* САНАЦЫЯ v4.449: структурныя правілы (section, .section-title, .container, .grid-*)
+   пераехалі ў style.css — АДЗІН гаспадар на клопат: themes.css = колеры/тэмы,
+   style.css = структура/тыпаграфіка. Дублікаты з рознымі значэннямі змагаліся паміж сабой. */

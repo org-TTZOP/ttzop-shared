@@ -17,8 +17,30 @@
     html { min-height: 100%; background: var(--bg); }
     body { min-height: 100vh; display: flex; align-items: center; justify-content: center; background: radial-gradient(ellipse at 30% 50%, #1a1f35 0%, var(--bg) 70%); font-family: 'Manrope', sans-serif; color: var(--text); padding: 20px; }
     .login-box { width: 100%; max-width: 420px; padding: 48px 40px; background: var(--surface); border: 1px solid var(--border); border-radius: 16px; box-shadow: 0 32px 80px rgba(0,0,0,0.5); }
+    /* кабінет: акно запаўняе ўвесь iframe кут-у-кут — без цёмнай рамкі/краю/ценю вакол */
+    /* кабінет = flex-калонка на ўсю вышыню акна: гісторыя чата сціскаецца, радок уводу + чыпы файлаў ПРЫЛІПЛЕНЫ ЎНІЗЕ і заўсёды бачны */
+    .login-box.cab { max-width: none; padding: 24px 16px; border: none; border-radius: 0; box-shadow: none; height: 100vh; display: flex; flex-direction: column; }
+    .login-box.cab #step-orders.active { display: flex; flex-direction: column; flex: 1; min-height: 0; }
+    /* два віды: Чат (flex-калонка на ўвесь астатак) і Кабінет (профіль+заказы, скрол) — перамыкаюцца табамі */
+    .login-box.cab #view-chat.active { flex: 1; display: flex; flex-direction: column; min-height: 0; }
+    .login-box.cab #cab-chat-wrap { flex: 1; display: flex; flex-direction: column; min-height: 0; }
+    .login-box.cab #portal-chat-feed { flex: 1; min-height: 0; max-height: none; } /* гісторыя займае астатак і сціскаецца, аддаючы месца радку+чыпам */
+    .login-box.cab #view-cabinet.active { flex: 1; min-height: 0; overflow-y: auto; }
+    .cab-view { display: none; }
+    .cab-view.active { display: block; }
+    /* табы перамыкача відаў */
+    #cab-tabs { display: flex; gap: 6px; margin-bottom: 12px; flex-shrink: 0; margin-top: 8px; }
+    .cab-tab { flex: 1; padding: 9px 8px; background: var(--surface2); border: 1px solid var(--border); border-radius: var(--radius); color: var(--muted); font-family: 'Manrope', sans-serif; font-size: 0.85rem; font-weight: 600; cursor: pointer; transition: all 0.15s; }
+    .cab-tab.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+    /* картка профілю кабінета */
+    .prof-name { font-family: 'Unbounded', sans-serif; font-size: 1.15rem; font-weight: 700; color: var(--text); margin-bottom: 4px; }
+    .prof-row { font-size: 0.9rem; color: var(--muted); margin-top: 6px; display: flex; align-items: center; gap: 8px; }
+    .prof-row b { color: var(--text); font-weight: 600; }
+    .prof-sec-title { font-family: 'Unbounded', sans-serif; font-size: 0.95rem; font-weight: 600; margin: 18px 0 8px; }
+    body.cab-body { padding: 0; } /* прыбіраем цёмны фон iframe па краях акна кабінета */
+    .login-box.cab .login-logo { margin-top: 26px; } /* дамен ніжэй — каб не перасякаўся з крыжыкам ✕ у верхнім левым куце */
     .login-logo { font-family: 'Unbounded', sans-serif; font-size: 1.4rem; font-weight: 700; color: var(--accent); margin-bottom: 8px; }
-    .login-sub { color: var(--muted); font-size: 0.9rem; margin-bottom: 36px; }
+    .login-sub { color: var(--muted); font-size: 0.9rem; margin-bottom: 18px; }
     .field-label { display: block; font-size: 0.8rem; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 8px; }
     .field-input { width: 100%; padding: 12px 16px; background: var(--surface2); border: 1.5px solid var(--border); border-radius: var(--radius); color: var(--text); font-family: 'Manrope', sans-serif; font-size: 1rem; transition: border-color 0.2s; margin-bottom: 20px; outline: none; }
     .field-input:focus { border-color: var(--accent); }
@@ -38,7 +60,13 @@
   </style>
 </head>
 <body>
-<div class="login-box">
+<div class="login-box" style="position:relative">
+  <!-- ✕ закрыць кабінет — толькі калі адкрыты як оверлей на сайце (у iframe); закрывае бацькоўскі оверлей без разлагіну -->
+  <button id="portal-close" onclick="portalCloseCabinet()" aria-label="✕"
+    style="display:none;position:absolute;top:12px;left:14px;z-index:2;width:30px;height:30px;border-radius:50%;border:1px solid var(--border);background:var(--surface2);color:var(--text);font-size:0.95rem;line-height:1;cursor:pointer">✕</button>
+  <!-- 🌐 мова кабінета (тая ж localStorage ttzop_lang, што і сайт) — просьба карыстальніка: кнопка Мовы ў мадалцы -->
+  <select id="portal-lang" onchange="portalSetLang(this.value)"
+    style="position:absolute;top:14px;right:14px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:'Manrope',sans-serif;font-size:0.8rem;padding:5px 8px;cursor:pointer"></select>
   <div class="login-logo" id="portal-logo">TTZOP</div>
   <div class="login-sub" id="portal-sub"></div>
 
@@ -60,29 +88,57 @@
     <button class="back-link" id="s2-back" onclick="showStep('email')"></button>
   </div>
 
-  <!-- Step 3: Orders -->
+  <!-- Step 3: Кабінет — два віды (💬 Чат / 👤 Кабінет) з перамыкачом-табамі -->
   <div class="step" id="step-orders">
-    <div style="font-family:'Unbounded',sans-serif;font-size:1rem;font-weight:600;margin-bottom:20px" id="my-orders-title"></div>
-    <div id="portal-orders"></div>
-    <button class="back-link" id="s3-logout" onclick="showStep('email')" style="margin-top:20px"></button>
+    <div id="cab-tabs">
+      <button class="cab-tab" id="tab-chat" onclick="portalSetView('chat')"></button>
+      <button class="cab-tab" id="tab-cabinet" onclick="portalSetView('cabinet')"></button>
+    </div>
+
+    <!-- ВІД: 💬 Чат з кампаніяй (Фаза 2 Чатаў: from_kind='client'). flex-калонка: гісторыя сціскаецца, радок+чыпы прыліплены ўнізе -->
+    <div class="cab-view" id="view-chat">
+      <div id="cab-chat-wrap">
+        <div style="font-family:'Unbounded',sans-serif;font-size:1rem;font-weight:600;margin-bottom:6px;flex-shrink:0" id="chat-title"></div>
+        <div id="portal-chat-feed" style="max-height:55vh;min-height:300px;overflow-y:auto;display:flex;flex-direction:column;gap:8px;padding:4px 0"></div><!-- у кабінеце flex:1 (сціскаецца), пакідае месца радку+чыпам -->
+        <div style="display:flex;gap:8px;margin-top:8px;align-items:stretch;flex-shrink:0"><!-- радок уводу — заўсёды бачны ўнізе -->
+          <button style="background:none;border:1px solid var(--border);border-radius:var(--radius);color:var(--text);cursor:pointer;padding:0 12px;flex-shrink:0" title="📷" onclick="document.getElementById('portal-chat-file').click()">📎</button>
+          <input type="file" id="portal-chat-file" accept="image/*" style="display:none" onchange="portalChatAttach(this)" />
+          <textarea class="field-input" id="portal-chat-input" rows="2" style="margin-bottom:0;resize:none;min-height:52px;flex:1" maxlength="4000"></textarea><!-- поле ў дзве строчкі -->
+          <button class="btn-primary" id="chat-send-btn" style="width:auto;padding:0 16px;flex-shrink:0;font-size:1.2rem" onclick="portalChatSend()">➤</button><!-- заўсёды іконка ➤ (як у панэлі) -->
+        </div>
+        <!-- чыпы фота з ✕ — ПАД радком уводу; max-height ~1.5 радка + скрол = бачна цэлы радок і палова наступнага (намёк на працяг) -->
+        <div id="portal-chat-atts" style="font-size:0.8rem;color:var(--muted);max-height:62px;overflow-y:auto;display:flex;flex-wrap:wrap;gap:4px;margin-top:6px;flex-shrink:0"></div>
+      </div>
+    </div>
+
+    <!-- ВІД: 👤 Кабінет — профіль кліента (Імя/Email/Тэлефон) + Мае заказы. Праўка/адрасы/аплата — Фаза C -->
+    <div class="cab-view" id="view-cabinet">
+      <div id="cab-profile"></div>
+      <div id="cab-addresses"></div><!-- C2a: кніга адрасоў дастаўкі -->
+      <div id="cab-payment"></div><!-- C3-1: 💳 Спосаб аплаты — рэквізіты + інструкцыі (payload.payment) -->
+      <div id="cab-subs"></div><!-- 🔁 S1: Мае падпіскі (payload.subscriptions) -->
+      <div class="prof-sec-title" id="my-orders-title"></div>
+      <div id="portal-orders"></div>
+    </div>
   </div>
 </div>
 
+<script src="assets/js/reader.js"></script><!-- 📄 універсальны чытач дакумента (фактура — paper) -->
 <script>
 const PORTAL_T = {
-  be: { title:'Партал кліента', get_code:'Атрымаць код', code_label:'Код з email', code_ph:'6-значны код', confirm:'Пацвердзіць', back:'← Назад', my_orders:'Мае заказы', logout:'← Выйсці', err_enter_email:'Увядзіце email', err_not_found:'Гэты email не знойдзены ў базе заказаў.', code_sent:'Код адпраўлены на {email}. Дзейнічае 15 хвілін.', err_conn:'Памылка сувязі. Паспрабуйце яшчэ раз.', err_enter_code:'Увядзіце 6-значны код', err_wrong_code:'Няправільны код. Паспрабуйце яшчэ раз.', no_orders:'Заказаў пакуль няма.', order_prefix:'Заказ #', paid_until:'Аплачана да:' , privacy_text: "Калі ласка, азнаёмцеся з палітыкай прыватнасці і пацвердзіце згоду.", privacy_link: "Палітыка прыватнасці", privacy_accept: "Пацвярджаю", privacy_thanks: "Дзякуй! Згода захавана." },
-  en: { title:'Client portal', get_code:'Get code', code_label:'Code from email', code_ph:'6-digit code', confirm:'Confirm', back:'← Back', my_orders:'My orders', logout:'← Log out', err_enter_email:'Enter email', err_not_found:'This email is not found in the order database.', code_sent:'Code sent to {email}. Valid for 15 minutes.', err_conn:'Connection error. Please try again.', err_enter_code:'Enter the 6-digit code', err_wrong_code:'Incorrect code. Please try again.', no_orders:'No orders yet.', order_prefix:'Order #', paid_until:'Paid until:' , privacy_text: "Please review the privacy policy and confirm your consent.", privacy_link: "Privacy policy", privacy_accept: "I agree", privacy_thanks: "Thank you! Consent saved." },
-  uk: { title:'Портал клієнта', get_code:'Отримати код', code_label:'Код з email', code_ph:'6-значний код', confirm:'Підтвердити', back:'← Назад', my_orders:'Мої замовлення', logout:'← Вийти', err_enter_email:'Введіть email', err_not_found:'Цей email не знайдено в базі замовлень.', code_sent:'Код відправлено на {email}. Діє 15 хвилин.', err_conn:'Помилка з\'єднання. Спробуйте ще раз.', err_enter_code:'Введіть 6-значний код', err_wrong_code:'Невірний код. Спробуйте ще раз.', no_orders:'Замовлень поки немає.', order_prefix:'Замовлення #', paid_until:'Оплачено до:' , privacy_text: "Будь ласка, ознайомтеся з політикою конфіденційності та підтвердьте згоду.", privacy_link: "Політика конфіденційності", privacy_accept: "Підтверджую", privacy_thanks: "Дякуємо! Згоду збережено." },
-  ru: { title:'Портал клиента', get_code:'Получить код', code_label:'Код из email', code_ph:'6-значный код', confirm:'Подтвердить', back:'← Назад', my_orders:'Мои заказы', logout:'← Выйти', err_enter_email:'Введите email', err_not_found:'Этот email не найден в базе заказов.', code_sent:'Код отправлен на {email}. Действует 15 минут.', err_conn:'Ошибка соединения. Попробуйте ещё раз.', err_enter_code:'Введите 6-значный код', err_wrong_code:'Неверный код. Попробуйте ещё раз.', no_orders:'Заказов пока нет.', order_prefix:'Заказ #', paid_until:'Оплачено до:' , privacy_text: "Пожалуйста, ознакомьтесь с политикой конфиденциальности и подтвердите согласие.", privacy_link: "Политика конфиденциальности", privacy_accept: "Подтверждаю", privacy_thanks: "Спасибо! Согласие сохранено." },
-  pl: { title:'Portal klienta', get_code:'Pobierz kod', code_label:'Kod z email', code_ph:'Kod 6-cyfrowy', confirm:'Potwierdź', back:'← Wstecz', my_orders:'Moje zamówienia', logout:'← Wyloguj się', err_enter_email:'Wprowadź email', err_not_found:'Ten email nie został znaleziony w bazie zamówień.', code_sent:'Kod wysłany na {email}. Ważny przez 15 minut.', err_conn:'Błąd połączenia. Spróbuj ponownie.', err_enter_code:'Wprowadź 6-cyfrowy kod', err_wrong_code:'Nieprawidłowy kod. Spróbuj ponownie.', no_orders:'Brak zamówień.', order_prefix:'Zamówienie #', paid_until:'Opłacone do:' , privacy_text: "Prosimy o zapoznanie się z polityką prywatności i potwierdzenie zgody.", privacy_link: "Polityka prywatności", privacy_accept: "Potwierdzam", privacy_thanks: "Dziękujemy! Zgoda zapisana." },
-  de: { title:'Kundenportal', get_code:'Code erhalten', code_label:'Code aus E-Mail', code_ph:'6-stelliger Code', confirm:'Bestätigen', back:'← Zurück', my_orders:'Meine Bestellungen', logout:'← Abmelden', err_enter_email:'E-Mail eingeben', err_not_found:'Diese E-Mail wurde in der Bestelldatenbank nicht gefunden.', code_sent:'Code an {email} gesendet. Gültig für 15 Minuten.', err_conn:'Verbindungsfehler. Bitte erneut versuchen.', err_enter_code:'Geben Sie den 6-stelligen Code ein', err_wrong_code:'Falscher Code. Bitte erneut versuchen.', no_orders:'Noch keine Bestellungen.', order_prefix:'Bestellung #', paid_until:'Bezahlt bis:' , privacy_text: "Bitte lesen Sie die Datenschutzerklärung und bestätigen Sie Ihre Zustimmung.", privacy_link: "Datenschutzerklärung", privacy_accept: "Ich stimme zu", privacy_thanks: "Danke! Zustimmung gespeichert." },
-  fr: { title:'Portail client', get_code:'Recevoir le code', code_label:'Code par email', code_ph:'Code à 6 chiffres', confirm:'Confirmer', back:'← Retour', my_orders:'Mes commandes', logout:'← Se déconnecter', err_enter_email:"Saisir l'email", err_not_found:"Cet email n'est pas trouvé dans la base de commandes.", code_sent:'Code envoyé à {email}. Valide pendant 15 minutes.', err_conn:'Erreur de connexion. Veuillez réessayer.', err_enter_code:'Saisissez le code à 6 chiffres', err_wrong_code:'Code incorrect. Veuillez réessayer.', no_orders:"Aucune commande pour l'instant.", order_prefix:'Commande #', paid_until:"Payé jusqu'au :" , privacy_text: "Veuillez consulter la politique de confidentialité et confirmer votre consentement.", privacy_link: "Politique de confidentialité", privacy_accept: "J’accepte", privacy_thanks: "Merci ! Consentement enregistré." },
-  es: { title:'Portal del cliente', get_code:'Obtener código', code_label:'Código del email', code_ph:'Código de 6 dígitos', confirm:'Confirmar', back:'← Volver', my_orders:'Mis pedidos', logout:'← Cerrar sesión', err_enter_email:'Introduce el email', err_not_found:'Este email no está en la base de pedidos.', code_sent:'Código enviado a {email}. Válido durante 15 minutos.', err_conn:'Error de conexión. Por favor, inténtelo de nuevo.', err_enter_code:'Introduce el código de 6 dígitos', err_wrong_code:'Código incorrecto. Por favor, inténtelo de nuevo.', no_orders:'Aún no hay pedidos.', order_prefix:'Pedido #', paid_until:'Pagado hasta:' , privacy_text: "Por favor, revise la política de privacidad y confirme su consentimiento.", privacy_link: "Política de privacidad", privacy_accept: "Acepto", privacy_thanks: "¡Gracias! Consentimiento guardado." },
-  it: { title:'Portale cliente', get_code:'Ricevi codice', code_label:"Codice dall'email", code_ph:'Codice a 6 cifre', confirm:'Conferma', back:'← Indietro', my_orders:'I miei ordini', logout:'← Esci', err_enter_email:'Inserisci email', err_not_found:'Questa email non è nella base degli ordini.', code_sent:'Codice inviato a {email}. Valido per 15 minuti.', err_conn:'Errore di connessione. Riprova.', err_enter_code:'Inserisci il codice a 6 cifre', err_wrong_code:'Codice errato. Riprova.', no_orders:'Ancora nessun ordine.', order_prefix:'Ordine #', paid_until:'Pagato fino al:' , privacy_text: "Si prega di consultare l’informativa sulla privacy e confermare il consenso.", privacy_link: "Informativa sulla privacy", privacy_accept: "Accetto", privacy_thanks: "Grazie! Consenso salvato." },
-  pt: { title:'Portal do cliente', get_code:'Obter código', code_label:'Código do email', code_ph:'Código de 6 dígitos', confirm:'Confirmar', back:'← Voltar', my_orders:'Meus pedidos', logout:'← Sair', err_enter_email:'Insira o email', err_not_found:'Este email não foi encontrado na base de pedidos.', code_sent:'Código enviado para {email}. Válido por 15 minutos.', err_conn:'Erro de conexão. Tente novamente.', err_enter_code:'Insira o código de 6 dígitos', err_wrong_code:'Código incorreto. Tente novamente.', no_orders:'Ainda não há pedidos.', order_prefix:'Pedido #', paid_until:'Pago até:' , privacy_text: "Por favor, revise a política de privacidade e confirme o seu consentimento.", privacy_link: "Política de privacidade", privacy_accept: "Aceito", privacy_thanks: "Obrigado! Consentimento salvo." },
-  zh: { title:'客户门户', get_code:'获取验证码', code_label:'邮件验证码', code_ph:'6位验证码', confirm:'确认', back:'← 返回', my_orders:'我的订单', logout:'← 退出登录', err_enter_email:'请输入邮箱', err_not_found:'此邮箱在订单数据库中未找到。', code_sent:'验证码已发送至 {email}。有效期15分钟。', err_conn:'连接错误，请重试。', err_enter_code:'请输入6位验证码', err_wrong_code:'验证码错误，请重试。', no_orders:'暂无订单。', order_prefix:'订单 #', paid_until:'已付款至：' , privacy_text: "请阅读隐私政策并确认您的同意。", privacy_link: "隐私政策", privacy_accept: "我同意", privacy_thanks: "谢谢！已保存您的同意。" },
-  ar: { title:'بوابة العميل', get_code:'الحصول على الرمز', code_label:'الرمز من البريد الإلكتروني', code_ph:'رمز من 6 أرقام', confirm:'تأكيد', back:'رجوع →', my_orders:'طلباتي', logout:'خروج →', err_enter_email:'أدخل البريد الإلكتروني', err_not_found:'هذا البريد الإلكتروني غير موجود في قاعدة الطلبات.', code_sent:'تم إرسال الرمز إلى {email}. صالح لمدة 15 دقيقة.', err_conn:'خطأ في الاتصال. يرجى المحاولة مجدداً.', err_enter_code:'أدخل الرمز المكون من 6 أرقام', err_wrong_code:'رمز غير صحيح. يرجى المحاولة مجدداً.', no_orders:'لا توجد طلبات حتى الآن.', order_prefix:'طلب #', paid_until:'مدفوع حتى:' , privacy_text: "يرجى الاطلاع على سياسة الخصوصية وتأكيد موافقتك.", privacy_link: "سياسة الخصوصية", privacy_accept: "أوافق", privacy_thanks: "شكراً! تم حفظ الموافقة." },
-  hu: { title:'Ügyfélportál', get_code:'Kód kérése', code_label:'Kód az emailből', code_ph:'6 jegyű kód', confirm:'Megerősítés', back:'← Vissza', my_orders:'Rendeléseim', logout:'← Kijelentkezés', err_enter_email:'Adja meg az e-mailt', err_not_found:'Ez az email nem található a rendelési adatbázisban.', code_sent:'Kód elküldve ide: {email}. 15 percig érvényes.', err_conn:'Kapcsolódási hiba. Kérjük, próbálja újra.', err_enter_code:'Adja meg a 6 jegyű kódot', err_wrong_code:'Hibás kód. Kérjük, próbálja újra.', no_orders:'Még nincsenek rendelések.', order_prefix:'Rendelés #', paid_until:'Fizetve eddig:' , privacy_text: "Kérjük, olvassa el az adatvédelmi szabályzatot és erősítse meg hozzájárulását.", privacy_link: "Adatvédelmi szabályzat", privacy_accept: "Elfogadom", privacy_thanks: "Köszönjük! Hozzájárulás mentve." },
+  be: { inv_title:'Фактура', inv_seller:'Прадавец', inv_buyer:'Пакупнік', inv_date:'Дата', inv_item:'Пазіцыя', inv_qty:'Кольк.', inv_price:'Цана', inv_sum:'Сума', inv_total:'Разам', inv_delivery:'Дастаўка', inv_share:'Падзяліцца', inv_save:'Друк / Захаваць PDF', pay_title:'Рэквізіты для аплаты', pay_recipient:'Атрымальнік', pay_bank:'Банк', pay_due:'Аплаціць да', pay_reference:'Прызначэнне', subs_title:'Мае падпіскі', sub_next:'Наступны заказ', sub_cancel:'Адмяніць', sub_pause:'Прыпыніць', sub_resume:'Аднавіць', sub_active:'Актыўная', sub_paused:'Прыпынена', sub_cancelled:'Адменена', sub_confirm:'Аформіць падпіску «{name}»?', sub_cancel_confirm:'Адмяніць падпіску «{name}»? Аднавіць яе будзе нельга — толькі аформіць новую.', sub_done:'Падпіска аформлена! Першы заказ выстаўлены — рэквізіты ў раздзеле аплаты.', per_month:'/мес', per_year:'/год', title:'Кабінет кліента', get_code:'Атрымаць код', code_label:'Код з email', code_ph:'6-значны код', confirm:'Пацвердзіць', back:'← Назад', my_orders:'Мае заказы', tab_chat:'Чат', tab_cabinet:'Кабінет', logout:'← Выйсці', email_taken:'Гэты email ужо заняты іншым кліентам.', saved:'Захавана', addr_title:'Адрасы дастаўкі', addr_add:'Дадаць адрас', addr_none:'Няма адрасоў', addr_default:'Асноўны', addr_zone:'Зона', addr_label_ph:'Назва (Дом, Праца…)', addr_text_ph:'Адрас', err_enter_email:'Увядзіце email', err_not_found:'Гэты email не знойдзены ў базе заказаў.', code_sent:'Код адпраўлены на {email}. Дзейнічае 15 хвілін.', err_conn:'Памылка сувязі. Паспрабуйце яшчэ раз.', err_enter_code:'Увядзіце 6-значны код', err_wrong_code:'Няправільны код. Паспрабуйце яшчэ раз.', no_orders:'Заказаў пакуль няма.', order_prefix:'Заказ #', paid_until:'Аплачана да:' , privacy_text: "Калі ласка, азнаёмцеся з палітыкай прыватнасці і пацвердзіце згоду.", privacy_link: "Палітыка прыватнасці", privacy_accept: "Пацвярджаю", privacy_thanks: "Дзякуй! Згода захавана.", chat_title: 'Чат з намі', chat_ph: 'Напішыце паведамленне…', chat_send: 'Даслаць', chat_empty: 'Пакуль паведамленняў няма — напішыце нам!', logout_confirm: 'Выйсці з кабінета? Наступны ўваход — толькі праз новы код на email.', cloud_wait: 'сцягваем файл з воблака…', cloud_err: 'Не ўдалося прачытаць файл «{name}». Часцей за ўсё ён захоўваецца ў воблаку (iCloud, Google Drive, OneDrive) і не сцягнуты на прыладу — нават файлы на Стале і ў Загрузках могуць быць воблачнымі.\n\nЯк выправіць:\n1. Двойчы адкрыйце файл у Finder (ён сцягнецца) або правы клік → «Сцягнуць» / Download Now.\n2. Вярніцеся сюды і прыкладзіце файл зноў.' },
+  en: { inv_title:'Invoice', inv_seller:'Seller', inv_buyer:'Buyer', inv_date:'Date', inv_item:'Item', inv_qty:'Qty', inv_price:'Price', inv_sum:'Amount', inv_total:'Total', inv_delivery:'Delivery', inv_share:'Share', inv_save:'Print / Save PDF', pay_title:'Payment details', pay_recipient:'Recipient', pay_bank:'Bank', pay_due:'Pay by', pay_reference:'Reference', subs_title:'My subscriptions', sub_next:'Next order', sub_cancel:'Cancel', sub_pause:'Pause', sub_resume:'Resume', sub_active:'Active', sub_paused:'Paused', sub_cancelled:'Cancelled', sub_confirm:'Subscribe to “{name}”?', sub_cancel_confirm:'Cancel the “{name}” subscription? It can\'t be resumed — only a new one can be started.', sub_done:'Subscription created! The first order has been issued — payment details are in the payment section.', per_month:'/mo', per_year:'/yr', title:'Client area', get_code:'Get code', code_label:'Code from email', code_ph:'6-digit code', confirm:'Confirm', back:'← Back', my_orders:'My orders', tab_chat:'Chat', tab_cabinet:'Account', logout:'← Log out', email_taken:'This email is already used by another client.', saved:'Saved', addr_title:'Delivery addresses', addr_add:'Add address', addr_none:'No addresses', addr_default:'Default', addr_zone:'Zone', addr_label_ph:'Label (Home, Work…)', addr_text_ph:'Address', err_enter_email:'Enter email', err_not_found:'This email is not found in the order database.', code_sent:'Code sent to {email}. Valid for 15 minutes.', err_conn:'Connection error. Please try again.', err_enter_code:'Enter the 6-digit code', err_wrong_code:'Incorrect code. Please try again.', no_orders:'No orders yet.', order_prefix:'Order #', paid_until:'Paid until:' , privacy_text: "Please review the privacy policy and confirm your consent.", privacy_link: "Privacy policy", privacy_accept: "I agree", privacy_thanks: "Thank you! Consent saved.", chat_title: 'Chat with us', chat_ph: 'Type a message…', chat_send: 'Send', chat_empty: 'No messages yet — write to us!', logout_confirm: 'Log out? Next time you\'ll need a new email code to sign in.', cloud_wait: 'downloading file from the cloud…', cloud_err: 'Couldn\'t read the file «{name}». Most likely it\'s stored in the cloud (iCloud, Google Drive, OneDrive) and not downloaded to your device — even files on the Desktop or in Downloads can be cloud-only.\n\nHow to fix:\n1. Double-click the file in Finder (it will download) or right-click → Download Now.\n2. Come back here and attach the file again.' },
+  uk: { inv_title:'Рахунок-фактура', inv_seller:'Продавець', inv_buyer:'Покупець', inv_date:'Дата', inv_item:'Позиція', inv_qty:'К-сть', inv_price:'Ціна', inv_sum:'Сума', inv_total:'Разом', inv_delivery:'Доставка', inv_share:'Поділитися', inv_save:'Друк / Зберегти PDF', pay_title:'Реквізити для оплати', pay_recipient:'Отримувач', pay_bank:'Банк', pay_due:'Оплатити до', pay_reference:'Призначення', subs_title:'Мої підписки', sub_next:'Наступне замовлення', sub_cancel:'Скасувати', sub_pause:'Призупинити', sub_resume:'Відновити', sub_active:'Активна', sub_paused:'Призупинена', sub_cancelled:'Скасована', sub_confirm:'Оформити підписку «{name}»?', sub_cancel_confirm:'Скасувати підписку «{name}»? Відновити її не можна — лише оформити нову.', sub_done:'Підписку оформлено! Перше замовлення виставлено — реквізити в розділі оплати.', per_month:'/міс', per_year:'/рік', title:'Кабінет клієнта', get_code:'Отримати код', code_label:'Код з email', code_ph:'6-значний код', confirm:'Підтвердити', back:'← Назад', my_orders:'Мої замовлення', tab_chat:'Чат', tab_cabinet:'Кабінет', logout:'← Вийти', email_taken:'Цей email уже зайнятий іншим клієнтом.', saved:'Збережено', addr_title:'Адреси доставки', addr_add:'Додати адресу', addr_none:'Немає адрес', addr_default:'Основна', addr_zone:'Зона', addr_label_ph:'Назва (Дім, Робота…)', addr_text_ph:'Адреса', err_enter_email:'Введіть email', err_not_found:'Цей email не знайдено в базі замовлень.', code_sent:'Код відправлено на {email}. Діє 15 хвилин.', err_conn:'Помилка з\'єднання. Спробуйте ще раз.', err_enter_code:'Введіть 6-значний код', err_wrong_code:'Невірний код. Спробуйте ще раз.', no_orders:'Замовлень поки немає.', order_prefix:'Замовлення #', paid_until:'Оплачено до:' , privacy_text: "Будь ласка, ознайомтеся з політикою конфіденційності та підтвердьте згоду.", privacy_link: "Політика конфіденційності", privacy_accept: "Підтверджую", privacy_thanks: "Дякуємо! Згоду збережено.", chat_title: 'Чат з нами', chat_ph: 'Напишіть повідомлення…', chat_send: 'Надіслати', chat_empty: 'Повідомлень поки немає — напишіть нам!', logout_confirm: 'Вийти з кабінету? Наступний вхід — лише через новий код на email.', cloud_wait: 'завантажуємо файл із хмари…', cloud_err: 'Не вдалося прочитати файл «{name}». Найімовірніше, він зберігається у хмарі (iCloud, Google Drive, OneDrive) і не завантажений на пристрій — навіть файли на Робочому столі та в Завантаженнях можуть бути хмарними.\n\nЯк виправити:\n1. Двічі відкрийте файл у Finder (він завантажиться) або правий клік → «Завантажити» / Download Now.\n2. Поверніться сюди та прикріпіть файл ще раз.' },
+  ru: { inv_title:'Счёт-фактура', inv_seller:'Продавец', inv_buyer:'Покупатель', inv_date:'Дата', inv_item:'Позиция', inv_qty:'Кол-во', inv_price:'Цена', inv_sum:'Сумма', inv_total:'Итого', inv_delivery:'Доставка', inv_share:'Поделиться', inv_save:'Печать / Сохранить PDF', pay_title:'Реквизиты для оплаты', pay_recipient:'Получатель', pay_bank:'Банк', pay_due:'Оплатить до', pay_reference:'Назначение', subs_title:'Мои подписки', sub_next:'Следующий заказ', sub_cancel:'Отменить', sub_pause:'Приостановить', sub_resume:'Возобновить', sub_active:'Активна', sub_paused:'Приостановлена', sub_cancelled:'Отменена', sub_confirm:'Оформить подписку «{name}»?', sub_cancel_confirm:'Отменить подписку «{name}»? Возобновить её нельзя — только оформить новую.', sub_done:'Подписка оформлена! Первый заказ выставлен — реквизиты в разделе оплаты.', per_month:'/мес', per_year:'/год', title:'Кабинет клиента', get_code:'Получить код', code_label:'Код из email', code_ph:'6-значный код', confirm:'Подтвердить', back:'← Назад', my_orders:'Мои заказы', tab_chat:'Чат', tab_cabinet:'Кабинет', logout:'← Выйти', email_taken:'Этот email уже занят другим клиентом.', saved:'Сохранено', addr_title:'Адреса доставки', addr_add:'Добавить адрес', addr_none:'Нет адресов', addr_default:'Основной', addr_zone:'Зона', addr_label_ph:'Название (Дом, Работа…)', addr_text_ph:'Адрес', err_enter_email:'Введите email', err_not_found:'Этот email не найден в базе заказов.', code_sent:'Код отправлен на {email}. Действует 15 минут.', err_conn:'Ошибка соединения. Попробуйте ещё раз.', err_enter_code:'Введите 6-значный код', err_wrong_code:'Неверный код. Попробуйте ещё раз.', no_orders:'Заказов пока нет.', order_prefix:'Заказ #', paid_until:'Оплачено до:' , privacy_text: "Пожалуйста, ознакомьтесь с политикой конфиденциальности и подтвердите согласие.", privacy_link: "Политика конфиденциальности", privacy_accept: "Подтверждаю", privacy_thanks: "Спасибо! Согласие сохранено.", chat_title: 'Чат с нами', chat_ph: 'Напишите сообщение…', chat_send: 'Отправить', chat_empty: 'Сообщений пока нет — напишите нам!', logout_confirm: 'Выйти из кабинета? Следующий вход — только через новый код на email.', cloud_wait: 'скачиваем файл из облака…', cloud_err: 'Не удалось прочитать файл «{name}». Скорее всего, он хранится в облаке (iCloud, Google Drive, OneDrive) и не скачан на устройство — даже файлы на Рабочем столе и в Загрузках могут быть облачными.\n\nКак исправить:\n1. Дважды откройте файл в Finder (он скачается) или правый клик → «Скачать» / Download Now.\n2. Вернитесь сюда и прикрепите файл снова.' },
+  pl: { inv_title:'Faktura', inv_seller:'Sprzedawca', inv_buyer:'Nabywca', inv_date:'Data', inv_item:'Pozycja', inv_qty:'Ilość', inv_price:'Cena', inv_sum:'Kwota', inv_total:'Razem', inv_delivery:'Dostawa', inv_share:'Udostępnij', inv_save:'Drukuj / Zapisz PDF', pay_title:'Dane do przelewu', pay_recipient:'Odbiorca', pay_bank:'Bank', pay_due:'Zapłać do', pay_reference:'Tytuł przelewu', subs_title:'Moje subskrypcje', sub_next:'Następne zamówienie', sub_cancel:'Anuluj', sub_pause:'Wstrzymaj', sub_resume:'Wznów', sub_active:'Aktywna', sub_paused:'Wstrzymana', sub_cancelled:'Anulowana', sub_confirm:'Zasubskrybować „{name}”?', sub_cancel_confirm:'Anulować subskrypcję „{name}”? Nie można jej wznowić — tylko założyć nową.', sub_done:'Subskrypcja utworzona! Pierwsze zamówienie wystawione — dane do przelewu w sekcji płatności.', per_month:'/mies.', per_year:'/rok', title:'Panel klienta', get_code:'Pobierz kod', code_label:'Kod z email', code_ph:'Kod 6-cyfrowy', confirm:'Potwierdź', back:'← Wstecz', my_orders:'Moje zamówienia', tab_chat:'Czat', tab_cabinet:'Konto', logout:'← Wyloguj się', email_taken:'Ten email jest już używany przez innego klienta.', saved:'Zapisano', addr_title:'Adresy dostawy', addr_add:'Dodaj adres', addr_none:'Brak adresów', addr_default:'Domyślny', addr_zone:'Strefa', addr_label_ph:'Nazwa (Dom, Praca…)', addr_text_ph:'Adres', err_enter_email:'Wprowadź email', err_not_found:'Ten email nie został znaleziony w bazie zamówień.', code_sent:'Kod wysłany na {email}. Ważny przez 15 minut.', err_conn:'Błąd połączenia. Spróbuj ponownie.', err_enter_code:'Wprowadź 6-cyfrowy kod', err_wrong_code:'Nieprawidłowy kod. Spróbuj ponownie.', no_orders:'Brak zamówień.', order_prefix:'Zamówienie #', paid_until:'Opłacone do:' , privacy_text: "Prosimy o zapoznanie się z polityką prywatności i potwierdzenie zgody.", privacy_link: "Polityka prywatności", privacy_accept: "Potwierdzam", privacy_thanks: "Dziękujemy! Zgoda zapisana.", chat_title: 'Czat z nami', chat_ph: 'Napisz wiadomość…', chat_send: 'Wyślij', chat_empty: 'Brak wiadomości — napisz do nas!', logout_confirm: 'Wylogować się? Następne logowanie będzie wymagać nowego kodu e-mail.', cloud_wait: 'pobieramy plik z chmury…', cloud_err: 'Nie udało się odczytać pliku «{name}». Najprawdopodobniej jest przechowywany w chmurze (iCloud, Google Drive, OneDrive) i nie został pobrany na urządzenie — nawet pliki na Pulpicie i w Pobranych mogą być w chmurze.\n\nJak naprawić:\n1. Kliknij plik dwukrotnie w Finderze (zostanie pobrany) lub prawym → «Pobierz» / Download Now.\n2. Wróć tutaj i załącz plik ponownie.' },
+  de: { inv_title:'Rechnung', inv_seller:'Verkäufer', inv_buyer:'Käufer', inv_date:'Datum', inv_item:'Position', inv_qty:'Menge', inv_price:'Preis', inv_sum:'Betrag', inv_total:'Gesamt', inv_delivery:'Lieferung', inv_share:'Teilen', inv_save:'Drucken / PDF speichern', pay_title:'Zahlungsdaten', pay_recipient:'Empfänger', pay_bank:'Bank', pay_due:'Zahlbar bis', pay_reference:'Verwendungszweck', subs_title:'Meine Abonnements', sub_next:'Nächste Bestellung', sub_cancel:'Kündigen', sub_pause:'Pausieren', sub_resume:'Fortsetzen', sub_active:'Aktiv', sub_paused:'Pausiert', sub_cancelled:'Gekündigt', sub_confirm:'„{name}“ abonnieren?', sub_cancel_confirm:'Abonnement „{name}“ kündigen? Es kann nicht fortgesetzt werden — nur ein neues abgeschlossen werden.', sub_done:'Abonnement erstellt! Die erste Bestellung wurde ausgestellt — Zahlungsdaten im Zahlungsbereich.', per_month:'/Mon.', per_year:'/Jahr', title:'Kundenbereich', get_code:'Code erhalten', code_label:'Code aus E-Mail', code_ph:'6-stelliger Code', confirm:'Bestätigen', back:'← Zurück', my_orders:'Meine Bestellungen', tab_chat:'Chat', tab_cabinet:'Konto', logout:'← Abmelden', email_taken:'Diese E-Mail wird bereits von einem anderen Kunden verwendet.', saved:'Gespeichert', addr_title:'Lieferadressen', addr_add:'Adresse hinzufügen', addr_none:'Keine Adressen', addr_default:'Standard', addr_zone:'Zone', addr_label_ph:'Bezeichnung (Zuhause, Arbeit…)', addr_text_ph:'Adresse', err_enter_email:'E-Mail eingeben', err_not_found:'Diese E-Mail wurde in der Bestelldatenbank nicht gefunden.', code_sent:'Code an {email} gesendet. Gültig für 15 Minuten.', err_conn:'Verbindungsfehler. Bitte erneut versuchen.', err_enter_code:'Geben Sie den 6-stelligen Code ein', err_wrong_code:'Falscher Code. Bitte erneut versuchen.', no_orders:'Noch keine Bestellungen.', order_prefix:'Bestellung #', paid_until:'Bezahlt bis:' , privacy_text: "Bitte lesen Sie die Datenschutzerklärung und bestätigen Sie Ihre Zustimmung.", privacy_link: "Datenschutzerklärung", privacy_accept: "Ich stimme zu", privacy_thanks: "Danke! Zustimmung gespeichert.", chat_title: 'Chat mit uns', chat_ph: 'Nachricht eingeben…', chat_send: 'Senden', chat_empty: 'Noch keine Nachrichten — schreiben Sie uns!', logout_confirm: 'Abmelden? Für die nächste Anmeldung benötigen Sie einen neuen E-Mail-Code.', cloud_wait: 'Datei wird aus der Cloud geladen…', cloud_err: 'Die Datei «{name}» konnte nicht gelesen werden. Höchstwahrscheinlich liegt sie in der Cloud (iCloud, Google Drive, OneDrive) und wurde nicht auf das Gerät heruntergeladen — sogar Dateien auf dem Schreibtisch und in Downloads können reine Cloud-Dateien sein.\n\nSo beheben Sie das:\n1. Öffnen Sie die Datei per Doppelklick im Finder (sie wird heruntergeladen) oder Rechtsklick → «Herunterladen» / Download Now.\n2. Kommen Sie hierher zurück und hängen Sie die Datei erneut an.' },
+  fr: { inv_title:'Facture', inv_seller:'Vendeur', inv_buyer:'Acheteur', inv_date:'Date', inv_item:'Article', inv_qty:'Qté', inv_price:'Prix', inv_sum:'Montant', inv_total:'Total', inv_delivery:'Livraison', inv_share:'Partager', inv_save:'Imprimer / Enregistrer PDF', pay_title:'Coordonnées de paiement', pay_recipient:'Bénéficiaire', pay_bank:'Banque', pay_due:'Payer avant le', pay_reference:'Référence', subs_title:'Mes abonnements', sub_next:'Prochaine commande', sub_cancel:'Annuler', sub_pause:'Suspendre', sub_resume:'Reprendre', sub_active:'Actif', sub_paused:'Suspendu', sub_cancelled:'Annulé', sub_confirm:'S\'abonner à « {name} » ?', sub_cancel_confirm:'Annuler l\'abonnement « {name} » ? Il ne pourra pas être repris — seul un nouvel abonnement sera possible.', sub_done:'Abonnement créé ! La première commande a été émise — coordonnées de paiement dans la section paiement.', per_month:'/mois', per_year:'/an', title:'Espace client', get_code:'Recevoir le code', code_label:'Code par email', code_ph:'Code à 6 chiffres', confirm:'Confirmer', back:'← Retour', my_orders:'Mes commandes', tab_chat:'Chat', tab_cabinet:'Compte', logout:'← Se déconnecter', email_taken:'Cet e-mail est déjà utilisé par un autre client.', saved:'Enregistré', addr_title:'Adresses de livraison', addr_add:'Ajouter une adresse', addr_none:'Aucune adresse', addr_default:'Par défaut', addr_zone:'Zone', addr_label_ph:'Libellé (Maison, Travail…)', addr_text_ph:'Adresse', err_enter_email:"Saisir l'email", err_not_found:"Cet email n'est pas trouvé dans la base de commandes.", code_sent:'Code envoyé à {email}. Valide pendant 15 minutes.', err_conn:'Erreur de connexion. Veuillez réessayer.', err_enter_code:'Saisissez le code à 6 chiffres', err_wrong_code:'Code incorrect. Veuillez réessayer.', no_orders:"Aucune commande pour l'instant.", order_prefix:'Commande #', paid_until:"Payé jusqu'au :" , privacy_text: "Veuillez consulter la politique de confidentialité et confirmer votre consentement.", privacy_link: "Politique de confidentialité", privacy_accept: "J’accepte", privacy_thanks: "Merci ! Consentement enregistré.", chat_title: 'Chat avec nous', chat_ph: 'Écrivez un message…', chat_send: 'Envoyer', chat_empty: 'Pas encore de messages — écrivez-nous !', logout_confirm: 'Se déconnecter ? La prochaine connexion nécessitera un nouveau code par e-mail.', cloud_wait: 'téléchargement du fichier depuis le cloud…', cloud_err: 'Impossible de lire le fichier « {name} ». Il est probablement stocké dans le cloud (iCloud, Google Drive, OneDrive) et non téléchargé sur l\'appareil — même les fichiers du Bureau et des Téléchargements peuvent être uniquement dans le cloud.\n\nComment résoudre :\n1. Double-cliquez sur le fichier dans le Finder (il se téléchargera) ou clic droit → « Télécharger » / Download Now.\n2. Revenez ici et joignez de nouveau le fichier.' },
+  es: { inv_title:'Factura', inv_seller:'Vendedor', inv_buyer:'Comprador', inv_date:'Fecha', inv_item:'Concepto', inv_qty:'Cant.', inv_price:'Precio', inv_sum:'Importe', inv_total:'Total', inv_delivery:'Envío', inv_share:'Compartir', inv_save:'Imprimir / Guardar PDF', pay_title:'Datos de pago', pay_recipient:'Beneficiario', pay_bank:'Banco', pay_due:'Pagar antes del', pay_reference:'Concepto', subs_title:'Mis suscripciones', sub_next:'Próximo pedido', sub_cancel:'Cancelar', sub_pause:'Pausar', sub_resume:'Reanudar', sub_active:'Activa', sub_paused:'Pausada', sub_cancelled:'Cancelada', sub_confirm:'¿Suscribirse a «{name}»?', sub_cancel_confirm:'¿Cancelar la suscripción «{name}»? No se podrá reanudar — solo crear una nueva.', sub_done:'¡Suscripción creada! El primer pedido ha sido emitido — datos de pago en la sección de pago.', per_month:'/mes', per_year:'/año', title:'Área de cliente', get_code:'Obtener código', code_label:'Código del email', code_ph:'Código de 6 dígitos', confirm:'Confirmar', back:'← Volver', my_orders:'Mis pedidos', tab_chat:'Chat', tab_cabinet:'Cuenta', logout:'← Cerrar sesión', email_taken:'Este email ya lo usa otro cliente.', saved:'Guardado', addr_title:'Direcciones de entrega', addr_add:'Añadir dirección', addr_none:'Sin direcciones', addr_default:'Predeterminada', addr_zone:'Zona', addr_label_ph:'Etiqueta (Casa, Trabajo…)', addr_text_ph:'Dirección', err_enter_email:'Introduce el email', err_not_found:'Este email no está en la base de pedidos.', code_sent:'Código enviado a {email}. Válido durante 15 minutos.', err_conn:'Error de conexión. Por favor, inténtelo de nuevo.', err_enter_code:'Introduce el código de 6 dígitos', err_wrong_code:'Código incorrecto. Por favor, inténtelo de nuevo.', no_orders:'Aún no hay pedidos.', order_prefix:'Pedido #', paid_until:'Pagado hasta:' , privacy_text: "Por favor, revise la política de privacidad y confirme su consentimiento.", privacy_link: "Política de privacidad", privacy_accept: "Acepto", privacy_thanks: "¡Gracias! Consentimiento guardado.", chat_title: 'Chat con nosotros', chat_ph: 'Escribe un mensaje…', chat_send: 'Enviar', chat_empty: 'Aún no hay mensajes — ¡escríbenos!', logout_confirm: '¿Cerrar sesión? La próxima vez necesitarás un nuevo código por correo.', cloud_wait: 'descargando el archivo de la nube…', cloud_err: 'No se pudo leer el archivo «{name}». Lo más probable es que esté en la nube (iCloud, Google Drive, OneDrive) y no se haya descargado en el dispositivo — incluso los archivos del Escritorio y de Descargas pueden estar solo en la nube.\n\nCómo solucionarlo:\n1. Haz doble clic en el archivo en el Finder (se descargará) o clic derecho → «Descargar» / Download Now.\n2. Vuelve aquí y adjunta el archivo de nuevo.' },
+  it: { inv_title:'Fattura', inv_seller:'Venditore', inv_buyer:'Acquirente', inv_date:'Data', inv_item:'Voce', inv_qty:'Q.tà', inv_price:'Prezzo', inv_sum:'Importo', inv_total:'Totale', inv_delivery:'Consegna', inv_share:'Condividi', inv_save:'Stampa / Salva PDF', pay_title:'Dati di pagamento', pay_recipient:'Beneficiario', pay_bank:'Banca', pay_due:'Pagare entro', pay_reference:'Causale', subs_title:'I miei abbonamenti', sub_next:'Prossimo ordine', sub_cancel:'Annulla', sub_pause:'Sospendi', sub_resume:'Riprendi', sub_active:'Attivo', sub_paused:'Sospeso', sub_cancelled:'Annullato', sub_confirm:'Abbonarsi a «{name}»?', sub_cancel_confirm:'Annullare l\'abbonamento «{name}»? Non potrà essere ripreso — solo attivarne uno nuovo.', sub_done:'Abbonamento creato! Il primo ordine è stato emesso — dati di pagamento nella sezione pagamenti.', per_month:'/mese', per_year:'/anno', title:'Area clienti', get_code:'Ricevi codice', code_label:"Codice dall'email", code_ph:'Codice a 6 cifre', confirm:'Conferma', back:'← Indietro', my_orders:'I miei ordini', tab_chat:'Chat', tab_cabinet:'Account', logout:'← Esci', email_taken:'Questa email è già usata da un altro cliente.', saved:'Salvato', addr_title:'Indirizzi di consegna', addr_add:'Aggiungi indirizzo', addr_none:'Nessun indirizzo', addr_default:'Predefinito', addr_zone:'Zona', addr_label_ph:'Etichetta (Casa, Lavoro…)', addr_text_ph:'Indirizzo', err_enter_email:'Inserisci email', err_not_found:'Questa email non è nella base degli ordini.', code_sent:'Codice inviato a {email}. Valido per 15 minuti.', err_conn:'Errore di connessione. Riprova.', err_enter_code:'Inserisci il codice a 6 cifre', err_wrong_code:'Codice errato. Riprova.', no_orders:'Ancora nessun ordine.', order_prefix:'Ordine #', paid_until:'Pagato fino al:' , privacy_text: "Si prega di consultare l’informativa sulla privacy e confermare il consenso.", privacy_link: "Informativa sulla privacy", privacy_accept: "Accetto", privacy_thanks: "Grazie! Consenso salvato.", chat_title: 'Chat con noi', chat_ph: 'Scrivi un messaggio…', chat_send: 'Invia', chat_empty: 'Ancora nessun messaggio — scrivici!', logout_confirm: 'Uscire? Al prossimo accesso servirà un nuovo codice via e-mail.', cloud_wait: 'scarichiamo il file dal cloud…', cloud_err: 'Impossibile leggere il file «{name}». Molto probabilmente è archiviato nel cloud (iCloud, Google Drive, OneDrive) e non è stato scaricato sul dispositivo — anche i file sulla Scrivania e nei Download possono essere solo nel cloud.\n\nCome risolvere:\n1. Fai doppio clic sul file nel Finder (verrà scaricato) o clic destro → «Scarica» / Download Now.\n2. Torna qui e allega di nuovo il file.' },
+  pt: { inv_title:'Fatura', inv_seller:'Vendedor', inv_buyer:'Comprador', inv_date:'Data', inv_item:'Item', inv_qty:'Qtd.', inv_price:'Preço', inv_sum:'Valor', inv_total:'Total', inv_delivery:'Entrega', inv_share:'Compartilhar', inv_save:'Imprimir / Salvar PDF', pay_title:'Dados de pagamento', pay_recipient:'Beneficiário', pay_bank:'Banco', pay_due:'Pagar até', pay_reference:'Referência', subs_title:'Minhas assinaturas', sub_next:'Próximo pedido', sub_cancel:'Cancelar', sub_pause:'Pausar', sub_resume:'Retomar', sub_active:'Ativa', sub_paused:'Pausada', sub_cancelled:'Cancelada', sub_confirm:'Assinar «{name}»?', sub_cancel_confirm:'Cancelar a assinatura «{name}»? Não poderá ser retomada — apenas criar uma nova.', sub_done:'Assinatura criada! O primeiro pedido foi emitido — dados de pagamento na seção de pagamento.', per_month:'/mês', per_year:'/ano', title:'Área do cliente', get_code:'Obter código', code_label:'Código do email', code_ph:'Código de 6 dígitos', confirm:'Confirmar', back:'← Voltar', my_orders:'Meus pedidos', tab_chat:'Chat', tab_cabinet:'Conta', logout:'← Sair', email_taken:'Este email já é usado por outro cliente.', saved:'Salvo', addr_title:'Endereços de entrega', addr_add:'Adicionar endereço', addr_none:'Sem endereços', addr_default:'Padrão', addr_zone:'Zona', addr_label_ph:'Rótulo (Casa, Trabalho…)', addr_text_ph:'Endereço', err_enter_email:'Insira o email', err_not_found:'Este email não foi encontrado na base de pedidos.', code_sent:'Código enviado para {email}. Válido por 15 minutos.', err_conn:'Erro de conexão. Tente novamente.', err_enter_code:'Insira o código de 6 dígitos', err_wrong_code:'Código incorreto. Tente novamente.', no_orders:'Ainda não há pedidos.', order_prefix:'Pedido #', paid_until:'Pago até:' , privacy_text: "Por favor, revise a política de privacidade e confirme o seu consentimento.", privacy_link: "Política de privacidade", privacy_accept: "Aceito", privacy_thanks: "Obrigado! Consentimento salvo.", chat_title: 'Chat conosco', chat_ph: 'Escreva uma mensagem…', chat_send: 'Enviar', chat_empty: 'Ainda não há mensagens — escreva para nós!', logout_confirm: 'Sair? No próximo acesso será necessário um novo código por e-mail.', cloud_wait: 'baixando o arquivo da nuvem…', cloud_err: 'Não foi possível ler o arquivo «{name}». Provavelmente está armazenado na nuvem (iCloud, Google Drive, OneDrive) e não foi baixado no dispositivo — até arquivos na Área de Trabalho e em Downloads podem estar apenas na nuvem.\n\nComo resolver:\n1. Dê um duplo clique no arquivo no Finder (ele será baixado) ou clique direito → «Baixar» / Download Now.\n2. Volte aqui e anexe o arquivo novamente.' },
+  zh: { inv_title:'发票', inv_seller:'卖方', inv_buyer:'买方', inv_date:'日期', inv_item:'项目', inv_qty:'数量', inv_price:'单价', inv_sum:'金额', inv_total:'合计', inv_delivery:'配送', inv_share:'分享', inv_save:'打印 / 保存PDF', pay_title:'付款信息', pay_recipient:'收款人', pay_bank:'银行', pay_due:'付款截止', pay_reference:'备注', subs_title:'我的订阅', sub_next:'下次订单', sub_cancel:'取消', sub_pause:'暂停', sub_resume:'恢复', sub_active:'生效中', sub_paused:'已暂停', sub_cancelled:'已取消', sub_confirm:'订阅“{name}”？', sub_cancel_confirm:'取消订阅“{name}”？取消后无法恢复，只能重新订阅。', sub_done:'订阅成功！首个订单已开出——付款信息见付款部分。', per_month:'/月', per_year:'/年', title:'客户中心', get_code:'获取验证码', code_label:'邮件验证码', code_ph:'6位验证码', confirm:'确认', back:'← 返回', my_orders:'我的订单', tab_chat:'聊天', tab_cabinet:'账户', logout:'← 退出登录', email_taken:'该邮箱已被其他客户使用。', saved:'已保存', addr_title:'配送地址', addr_add:'添加地址', addr_none:'暂无地址', addr_default:'默认', addr_zone:'区域', addr_label_ph:'名称（家、公司…）', addr_text_ph:'地址', err_enter_email:'请输入邮箱', err_not_found:'此邮箱在订单数据库中未找到。', code_sent:'验证码已发送至 {email}。有效期15分钟。', err_conn:'连接错误，请重试。', err_enter_code:'请输入6位验证码', err_wrong_code:'验证码错误，请重试。', no_orders:'暂无订单。', order_prefix:'订单 #', paid_until:'已付款至：' , privacy_text: "请阅读隐私政策并确认您的同意。", privacy_link: "隐私政策", privacy_accept: "我同意", privacy_thanks: "谢谢！已保存您的同意。", chat_title: '在线聊天', chat_ph: '输入消息…', chat_send: '发送', chat_empty: '暂无消息——给我们留言吧！', logout_confirm: '确定退出吗？下次登录需要新的邮箱验证码。', cloud_wait: '正在从云端下载文件…', cloud_err: '无法读取文件«{name}»。很可能它存储在云端（iCloud、Google Drive、OneDrive）且尚未下载到设备——即使桌面和下载文件夹中的文件也可能仅在云端。\n\n如何解决：\n1. 在访达中双击该文件（会开始下载），或右键 →«下载»/Download Now。\n2. 返回此处，重新添加该文件。' },
+  ar: { inv_title:'فاتورة', inv_seller:'البائع', inv_buyer:'المشتري', inv_date:'التاريخ', inv_item:'البند', inv_qty:'الكمية', inv_price:'السعر', inv_sum:'المبلغ', inv_total:'الإجمالي', inv_delivery:'التوصيل', inv_share:'مشاركة', inv_save:'طباعة / حفظ PDF', pay_title:'بيانات الدفع', pay_recipient:'المستفيد', pay_bank:'البنك', pay_due:'الدفع قبل', pay_reference:'مرجع الدفع', subs_title:'اشتراكاتي', sub_next:'الطلب التالي', sub_cancel:'إلغاء', sub_pause:'إيقاف مؤقت', sub_resume:'استئناف', sub_active:'نشط', sub_paused:'موقوف مؤقتاً', sub_cancelled:'ملغى', sub_confirm:'الاشتراك في «{name}»؟', sub_cancel_confirm:'إلغاء اشتراك «{name}»؟ لا يمكن استئنافه — فقط إنشاء اشتراك جديد.', sub_done:'تم إنشاء الاشتراك! صدر الطلب الأول — بيانات الدفع في قسم الدفع.', per_month:'/شهر', per_year:'/سنة', title:'منطقة العميل', get_code:'الحصول على الرمز', code_label:'الرمز من البريد الإلكتروني', code_ph:'رمز من 6 أرقام', confirm:'تأكيد', back:'رجوع →', my_orders:'طلباتي', tab_chat:'الدردشة', tab_cabinet:'الحساب', logout:'خروج →', email_taken:'هذا البريد الإلكتروني مستخدم من قبل عميل آخر.', saved:'تم الحفظ', addr_title:'عناوين التوصيل', addr_add:'إضافة عنوان', addr_none:'لا توجد عناوين', addr_default:'افتراضي', addr_zone:'المنطقة', addr_label_ph:'التسمية (المنزل، العمل…)', addr_text_ph:'العنوان', err_enter_email:'أدخل البريد الإلكتروني', err_not_found:'هذا البريد الإلكتروني غير موجود في قاعدة الطلبات.', code_sent:'تم إرسال الرمز إلى {email}. صالح لمدة 15 دقيقة.', err_conn:'خطأ في الاتصال. يرجى المحاولة مجدداً.', err_enter_code:'أدخل الرمز المكون من 6 أرقام', err_wrong_code:'رمز غير صحيح. يرجى المحاولة مجدداً.', no_orders:'لا توجد طلبات حتى الآن.', order_prefix:'طلب #', paid_until:'مدفوع حتى:' , privacy_text: "يرجى الاطلاع على سياسة الخصوصية وتأكيد موافقتك.", privacy_link: "سياسة الخصوصية", privacy_accept: "أوافق", privacy_thanks: "شكراً! تم حفظ الموافقة.", chat_title: 'الدردشة معنا', chat_ph: 'اكتب رسالة…', chat_send: 'إرسال', chat_empty: 'لا توجد رسائل بعد — راسلنا!', logout_confirm: 'تسجيل الخروج؟ ستحتاج إلى رمز بريد إلكتروني جديد للدخول مرة أخرى.', cloud_wait: 'جارٍ تنزيل الملف من السحابة…', cloud_err: 'تعذّرت قراءة الملف «{name}». على الأرجح أنه مخزَّن في السحابة (iCloud وGoogle Drive وOneDrive) ولم يُنزَّل على الجهاز — حتى الملفات على سطح المكتب وفي التنزيلات قد تكون سحابية فقط.\n\nكيفية الحل:\n1. انقر نقرًا مزدوجًا على الملف في Finder (سيُنزَّل) أو انقر بالزر الأيمن ← «تنزيل» / Download Now.\n2. عُد إلى هنا وأرفق الملف مرة أخرى.' },
+  hu: { inv_title:'Számla', inv_seller:'Eladó', inv_buyer:'Vevő', inv_date:'Dátum', inv_item:'Tétel', inv_qty:'Menny.', inv_price:'Ár', inv_sum:'Összeg', inv_total:'Összesen', inv_delivery:'Szállítás', inv_share:'Megosztás', inv_save:'Nyomtatás / PDF mentés', pay_title:'Fizetési adatok', pay_recipient:'Kedvezményezett', pay_bank:'Bank', pay_due:'Fizetési határidő', pay_reference:'Közlemény', subs_title:'Előfizetéseim', sub_next:'Következő rendelés', sub_cancel:'Lemondás', sub_pause:'Szüneteltetés', sub_resume:'Folytatás', sub_active:'Aktív', sub_paused:'Szüneteltetve', sub_cancelled:'Lemondva', sub_confirm:'Előfizet a(z) „{name}” szolgáltatásra?', sub_cancel_confirm:'Lemondja a(z) „{name}” előfizetést? Nem folytatható — csak új köthető.', sub_done:'Előfizetés létrehozva! Az első rendelés kiállítva — fizetési adatok a fizetés szekcióban.', per_month:'/hó', per_year:'/év', title:'Ügyfélfiók', get_code:'Kód kérése', code_label:'Kód az emailből', code_ph:'6 jegyű kód', confirm:'Megerősítés', back:'← Vissza', my_orders:'Rendeléseim', tab_chat:'Csevegés', tab_cabinet:'Fiók', logout:'← Kijelentkezés', email_taken:'Ezt az e-mailt már egy másik ügyfél használja.', saved:'Mentve', addr_title:'Szállítási címek', addr_add:'Cím hozzáadása', addr_none:'Nincsenek címek', addr_default:'Alapértelmezett', addr_zone:'Zóna', addr_label_ph:'Címke (Otthon, Munka…)', addr_text_ph:'Cím', err_enter_email:'Adja meg az e-mailt', err_not_found:'Ez az email nem található a rendelési adatbázisban.', code_sent:'Kód elküldve ide: {email}. 15 percig érvényes.', err_conn:'Kapcsolódási hiba. Kérjük, próbálja újra.', err_enter_code:'Adja meg a 6 jegyű kódot', err_wrong_code:'Hibás kód. Kérjük, próbálja újra.', no_orders:'Még nincsenek rendelések.', order_prefix:'Rendelés #', paid_until:'Fizetve eddig:' , privacy_text: "Kérjük, olvassa el az adatvédelmi szabályzatot és erősítse meg hozzájárulását.", privacy_link: "Adatvédelmi szabályzat", privacy_accept: "Elfogadom", privacy_thanks: "Köszönjük! Hozzájárulás mentve.", chat_title: 'Csevegés velünk', chat_ph: 'Írjon üzenetet…', chat_send: 'Küldés', chat_empty: 'Még nincsenek üzenetek — írjon nekünk!', logout_confirm: 'Kijelentkezik? A következő belépéshez új e-mail kód szükséges.', cloud_wait: 'fájl letöltése a felhőből…', cloud_err: 'Nem sikerült beolvasni a(z) «{name}» fájlt. Valószínűleg a felhőben van tárolva (iCloud, Google Drive, OneDrive), és nincs letöltve az eszközre — még az Asztalon és a Letöltésekben lévő fájlok is lehetnek csak felhőben.\n\nHogyan javítható:\n1. Kattintson duplán a fájlra a Finderben (letöltődik), vagy jobb klikk → «Letöltés» / Download Now.\n2. Térjen vissza ide, és csatolja újra a fájlt.' },
 };
 
 const STATUS_T = {
@@ -120,7 +176,10 @@ document.getElementById('portal-logo').textContent = REPO.toUpperCase();
 let PT = PORTAL_T.be;
 let ST = STATUS_T.be;
 let portalEmail = '';
-let portalToken = '';
+let portalToken = localStorage.getItem('ttzop_portal_token') || ''; // сесія кабінета 30 дзён — «памятаем» наведвальніка
+// які від паказаць пасля ўваходу: chat (дэфолт) / cabinet — з location.hash (навбар-меню сайта дае #chat/#cabinet)
+let portalView = (location.hash.replace('#', '') === 'cabinet') ? 'cabinet' : 'chat';
+let lastCabData = null; // апошні payload (portal_me/verify) — для рэндэру профілю пры перамыканні відаў
 
 function detectPortalLang() {
   const saved = localStorage.getItem('ttzop_lang');
@@ -145,12 +204,21 @@ function applyPortalLang() {
   document.getElementById('s2-btn').textContent = PT.confirm;
   document.getElementById('s2-back').textContent = PT.back;
   document.getElementById('my-orders-title').textContent = PT.my_orders;
-  document.getElementById('s3-logout').textContent = PT.logout;
+  document.getElementById('tab-chat').textContent = '💬 ' + PT.tab_chat;
+  document.getElementById('tab-cabinet').textContent = '👤 ' + PT.tab_cabinet;
+  document.getElementById('chat-title').textContent = PT.chat_title;
+  if (lastCabData) { renderCabinetProfile(lastCabData); renderCabinetPayment(); renderCabinetSubs(); } // перамалёўка профілю + аплаты + падпісак на новую мову
+  document.getElementById('portal-chat-input').placeholder = PT.chat_ph;
+  document.getElementById('chat-send-btn').title = PT.chat_send; // кнопка = іконка ➤, тэкст у title (даступнасць)
 }
 
 function showStep(step) {
   document.querySelectorAll('.step').forEach(s => s.classList.remove('active'));
   document.getElementById('step-' + step).classList.add('active');
+  // кабінет (заказы+чат) — шырокі рэжым: акно на ўсю шырыню, менш бакавых водступаў (больш месца чату);
+  // login/code — вузкая цэнтраваная форма (як было)
+  document.querySelector('.login-box').classList.toggle('cab', step === 'orders');
+  document.body.classList.toggle('cab-body', step === 'orders'); // прыбраць цёмны край iframe вакол акна кабінета
 }
 
 function setMsg(id, text) {
@@ -168,11 +236,7 @@ async function portalSendCode() {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ action: 'portal_send_code', repo: REPO, email, lang: detectPortalLang() })
     });
-    const data = await res.json();
-    if (data.error === 'not_found') {
-      setMsg('s1-msg', PT.err_not_found);
-      btn.disabled = false; btn.textContent = PT.get_code; return;
-    }
+    await res.json(); // код ідзе ЛЮБОМУ email (новы наведвальнік = рэгістрацыя; Кліент створыцца пасля верыфікацыі)
     portalEmail = email;
     document.getElementById('s2-desc').textContent = PT.code_sent.replace('{email}', email);
     showStep('code');
@@ -196,12 +260,558 @@ async function portalVerifyCode() {
     if (!res.ok) { setMsg('s2-msg', PT.err_wrong_code); btn.disabled = false; btn.textContent = PT.confirm; return; }
     const data = await res.json();
     portalToken = data.token || '';
-    renderOrders(data);
-    showStep('orders');
+    localStorage.setItem('ttzop_portal_token', portalToken); // сесія 30 дзён — наступны раз без кода
+    localStorage.setItem('ttzop_portal_email', data.email || portalEmail); // прэфіл заказу на сайце (заказ без паўторнага кода)
+    enterCabinet(data);
   } catch {
     setMsg('s2-msg', PT.err_conn);
   }
   btn.disabled = false; btn.textContent = PT.confirm;
+}
+
+// ─── Кабінет: агульны ўваход (пасля кода І пасля аўта-ўваходу) ───
+function enterCabinet(data) {
+  lastCabData = data;
+  renderOrders(data);
+  renderCabinetProfile(data);
+  renderCabinetAddresses();
+  renderCabinetPayment(); // C3-1: 💳 Спосаб аплаты
+  renderCabinetSubs(); // 🔁 S1: Мае падпіскі
+  showStep('orders');
+  portalSetView(portalView); // від, з якім адкрылі (навбар-меню сайта: chat/cabinet)
+  startChatPoll();
+  portalSubIntentApply(); // 🔁 S1: намер «Падпісацца» з карткі сайта (пасля ўваходу)
+}
+
+// перамыкач відаў Чат/Кабінет (табы ўнутры + навбар-меню сайта)
+function portalSetView(v) {
+  portalView = (v === 'cabinet') ? 'cabinet' : 'chat';
+  document.getElementById('view-chat').classList.toggle('active', portalView === 'chat');
+  document.getElementById('view-cabinet').classList.toggle('active', portalView === 'cabinet');
+  document.getElementById('tab-chat').classList.toggle('active', portalView === 'chat');
+  document.getElementById('tab-cabinet').classList.toggle('active', portalView === 'cabinet');
+  if (portalView === 'chat') { const f = document.getElementById('portal-chat-feed'); if (f) f.scrollTop = f.scrollHeight; _chatPrefillApply(); }
+}
+// прадзапаўненне чата з сайта (📅 «Запісацца» на картцы паслугі кладзе тэкст у localStorage; same-origin iframe)
+function _chatPrefillApply() {
+  try {
+    const v = localStorage.getItem('ttzop_chat_prefill'); if (!v) return;
+    const inp = document.getElementById('portal-chat-input');
+    if (inp && !inp.value) { inp.value = v; inp.focus(); }
+    localStorage.removeItem('ttzop_chat_prefill'); // аднаразова — не ўсплываць пры наступных адкрыццях
+  } catch {}
+}
+
+// профіль кліента ў відзе «Кабінет»: Імя (загаловак) + Email + Тэлефон (іконкі, без тэкст-лэйблаў = без хардкоду).
+// ✎ праўка Імя/Тэлефона (append профілю ў D1) і замена Email (код на новы email). Адрасы/аплата — C2/C3.
+let cabEmailPending = ''; // новы email, на які дасланы код (крок замены email)
+const _editBtn = fn => `<button onclick="${fn}" title="✎" style="background:none;border:none;color:var(--accent);cursor:pointer;font-size:0.95rem;padding:2px 4px">✎</button>`;
+function renderCabinetProfile(data) {
+  const el = document.getElementById('cab-profile');
+  if (!el) return;
+  cabEmailPending = '';
+  const name = data.name || data.email || '';
+  el.innerHTML = `
+    <div style="display:flex;align-items:center;gap:6px"><div class="prof-name" style="margin-bottom:0">${escChat(name)}</div>${_editBtn('cabProfileEdit()')}</div>
+    ${data.email ? `<div class="prof-row">✉️ <b>${escChat(data.email)}</b> ${_editBtn('cabEmailEdit()')}</div>` : ''}
+    <div class="prof-row">📞 <b>${data.phone ? escChat(data.phone) : '—'}</b> ${_editBtn('cabProfileEdit()')}</div>
+    <div class="error-msg" id="cab-prof-msg" style="min-height:0;text-align:left;margin-top:8px"></div>`;
+}
+
+// ── праўка Імя/Тэлефона (адзін мадал-блок, палі прадзапоўнены бягучым) ──
+function cabProfileEdit() {
+  const el = document.getElementById('cab-profile');
+  const d = lastCabData || {};
+  el.innerHTML = `
+    <label class="field-label">✉️ ${escChat(d.email || '')}</label>
+    <input class="field-input" id="cab-name" placeholder="${escChat(PT.tab_cabinet)}" value="${escChat(d.name || '')}" />
+    <input class="field-input" id="cab-phone" type="tel" placeholder="📞" value="${escChat(d.phone || '')}" />
+    <div style="display:flex;gap:8px"><button class="btn-primary" id="cab-prof-save" onclick="cabProfileSave()">${escChat(PT.confirm)}</button></div>
+    <button class="back-link" onclick="renderCabinetProfile(lastCabData)">${escChat(PT.back)}</button>
+    <div class="error-msg" id="cab-prof-msg" style="min-height:0"></div>`;
+}
+async function cabProfileSave() {
+  const name = document.getElementById('cab-name').value.trim();
+  const phone = document.getElementById('cab-phone').value.trim();
+  const btn = document.getElementById('cab-prof-save'); btn.disabled = true; btn.textContent = '...';
+  try {
+    const res = await fetch(API, { method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'portal_update_profile', repo: REPO, token: portalToken, name, phone }) });
+    if (!res.ok) throw new Error();
+    lastCabData = await res.json();
+    renderCabinetProfile(lastCabData);
+    const m = document.getElementById('cab-prof-msg'); if (m) { m.style.color = 'var(--success)'; m.textContent = PT.saved; setTimeout(() => { if (m) m.textContent = ''; }, 2000); }
+  } catch { const m = document.getElementById('cab-prof-msg'); if (m) { m.style.color = 'var(--error)'; m.textContent = PT.err_conn; } btn.disabled = false; btn.textContent = PT.confirm; }
+}
+
+// ── замена email: увод новага → код на яго (portal_send_code) → пацверджанне (portal_change_email) ──
+function cabEmailEdit() {
+  const el = document.getElementById('cab-profile');
+  el.innerHTML = `
+    <label class="field-label">✉️ Email</label>
+    <input class="field-input" id="cab-new-email" type="email" placeholder="you@example.com" />
+    <button class="btn-primary" id="cab-email-code-btn" onclick="cabEmailSendCode()">${escChat(PT.get_code)}</button>
+    <button class="back-link" onclick="renderCabinetProfile(lastCabData)">${escChat(PT.back)}</button>
+    <div class="error-msg" id="cab-prof-msg" style="min-height:0"></div>`;
+}
+async function cabEmailSendCode() {
+  const email = document.getElementById('cab-new-email').value.trim().toLowerCase();
+  const msg = document.getElementById('cab-prof-msg'); msg.style.color = 'var(--error)';
+  if (!email || !/.+@.+\..+/.test(email)) { msg.textContent = PT.err_enter_email; return; }
+  const btn = document.getElementById('cab-email-code-btn'); btn.disabled = true; btn.textContent = '...';
+  try {
+    const res = await fetch(API, { method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'portal_send_code', repo: REPO, email, lang: detectPortalLang() }) });
+    await res.json();
+    cabEmailPending = email;
+    // крок 2: увод кода + пацверджанне
+    const el = document.getElementById('cab-profile');
+    el.innerHTML = `
+      <div style="color:var(--muted);font-size:0.85rem;margin-bottom:14px">${escChat(PT.code_sent.replace('{email}', email))}</div>
+      <label class="field-label">${escChat(PT.code_label)}</label>
+      <input class="field-input" id="cab-email-code" type="text" maxlength="6" inputmode="numeric" placeholder="${escChat(PT.code_ph)}" />
+      <button class="btn-primary" id="cab-email-confirm" onclick="cabEmailConfirm()">${escChat(PT.confirm)}</button>
+      <button class="back-link" onclick="renderCabinetProfile(lastCabData)">${escChat(PT.back)}</button>
+      <div class="error-msg" id="cab-prof-msg" style="min-height:0"></div>`;
+  } catch { msg.textContent = PT.err_conn; btn.disabled = false; btn.textContent = PT.get_code; }
+}
+async function cabEmailConfirm() {
+  const code = document.getElementById('cab-email-code').value.trim();
+  const msg = document.getElementById('cab-prof-msg'); msg.style.color = 'var(--error)';
+  if (code.length !== 6) { msg.textContent = PT.err_enter_code; return; }
+  const btn = document.getElementById('cab-email-confirm'); btn.disabled = true; btn.textContent = '...';
+  try {
+    const res = await fetch(API, { method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'portal_change_email', repo: REPO, token: portalToken, email: cabEmailPending, code }) });
+    if (res.status === 409) { msg.textContent = PT.email_taken; btn.disabled = false; btn.textContent = PT.confirm; return; }
+    if (res.status === 401) { msg.textContent = PT.err_wrong_code; btn.disabled = false; btn.textContent = PT.confirm; return; }
+    if (!res.ok) throw new Error();
+    lastCabData = await res.json();
+    localStorage.setItem('ttzop_portal_email', lastCabData.email || cabEmailPending); // сайт-прэфіл заказу = новы email
+    renderCabinetProfile(lastCabData);
+    const m = document.getElementById('cab-prof-msg'); if (m) { m.style.color = 'var(--success)'; m.textContent = PT.saved; setTimeout(() => { if (m) m.textContent = ''; }, 2000); }
+  } catch { msg.textContent = PT.err_conn; btn.disabled = false; btn.textContent = PT.confirm; }
+}
+
+// ── C2a: кніга адрасоў дастаўкі (спіс/дадаць/праўка/выдаліць/асноўны) ──
+function _cabAddrList() { return Array.isArray(lastCabData?.addresses) ? lastCabData.addresses : []; }
+function renderCabinetAddresses() {
+  const el = document.getElementById('cab-addresses');
+  if (!el) return;
+  const list = _cabAddrList();
+  const rows = list.map(a => `
+    <div style="background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius);padding:10px 12px;margin-bottom:8px">
+      <div style="display:flex;align-items:center;gap:8px">
+        <div style="flex:1;min-width:0">
+          ${a.label ? `<div style="font-weight:600;font-size:0.9rem;color:var(--text)">${escChat(a.label)}${a.isDefault ? ` <span style="font-size:0.72rem;color:var(--accent)">★ ${escChat(PT.addr_default)}</span>` : ''}</div>` : (a.isDefault ? `<div style="font-size:0.72rem;color:var(--accent)">★ ${escChat(PT.addr_default)}</div>` : '')}
+          <div style="font-size:0.85rem;color:var(--muted)">${escChat(a.text)}</div>
+          ${a.zoneId && _cabZones().find(z => z.id === a.zoneId) ? `<div style="font-size:0.75rem;color:var(--accent)">🚚 ${escChat(_cabZones().find(z => z.id === a.zoneId).name)}</div>` : ''}
+        </div>
+        <button title="★" onclick="cabAddrDefault('${a.id}')" style="background:none;border:none;color:${a.isDefault ? 'var(--accent)' : 'var(--muted)'};cursor:pointer;font-size:1rem;padding:2px 4px">${a.isDefault ? '★' : '☆'}</button>
+        <button title="✎" onclick="cabAddrEdit('${a.id}')" style="background:none;border:none;color:var(--accent);cursor:pointer;font-size:0.95rem;padding:2px 4px">✎</button>
+        <button title="✕" onclick="cabAddrDelete('${a.id}')" style="background:none;border:none;color:var(--error);cursor:pointer;font-size:0.9rem;padding:2px 4px">✕</button>
+      </div>
+    </div>`).join('');
+  el.innerHTML = `
+    <div class="prof-sec-title">📦 ${escChat(PT.addr_title)}</div>
+    ${list.length ? rows : `<div style="color:var(--muted);font-size:0.85rem;margin-bottom:8px">${escChat(PT.addr_none)}</div>`}
+    <button class="btn-primary" style="padding:10px" onclick="cabAddrEdit('')">➕ ${escChat(PT.addr_add)}</button>
+    <div class="error-msg" id="cab-addr-msg" style="min-height:0;text-align:left;margin-top:6px"></div>`;
+}
+function _cabZones() { return Array.isArray(lastCabData?.delivery?.zones) ? lastCabData.delivery.zones : []; }
+function cabAddrEdit(id) {
+  const el = document.getElementById('cab-addresses');
+  const a = _cabAddrList().find(x => x.id === id) || { id: '', label: '', text: '', zoneId: '' };
+  const zones = _cabZones();
+  // выпадальнік зоны — толькі калі адмін наладзіў зоны дастаўкі (C2b)
+  const zoneSel = zones.length ? `<select class="field-input" id="cab-addr-zone" style="cursor:pointer">
+      <option value="">— ${escChat(PT.addr_zone || 'Зона')} —</option>
+      ${zones.map(z => `<option value="${escChat(z.id)}"${z.id === a.zoneId ? ' selected' : ''}>${escChat(z.name)}${z.cost ? ' (' + z.cost + (lastCabData.delivery.currency ? ' ' + lastCabData.delivery.currency : '') + ')' : ''}</option>`).join('')}
+    </select>` : '';
+  el.innerHTML = `
+    <div class="prof-sec-title">📦 ${escChat(PT.addr_title)}</div>
+    <input class="field-input" id="cab-addr-label" placeholder="${escChat(PT.addr_label_ph)}" value="${escChat(a.label || '')}" maxlength="80" />
+    <textarea class="field-input" id="cab-addr-text" rows="2" placeholder="${escChat(PT.addr_text_ph)}" style="resize:none" maxlength="300">${escChat(a.text || '')}</textarea>
+    ${zoneSel}
+    <div style="display:flex;gap:8px"><button class="btn-primary" id="cab-addr-save" onclick="cabAddrSaveForm('${a.id}')">${escChat(PT.confirm)}</button></div>
+    <button class="back-link" onclick="renderCabinetAddresses()">${escChat(PT.back)}</button>
+    <div class="error-msg" id="cab-addr-msg" style="min-height:0"></div>`;
+}
+function cabAddrSaveForm(id) {
+  const label = document.getElementById('cab-addr-label').value.trim();
+  const text = document.getElementById('cab-addr-text').value.trim();
+  const zoneId = document.getElementById('cab-addr-zone')?.value || '';
+  const msg = document.getElementById('cab-addr-msg'); msg.style.color = 'var(--error)';
+  if (!text) { msg.textContent = PT.addr_text_ph; return; }
+  const list = _cabAddrList().map(a => ({ ...a }));
+  const ex = list.find(a => a.id === id);
+  if (ex) { ex.label = label; ex.text = text; ex.zoneId = zoneId; }
+  else list.push({ id: '', label, text, zoneId, isDefault: list.length === 0 }); // першы адрас = асноўны
+  cabAddrPersist(list);
+}
+function cabAddrDelete(id) {
+  portalConfirm('✕ ' + (_cabAddrList().find(a => a.id === id)?.text || ''), // кастомнае пацверджанне (сістэмны confirm забаронены)
+    () => cabAddrPersist(_cabAddrList().filter(a => a.id !== id)), { danger: true });
+}
+function cabAddrDefault(id) {
+  cabAddrPersist(_cabAddrList().map(a => ({ ...a, isDefault: a.id === id })));
+}
+async function cabAddrPersist(list) {
+  try {
+    const res = await fetch(API, { method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'portal_set_addresses', repo: REPO, token: portalToken, addresses: list }) });
+    if (!res.ok) throw new Error();
+    const d = await res.json();
+    if (lastCabData) lastCabData.addresses = d.addresses || [];
+    renderCabinetAddresses();
+  } catch { const m = document.getElementById('cab-addr-msg'); if (m) { m.style.color = 'var(--error)'; m.textContent = PT.err_conn; } }
+}
+
+// ── C3-1: 💳 «Спосаб аплаты» — рэквізіты (payload.payment = settings.banking з панэлі, ○ Бягучы банк)
+// + вольныя інструкцыі (ml — выбіраем мову кабінета); акцэнт-рамка калі ёсць заказ «чакае аплаты»
+function _mlPortal(v) { // ml-аб'ект {мова:тэкст} → тэкст на мове кабінета (fallback: першае непустое)
+  if (!v) return '';
+  if (typeof v !== 'object') return String(v);
+  return v[detectPortalLang()] || Object.values(v).find(x => x) || '';
+}
+function cabCopy(id, btn) { // 📋 скапіраваць тэкст элемента ў буфер + кароткі ✓-водгук (аналаг _copyEl панэлі)
+  const txt = document.getElementById(id)?.textContent || '';
+  const done = () => { const o = btn.textContent; btn.textContent = '✓'; setTimeout(() => { btn.textContent = o; }, 1200); };
+  if (navigator.clipboard?.writeText) { navigator.clipboard.writeText(txt).then(done).catch(() => {}); }
+  else { const ta = document.createElement('textarea'); ta.value = txt; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); ta.remove(); done(); }
+}
+function renderCabinetPayment() {
+  const el = document.getElementById('cab-payment');
+  if (!el) return;
+  const p = lastCabData?.payment;
+  if (!p) { el.innerHTML = ''; return; } // рэквізітаў няма (банк не наладжаны) — секцыя не паказваецца
+  // Прызначэнне — ТОЛЬКІ заказы «чакае аплаты»: радок на кожны заказ (адзін пералік = адзін заказ) з сумай і дэдлайнам (C3-1b)
+  const awaiting = (lastCabData.orders || []).filter(o => o.status === 'awaiting_payment');
+  const instr = _mlPortal(p.instructions);
+  const copyBtn = (cid) => `<button title="📋" onclick="cabCopy('${cid}',this)" style="background:none;border:none;cursor:pointer;font-size:0.85rem;padding:1px 4px;color:var(--muted)">📋</button>`;
+  const row = (label, val, cid) => val ? `<div class="prof-row" style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">${escChat(label)}: <b id="${cid}" style="word-break:break-all">${escChat(val)}</b>${copyBtn(cid)}</div>` : '';
+  const dueRows = awaiting.map((o, i) => `
+      <div class="prof-row" style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">${escChat(PT.pay_reference)}:
+        <b id="pay-ref-${i}">#${escChat(o.id)}</b>${copyBtn('pay-ref-' + i)}
+        ${_cabAmountsStr(o) ? `<span style="color:var(--accent);font-weight:600">${escChat(_cabAmountsStr(o))}</span>` : ''}
+        ${o.until ? `<span style="color:var(--muted);font-size:0.8rem">· ${escChat(PT.pay_due)}: ${_cabDate(o.until)}</span>` : ''}
+        <button title="🧾 ${escChat(PT.inv_title)}" onclick="portalInvoice('${escChat(o.id)}')" style="background:none;border:none;cursor:pointer;font-size:0.9rem;padding:1px 4px">🧾</button>
+      </div>`).join('');
+  el.innerHTML = `
+    <div class="prof-sec-title">💳 ${escChat(PT.pay_title)}</div>
+    <div style="background:var(--surface2);border:1px solid ${awaiting.length ? 'var(--accent)' : 'var(--border)'};border-radius:var(--radius);padding:12px 14px;margin-bottom:14px">
+      ${row(PT.pay_recipient, p.accountHolder, 'pay-holder')}
+      ${row(PT.pay_bank, p.bankName, 'pay-bank')}
+      ${row('IBAN', p.iban, 'pay-iban')}
+      ${row('BIC/SWIFT', p.bic, 'pay-bic')}
+      ${dueRows}
+      ${instr ? `<div style="white-space:pre-line;font-size:0.85rem;color:var(--text);margin-top:8px">${escChat(instr)}</div>` : ''}
+    </div>`;
+}
+// сума заказу «150 EUR + 20 PLN» з payload.amounts (лічыць worker; нелічбавыя цэны прапушчаны)
+function _cabAmountsStr(o) { return (o.amounts || []).map(a => `${a.sum} ${a.currency}`).join(' + '); }
+function _cabDate(iso) { const [y, m, d] = String(iso).split('-'); return d && m ? `${d}.${m}.${y}` : iso; }
+
+// ── 🔁 S1: «Мае падпіскі» — спіс + самакіраванне (кліент заўсёды правы: паўза/аднаўленне без пацверджання, адмена з confirm)
+function renderCabinetSubs() {
+  const el = document.getElementById('cab-subs');
+  if (!el) return;
+  const subs = lastCabData?.subscriptions || [];
+  if (!subs.length) { el.innerHTML = ''; return; } // падпісак няма — секцыя не паказваецца
+  const stColor = { active: 'var(--success, #22c55e)', paused: '#f59e0b', cancelled: 'var(--error, #ef4444)' };
+  const rows = subs.map(s => {
+    const per = s.period === 'year' ? PT.per_year : PT.per_month;
+    const price = s.price ? `${s.price} ${s.currency}${per}` : '';
+    const btn = (label, st, danger) => `<button onclick="cabSubSet('${escChat(s.id)}','${st}','${escChat(s.name).replace(/'/g, '&#39;')}')" style="background:none;border:1px solid var(--border);border-radius:6px;color:${danger ? 'var(--error)' : 'var(--accent)'};cursor:pointer;font-size:0.78rem;padding:3px 8px">${escChat(label)}</button>`;
+    const btns = s.status === 'active' ? btn(PT.sub_pause, 'paused') + ' ' + btn(PT.sub_cancel, 'cancelled', true)
+      : s.status === 'paused' ? btn(PT.sub_resume, 'active') + ' ' + btn(PT.sub_cancel, 'cancelled', true) : '';
+    return `<div style="background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius);padding:10px 12px;margin-bottom:8px">
+      <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+        <div style="flex:1;min-width:0">
+          <div style="font-weight:600;font-size:0.9rem;color:var(--text)">${escChat(s.name)}${price ? ` <span style="color:var(--accent)">${escChat(price)}</span>` : ''}</div>
+          <div style="font-size:0.78rem;color:${stColor[s.status] || 'var(--muted)'}">● ${escChat(PT['sub_' + s.status] || s.status)}${s.status !== 'cancelled' && s.nextAt ? ` <span style="color:var(--muted)">· ${escChat(PT.sub_next)}: ${_cabDate(s.nextAt)}</span>` : ''}</div>
+        </div>
+        <div style="display:flex;gap:4px;flex-shrink:0">${btns}</div>
+      </div>
+    </div>`;
+  }).join('');
+  el.innerHTML = `<div class="prof-sec-title">🔁 ${escChat(PT.subs_title)}</div>${rows}<div class="error-msg" id="cab-subs-msg" style="min-height:0;text-align:left"></div>`;
+}
+async function cabSubSet(subId, status, name) {
+  const doIt = async () => {
+    try {
+      const res = await fetch(API, { method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'portal_sub_set', repo: REPO, token: portalToken, subId, status }) });
+      if (!res.ok) throw new Error();
+      lastCabData = await res.json();
+      renderCabinetSubs(); renderOrders(lastCabData); renderCabinetPayment();
+    } catch { _subsMsg(PT.err_conn); }
+  };
+  if (status === 'cancelled') { // адмена незваротная — адзінае месца з пацверджаннем (кастомным!)
+    const q = name ? PT.sub_cancel_confirm.replace('{name}', name)
+      : PT.sub_cancel_confirm.replace(/[«„“"]?\{name\}[»“”"]?/, '').replace(/\s{2,}/g, ' '); // без назвы → без пустых «»
+    portalConfirm(q, doIt, { okLabel: PT.sub_cancel, danger: true });
+  } else doIt();
+}
+// паведамленне пад секцыяй падпісак (inline, НЕ сістэмны alert); секцыі можа не быць (0 падпісак) → ствараем трымальнік
+function _subsMsg(txt, ok) {
+  const host = document.getElementById('cab-subs');
+  if (host && !document.getElementById('cab-subs-msg')) host.insertAdjacentHTML('beforeend', '<div class="error-msg" id="cab-subs-msg" style="min-height:0;text-align:left"></div>');
+  const m = document.getElementById('cab-subs-msg');
+  if (m) { m.style.color = ok ? 'var(--success)' : 'var(--error)'; m.textContent = txt; if (ok) setTimeout(() => { if (m.textContent === txt) m.textContent = ''; }, 6000); }
+}
+// намер «Падпісацца» з карткі сайта (localStorage, same-origin iframe — той жа патэрн, што chat_prefill).
+// БЕЗ перапытвання (клік на кнопцы «Аформіць падпіску» і ёсць намер) і БЕЗ сістэмных alert — вынік inline.
+async function portalSubIntentApply() {
+  let intent = null;
+  try { intent = JSON.parse(localStorage.getItem('ttzop_sub_intent') || 'null'); localStorage.removeItem('ttzop_sub_intent'); } catch {}
+  if (!intent || !intent.id) return;
+  portalSetView('cabinet'); // падпіскі жывуць у відзе Кабінет
+  try {
+    const res = await fetch(API, { method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'portal_subscribe', repo: REPO, token: portalToken, itemId: intent.id, lang: detectPortalLang() }) });
+    const d = await res.json().catch(() => ({}));
+    if (!res.ok) { _subsMsg(d.error === 'sub_exists' ? (PT.sub_active + ' ✓') : PT.err_conn, d.error === 'sub_exists'); return; } // дубль = ужо падпісаны
+    lastCabData = d;
+    renderCabinetSubs(); renderOrders(lastCabData); renderCabinetPayment();
+    _subsMsg(PT.sub_done, true);
+    document.getElementById('cab-subs')?.scrollIntoView({ behavior: 'smooth', block: 'start' }); // паказаць новую падпіску
+  } catch { _subsMsg(PT.err_conn); }
+}
+// ── кастомнае пацверджанне кабінета (сістэмныя confirm/alert у прадукце ЗАБАРОНЕНЫ — уласны стыль)
+function portalConfirm(msg, onOk, opts = {}) {
+  document.getElementById('p-confirm')?.remove();
+  const ov = document.createElement('div');
+  ov.id = 'p-confirm';
+  ov.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.55);z-index:10000;display:flex;align-items:center;justify-content:center;padding:20px';
+  ov.innerHTML = `<div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);max-width:340px;width:100%;padding:18px 18px 14px;box-shadow:0 16px 48px rgba(0,0,0,0.5)">
+    <div style="font-size:0.92rem;line-height:1.5;white-space:pre-line;color:var(--text)">${escChat(msg)}</div>
+    <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:16px;align-items:center">
+      ${opts.okOnly ? '' : `<button id="pc-no" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:0.88rem;padding:8px 10px">${escChat(PT.back.replace(/^←\s*/, ''))}</button>`}
+      <button id="pc-ok" class="btn-primary" style="width:auto;padding:8px 20px;margin:0${opts.danger ? ';background:var(--error)' : ''}">${escChat(opts.okLabel || PT.confirm)}</button>
+    </div></div>`;
+  ov.addEventListener('click', e => { if (e.target === ov) ov.remove(); }); // фон = скасаваць
+  ov.querySelector('#pc-no')?.addEventListener('click', () => ov.remove());
+  ov.querySelector('#pc-ok').addEventListener('click', () => { ov.remove(); if (onOk) onOk(); });
+  document.body.appendChild(ov);
+}
+
+// ── C3-1c: 🧾 ФАКТУРА праз УНІВЕРСАЛЬНЫ ЧЫТАЧ (assets/js/reader.js), стыль 'paper' (белы дакумент для друку).
+// _invoiceReaderCfg будуе cfg (bodyHtml=цела фактуры + extraCss=яе табліцы); адкрыццё — renderReaderDoc/replaceWithReaderDoc.
+function _invoiceReaderCfg(o, d, shareUrl) {
+  const p = d.payment || {}, comp = d.company || {};
+  const lang = detectPortalLang(), isRtl = lang === 'ar';
+  const e = escChat, align = isRtl ? 'right' : 'left';
+  const itemRows = (o.items || []).map(it => {
+    const pr = parseFloat(it.price), sum = pr > 0 ? Math.round(pr * (it.qty || 1) * 100) / 100 : null;
+    return `<tr><td>${e(it.name)}</td><td class="n">${it.qty || 1}</td><td class="n">${e(String(it.price ?? ''))}</td><td class="n">${sum != null ? sum + ' ' + e(it.currency || '') : ''}</td></tr>`;
+  }).join('');
+  const dc = parseFloat(o.deliveryCost);
+  const delivRow = dc > 0 ? `<tr><td>🚚 ${e(PT.inv_delivery)}${o.deliveryZone ? ' (' + e(o.deliveryZone) + ')' : ''}</td><td class="n">1</td><td class="n">${dc}</td><td class="n">${dc} ${e(d.delivery?.currency || '')}</td></tr>` : '';
+  const reqRow = (label, val) => val ? `<div><b>${e(label)}:</b> ${e(val)}</div>` : '';
+  const instr = _mlPortal(p.instructions);
+  // CSS цела фактуры — скоўп пад .rdr-body (абалонку дае reader.js); белы дзелавы дакумент
+  const extraCss = `.rdr-body .grid{display:flex;gap:24px;margin:6px 0 18px;flex-wrap:wrap}.rdr-body .grid>div{flex:1;min-width:200px}.rdr-body .muted{color:#666;font-size:0.85rem}`
+    + `.rdr-body table{width:100%;border-collapse:collapse;margin:14px 0}.rdr-body th,.rdr-body td{border:1px solid #ddd;padding:6px 8px;text-align:${align}}.rdr-body th{background:#f5f5f5;font-size:0.8rem}.rdr-body td.n{text-align:right;white-space:nowrap}`
+    + `.rdr-body .total{text-align:${isRtl ? 'left' : 'right'};font-size:1.05rem;font-weight:700}.rdr-body .req{border:1px solid #f97316;border-radius:8px;padding:10px 14px;margin:14px 0}.rdr-body .req>div{margin:2px 0}.rdr-body .due{color:#f97316;font-weight:700}`;
+  const body = `<div class="grid">`
+    + `<div><div class="muted">${e(PT.inv_seller)}</div><b>${e(_mlPortal(comp.name) || p.accountHolder || '')}</b>${_mlPortal(comp.address) ? `<div>${e(_mlPortal(comp.address))}</div>` : ''}</div>`
+    + `<div><div class="muted">${e(PT.inv_buyer)}</div><b>${e(d.name || '')}</b><div>${e(d.email || '')}</div></div></div>`
+    + `<table><thead><tr><th>${e(PT.inv_item)}</th><th>${e(PT.inv_qty)}</th><th>${e(PT.inv_price)}</th><th>${e(PT.inv_sum)}</th></tr></thead><tbody>${itemRows}${delivRow}</tbody></table>`
+    + `<div class="total">${e(PT.inv_total)}: ${e(_cabAmountsStr(o) || '—')}</div>`
+    + `<div class="req">${reqRow(PT.pay_recipient, p.accountHolder)}${reqRow(PT.pay_bank, p.bankName)}${reqRow('IBAN', p.iban)}${reqRow('BIC/SWIFT', p.bic)}${reqRow(PT.pay_reference, '#' + o.id)}`
+    + `${o.until ? `<div class="due">${e(PT.pay_due)}: ${_cabDate(o.until)}</div>` : ''}${instr ? `<div style="white-space:pre-line;margin-top:6px">${e(instr)}</div>` : ''}</div>`;
+  return {
+    title: `${PT.inv_title} ${o.id}`, meta: `${PT.inv_date}: ${_cabDate(String(o.createdAt || '').split('T')[0])}`,
+    bodyHtml: body, extraCss, lang, dir: isRtl ? 'rtl' : 'ltr', style: 'paper',
+    share: shareUrl ? { mode: 'url', value: shareUrl, title: `${PT.inv_title} ${o.id}` } : null,
+    labels: { share: PT.inv_share, pdfprint: PT.inv_save, close: '', copied: PT.saved },
+    fontControls: true, siteName: _mlPortal(comp.name) || ''
+  };
+}
+async function portalInvoice(orderId) {
+  const d = lastCabData || {};
+  const o = (d.orders || []).find(x => x.id === orderId);
+  if (!o) return;
+  const w = window.open('', '_blank'); // адкрываем СІНХРОННА (папап-блакер), змест дапішам пасля fetch спасылкі
+  if (!w) return;
+  let shareUrl = null; // спасылка-шэйр (90 дзён, без уваходу); правал fetch → фактура проста без кнопкі Падзяліцца
+  try {
+    const res = await fetch(API, { method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'portal_invoice_link', repo: REPO, token: portalToken, orderId }) });
+    if (res.ok) shareUrl = (await res.json()).url || null;
+  } catch {}
+  mountReaderDoc(w, _invoiceReaderCfg(o, d, shareUrl)); // адзіны мантаж рыдэра (без document.write — Safari-друк)
+}
+// прагляд фактуры па share-спасылцы (?inv={key}) — публічна, без уваходу; старонка цалкам замяняецца дакументам
+async function portalInvoiceView(key) {
+  try {
+    const res = await fetch(API, { method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'invoice_view', key }) });
+    if (!res.ok) return false;
+    const v = await res.json();
+    replaceWithReaderDoc(_invoiceReaderCfg(v.order, v, location.href));
+    return true;
+  } catch { return false; }
+}
+
+// аўта-ўваход па захаваным токене (portal_me правярае і падаўжае сесію)
+async function portalAutoLogin() {
+  if (!portalToken) return;
+  try {
+    const res = await fetch(API, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'portal_me', repo: REPO, token: portalToken })
+    });
+    if (!res.ok) { portalLogout(false); return; } // сесія памерла — назад да email
+    enterCabinet(await res.json());
+  } catch { /* сетка — застаёмся на email-кроку */ }
+}
+
+function portalLogout(showEmail = true) {
+  // перапытанне толькі пры РУЧНЫМ выхадзе (мёртвая сесія выходзіць моўчкі): наступны ўваход — новы код
+  if (showEmail) { portalConfirm(PT.logout_confirm, () => _portalLogoutDo(true), { danger: true }); return; } // кастомны дыялог (сістэмныя забаронены)
+  _portalLogoutDo(false);
+}
+function _portalLogoutDo(showEmail) {
+  portalToken = '';
+  localStorage.removeItem('ttzop_portal_token');
+  localStorage.removeItem('ttzop_portal_email');
+  stopChatPoll();
+  if (showEmail) showStep('email');
+}
+
+// 🌐 мова кабінета: агульны ключ з сайтам (ttzop_lang) → перазагрузка (аўта-ўваход верне ў кабінет)
+function initPortalLangPicker() {
+  const sel = document.getElementById('portal-lang');
+  const cur = detectPortalLang();
+  sel.innerHTML = Object.keys(PORTAL_T).map(c => `<option value="${c}"${c === cur ? ' selected' : ''}>${c.toUpperCase()}</option>`).join('');
+}
+function portalSetLang(c) { localStorage.setItem('ttzop_lang', c); location.reload(); }
+
+// ─── 💬 Чат кабінета: стужка + адпраўка + палінг 20с (пакуль кабінет адкрыты) ───
+let chatTimer = null;
+function startChatPoll() { loadChatMsgs(); if (!chatTimer) chatTimer = setInterval(loadChatMsgs, 20000); }
+function stopChatPoll() { if (chatTimer) { clearInterval(chatTimer); chatTimer = null; } }
+const escChat = s => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+// 🔍 прагляд выявы ў оверлеі (як у панэлі) — замест адкрыцця файла новай укладкай; фон/✕/Esc/выява закрываюць
+function portalLightbox(url) {
+  const ov = document.createElement('div');
+  ov.style.cssText = 'position:fixed;inset:0;z-index:100000;background:rgba(0,0,0,0.88);display:flex;align-items:center;justify-content:center;padding:20px;cursor:zoom-out';
+  ov.innerHTML = `<img src="${escChat(url)}" alt="" style="max-width:96vw;max-height:92vh;object-fit:contain;border-radius:8px">
+    <button aria-label="✕" style="position:absolute;top:14px;right:16px;width:38px;height:38px;border-radius:50%;border:none;background:rgba(255,255,255,0.14);color:#fff;font-size:1.15rem;cursor:pointer">✕</button>`;
+  const close = () => { ov.remove(); document.removeEventListener('keydown', onKey); };
+  const onKey = e => { if (e.key === 'Escape') close(); };
+  ov.addEventListener('click', close); document.addEventListener('keydown', onKey);
+  document.body.appendChild(ov);
+}
+
+async function loadChatMsgs() {
+  if (!portalToken) return;
+  try {
+    const res = await fetch(API, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'portal_chat_messages', repo: REPO, token: portalToken })
+    });
+    if (!res.ok) return;
+    const { messages } = await res.json();
+    const feed = document.getElementById('portal-chat-feed');
+    const atBottom = feed.scrollHeight - feed.scrollTop - feed.clientHeight < 40 || !feed.dataset.loaded;
+    if (!messages || !messages.length) {
+      feed.innerHTML = `<div style="color:var(--muted);font-size:0.85rem;text-align:center;padding:12px 0">${PT.chat_empty}</div>`;
+    } else {
+      feed.innerHTML = messages.map(m => {
+        const time = (m.at || '').slice(11, 16);
+        const atts = (m.attachments || []).map(a => /^image\//.test(a.mimeType || '')
+          ? `<img src="${escChat(a.url)}" alt="" onclick="portalLightbox('${escChat(a.url)}')" style="max-width:100%;max-height:160px;border-radius:8px;margin-top:4px;cursor:zoom-in;display:block" />` // клік → lightbox, не новая ўкладка
+          : `<div><a href="${escChat(a.url)}" target="_blank" rel="noopener" style="color:inherit">📎 ${escChat(a.name || 'file')}</a></div>`).join('');
+        return `<div style="align-self:${m.mine ? 'flex-end' : 'flex-start'};max-width:85%;padding:8px 12px;border-radius:12px;font-size:0.88rem;line-height:1.45;color:var(--text);background:${m.mine ? 'rgba(59,130,246,0.16)' : 'rgba(255,255,255,0.05)'};border:1px solid ${m.mine ? 'rgba(59,130,246,0.25)' : 'var(--border)'}"><!-- фон як у панэлі: свае = блакітны напаўпразрысты, чужыя = светлы (без аранжавага) -->
+          ${m.mine ? '' : `<div style="font-size:0.72rem;color:var(--muted);margin-bottom:2px">${escChat(m.fromLabel)}</div>`}
+          <div>${escChat(m.text)}</div>${atts}
+          <div style="font-size:0.68rem;opacity:0.6;text-align:right;margin-top:2px">${time}</div>
+        </div>`;
+      }).join('');
+    }
+    feed.dataset.loaded = '1';
+    if (atBottom) feed.scrollTop = feed.scrollHeight;
+  } catch { /* палінг — маўчым */ }
+}
+
+// 📷 фота ад кліента (скрыншоты праблем): да 3 выяў, чып з ✕ да адпраўкі
+let portalChatAtts = []; // [{data, contentType, fileName}]
+// сціск выявы з dataURL (не чытаем файл двойчы) — вялікі скрыншот → webp ≤1600px
+async function _portalShrink(dataUrl, type, fileName, maxDim) {
+  if (!/^image\//.test(type || '') || type === 'image/gif') return null;
+  try {
+    const img = await new Promise((res, rej) => { const im = new Image(); im.onload = () => res(im); im.onerror = () => rej(0); im.src = dataUrl; });
+    const k = Math.min(1, maxDim / Math.max(img.width, img.height));
+    const c = document.createElement('canvas');
+    c.width = Math.max(1, Math.round(img.width * k)); c.height = Math.max(1, Math.round(img.height * k));
+    c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+    const blob = await new Promise(r => c.toBlob(r, 'image/webp', 0.85));
+    if (!blob) return null;
+    const data = await new Promise((res, rej) => { const rd = new FileReader(); rd.onload = () => res(String(rd.result).split(',')[1]); rd.onerror = () => rej(0); rd.readAsDataURL(blob); });
+    return { data, contentType: 'image/webp', fileName: String(fileName || 'photo').replace(/\.[a-z0-9]+$/i, '') + '.webp' };
+  } catch { return null; }
+}
+// надзейнае чытанне файла (той жа падыход, што ў панэлі): спярша file.arrayBuffer() — на Safari/WebKit
+// чытае надзейней за FileReader; fallback FileReader; абедзве спробы кожны раунд. Кідае 'cloud:<прычына>'.
+async function _portalReadDataUrl(file, statusCb) {
+  const waits = [0, 1200, 2500, 5000, 10000];
+  let lastErr = 'read';
+  const ct = file.type || 'application/octet-stream';
+  const toB64 = buf => { const bytes = new Uint8Array(buf); let bin = ''; const CH = 0x8000; for (let i = 0; i < bytes.length; i += CH) bin += String.fromCharCode.apply(null, bytes.subarray(i, i + CH)); return btoa(bin); };
+  for (let i = 0; i < waits.length; i++) {
+    if (waits[i]) { if (statusCb) statusCb(i); await new Promise(r => setTimeout(r, waits[i])); }
+    try { const buf = await file.arrayBuffer(); if (buf && buf.byteLength) return `data:${ct};base64,${toB64(buf)}`; lastErr = 'empty'; }
+    catch (e) { lastErr = e?.name || e?.message || 'read'; }
+    try { const url = await new Promise((res, rej) => { const rd = new FileReader(); rd.onload = () => res(String(rd.result || '')); rd.onerror = () => rej(rd.error || new Error('read')); rd.readAsDataURL(file); }); if (url && url.indexOf(',') > 0 && url.split(',')[1]) return url; }
+    catch (e) { lastErr = e?.name || e?.message || 'read'; }
+  }
+  throw new Error('cloud:' + lastErr);
+}
+async function portalChatAttach(input) {
+  const file = input.files?.[0]; // ⚠️ НЕ чысцім input.value да чытання (на Safari/WebKit можа адвязаць File)
+  if (!file || !file.type.startsWith('image/') || portalChatAtts.length >= 3) { input.value = ''; return; }
+  const box = document.getElementById('portal-chat-atts');
+  const sendBtn = document.getElementById('chat-send-btn'); if (sendBtn) sendBtn.disabled = true; // 🔒 Даслаць неактыўная пакуль грузіцца
+  portalChatAttsRender(); if (box) box.innerHTML += ` <span style="color:var(--muted)">⏳ ${escChat(file.name)}</span>`;
+  try {
+    const dataUrl = await _portalReadDataUrl(file, () => { portalChatAttsRender(); if (box) box.innerHTML += ` <span style="color:var(--muted)">☁️⏳ ${escChat((PT.cloud_wait || '…') + ' ' + file.name)}</span>`; });
+    const sh = await _portalShrink(dataUrl, file.type, file.name, 1600); // сціск з ужо прачытаных байтаў
+    portalChatAtts.push(sh || { data: dataUrl.split(',')[1], contentType: file.type, fileName: file.name });
+    portalChatAttsRender();
+  } catch (e) {
+    console.warn('[cabinet attach fail]', file.name, String(e?.message || 'read')); // тэхпрычына — у консоль, кліенту не паказваем
+    portalChatAttsRender();
+    portalConfirm('☁️ ' + (PT.cloud_err || 'Cloud file not downloaded yet').replace('{name}', file.name), null, { okOnly: true }); // інфа-мадалка (сістэмны alert забаронены)
+  } finally {
+    try { input.value = ''; } catch (e) {} // цяпер бяспечна: чытанне завершана (дазваляе перавыбраць той жа файл)
+    if (sendBtn) sendBtn.disabled = false; // 🔓 разблакаваць Даслаць
+  }
+}
+function portalChatAttDel(i) { portalChatAtts.splice(i, 1); portalChatAttsRender(); }
+function portalChatAttsRender() {
+  document.getElementById('portal-chat-atts').innerHTML = portalChatAtts.map((a, i) =>
+    `<span style="display:inline-flex;align-items:center;gap:4px;border:1px solid var(--border);border-radius:6px;padding:2px 6px;margin:2px 4px 0 0">📷 ${escChat(a.fileName)}
+      <span style="opacity:0.6;font-size:0.72rem">(${i + 1}/${portalChatAtts.length})</span><!-- нумар файла з агульнай колькасці (макс 3) -->
+      <button style="background:none;border:none;color:var(--error);cursor:pointer;padding:0 2px" onclick="portalChatAttDel(${i})">✕</button></span>`).join('');
+}
+
+async function portalChatSend() {
+  const input = document.getElementById('portal-chat-input');
+  const text = input.value.trim();
+  if ((!text && !portalChatAtts.length) || !portalToken) return;
+  const btn = document.getElementById('chat-send-btn');
+  btn.disabled = true;
+  try {
+    const res = await fetch(API, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'portal_chat_send', repo: REPO, token: portalToken, text, atts: portalChatAtts })
+    });
+    if (res.ok) { input.value = ''; portalChatAtts = []; portalChatAttsRender(); await loadChatMsgs(); }
+  } catch { /* паспрабуе яшчэ раз */ }
+  btn.disabled = false;
 }
 
 function renderOrders(data) {
@@ -223,12 +833,16 @@ function renderOrders(data) {
     const label = ST[o.status] || o.status;
     const color = STATUS_COLORS[o.status] || '#6b7280';
     const siteUrl = o.desiredSubdomain ? `https://${o.desiredSubdomain}.ttzop.com` : null;
-    const untilStr = o.until ? (() => { const [y,m,d] = o.until.split('-'); return `${d}.${m}.${y}`; })() : null;
+    const untilStr = o.until ? _cabDate(o.until) : null;
+    const awaitingPay = o.status === 'awaiting_payment'; // C3-1b: подпіс даты па статусе — «Аплаціць да» (дэдлайн) vs «Аплачана да» (падпіска)
+    const amtStr = awaitingPay ? _cabAmountsStr(o) : '';
     return `<div class="order-card">
       <div class="order-id">${PT.order_prefix}${o.id}</div>
-      <div><span class="order-badge" style="background:${color}22;color:${color}">${label}</span></div>
+      <div><span class="order-badge" style="background:${color}22;color:${color}${awaitingPay ? ';cursor:pointer;text-decoration:underline dashed' : ''}"${awaitingPay ? ` role="button" title="🧾 ${escChat(PT.inv_title)}" onclick="portalInvoice('${escChat(o.id)}')"` : ''}>${label}${awaitingPay ? ' 🧾' : ''}</span></div>
       ${siteUrl ? `<div class="order-row">🌐 <a href="${siteUrl}" target="_blank">${siteUrl}</a></div>` : ''}
-      ${untilStr ? `<div class="order-row">${PT.paid_until} <b style="color:var(--text)">${untilStr}</b></div>` : ''}
+      ${o.deliveryAddress ? `<div class="order-row">📦 ${escChat(o.deliveryAddress)}${o.deliveryCost != null ? ` · 🚚 ${o.deliveryZone ? escChat(o.deliveryZone) + ' ' : ''}${o.deliveryCost}${data.delivery?.currency ? ' ' + escChat(data.delivery.currency) : ''}` : ''}</div>` : ''}
+      ${amtStr ? `<div class="order-row">💳 <b style="color:var(--accent)">${escChat(amtStr)}</b></div>` : ''}
+      ${untilStr ? `<div class="order-row">${awaitingPay ? escChat(PT.pay_due) + ':' : PT.paid_until} <b style="color:var(--text)">${untilStr}</b></div>` : ''}
     </div>`;
   }).join('');
 }
@@ -250,9 +864,20 @@ async function portalAcceptPrivacy() {
 }
 
 applyPortalLang();
+initPortalLangPicker();
+// ?inv={key} — публічны прагляд фактуры па share-спасылцы (без уваходу); інакш звычайны кабінет
+const _invKey = new URLSearchParams(location.search).get('inv');
+if (_invKey) portalInvoiceView(_invKey).then(ok => { if (!ok) portalAutoLogin(); }); // мёртвы ключ → звычайны кабінет
+else portalAutoLogin(); // захаваная сесія → адразу ў кабінет без кода
+
+// ✕ кабінета: бачны ТОЛЬКІ калі старонка адкрыта як оверлей на сайце (у iframe) — закрывае бацькоўскі оверлей без разлагіну.
+// Пры прамым адкрыцці /portal крыжык няма (няма куды закрываць).
+function portalCloseCabinet() { try { window.parent.closeCabinet(); } catch (e) { location.href = '/'; } }
+if (window.self !== window.top) { const _cb = document.getElementById('portal-close'); if (_cb) _cb.style.display = ''; }
 
 document.getElementById('portal-code').addEventListener('keydown', e => { if (e.key === 'Enter') portalVerifyCode(); });
 document.getElementById('portal-email').addEventListener('keydown', e => { if (e.key === 'Enter') portalSendCode(); });
+document.getElementById('portal-chat-input').addEventListener('keydown', e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); portalChatSend(); } }); // Enter=даслаць, Shift+Enter=новы радок
 </script>
 </body>
 </html>

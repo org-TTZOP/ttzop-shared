@@ -1,13 +1,16 @@
-/* ================================================
-   TTZOP â€” style.css праверка аўтаматычнага абнаўлення.... == 3 ==  пасля ГЕМІМНІ
-   ÐÐ³ÑƒÐ»ÑŒÐ½Ñ‹Ñ ÑÑ‚Ñ‹Ð»Ñ– Ð´Ð»Ñ ÑžÑÑ–Ñ… 17 ÑÐµÐºÑ†Ñ‹Ð¹
-   ================================================ */
+/* ================================================================
+   TTZOP — style.css: СТРУКТУРА і ТЫПАГРАФІКА публічнага сайта
+   Падзел адказнасці (санацыя v4.449):
+     • themes.css  — колеры/тэмы ([data-theme], .s-light/.s-dark/.s-alt, .btn, навбар/футэр-колеры)
+     • style.css   — макет, сеткі, памеры, шрыфты (гэты файл)
+   Слоўнік класаў сінхранізаваны з index.html + main.js (генераваная разметка).
+   ================================================================ */
 
-/* ---- RESET ---- */
+/* ---- РЭСЕТ ---- */
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 html { scroll-behavior: smooth; }
 body {
-  font-family: 'Inter', Arial, sans-serif;
+  font-family: var(--font-main);
   font-size: 16px;
   line-height: 1.6;
   color: var(--text-main);
@@ -16,16 +19,28 @@ body {
 img { max-width: 100%; display: block; }
 a { color: inherit; text-decoration: none; }
 
-/* ---- Ð¡Ð•ÐšÐ¦Ð«Ð† ---- */
+/* Загалоўкі — фірмовы дысплэй-шрыфт (Unbounded), тэкст застаецца на Manrope */
+h1, h2, h3, h4, .navbar-logo, .footer-logo { font-family: var(--font-heading); }
+
+/* ---- СЕКЦЫІ ---- */
 section { padding: var(--section-padding); }
-section.s-light { background: var(--light-bg); color: var(--text-main); }
-section.s-dark  { background: var(--dark-bg);  color: var(--text-light); }
 .section-title {
   font-size: clamp(1.6rem, 4vw, 2.4rem);
   font-weight: 700;
+  line-height: 1.2;
   margin-bottom: 2rem;
   text-align: center;
 }
+/* Акцэнт-рыска пад загалоўкам секцыі — візуальны рытм старонкі (колер тэмы) */
+.section-title::after {
+  content: '';
+  display: block;
+  width: 56px; height: 3px;
+  background: var(--color-primary);
+  border-radius: 2px;
+  margin: 14px auto 0;
+}
+.hero .section-title::after { display: none; } /* у hero рыска не патрэбна */
 .section-subtitle {
   text-align: center;
   opacity: 0.7;
@@ -33,107 +48,308 @@ section.s-dark  { background: var(--dark-bg);  color: var(--text-light); }
   margin-bottom: 2rem;
 }
 
-/* ---- ÐšÐÐÐ¢Ð­Ð™ÐÐ•Ð  ---- */
+/* ---- КАНТЭЙНЕР І СЕТКІ ---- */
 .container { max-width: 1140px; margin: 0 auto; padding: 0 20px; }
+.grid { display: grid; gap: 24px; }
+.grid-2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 24px; }
+.grid-3 { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 24px; }
+.grid-4 { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 20px; }
 
-/* ---- ÐšÐÐžÐŸÐšÐ† ---- */
-.btn {
-  display: inline-block;
-  padding: 14px 32px;
-  border-radius: var(--radius-md);
-  font-weight: 600;
-  font-size: 1rem;
-  cursor: pointer;
-  border: none;
-  transition: var(--transition);
-}
-.btn-primary {
-  background: var(--color-primary);
-  color: #fff;
-}
-.btn-primary:hover { opacity: 0.88; transform: translateY(-2px); }
-.btn-outline {
-  background: transparent;
-  border: 2px solid var(--color-primary);
-  color: var(--color-primary);
-}
-.btn-outline:hover { background: var(--color-primary); color: #fff; }
-
-/* ---- ÐÐÐ’Ð†Ð“ÐÐ¦Ð«Ð¯ ---- */
-.navbar {
-  position: sticky;
-  top: 0;
-  z-index: 100;
-  background: var(--dark-bg);
-  color: var(--text-light);
-  padding: 0 20px;
-  box-shadow: 0 2px 12px rgba(0,0,0,0.15);
-}
+/* ---- НАВІГАЦЫЯ (структура; колеры — у themes.css праз --nav-*) ---- */
 .navbar-inner {
   display: flex;
   align-items: center;
   justify-content: space-between;
   height: 64px;
 }
-.navbar-logo {
-  font-size: 1.3rem;
-  font-weight: 700;
-  color: var(--text-light);
+.navbar { box-shadow: 0 2px 12px rgba(0,0,0,0.15); transition: background-color 0.25s ease, backdrop-filter 0.25s ease; }
+/* Glass-навбар (дызайн-параметр тэмы glassNav → data-d-glass): пасля пракруткі — паўпразрысты з blur */
+html[data-d-glass="on"] .navbar.scrolled {
+  background-color: color-mix(in srgb, var(--nav-bg) 62%, transparent);
+  -webkit-backdrop-filter: blur(14px);
+  backdrop-filter: blur(14px);
 }
+.navbar-logo { font-size: 1.3rem; font-weight: 700; display: flex; align-items: center; gap: 10px; }
+#site-logo-img { display: flex; }
+#site-logo-img img { height: 34px; width: auto; border-radius: 6px; } /* лагатып-выява (калі загружаны ў Структуры кампаніі) */
+/* Навігацыя секцый — ФІКСАВАНАЯ левая панэль (як сайдбар панэлі кіравання): не скроліцца
+   разам са старонкай; у верхнім радку навбара секцый больш няма (толькі лога + ☰ + дзеянні) */
 .navbar-menu {
-  display: flex;
-  align-items: center;
-  gap: 24px;
   list-style: none;
+  position: fixed;
+  top: 64px; left: 0; bottom: 0;
+  z-index: 90;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 12px 10px;
+  box-sizing: border-box;
+  background: var(--nav-bg);
+  border-right: 1px solid color-mix(in srgb, var(--color-primary, #f97316) 22%, transparent);
+  overflow-y: auto; overflow-x: hidden; /* шмат секцый — панэль скроліцца ЎНУТРЫ сябе, не са старонкай */
 }
-.navbar-menu a {
-  color: var(--text-light);
-  font-weight: 500;
-  opacity: 0.85;
-  transition: var(--transition);
-}
+.navbar-menu a { font-weight: 500; opacity: 0.85; }
 .navbar-menu a:hover { opacity: 1; }
+.navbar-actions { display: flex; align-items: center; gap: 12px; }
+.navbar-logo { margin-right: auto; } /* лога прыціснута да ☰ злева, дзеянні — управа (меню выйшла з радка ў фікс-панэль) */
+
+/* Пераключальнік моў у навбары — колеры ад --nav-text (працуе і на светлым, і на цёмным навбары) */
 #site-lang-picker { position: relative; }
-.lang-dd-btn { background: transparent; border: 1px solid rgba(255,255,255,0.35); border-radius: 6px; color: rgba(255,255,255,0.85); padding: 5px 11px; font-size: 0.8rem; font-weight: 700; cursor: pointer; font-family: inherit; display: flex; align-items: center; gap: 5px; transition: all 0.15s; white-space: nowrap; }
-.lang-dd-btn:hover { border-color: rgba(255,255,255,0.7); color: #fff; }
+.lang-dd-btn { background: transparent; border: 1px solid var(--nav-text); opacity: 0.8; border-radius: 6px; color: var(--nav-text); padding: 5px 11px; font-size: 0.8rem; font-weight: 700; cursor: pointer; font-family: inherit; display: flex; align-items: center; gap: 5px; transition: all 0.15s; white-space: nowrap; }
+.lang-dd-btn:hover { opacity: 1; }
 .dd-arrow { font-size: 0.6em; opacity: 0.65; }
-.lang-dd-menu { display: none; position: absolute; top: calc(100% + 6px); right: 0; background: var(--dark-bg); border: 1px solid rgba(255,255,255,0.13); border-radius: 8px; padding: 4px; min-width: 165px; box-shadow: 0 8px 24px rgba(0,0,0,0.35); z-index: 200; }
+.lang-dd-menu { display: none; position: absolute; top: calc(100% + 6px); right: 0; background: var(--nav-bg); border: 1px solid var(--border-color); border-radius: 8px; padding: 4px; min-width: 165px; box-shadow: 0 8px 24px rgba(0,0,0,0.35); z-index: 200; }
 .lang-dd-menu.open { display: block; }
-.lang-dd-item { display: flex; align-items: center; gap: 10px; width: 100%; background: transparent; border: none; border-radius: 5px; color: rgba(255,255,255,0.7); padding: 7px 10px; cursor: pointer; font-family: inherit; font-size: 0.83rem; text-align: left; transition: background 0.12s; }
-.lang-dd-item:hover { background: rgba(255,255,255,0.08); color: #fff; }
-.lang-dd-item.active { color: #fff; font-weight: 600; }
+.lang-dd-item { display: flex; align-items: center; gap: 10px; width: 100%; background: transparent; border: none; border-radius: 5px; color: var(--nav-text); opacity: 0.75; padding: 7px 10px; cursor: pointer; font-family: inherit; font-size: 0.83rem; text-align: left; transition: opacity 0.12s; }
+.lang-dd-item:hover { opacity: 1; }
+.lang-dd-item.active { opacity: 1; font-weight: 600; }
 .lang-dd-code { font-weight: 700; font-size: 0.7rem; opacity: 0.5; min-width: 22px; }
 .lang-dd-item.active .lang-dd-code { opacity: 1; color: var(--color-primary); }
 .lang-dd-name { flex: 1; }
+
+/* ☰ бургер — злева, бачны на ЎСІХ экранах (мабілка: адкрыць drawer; сярэдні: разгарнуць рэйл да назваў; шырокі: згарнуць да іконак) */
 .navbar-burger {
-  display: none;
+  display: block;
   background: none;
   border: none;
-  color: var(--text-light);
+  color: var(--nav-text);
   font-size: 1.5rem;
   cursor: pointer;
+  margin-right: 4px;
 }
-@media (max-width: 600px) {
-  .navbar-burger { display: block; }
-  .navbar-menu { display: none; }
-  .navbar-menu.open {
-    display: flex;
-    flex-direction: column;
-    position: absolute;
-    top: 64px; left: 0; right: 0;
-    background: var(--dark-bg);
-    padding: 16px 20px;
-    gap: 12px;
-  }
+/* іконкі меню — ЗАЎЖДЫ каляровыя эмодзі (прымусовы эмодзі-шрыфт + без прыглушэння колеру/празрыстасці) */
+.nav-ico {
+  font-family: 'Apple Color Emoji', 'Segoe UI Emoji', 'Noto Color Emoji', sans-serif;
+  font-style: normal;
+  opacity: 1 !important;
+  margin-right: 6px;
 }
+.navbar-menu li a { /* пункт панэлі — як радок сайдбара панэлі кіравання */
+  display: flex; align-items: center; gap: 12px;
+  padding: 9px 12px; border-radius: 10px; opacity: 1;
+  color: var(--nav-text);
+  transition: background 0.12s;
+}
+.navbar-menu li a:hover { background: color-mix(in srgb, var(--color-primary, #f97316) 14%, transparent); }
+.navbar-menu .nav-ico { /* іконка ў круглым акцэнт-чыпе */
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 34px; height: 34px; border-radius: 9px; margin-right: 0; flex-shrink: 0;
+  background: color-mix(in srgb, var(--color-primary, #f97316) 16%, transparent);
+  font-size: 1.1rem;
+}
+.navbar-menu .nav-lbl { white-space: nowrap; font-weight: 600; }
+#footer-nav .nav-ico { margin-right: 6px; } /* у футэры заўсёды іконка+назва */
+/* Зрух зместу пад фіксаваную панэль (навбар — на ўсю шырыню зверху; мадалкі — фіксаваныя оверлеі — не чапаем) */
+#hero, #site-sections, #contact, #map, .footer { transition: margin-left 0.2s ease; }
 
-/* ---- HERO ---- */
-.section-hero {
+/* ── ШЫРОКІ ЭКРАН (>800px): панэль з іконкамі + назвамі; ☰ згортвае да вузкага рэйла ── */
+@media (min-width: 801px) {
+  .navbar-menu { width: 220px; align-items: stretch; }
+  #hero, #site-sections, #contact, #map, .footer { margin-left: 220px; }
+  body.nav-collapsed .navbar-menu { width: 66px; align-items: center; }
+  body.nav-collapsed .navbar-menu li a { justify-content: center; }
+  body.nav-collapsed .navbar-menu .nav-lbl { display: none; }
+  body.nav-collapsed :is(#hero, #site-sections, #contact, #map, .footer) { margin-left: 66px; }
+}
+/* ── СЯРЭДНІ ЭКРАН (480–800px): вузкі рэйл толькі-іконкі; ☰ разгортвае да назваў оверлеем (змест не зрушваецца) ── */
+@media (min-width: 480px) and (max-width: 800px) {
+  .navbar-menu { width: 66px; align-items: center; }
+  .navbar-menu li a { justify-content: center; }
+  .navbar-menu .nav-lbl { display: none; }
+  #hero, #site-sections, #contact, #map, .footer { margin-left: 66px; }
+  body.nav-expanded .navbar-menu {
+    width: 220px; align-items: stretch;
+    box-shadow: 6px 0 26px rgba(0,0,0,0.32);
+    border-right-color: color-mix(in srgb, var(--color-primary, #f97316) 32%, transparent);
+  }
+  body.nav-expanded .navbar-menu li a { justify-content: flex-start; }
+  body.nav-expanded .navbar-menu .nav-lbl { display: inline; }
+}
+/* ── МАБІЛКІ (<480px): пастаяннай панэлі няма — толькі ☰ высоўвае drawer з назвамі + зацямненне ── */
+@media (max-width: 479px) {
+  .navbar-menu {
+    width: 250px; max-width: 84vw; align-items: stretch;
+    transform: translateX(-100%); transition: transform 0.2s ease;
+    box-shadow: 6px 0 26px rgba(0,0,0,0.42);
+    z-index: 200;
+  }
+  .navbar-menu li a { justify-content: flex-start; }
+  .navbar-menu.open { transform: translateX(0); }
+  #hero, #site-sections, #contact, #map, .footer { margin-left: 0; }
+}
+/* зацямненне фону пад мабільным drawer (як #sidebar-backdrop у панэлі кіравання) */
+#nav-backdrop { display: none; position: fixed; inset: 64px 0 0 0; background: rgba(0,0,0,0.45); z-index: 150; }
+#nav-backdrop.show { display: block; }
+
+/* ---- HERO (клас .hero — як у index.html; стары арфан .section-hero выдалены) ---- */
+.hero {
   min-height: 88vh;
   display: flex;
   align-items: center;
   padding: 80px 20px;
 }
+/* Фон hero — дызайн-параметр тэмы heroStyle (data-d-hero): aurora = градыент з подыхам акцэнту,
+   vivid = насычаны двухколерны градыент што павольна «дыхае» (прэсэт «Жывы»),
+   flat = чысты колер .s-dark. color-mix ад --color-primary → пасуе любой тэме і кастомнай палітры */
+html[data-d-hero="aurora"] .hero {
+  background:
+    radial-gradient(1100px 520px at 80% 12%, color-mix(in srgb, var(--color-primary) 22%, transparent), transparent 65%),
+    linear-gradient(165deg, var(--dark-bg) 45%, color-mix(in srgb, var(--dark-bg) 75%, var(--color-primary)));
+}
+html[data-d-hero="vivid"] .hero {
+  background:
+    radial-gradient(900px 480px at 12% 88%, color-mix(in srgb, var(--color-accent) 30%, transparent), transparent 60%),
+    radial-gradient(1100px 520px at 82% 10%, color-mix(in srgb, var(--color-primary) 42%, transparent), transparent 65%),
+    linear-gradient(160deg, var(--dark-bg) 30%, color-mix(in srgb, var(--dark-bg) 58%, var(--color-primary)));
+  background-size: 170% 170%, 170% 170%, 100% 100%;
+  animation: heroVivid 16s ease-in-out infinite alternate;
+}
+@keyframes heroVivid {
+  from { background-position: 0% 100%, 100% 0%, 0 0; }
+  to   { background-position: 60% 40%, 40% 60%, 0 0; }
+}
+@media (prefers-reduced-motion: reduce) { html[data-d-hero="vivid"] .hero { animation: none; } }
+
+/* ── Структурныя восі прэсэта «Цэх» (v4.460) ─────────────────────────────── */
+/* herolayout=photo: поўнаэкранны hero, кантэнт унізе злева (як фота-афіша) */
+html[data-d-herolayout="photo"] .hero { min-height: 100vh; align-items: flex-end; padding-bottom: 64px; position: relative; overflow: hidden; }
+html[data-d-herolayout="photo"] .hero-inner { display: flex; flex-direction: column; position: relative; z-index: 2; width: 100%; max-width: 1140px; margin: 0 auto; }
+/* herophoto=on: фонавы здымак (#hero-photo устаўляе main.js, аверлэй у background-image) + зерне */
+#hero-photo { position: absolute; inset: 0; background-size: cover; background-position: center; z-index: 0; }
+html[data-d-herophoto="on"] .hero { position: relative; overflow: hidden; }
+html[data-d-herophoto="on"] .hero::after { content: ''; position: absolute; inset: 0; z-index: 1; opacity: 0.4; mix-blend-mode: overlay; pointer-events: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='240'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='240' height='240' filter='url(%23n)' opacity='0.5'/%3E%3C/svg%3E"); }
+html[data-d-herophoto="on"] .hero-inner { position: relative; z-index: 2; }
+/* stats=on: hero-meta (тэлефон/гадзіны) — стужка фактаў ПАД кнопкамі, з верхняй рыскай */
+html[data-d-stats="on"] .hero-inner { display: flex; flex-direction: column; }
+html[data-d-stats="on"] .hero-meta { order: 9; border-top: 1px solid rgba(255,255,255,0.16); padding-top: 20px; margin-top: 44px; gap: 36px; opacity: 1; font-weight: 600; }
+html[data-d-stats="on"] .hero-meta span::before { content: ''; }
+/* navstyle=overlay: навбар празрысты паверх hero; пасля скролу — шкло (незалежна ад data-d-glass) */
+html[data-d-navstyle="overlay"] .navbar { position: fixed; left: 0; right: 0; background-color: transparent; box-shadow: none; }
+html[data-d-navstyle="overlay"] .navbar.scrolled { background-color: color-mix(in srgb, var(--nav-bg) 72%, transparent); -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px); box-shadow: 0 2px 12px rgba(0,0,0,0.15); }
+/* bands=on: «Пра нас» — цёмная паласа тэкст↔выява на ўсю шырыню (у духу цэхавых band-секцый) */
+html[data-d-bands="on"] #about { background:
+  radial-gradient(700px 420px at 82% 30%, color-mix(in srgb, var(--color-primary) 26%, transparent), transparent 65%),
+  var(--dark-bg); color: var(--dark-text); }
+html[data-d-bands="on"] #about .section-title { color: var(--dark-text); }
+html[data-d-bands="on"] #about .about-text { color: var(--dark-text-muted); }
+html[data-d-bands="on"] #about .about-image { box-shadow: 0 24px 60px rgba(0,0,0,0.35); }
+
+/* ── Восі прэсэтаў «Маршрут» / «Афіша» (v4.461) ─────────────────────────── */
+/* heroalign=center: кампазіцыя першага экрана па цэнтры */
+html[data-d-heroalign="center"] .hero-inner { margin-left: auto; margin-right: auto; text-align: center; max-width: 780px; }
+html[data-d-heroalign="center"] .hero-btns, html[data-d-heroalign="center"] .hero-meta { justify-content: center; }
+/* bgpattern=grid: тонкая карта-сетка на светлых секцыях (колер ад тэмы) */
+html[data-d-bgpattern="grid"] .s-light.section, html[data-d-bgpattern="grid"] .s-alt.section {
+  background-image:
+    linear-gradient(color-mix(in srgb, var(--light-border) 55%, transparent) 1px, transparent 1px),
+    linear-gradient(90deg, color-mix(in srgb, var(--light-border) 55%, transparent) 1px, transparent 1px);
+  background-size: 56px 56px; background-position: center; }
+/* svcstyle=route: паслугі — прыпынкі на пункцірнай лініі маршруту (нумар = парадак прыпынку) */
+html[data-d-svcstyle="route"] #services-grid { display: block; position: relative; counter-reset: stop; max-width: 900px; margin: 0 auto; }
+html[data-d-svcstyle="route"] #services-grid::before { content: ''; position: absolute; left: 50%; top: 0; bottom: 0; border-left: 3px dotted var(--color-accent); opacity: 0.55; }
+html[data-d-svcstyle="route"] .service-card { counter-increment: stop; position: relative; width: calc(50% - 44px); margin: 0 0 36px; }
+html[data-d-svcstyle="route"] .service-card:nth-of-type(odd) { margin-right: auto; }
+html[data-d-svcstyle="route"] .service-card:nth-of-type(even) { margin-left: auto; }
+html[data-d-svcstyle="route"] .service-card::before { content: counter(stop); position: absolute; top: 24px; width: 40px; height: 40px; border-radius: 50%;
+  background: var(--color-accent); color: var(--light-bg); display: flex; align-items: center; justify-content: center; font-weight: 700; box-shadow: 0 0 0 5px var(--light-bg); }
+html[data-d-svcstyle="route"] .service-card:nth-of-type(odd)::before { right: -64px; }
+html[data-d-svcstyle="route"] .service-card:nth-of-type(even)::before { left: -64px; }
+html[data-d-svcstyle="route"] .service-icon { display: none; }
+html[data-d-svcstyle="route"] .services-folder-heading { text-align: center; border-bottom: none !important; position: relative; z-index: 1; }
+@media (max-width: 760px) {
+  html[data-d-svcstyle="route"] #services-grid::before { left: 22px; }
+  html[data-d-svcstyle="route"] .service-card { width: auto; margin-left: 52px !important; margin-right: 0 !important; }
+  html[data-d-svcstyle="route"] .service-card::before { left: -52px !important; right: auto !important; width: 34px; height: 34px; }
+}
+/* svcstyle=covers: паслугі — вертыкальныя афішы-вокладкі, гарызантальная стужка са снэп-скролам */
+html[data-d-svcstyle="covers"] #services-grid { display: flex; gap: 18px; overflow-x: auto; scroll-snap-type: x mandatory; padding-bottom: 14px; }
+html[data-d-svcstyle="covers"] .service-card { flex: 0 0 290px; scroll-snap-align: start; aspect-ratio: 3 / 4; display: flex; flex-direction: column; justify-content: flex-end;
+  position: relative; overflow: hidden; border: none; color: #fff; }
+html[data-d-svcstyle="covers"] .service-card:nth-of-type(4n+1) { background: linear-gradient(180deg, transparent 30%, rgba(8,8,16,0.85)), radial-gradient(480px 340px at 30% 25%, color-mix(in srgb, var(--color-accent) 60%, transparent), transparent 70%), linear-gradient(165deg, color-mix(in srgb, var(--color-primary) 50%, #14141f), #12121c); }
+html[data-d-svcstyle="covers"] .service-card:nth-of-type(4n+2) { background: linear-gradient(180deg, transparent 30%, rgba(8,8,16,0.85)), radial-gradient(460px 320px at 70% 30%, color-mix(in srgb, var(--color-primary) 55%, transparent), transparent 70%), linear-gradient(200deg, color-mix(in srgb, var(--color-accent) 30%, #131320), #101018); }
+html[data-d-svcstyle="covers"] .service-card:nth-of-type(4n+3) { background: linear-gradient(180deg, transparent 30%, rgba(8,8,16,0.85)), radial-gradient(480px 340px at 45% 20%, color-mix(in srgb, var(--color-accent) 45%, transparent), transparent 70%), linear-gradient(180deg, color-mix(in srgb, var(--color-primary) 35%, #161420), #100f18); }
+html[data-d-svcstyle="covers"] .service-card:nth-of-type(4n+4) { background: linear-gradient(180deg, transparent 30%, rgba(8,8,16,0.85)), radial-gradient(520px 320px at 55% 35%, color-mix(in srgb, var(--color-primary) 45%, transparent), transparent 70%), linear-gradient(190deg, color-mix(in srgb, var(--color-accent) 25%, #101418), #0d1012); }
+html[data-d-svcstyle="covers"] .service-title { color: #fff; font-size: 1.3rem; text-shadow: 0 2px 14px rgba(0,0,0,0.5); }
+html[data-d-svcstyle="covers"] .service-desc { color: rgba(255,255,255,0.78); }
+html[data-d-svcstyle="covers"] .service-price { color: var(--color-accent); font-size: 1.2rem; }
+html[data-d-svcstyle="covers"] .service-icon { position: absolute; top: 18px; left: 20px; margin: 0; }
+html[data-d-svcstyle="covers"] .services-folder-heading { flex: 0 0 100%; }
+
+/* svcstyle=index: паслугі — нумараваны спіс-індэкс, як змест дакумента (прэсэт «Пратакол») */
+html[data-d-svcstyle="index"] #services-grid { display: block; max-width: 980px; margin: 0 auto; counter-reset: idx; border-top: 2px solid var(--light-text); }
+html[data-d-svcstyle="index"] .service-card { counter-increment: idx; display: grid; grid-template-columns: 56px 1.1fr 1.6fr auto auto; gap: 20px; align-items: baseline;
+  background: transparent; border: none; border-bottom: 1px solid var(--light-border); border-radius: 0; box-shadow: none !important; padding: 22px 4px; transform: none !important; }
+html[data-d-svcstyle="index"] .service-card:hover { background: color-mix(in srgb, var(--light-text) 5%, transparent); }
+html[data-d-svcstyle="index"] .service-card::before { content: counter(idx, decimal-leading-zero); font-size: 0.85rem; color: var(--light-text-muted); font-variant-numeric: tabular-nums; }
+html[data-d-svcstyle="index"] .service-icon { display: none; }
+html[data-d-svcstyle="index"] .service-title { font-size: 1.35rem; margin: 0; grid-column: 2; }
+html[data-d-svcstyle="index"] .service-desc { font-size: 0.85rem; grid-column: 3; }
+html[data-d-svcstyle="index"] .service-price { white-space: nowrap; font-weight: 600; margin: 0; grid-column: 4; }
+html[data-d-svcstyle="index"] .service-card button { width: auto !important; padding: 8px 18px !important; margin-top: 0 !important; grid-column: 5; border-radius: 0 !important; }
+html[data-d-svcstyle="index"] .services-folder-heading { border-bottom: none !important; padding: 18px 4px 6px; }
+@media (max-width: 760px) {
+  html[data-d-svcstyle="index"] .service-card { grid-template-columns: 40px 1fr auto; }
+  html[data-d-svcstyle="index"] .service-desc { display: none; }
+  html[data-d-svcstyle="index"] .service-price { grid-column: 3; }
+  html[data-d-svcstyle="index"] .service-card button { grid-column: 2 / -1; justify-self: start; }
+}
+
+/* ── 🎛 typo: характар тыпаграфікі (вось прэсэтаў «Пратакол»/«Штамп») ── */
+/* editorial: серыф-часопісная — загалоўкі лёгкай вагой, курсіўны акцэнт («Пратакол») */
+html[data-d-typo="editorial"] .hero-title, html[data-d-typo="editorial"] .section-title,
+html[data-d-typo="editorial"] .service-title, html[data-d-typo="editorial"] .about-content h2 {
+  font-family: Georgia, 'Times New Roman', serif; font-weight: 400; letter-spacing: -0.01em; }
+html[data-d-typo="editorial"] .hero-title { line-height: 1.05; }
+html[data-d-typo="editorial"] .section-title::after { height: 2px; border-radius: 0; } /* рыска-разлінейка замест тоўстай */
+html[data-d-typo="editorial"] .btn { border-radius: 0; }
+/* caps: КАПС-плакат — загалоўкі і кнопкі великімі, вага 900 («Штамп») */
+html[data-d-typo="caps"] .hero-title, html[data-d-typo="caps"] .section-title { text-transform: uppercase; font-weight: 900; letter-spacing: -0.02em; line-height: 1.02; }
+html[data-d-typo="caps"] .service-title, html[data-d-typo="caps"] .about-content h2 { text-transform: uppercase; font-weight: 800; }
+html[data-d-typo="caps"] .btn { text-transform: uppercase; font-weight: 900; letter-spacing: 0.04em; }
+
+/* ── 🎛 frames=on: тоўстыя рамкі-борды друкарні замест ценяў (прэсэт «Штамп») ── */
+html[data-d-frames="on"] .navbar { border-bottom: 3px solid var(--light-text); box-shadow: none !important; }
+html[data-d-frames="on"] .s-light .card, html[data-d-frames="on"] .s-alt .card { border: 3px solid var(--light-text); box-shadow: none !important; border-radius: 0; }
+html[data-d-frames="on"] .s-light .card:hover, html[data-d-frames="on"] .s-alt .card:hover { transform: none; background: color-mix(in srgb, var(--color-accent) 25%, var(--light-bg-card)); }
+html[data-d-frames="on"] .btn { border: 3px solid var(--light-text); border-radius: 0 !important; box-shadow: none !important; }
+html[data-d-frames="on"] .prices-table td, html[data-d-frames="on"] .prices-table th { border-bottom: 2px solid var(--light-text); }
+html[data-d-frames="on"] .section-title::after { height: 6px; border-radius: 0; }
+
+/* ── 🎛 marquee=on: бягучы радок паслуг/коштаў пад hero (прэсэт «Штамп»; ствараецца ў main.js) ── */
+#site-marquee { overflow: hidden; white-space: nowrap; background: var(--color-accent); color: var(--light-text);
+  border-top: 3px solid var(--light-text); border-bottom: 3px solid var(--light-text); }
+#site-marquee .mq-track { display: inline-block; padding: 12px 0; font-weight: 900; font-size: 0.9rem;
+  text-transform: uppercase; letter-spacing: 0.05em; animation: mq-scroll 28s linear infinite; }
+@keyframes mq-scroll { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+@media (prefers-reduced-motion: reduce) { #site-marquee .mq-track { animation: none; } }
+
+/* ── 🎛 stamp=on: круглая «пячатка» з назвай кампаніі ў hero (прэсэт «Штамп»; ствараецца ў main.js) ── */
+#hero-stamp { position: absolute; right: 5%; top: 76px; width: 180px; height: 180px; border: 5px solid var(--color-primary);
+  border-radius: 50%; display: flex; align-items: center; justify-content: center; text-align: center; padding: 16px;
+  color: var(--color-primary); font-weight: 900; font-size: 1.1rem; line-height: 1.25; text-transform: uppercase;
+  letter-spacing: 0.06em; transform: rotate(12deg); opacity: 0.9; pointer-events: none; z-index: 2; overflow: hidden; }
+#hero-stamp::after { content: ''; position: absolute; inset: 8px; border: 2px solid var(--color-primary); border-radius: 50%; }
+html[data-d-stamp="on"] #hero { position: relative; }
+@media (max-width: 900px) { #hero-stamp { display: none; } }
+
+/* ── 👁 Панэлька прэв'ю выгляду (?look=1) — не частка дызайну сайта, толькі рэжым прагляду ── */
+#look-panel { position: fixed; bottom: 14px; left: 50%; transform: translateX(-50%); z-index: 10000;
+  background: rgba(15,17,20,0.94); -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px);
+  color: #eee; border-radius: 16px; padding: 12px 16px; box-shadow: 0 10px 40px rgba(0,0,0,0.45);
+  display: flex; flex-direction: column; gap: 8px; max-width: min(94vw, 760px); font-family: 'Manrope', sans-serif; }
+#look-panel .look-note { font-size: 0.72rem; color: #f5b83d; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; text-align: center; }
+#look-panel .look-row { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+#look-panel .look-lbl { font-size: 0.72rem; color: #999; min-width: 86px; font-weight: 600; }
+#look-panel .look-opt { background: rgba(255,255,255,0.08); border: 1px solid transparent; color: #ccc;
+  border-radius: 999px; padding: 6px 13px; font: 600 0.78rem 'Manrope', sans-serif; cursor: pointer; }
+#look-panel .look-opt:hover { color: #fff; }
+#look-panel .look-opt.cur { border-color: #f5a83d; } /* аранжавая рамка = бягучыя захаваныя налады сайта */
+#look-panel .look-opt.on { background: #2ea052; color: #fff; }
+#look-panel .look-apply { margin-top: 2px; background: #fff; color: #111; border: none; border-radius: 10px;
+  padding: 10px 18px; font: 800 0.88rem 'Manrope', sans-serif; cursor: pointer; }
+#look-panel .look-apply:hover { background: #e8f5ec; }
+@media (max-width: 600px) { #look-panel { bottom: 0; left: 0; right: 0; transform: none; border-radius: 16px 16px 0 0; max-width: none; } }
 .hero-inner { max-width: 700px; }
 .hero-title {
   font-size: clamp(2rem, 6vw, 3.6rem);
@@ -150,38 +366,34 @@ section.s-dark  { background: var(--dark-bg);  color: var(--text-light); }
 .hero-meta { display: flex; gap: 24px; flex-wrap: wrap; opacity: 0.75; font-size: 0.95rem; }
 .hero-meta span::before { content: "✓ "; color: var(--color-primary); }
 
-/* ---- ÐŸÐÐ¡Ð›Ð£Ð“Ð† ---- */
-.services-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-  gap: 24px;
+/* ---- ПАСЛУГІ (карткі; фон/рамка ад .card у themes.css) ---- */
+/* Bento-сетка (дызайн-параметр bento → data-d-bento): кожная 6-я картка — «геройская» на 2 калонкі.
+   Толькі на шырокіх экранах (на вузкіх span разарваў бы аднакалонкавую сетку) */
+@media (min-width: 700px) {
+  html[data-d-bento="on"] #services-grid .service-card:nth-of-type(6n+1) {
+    grid-column: span 2;
+    display: flex; flex-direction: column; justify-content: center;
+  }
+  html[data-d-bento="on"] #services-grid .service-card:nth-of-type(6n+1) .service-title { font-size: 1.35rem; }
 }
-.service-card {
-  background: var(--card-bg);
-  border-radius: var(--radius-lg);
-  padding: 28px 24px;
-  transition: var(--transition);
-  border: 1px solid var(--border-color);
-}
+.service-card { padding: 28px 24px; transition: var(--transition); }
 .service-card:hover { transform: translateY(-4px); box-shadow: 0 8px 32px rgba(0,0,0,0.10); }
+/* Цені картак (дызайн-параметр shadows → data-d-shadows): flat = толькі рамка (і без hover-пад'ёму),
+   soft = лёгкі нейтральны цень, deep = глыбокі цень з подыхам прымарнага колеру + мацнейшы hover */
+html[data-d-shadows="soft"] .card { box-shadow: 0 2px 10px rgba(0,0,0,0.06); }
+html[data-d-shadows="deep"] .card { box-shadow: 0 10px 30px color-mix(in srgb, var(--color-primary) 14%, rgba(0,0,0,0.10)); }
+html[data-d-shadows="deep"] .service-card:hover { transform: translateY(-6px) scale(1.01); box-shadow: 0 18px 44px color-mix(in srgb, var(--color-primary) 24%, rgba(0,0,0,0.14)); }
+html[data-d-shadows="flat"] .service-card:hover { transform: none; box-shadow: none; }
 .service-icon { font-size: 2.2rem; margin-bottom: 12px; }
 .service-title { font-weight: 700; font-size: 1.1rem; margin-bottom: 8px; }
 .service-desc { opacity: 0.75; font-size: 0.95rem; }
 .service-price { margin-top: 12px; font-weight: 700; color: var(--color-primary); }
 
-/* ---- ÐŸÐ•Ð ÐÐ’ÐÐ“Ð† ---- */
-.advantages-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 24px;
-  text-align: center;
-}
-.advantage-item { padding: 24px 16px; }
+/* ---- ПЕРАВАГІ (main.js генеруе .advantage-card; арфан .advantage-item перайменаваны) ---- */
+.advantage-card { padding: 24px 16px; text-align: center; }
 .advantage-icon { font-size: 2.5rem; margin-bottom: 12px; }
-.advantage-title { font-weight: 700; margin-bottom: 8px; }
-.advantage-desc { opacity: 0.75; font-size: 0.95rem; }
 
-/* ---- ÐÐ‘ ÐÐÐ¡ ---- */
+/* ---- ПРА НАС ---- */
 .about-inner {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -189,13 +401,12 @@ section.s-dark  { background: var(--dark-bg);  color: var(--text-light); }
   align-items: center;
 }
 @media (max-width: 768px) { .about-inner { grid-template-columns: 1fr; } }
-.about-img { border-radius: var(--radius-lg); overflow: hidden; }
-.about-img img { width: 100%; height: 360px; object-fit: cover; }
-.about-text h2 { margin-bottom: 1rem; }
-.about-text p { opacity: 0.8; margin-bottom: 1rem; }
+.about-image { border-radius: var(--radius-lg); overflow: hidden; } /* index.html: .about-image (арфан .about-img перайменаваны) */
+.about-image img { width: 100%; height: 360px; object-fit: cover; }
+.about-text { opacity: 0.85; }
 
-/* ---- Ð¯Ðš ÐœÐ« ÐŸÐ ÐÐ¦Ð£Ð•Ðœ ---- */
-.steps { display: flex; flex-direction: column; gap: 24px; max-width: 720px; margin: 0 auto; }
+/* ---- ЯК МЫ ПРАЦУЕМ (.how-steps — кантэйнер з index.html; .steps/.step — разметка main.js) ---- */
+.how-steps, .steps { display: flex; flex-direction: column; gap: 24px; max-width: 720px; margin: 0 auto; }
 .step { display: flex; gap: 20px; align-items: flex-start; }
 .step-num {
   min-width: 48px; height: 48px;
@@ -208,12 +419,7 @@ section.s-dark  { background: var(--dark-bg);  color: var(--text-light); }
 .step-body h3 { font-weight: 700; margin-bottom: 4px; }
 .step-body p { opacity: 0.75; font-size: 0.95rem; }
 
-/* ---- ÐÐšÐ¦Ð«Ð† ---- */
-.promos-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  gap: 24px;
-}
+/* ---- АКЦЫІ ---- */
 .promo-card {
   background: var(--color-primary);
   color: #fff;
@@ -231,7 +437,7 @@ section.s-dark  { background: var(--dark-bg);  color: var(--text-light); }
 .promo-title { font-size: 1.2rem; font-weight: 700; margin-bottom: 8px; }
 .promo-desc { opacity: 0.85; font-size: 0.95rem; }
 
-/* ---- Ð“ÐÐ›Ð•Ð Ð­Ð¯ ---- */
+/* ---- ГАЛЕРЭЯ (пліткі) ---- */
 .tile-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
@@ -256,57 +462,60 @@ section.s-dark  { background: var(--dark-bg);  color: var(--text-light); }
   .tile-grid { grid-template-columns: repeat(2, 1fr) !important; gap: 10px; }
 }
 
-/* ---- LIGHTBOX ---- */
+/* ---- LIGHTBOX (разметка з main.js: .lightbox > .lightbox-inner > img + ✕) ---- */
 .lightbox {
   display: none; position: fixed; inset: 0;
   background: rgba(0,0,0,0.92); z-index: 999;
   align-items: center; justify-content: center;
 }
 .lightbox.active { display: flex; }
+.lightbox-inner { position: relative; }
 .lightbox img { max-width: 90vw; max-height: 90vh; border-radius: var(--radius-md); }
-.lightbox-close {
-  position: absolute; top: 24px; right: 32px;
+.lightbox-inner button, .lightbox-close {
+  position: absolute; top: -40px; right: 0;
+  background: none; border: none;
   color: #fff; font-size: 2rem; cursor: pointer;
 }
 
-/* ---- Ð’ÐžÐ”Ð“Ð£ÐšÐ† ---- */
-.testimonials-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  gap: 24px;
-}
-.testimonial-card {
-  background: var(--card-bg);
-  border-radius: var(--radius-lg);
-  padding: 28px 24px;
-  border: 1px solid var(--border-color);
-}
+/* ---- ВОДГУКІ ---- */
+.testimonial-card { padding: 28px 24px; }
 .testimonial-stars { color: #f59e0b; margin-bottom: 12px; }
 .testimonial-text { opacity: 0.85; font-style: italic; margin-bottom: 16px; }
 .testimonial-author { font-weight: 700; }
 .testimonial-car { font-size: 0.9rem; opacity: 0.6; }
 
-/* ---- ÐŸÐ ÐÐ™Ð¡ ---- */
-.prices-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-  gap: 24px;
+/* ---- КОШТЫ (табліца з index.html; санацыя: клас не меў стыляў увогуле) ---- */
+.prices-table {
+  width: 100%;
+  max-width: 720px;
+  margin: 0 auto;
+  border-collapse: collapse;
 }
-.price-card {
-  background: var(--card-bg);
-  border-radius: var(--radius-lg);
-  padding: 28px 24px;
-  border: 1px solid var(--border-color);
+.prices-table th {
+  text-align: left;
+  padding: 10px 12px;
+  border-bottom: 2px solid var(--color-primary);
+  font-size: 0.9rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  opacity: 0.8;
 }
-.price-card-title { font-weight: 700; font-size: 1.1rem; margin-bottom: 16px; }
-.price-list { list-style: none; }
-.price-list li {
-  display: flex; justify-content: space-between;
-  padding: 8px 0; border-bottom: 1px solid var(--border-color);
+.prices-table td {
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--border-color);
   font-size: 0.95rem;
 }
-.price-list li:last-child { border-bottom: none; }
-.price-amount { font-weight: 700; color: var(--color-primary); }
+.price-amount { font-weight: 700; color: var(--color-primary); white-space: nowrap; }
+
+/* ---- МАРКІ / ПАРТНЁРЫ (санацыя: клас не меў стыляў) ---- */
+.brands-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 20px;
+  align-items: center;
+  justify-items: center;
+  text-align: center;
+}
 
 /* ---- FAQ ---- */
 .faq-list { max-width: 720px; margin: 0 auto; }
@@ -323,26 +532,24 @@ section.s-dark  { background: var(--dark-bg);  color: var(--text-light); }
 .faq-item.open .faq-answer { display: block; }
 .faq-group-heading { margin-top: 20px; margin-bottom: 4px; font-size: 1.05rem; font-weight: 700; padding-bottom: 6px; border-bottom: 2px solid var(--color-primary); color: var(--color-primary); }
 
-/* ---- ÐšÐÐÐ¢ÐÐšÐ¢Ð« ---- */
-.contacts-inner {
+/* ---- КАНТАКТЫ (.contact-layout — з index.html; арфан .contacts-inner перайменаваны) ---- */
+.contact-layout {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 48px;
 }
-@media (max-width: 768px) { .contacts-inner { grid-template-columns: 1fr; } }
+@media (max-width: 768px) { .contact-layout { grid-template-columns: 1fr; } }
 .contact-info { display: flex; flex-direction: column; gap: 16px; }
 .contact-item { display: flex; gap: 12px; align-items: flex-start; }
 .contact-icon { font-size: 1.3rem; }
-.contact-label { font-size: 0.85rem; opacity: 0.6; }
-.contact-value { font-weight: 600; }
 
-/* ---- Ð¤ÐžÐ ÐœÐ ---- */
-.form-group { margin-bottom: 16px; }
-.form-group label { display: block; margin-bottom: 6px; font-weight: 500; font-size: 0.95rem; }
-.form-group input,
-.form-group textarea,
-.form-group select {
+/* Форма заяўкі (палі — прамыя дзеці form, без .form-group-абгортак) */
+.contact-form-wrap h3 { margin-bottom: 16px; }
+.contact-form-wrap input,
+.contact-form-wrap textarea,
+.contact-form-wrap select {
   width: 100%;
+  margin-bottom: 14px;
   padding: 12px 16px;
   border-radius: var(--radius-md);
   border: 1.5px solid var(--border-color);
@@ -352,33 +559,26 @@ section.s-dark  { background: var(--dark-bg);  color: var(--text-light); }
   font-family: inherit;
   transition: var(--transition);
 }
-.form-group input:focus,
-.form-group textarea:focus,
-.form-group select:focus {
+.contact-form-wrap input:focus,
+.contact-form-wrap textarea:focus,
+.contact-form-wrap select:focus {
   outline: none;
   border-color: var(--color-primary);
 }
-.form-group textarea { min-height: 120px; resize: vertical; }
-.form-note { font-size: 0.8rem; opacity: 0.6; margin-top: 8px; }
+.contact-form-wrap textarea { min-height: 120px; resize: vertical; }
 
-/* ---- ÐšÐÐ Ð¢Ð ---- */
+/* ---- КАРТА ---- */
 #map-container {
   height: 400px;
   border-radius: var(--radius-lg);
   overflow: hidden;
   isolation: isolate;
 }
-
 @media (max-width: 600px) {
   #map-container { height: 250px; }
 }
 
-/* ---- FOOTER ---- */
-.footer {
-  background: var(--dark-bg);
-  color: var(--text-light);
-  padding: 40px 20px 24px;
-}
+/* ---- FOOTER (структура; колеры — у themes.css праз --footer-*) ---- */
 .footer-inner {
   max-width: 1140px; margin: 0 auto;
   display: flex; justify-content: space-between;
@@ -386,16 +586,84 @@ section.s-dark  { background: var(--dark-bg);  color: var(--text-light); }
   padding-bottom: 24px;
   border-bottom: 1px solid rgba(255,255,255,0.1);
 }
+.footer-col { min-width: 160px; }
+.footer-col h4 { margin-bottom: 10px; font-size: 0.95rem; }
+.footer-col ul { list-style: none; }
+.footer-col li { margin-bottom: 6px; }
 .footer-logo { font-size: 1.2rem; font-weight: 700; margin-bottom: 8px; }
-.footer-copy {
+.footer-bottom { /* index.html: .footer-bottom (арфан .footer-copy перайменаваны) */
   max-width: 1140px; margin: 20px auto 0;
   text-align: center; opacity: 0.5; font-size: 0.85rem;
 }
-.footer-links { display: flex; gap: 16px; flex-wrap: wrap; }
-.footer-links a { opacity: 0.7; transition: var(--transition); }
-.footer-links a:hover { opacity: 1; }
 
-/* ---- Ð£Ð¢Ð«Ð›Ð†Ð¢Ð« ---- */
+/* ---- ПЛАЎНАЕ З'ЯЎЛЕННЕ СЕКЦЫЙ ПРЫ СКРОЛЕ ----
+   Клас .js-reveal ставіць main.js ТОЛЬКІ калі ёсць IntersectionObserver і не ўключаны
+   prefers-reduced-motion → без JS / на старых браўзерах усё бачна адразу (без «белай старонкі») */
+.js-reveal section {
+  opacity: 0;
+  transform: translateY(16px);
+  transition: opacity 0.6s ease, transform 0.6s ease;
+}
+.js-reveal section.in-view { opacity: 1; transform: none; }
+
+/* ---- МАБІЛЬНАЯ ПЛАВАЮЧАЯ CTA (дызайн-параметр stickyCta; ствараецца ў main.js initStickyCta) ---- */
+#sticky-cta {
+  display: none;
+  position: fixed;
+  left: 12px; right: 12px; bottom: 12px;
+  z-index: 900; /* ніжэй за кошык-бар (9999) і lightbox */
+  gap: 10px;
+}
+#sticky-cta .btn-primary { flex: 1; text-align: center; box-shadow: 0 6px 24px rgba(0,0,0,0.25); }
+#sticky-cta .btn-outline { background: var(--light-bg-card); }
+@media (max-width: 700px) {
+  #sticky-cta { display: flex; }
+  body { padding-bottom: 72px; } /* каб CTA не закрывала футэр-кантэнт */
+}
+
+/* ---- УТЫЛІТЫ ---- */
 .hidden { display: none !important; }
 .text-center { text-align: center; }
+.text-muted { opacity: 0.75; } /* дэфолт; унутры .s-light/.s-dark/.s-alt колер дае themes.css */
 .mt-2 { margin-top: 2rem; }
+
+/* ---- КАБІНЕТ КЛІЕНТА (оверлей на старонцы) ---- */
+/* Чысцейшае акно: адна рамка (сам iframe). Дэсктоп — акно 480px; мабілка — на ўвесь экран. */
+#cabinet-overlay { position: fixed; inset: 0; z-index: 10000; background: rgba(0,0,0,0.62); backdrop-filter: blur(3px); display: flex; align-items: center; justify-content: center; padding: 16px; }
+#cabinet-overlay .cabinet-frame { width: 100%; max-width: 480px; height: min(680px, 92vh); }
+#cabinet-overlay iframe { width: 100%; height: 100%; border: none; border-radius: 16px; background: #0f1117; box-shadow: 0 24px 70px rgba(0,0,0,0.5); }
+@media (max-width: 600px) {
+  #cabinet-overlay { padding: 0; }                              /* мабілка = fullscreen, без фонавай рамкі */
+  #cabinet-overlay .cabinet-frame { max-width: none; height: 100%; }
+  #cabinet-overlay iframe { border-radius: 0; }
+}
+
+/* ═══ 🎛 ПРЭЗЕНТАЦЫЯ ГАЛІНЫ (v4.593): згорнутасць / ліміт паказу / Карткі-Спіс ═══ */
+.ds-fold > summary { cursor: pointer; list-style: none; }
+.ds-fold > summary::-webkit-details-marker { display: none; }
+.ds-fold > summary > * { display: inline-block; }               /* загаловак і стрэлка ў адзін радок */
+.ds-fold > summary::after { content: '▸'; margin-inline-start: 10px; opacity: 0.55; font-size: 0.9em; transition: transform 0.15s; display: inline-block; }
+.ds-fold[open] > summary::after { transform: rotate(90deg); }
+.ds-more-wrap { text-align: center; margin-top: 14px; display: flex; gap: 10px; justify-content: center; }
+.ds-more-btn { padding: 8px 18px; border: 1px solid var(--accent, #f97316); border-radius: 999px; background: transparent; color: var(--accent, #f97316); font-weight: 600; font-size: 0.88rem; cursor: pointer; }
+.ds-more-btn:hover { background: var(--accent, #f97316); color: #fff; }
+.ds-lay-btn { display: block; margin-left: auto; margin-bottom: 8px; padding: 4px 12px; border: 1px solid var(--border, #8883); border-radius: 8px; background: transparent; color: inherit; opacity: 0.7; cursor: pointer; font-size: 0.95rem; }
+.ds-list .grid { grid-template-columns: 1fr !important; gap: 10px; }       /* Спіс: карткі ў адзін слупок, кампактна */
+.ds-list .grid .card { display: flex; align-items: center; gap: 14px; text-align: left; padding: 12px 16px; }
+.ds-list .grid .card .service-icon { margin: 0; font-size: 1.4rem; }
+.ds-list .tile-grid { grid-template-columns: repeat(2, 1fr) !important; }  /* фота ў рэжыме Спіс — дзве калонкі буйней */
+
+/* 🎛 SECTION_PROPS хваля 1 (v4.594): фон-паласа / выраўноўванне / калонкі / шырыня / водступы / карусель */
+.s-accent { background: rgba(249, 115, 22, 0.12); background: color-mix(in srgb, var(--accent, #f97316) 12%, transparent); } /* акцэнтная паласа (fallback → color-mix) */
+.ds-w-narrow .container { max-width: 760px; }
+.ds-w-full .container { max-width: none; padding-left: 18px; padding-right: 18px; }
+.ds-pad-compact.section { padding-top: 26px; padding-bottom: 26px; }
+.ds-pad-roomy.section { padding-top: 110px; padding-bottom: 110px; }
+@media (min-width: 700px) { /* калонкі — толькі на шырокіх (мабільныя media-правілы сеткі не ламаем) */
+  .ds-cols-2 .grid, .ds-cols-2 .tile-grid { grid-template-columns: repeat(2, 1fr) !important; }
+  .ds-cols-3 .grid, .ds-cols-3 .tile-grid { grid-template-columns: repeat(3, 1fr) !important; }
+  .ds-cols-4 .grid, .ds-cols-4 .tile-grid { grid-template-columns: repeat(4, 1fr) !important; }
+}
+.ds-carousel .grid, .ds-carousel .tile-grid, .ds-carousel .brands-grid { display: flex !important; overflow-x: auto; scroll-snap-type: x mandatory; gap: 14px; padding-bottom: 10px; -webkit-overflow-scrolling: touch; }
+.ds-carousel .grid > *, .ds-carousel .tile-grid > *, .ds-carousel .brands-grid > * { flex: 0 0 min(270px, 78vw); scroll-snap-align: start; }
+.ds-carousel .services-folder-heading { flex: 0 0 100%; }

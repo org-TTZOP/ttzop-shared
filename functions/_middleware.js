@@ -6,8 +6,8 @@ const PRIVATE_PREFIXES = [
   '/content/clients',              // персанальныя дадзеныя кліентаў (GDPR)
   '/content/auth.json',           // хэш пароля адміна
   '/content/consents.json',       // згоды
-  '/content/migrations.json',     // службовы — міграцыі merge-settings
-  '/content/settings-template.json', // службовы — шаблон налад для merge
+  // settings-template.json + migrations.json РАЗблакаваны (крок 4 «парадку ў дадзеных»): іх чытае
+  // панэль пры прымірэнні дэфолтаў (_settingsReconcileDefaults); сакрэтаў няма (пустыя дэфолты + rename-правілы)
   '/CLAUDE.md',                   // унутраная дакументацыя архітэктуры
   '/README.md'                    // унутраны readme
 ];
