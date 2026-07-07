@@ -2226,6 +2226,14 @@ async function _loginAvatarFetch(email) {
   const em = document.getElementById('invite-email'); em.value = inv;
   setTimeout(() => document.getElementById('invite-code')?.focus(), 100); // email прэфілены — курсор адразу ў код
 })();
+// Deep-link «сайт створаны» (ліст кліенту): /admin/?email=... → прапісаць email у поле ўваходу.
+// Бяспечна: спасылка прыйшла на АСАБІСТЫ email кліента (ён яго і так ведае); наведвальніку без спасылкі email НЕ паказваецца.
+(function loginEmailPrefill() {
+  const em = new URLSearchParams(location.search).get('email');
+  if (!em) return;
+  const el = document.getElementById('email-input');
+  if (el) { el.value = em; setTimeout(() => document.getElementById('password-input')?.focus(), 100); } // email вядомы → курсор адразу ў пароль
+})();
 // Праверка firstLogin пры загрузцы + аднаўленне сесіі па токене (Этап 3-2: без паўторнага ўводу пароля)
 (async function checkAuthStatus() {
   if (authToken) {
