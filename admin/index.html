@@ -2308,12 +2308,14 @@ async function doLogin() {
       authToken = d.token; currentUser = d.user || null;
       sessionStorage.setItem('ttzop_token_' + REPO, authToken);
       password = email ? '' : pwd; // legacy-сумяшчальнасць (флоў змены пароля); супрацоўнік пароля сайта не ведае
-      await _bootAfterAuth();
+      // Уваход УДАЛЫ. Збой пабудовы панэлі — гэта НЕ «Connection error»: паказваем рэальную прычыну (было замаскіравана адным catch → падман «няправільны пароль/сетка»)
+      try { await _bootAfterAuth(); }
+      catch (e) { console.error('boot after auth failed', e); document.getElementById('login-error').textContent = '⚠ ' + (e?.message || e); }
     } else {
       document.getElementById('login-error').textContent = d.error || t('err_wrong_password');
       const pwdEl = document.getElementById('password-input'); pwdEl.value = ''; pwdEl.focus(); // ачысціць поле для паўторнага ўводу
     }
-  } catch { document.getElementById('login-error').textContent = t('err_connection'); }
+  } catch (e) { console.error('login fetch failed', e); document.getElementById('login-error').textContent = t('err_connection') + (e?.message ? ': ' + e.message : ''); }
   btn.disabled = false; btn.textContent = t('login_btn');
 }
 // ─── 3-3b: прыняцце запрашэння супрацоўнікам (email + код + уласны пароль → user_accept → аўта-login) ───
