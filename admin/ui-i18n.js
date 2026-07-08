@@ -1971,6 +1971,9 @@ const ADMIN_UI = {
   },
 };
 
+// Варыянт «1 калонка» (spv_c1) — подпіс лічбавы «1» ва ўсіх мовах
+Object.keys(ADMIN_UI).forEach(l => { ADMIN_UI[l].spv_c1 = '1'; });
+
 // 🧩 Table-праекцыя ўласцівасцяў выгляду (адна ўніверсальная табліца замест N Flat-секцый) — загалоўкі слупкоў
 Object.assign(ADMIN_UI.be, { st_props_title:'Уласцівасці выгляду', st_col_group:'Група', st_col_param:'Параметр', st_col_value:'Значэнне' });
 Object.assign(ADMIN_UI.en, { st_props_title:'Display properties', st_col_group:'Group', st_col_param:'Parameter', st_col_value:'Value' });

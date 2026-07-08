@@ -660,6 +660,7 @@ html[data-d-shadows="flat"] .service-card:hover { transform: none; box-shadow: n
 .ds-pad-compact.section { padding-top: 26px; padding-bottom: 26px; }
 .ds-pad-roomy.section { padding-top: 110px; padding-bottom: 110px; }
 @media (min-width: 700px) { /* калонкі — толькі на шырокіх (мабільныя media-правілы сеткі не ламаем) */
+  .ds-cols-1 .grid, .ds-cols-1 .tile-grid { grid-template-columns: 1fr !important; } /* 1 калонка = буйныя карткі ў слупок (адрозна ад layoutView:Спіс — той мяняе стыль на радкі) */
   .ds-cols-2 .grid, .ds-cols-2 .tile-grid { grid-template-columns: repeat(2, 1fr) !important; }
   .ds-cols-3 .grid, .ds-cols-3 .tile-grid { grid-template-columns: repeat(3, 1fr) !important; }
   .ds-cols-4 .grid, .ds-cols-4 .tile-grid { grid-template-columns: repeat(4, 1fr) !important; }
