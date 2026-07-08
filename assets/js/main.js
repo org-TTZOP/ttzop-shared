@@ -2308,6 +2308,17 @@ function _edQuillLoad() { // адзін раз падгрузіць Quill CSS+JS
   });
   return _edQuillP;
 }
+// эфектыўны (скампазаваны) фон элемента: збірае паўпразрыстыя слаі фону ад el уверх да першага
+// непразрыстага, кампазуе іх — вяртае суцэльны rgb, які РЭАЛЬНА бачны на месцы карткі.
+function _effectiveBg(node) {
+  const parse = c => { const m = c && c.match(/rgba?\(\s*(\d+)[,\s]+(\d+)[,\s]+(\d+)(?:[,\s/]+([\d.]+))?/); return m ? { r: +m[1], g: +m[2], b: +m[3], a: m[4] === undefined ? 1 : +m[4] } : null; };
+  const stack = []; let n = node, base = null;
+  while (n) { const p = parse(getComputedStyle(n).backgroundColor); if (p) { if (p.a >= 0.999) { base = p; break; } if (p.a > 0) stack.push(p); } n = n.parentElement; }
+  if (!base) base = { r: 255, g: 255, b: 255, a: 1 };
+  let cur = base; // ад дна (непразрысты) уверх — накладаем кожны паўпразрысты слой
+  for (let i = stack.length - 1; i >= 0; i--) { const t = stack[i]; cur = { r: Math.round(t.r * t.a + cur.r * (1 - t.a)), g: Math.round(t.g * t.a + cur.g * (1 - t.a)), b: Math.round(t.b * t.a + cur.b * (1 - t.a)) }; }
+  return `rgb(${cur.r}, ${cur.g}, ${cur.b})`;
+}
 function _edModalOpen(el) {
   const [id, path] = (el.dataset.edm || '').split('::'); if (!id || !path) return;
   _edModalCtx = { el, id, path };
@@ -2325,11 +2336,9 @@ function _edModalOpen(el) {
   // 🎨 колеры з ЖЫВОЙ старонкі (іменаванне тэма-зменных заблытанае → чытаем computed). Мадалка = як картка.
   const rootCs = getComputedStyle(document.documentElement);
   const fg = getComputedStyle(el).color || '#1a1a1a'; // колер САМОГА рэдагаванага тэксту (дакладна як на старонцы)
-  // фон: бліжэйшы продак з ПОЎНАСЦЮ НЕПРАЗРЫСТЫМ фонам (альфа=1) — інакш мадалка паўпразрыстая (шкляныя карткі rgba<1)
-  let card = el, bg = '';
-  const _opaque = c => { if (!c || c === 'transparent') return false; const m = c.match(/rgba?\(([^)]+)\)/); if (!m) return true; const a = m[1].split(',')[3]; return a === undefined || parseFloat(a) >= 0.999; };
-  while (card) { const cb = getComputedStyle(card).backgroundColor; if (_opaque(cb)) { bg = cb; break; } card = card.parentElement; }
-  if (!bg) bg = rootCs.getPropertyValue('--card-bg').trim() || '#fff';
+  // фон = ЭФЕКТЫЎНЫ колер карткі, як бачыць вока: шкляныя карткі (rgba<1) кампазуюцца паверх свайго фону.
+  // (Раней бралі першы непразрысты продак → карычневы фон пад шкляной сіняй карткай — не супадала.)
+  const bg = _effectiveBg(el);
   const accent = rootCs.getPropertyValue('--accent').trim() || rootCs.getPropertyValue('--color-primary').trim() || '#f97316';
   const box = _edModalEl.querySelector('.ed-modal-box'); // інлайн-var перакрываюць CSS-фолбэкі
   box.style.setProperty('--card-bg', bg); box.style.setProperty('--text-main', fg);
