@@ -2245,7 +2245,7 @@ async function _dChange(key, val) { // прама ў чарнавік праз w
   if (!_dSecId) return;
   const tok = new URLSearchParams(location.search).get('look');
   try {
-    await fetch(API_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'draft_set', repo: SITE_REPO, lookToken: tok, id: _dSecId, key, val }) });
+    await _draftPost({ action: 'draft_set', repo: SITE_REPO, lookToken: tok, id: _dSecId, key, val }); // праз чаргу (без гонкі)
     await _dReload();
   } catch (e) {}
 }
@@ -2264,6 +2264,13 @@ async function _dReload() { // перачытаць чарнавік і пера
 function _edAttr(id, path, mode, ph) {
   return _dEdit ? ` contenteditable="true" data-ed="${_dsEsc(id + '::' + path + '::' + (mode || 'text'))}"${ph ? ` data-ph="${_dsEsc(ph)}"` : ''}` : '';
 }
+// 🔒 ЧАРГА draft-запісаў: draft_set/draft_theme — read-modify-write адзін sections/settings-чарнавік →
+// паралельныя праўкі перазапісвалі б адна адну. Серыялізуем усе праз адзін ланцуг промісаў.
+let _draftQ = Promise.resolve();
+function _draftPost(body) {
+  _draftQ = _draftQ.then(() => fetch(API_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) }).catch(() => {}));
+  return _draftQ;
+}
 let _dEditBound = false;
 function _dEditBind() {
   if (_dEditBound) return; _dEditBound = true;
@@ -2274,7 +2281,7 @@ function _dEditBind() {
     const path = mode === 'ml' ? path0 + '.' + currentLang : path0; // ml-палі (title/subtitle) → {бягучая мова}
     const val = mode === 'html' ? el.innerHTML.trim() : el.textContent.trim(); // body — HTML; астатняе — плоскі тэкст
     const tok = new URLSearchParams(location.search).get('look');
-    try { await fetch(API_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'draft_set', repo: SITE_REPO, lookToken: tok, id, path, val }) }); } catch (e2) {}
+    _draftPost({ action: 'draft_set', repo: SITE_REPO, lookToken: tok, id, path, val }); // праз чаргу (без гонкі)
   });
 }
 function _lookPick(kind, id) { _lookSel[kind] = id; _lookRefresh(); }
@@ -2301,7 +2308,7 @@ async function _lookApply() {
   const tc = _lookTC(); if (!tc) return;
   const tok = new URLSearchParams(location.search).get('look');
   try {
-    await fetch(API_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'draft_theme', repo: SITE_REPO, lookToken: tok, theme: _lookSel.p, activeDesign: _lookSel.d, themeColors: tc }) });
+    await _draftPost({ action: 'draft_theme', repo: SITE_REPO, lookToken: tok, theme: _lookSel.p, activeDesign: _lookSel.d, themeColors: tc }); // праз чаргу (без гонкі)
     const btn = document.querySelector('#look-panel .look-apply'); if (btn) { const t0 = btn.textContent; btn.textContent = '✓'; setTimeout(() => { btn.textContent = t0; }, 1400); } // фідбэк
   } catch (e) {}
 }
