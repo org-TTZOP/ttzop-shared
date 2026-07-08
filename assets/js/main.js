@@ -2174,45 +2174,52 @@ function initLookPreview(data) {
   _lookRefresh();
   if (edit) _dEditInit();
 }
-// ── Фаза D: двухтабны сінхрон прэв'ю↔панэль (BroadcastChannel 'ttzop-look') ──
-let _dCat = null, _dSecId = null, _dChan = null;
-function _dEditInit() {
-  try { _dChan = new BroadcastChannel('ttzop-look'); } catch { return; }
-  _dChan.addEventListener('message', e => {
-    const d = e.data || {};
-    if (d.t === 'd-cat') { _dCat = d.cat; _dEditRender(); }
-    else if (d.t === 'd-sync') _dReload();
-  });
-  _dChan.postMessage({ t: 'd-hello' }); // папрасіць каталог у адкрытай панэлі
-  setTimeout(() => { const w = document.getElementById('look-edit'); if (w && !_dCat) w.innerHTML = `<span class="look-lbl">${_svcEsc(getUI().look_edit_nopanel)}</span>`; }, 1600);
-}
+// ── 🖊️ Фаза D (АДЗІНЫ ШЛЯХ) — самадастатковы рэдактар параметраў секцыі ў прэв'ю ──
+// Адзін таб, без панэлі/BroadcastChannel (працуе на Тэсла Atom): піша ў чарнавік ПРАМА праз worker
+// draft_set (аўтарызацыя lookToken са спасылкі), потым перачытвае чарнавік і перарэндэрвае старонку.
+let _dSecId = null;
+// спрошчаны лэйбл: be для славянскіх моў інтэрфейсу, en для астатніх (оверлэй — інструмент уладальніка;
+// каталог параметраў — люстэрка панэльнага SECTION_PROPS, але кароткі: тыпы паказаны іконка+код без перакладу)
+const _dL = (be, en) => (['be', 'ru', 'uk'].includes(currentUiLang) ? be : en);
+const _SEC_TYPES = ['text', 'cards', 'list', 'accordion', 'gallery', 'testimonials', 'brands', 'posts', 'hero', 'footer'];
+const _SEC_TICON = { text: '📄', cards: '🃏', list: '💰', accordion: '❓', gallery: '🖼️', testimonials: '💬', brands: '🚗', posts: '📰', hero: '🔝', footer: '🔚' };
+function _secCat() { return [
+  { key: 'gridCols',   name: _dL('Калонкі', 'Columns'),   opts: [['auto', _dL('Аўта', 'Auto')], ['c1', '1'], ['c2', '2'], ['c3', '3'], ['c4', '4']] },
+  { key: 'layoutView', name: _dL('Выгляд', 'View'),       opts: [['off', _dL('Аўта', 'Auto')], ['cards', _dL('Карткі', 'Cards')], ['list', _dL('Спіс', 'List')]] },
+  { key: 'band',       name: _dL('Паласа', 'Band'),       opts: [['auto', _dL('Аўта', 'Auto')], ['light', _dL('Светлая', 'Light')], ['accent', _dL('Акцэнт', 'Accent')]] },
+  { key: 'secWidth',   name: _dL('Шырыня', 'Width'),      opts: [['normal', _dL('Звычайна', 'Normal')], ['narrow', _dL('Вузкая', 'Narrow')], ['full', _dL('На ўвесь', 'Full')]] },
+  { key: 'secPad',     name: _dL('Водступы', 'Padding'),  opts: [['normal', _dL('Звычайна', 'Normal')], ['compact', _dL('Кампактна', 'Compact')], ['roomy', _dL('Прасторна', 'Roomy')]] },
+  { key: 'carousel',   name: _dL('Карусель', 'Carousel'), opts: [['no', _dL('Не', 'No')], ['yes', _dL('Так', 'Yes')]] }
+]; }
+function _dEditInit() { _dEditRender(); }
 function _dSecs() { const s = siteData?._sections; return (Array.isArray(s?.sections) ? s.sections : []).filter(x => x && x.kind !== 'folder' && x.kind !== 'file' && x.type && SITE_VIEWS[x.type]); }
-function _dVicon(k) { return _dCat?.views.find(v => v.k === k)?.icon || ''; }
-function _dSecTitle(s) { const tt = s.title; const nm = (tt && typeof tt === 'object') ? (tt[currentLang] || Object.values(tt).find(Boolean)) : tt; return nm || _dCat?.views.find(v => v.k === s.type)?.label || s.id; }
+function _dSecTitle(s) { const tt = s.title; const nm = (tt && typeof tt === 'object') ? (tt[currentLang] || Object.values(tt).find(Boolean)) : tt; return nm || s.type || s.id; }
 function _dEditRender() {
-  const w = document.getElementById('look-edit'); if (!w || !_dCat) return;
+  const w = document.getElementById('look-edit'); if (!w) return;
   const secs = _dSecs();
-  if (!secs.some(s => s.id === _dSecId)) _dSecId = secs[0]?.id || null;
+  if (!secs.length) { w.innerHTML = `<span class="look-lbl">🧱 —</span>`; return; }
+  if (!secs.some(s => s.id === _dSecId)) _dSecId = secs[0].id;
   const sec = secs.find(s => s.id === _dSecId);
-  const sst = 'padding:4px 8px;border-radius:6px;border:1px solid rgba(128,128,128,.4);background:rgba(0,0,0,.15);color:inherit;font-size:.82rem;max-width:180px';
+  const sst = 'padding:4px 8px;border-radius:6px;border:1px solid rgba(128,128,128,.4);background:rgba(0,0,0,.15);color:inherit;font-size:.82rem;max-width:170px';
   const o = (v, sel, lbl) => `<option value="${_svcEsc(v)}"${v === sel ? ' selected' : ''}>${_svcEsc(lbl)}</option>`;
-  const secSel = `<select onchange="_dSecPick(this.value)" style="${sst}">${secs.map(s => o(s.id, _dSecId, (_dVicon(s.type) + ' ' + _dSecTitle(s)).trim())).join('')}</select>`;
-  let ctrls = '';
-  if (sec) {
-    ctrls += `<label style="display:flex;flex-direction:column;gap:2px;font-size:.72rem;opacity:.85">${_svcEsc(_dCat.viewLabel)}<select onchange="_dChange('type',this.value)" style="${sst}">${_dCat.views.map(v => o(v.k, sec.type, v.icon + ' ' + v.label)).join('')}</select></label>`;
-    ctrls += _dCat.props.map(p => {
-      const cur = (sec.disp && sec.disp[p.key] != null) ? sec.disp[p.key] : (p.type === 'number' ? '' : (p.options[0] && p.options[0].v));
-      const inp = p.type === 'number'
-        ? `<input type="number" min="0" value="${_svcEsc(cur == null ? '' : cur)}" onchange="_dChange('${p.key}',this.value)" style="${sst};max-width:64px">`
-        : `<select onchange="_dChange('${p.key}',this.value)" style="${sst}">${p.options.map(op => o(op.v, cur, op.label)).join('')}</select>`;
-      return `<label style="display:flex;flex-direction:column;gap:2px;font-size:.72rem;opacity:.85">${_svcEsc(p.label)}${inp}</label>`;
-    }).join('');
-  }
-  w.innerHTML = `<span class="look-lbl">🧱 ${_svcEsc(_dCat.section)}</span>${secSel}<div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:4px">${ctrls}</div>`;
+  const secSel = `<select onchange="_dSecPick(this.value)" style="${sst}">${secs.map(s => o(s.id, _dSecId, ((_SEC_TICON[s.type] || '') + ' ' + _dSecTitle(s)).trim())).join('')}</select>`;
+  const typeSel = `<label style="display:flex;flex-direction:column;gap:2px;font-size:.72rem;opacity:.85">${_svcEsc(_dL('Тып', 'Type'))}<select onchange="_dChange('type',this.value)" style="${sst}">${_SEC_TYPES.map(k => o(k, sec.type, (_SEC_TICON[k] || '') + ' ' + k)).join('')}</select></label>`;
+  const props = _secCat().map(p => {
+    const cur = (sec.disp && sec.disp[p.key] != null) ? sec.disp[p.key] : p.opts[0][0];
+    return `<label style="display:flex;flex-direction:column;gap:2px;font-size:.72rem;opacity:.85">${_svcEsc(p.name)}<select onchange="_dChange('${p.key}',this.value)" style="${sst}">${p.opts.map(op => o(op[0], cur, op[1])).join('')}</select></label>`;
+  }).join('');
+  w.innerHTML = `<span class="look-lbl">🧱 ${_svcEsc(_dL('Секцыя', 'Section'))}</span>${secSel}<div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:4px">${typeSel}${props}</div>`;
 }
 function _dSecPick(id) { _dSecId = id; _dEditRender(); }
-function _dChange(key, val) { if (_dSecId && _dChan) _dChan.postMessage({ t: 'd-set', id: _dSecId, key, val }); } // → панэль піша ў чарнавік
-async function _dReload() { // панэль паведаміла, што чарнавік абноўлены → перачытаць і перарэндэрыць
+async function _dChange(key, val) { // прама ў чарнавік праз worker (lookToken), потым перарэндэр
+  if (!_dSecId) return;
+  const tok = new URLSearchParams(location.search).get('look');
+  try {
+    await fetch(API_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'draft_set', repo: SITE_REPO, lookToken: tok, id: _dSecId, key, val }) });
+    await _dReload();
+  } catch (e) {}
+}
+async function _dReload() { // перачытаць чарнавік і перарэндэрыць старонку + оверлэй
   try {
     const tok = new URLSearchParams(location.search).get('look');
     const r = await fetch(API_URL + '/content/' + SITE_REPO + '/sections?draft=' + encodeURIComponent(tok) + '&cb=' + Date.now());
