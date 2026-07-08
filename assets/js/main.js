@@ -2182,9 +2182,13 @@ let _dSecId = null;
 // каталог параметраў — люстэрка панэльнага SECTION_PROPS, але кароткі: тыпы паказаны іконка+код без перакладу)
 const _dL = (be, en) => (['be', 'ru', 'uk'].includes(currentUiLang) ? be : en);
 const _SEC_TICON = { text: '📄', cards: '🃏', list: '💰', accordion: '❓', gallery: '🖼️', testimonials: '💬', brands: '🚗', posts: '📰', hero: '🔝', footer: '🔚' }; // іконка тыпу для подпісу секцыі (сам Тып мяняецца ў панэлі, не ў прэв'ю)
-function _secCat() { return [
+function _secCat() { return [ // люстэрка SECTION_PROPS панэлі (усе 10 параметраў); num:true → лічбавае поле
   { key: 'gridCols',   name: _dL('Калонкі', 'Columns'),   opts: [['auto', _dL('Аўта', 'Auto')], ['c1', '1'], ['c2', '2'], ['c3', '3'], ['c4', '4']] },
   { key: 'layoutView', name: _dL('Выгляд', 'View'),       opts: [['off', _dL('Аўта', 'Auto')], ['cards', _dL('Карткі', 'Cards')], ['list', _dL('Спіс', 'List')]] },
+  { key: 'previewN',   name: _dL('Паказваць', 'Show'),    num: true }, // колькі пазіцый адразу (0 = усе)
+  { key: 'itemOrder',  name: _dL('Парадак', 'Order'),     opts: [['panel', _dL('З панэлі', 'Panel')], ['random', _dL('Выпадкова', 'Random')], ['newest', _dL('Навейшыя', 'Newest')]] },
+  { key: 'collapsed',  name: _dL('Згорнута', 'Collapsed'), opts: [['no', _dL('Не', 'No')], ['yes', _dL('Так', 'Yes')]] },
+  { key: 'headAlign',  name: _dL('Загаловак', 'Heading'), opts: [['center', _dL('Цэнтр', 'Center')], ['left', _dL('Злева', 'Left')]] },
   { key: 'band',       name: _dL('Паласа', 'Band'),       opts: [['auto', _dL('Аўта', 'Auto')], ['light', _dL('Светлая', 'Light')], ['accent', _dL('Акцэнт', 'Accent')]] },
   { key: 'secWidth',   name: _dL('Шырыня', 'Width'),      opts: [['normal', _dL('Звычайна', 'Normal')], ['narrow', _dL('Вузкая', 'Narrow')], ['full', _dL('На ўвесь', 'Full')]] },
   { key: 'secPad',     name: _dL('Водступы', 'Padding'),  opts: [['normal', _dL('Звычайна', 'Normal')], ['compact', _dL('Кампактна', 'Compact')], ['roomy', _dL('Прасторна', 'Roomy')]] },
@@ -2204,8 +2208,11 @@ function _dEditRender() {
   const secSel = `<select onchange="_dSecPick(this.value)" style="${sst}">${secs.map(s => o(s.id, _dSecId, ((_SEC_TICON[s.type] || '') + ' ' + _dSecTitle(s)).trim())).join('')}</select>`;
   // Тып секцыі ў прэв'ю НЕ мяняем (эканомім месца на экране; тып рэдагуецца ў панэлі — Структура)
   const props = _secCat().map(p => {
-    const cur = (sec.disp && sec.disp[p.key] != null) ? sec.disp[p.key] : p.opts[0][0];
-    return `<label style="display:flex;flex-direction:column;gap:2px;font-size:.72rem;opacity:.85">${_svcEsc(p.name)}<select onchange="_dChange('${p.key}',this.value)" style="${sst}">${p.opts.map(op => o(op[0], cur, op[1])).join('')}</select></label>`;
+    const cur = (sec.disp && sec.disp[p.key] != null) ? sec.disp[p.key] : (p.num ? 0 : p.opts[0][0]);
+    const ctrl = p.num // лічбавае поле (previewN) — оверлэй умее і select, і number
+      ? `<input type="number" min="0" value="${_svcEsc(cur == null ? 0 : cur)}" onchange="_dChange('${p.key}',this.value)" style="${sst};max-width:64px">`
+      : `<select onchange="_dChange('${p.key}',this.value)" style="${sst}">${p.opts.map(op => o(op[0], cur, op[1])).join('')}</select>`;
+    return `<label style="display:flex;flex-direction:column;gap:2px;font-size:.72rem;opacity:.85">${_svcEsc(p.name)}${ctrl}</label>`;
   }).join('');
   w.innerHTML = `<span class="look-lbl">🧱 ${_svcEsc(_dL('Секцыя', 'Section'))}</span>${secSel}<div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:4px">${props}</div>`;
 }
