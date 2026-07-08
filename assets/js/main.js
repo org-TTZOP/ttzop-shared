@@ -2270,7 +2270,7 @@ async function _dReload() { // перачытаць чарнавік і пера
 // мадалку WYSIWYG (доўгае/прыгожае цела). Новае поле = адзін выклік.
 function _edAttr(id, path, mode, ph) {
   if (!_dEdit) return '';
-  if (mode === 'rich') return ` data-edm="${_dsEsc(id + '::' + path)}" data-ph="${_dsEsc(ph || '')}" class="ds-edm" title="${_dsEsc(ph || '')}"`;
+  if (mode === 'rich') return ` data-edm="${_dsEsc(id + '::' + path)}" data-ph="${_dsEsc(ph || '')}" title="${_dsEsc(ph || '')}"`; // без class (элемент ужо мае свой) — стыль/клік па [data-edm]
   return ` contenteditable="true" data-ed="${_dsEsc(id + '::' + path + '::' + (mode || 'text'))}"${ph ? ` data-ph="${_dsEsc(ph)}"` : ''}`;
 }
 // 🔒 ЧАРГА draft-запісаў: draft_set/draft_theme — read-modify-write адзін sections/settings-чарнавік →
@@ -2284,7 +2284,7 @@ let _dEditBound = false;
 function _dEditBind() {
   if (_dEditBound) return; _dEditBound = true;
   document.addEventListener('keydown', e => { const el = e.target.closest && e.target.closest('[data-ed]'); if (el && e.key === 'Enter' && !e.shiftKey && !(el.dataset.ed || '').endsWith('::html')) { e.preventDefault(); el.blur(); } }); // Enter=скончыць
-  document.addEventListener('click', e => { const el = e.target.closest && e.target.closest('.ds-edm'); if (el) { e.preventDefault(); e.stopPropagation(); _edModalOpen(el); } }); // rich-цела → мадалка WYSIWYG
+  document.addEventListener('click', e => { const el = e.target.closest && e.target.closest('[data-edm]'); if (el) { e.preventDefault(); e.stopPropagation(); _edModalOpen(el); } }); // rich-цела → мадалка WYSIWYG
   document.addEventListener('focusout', async e => {
     const el = e.target.closest && e.target.closest('[data-ed]'); if (!el) return;
     const [id, path0, mode] = (el.dataset.ed || '').split('::'); if (!id || !path0) return;
