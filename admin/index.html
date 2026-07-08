@@ -11631,7 +11631,37 @@ function _lookBodyHtml() {
     ${has ? `<button class="btn-sm" onclick="_settingsSaveFlush();_copyEl('look-url', this)">📋 ${t('look_copy')}</button>
     <button class="btn-sm" onclick="_lookRevoke()" style="color:var(--error)">🚫 ${t('look_revoke')}</button>
     <span id="look-url" style="font-size:0.75rem;color:var(--muted);word-break:break-all">${escHtml(_lookUrl())}</span>` : ''}
+    <span style="flex-basis:100%;height:1px;background:var(--border);margin:2px 0"></span>
+    <button class="btn-sm" onclick="_sitePublish(this)" style="background:var(--accent);color:#fff;font-weight:700;border-color:var(--accent)">🚀 ${t('look_publish')}</button>
+    <button class="btn-sm" onclick="_siteResetDraft()" style="color:var(--muted)">♻️ ${t('look_reset')}</button>
+    <span style="flex-basis:100%;font-size:0.8rem;color:var(--muted)">${t('look_publish_hint')}</span>
     <span style="flex-basis:100%;font-size:0.8rem;color:var(--muted)">${t('look_hint')}</span></div>`;
+}
+// 🚀 Апублікаваць сайт: чарнавік (усе панэльныя праўкі старонкі) → жывы сайт для ўсіх наведвальнікаў
+async function _sitePublish(btn) {
+  showConfirm(t('look_publish_q'), async () => {
+    _settingsSaveFlush(); // дапісаць магчымыя незахаваныя праўкі ў чарнавік перад публікацыяй
+    try {
+      const res = await fetch(API, { method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'publish_site', repo: REPO, password }) });
+      const data = res.ok ? await res.json() : null;
+      if (!res.ok || !data?.ok) { showAlert(t('err') + (data?.error ? ': ' + data.error : '')); return; }
+      showAlert(data.published ? t('look_published') : t('look_publish_none'));
+    } catch (e) { showAlert(t('err') + ': ' + e.message); }
+  }, { danger: false, label: t('look_publish') });
+}
+// ♻️ Адкінуць чарнавік: вярнуць старонку да апублікаванага стану (панэль перачытвае)
+async function _siteResetDraft() {
+  showConfirm(t('look_reset_q'), async () => {
+    try {
+      const res = await fetch(API, { method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'reset_draft', repo: REPO, password }) });
+      const data = res.ok ? await res.json() : null;
+      if (!res.ok || !data?.ok) { showAlert(t('err') + (data?.error ? ': ' + data.error : '')); return; }
+      showAlert(t('look_reset_done') + ' ✓');
+      if (typeof siteSectionsState !== 'undefined') { siteSectionsState.expanded?.clear(); loadNodeEditor(siteSectionsState); } // перачытаць старонку з published
+    } catch (e) { showAlert(t('err') + ': ' + e.message); }
+  }, { danger: true, label: t('look_reset') });
 }
 function _lookOpen() { // flush: токен мусіць даляцець у KV да загрузкі сайта
   const created = !settings.lookToken;

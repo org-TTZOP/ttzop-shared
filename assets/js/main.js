@@ -1119,7 +1119,9 @@ function buildSiteNav(list) {
 
 async function applySections() {
   try {
-    const response = await fetch(API_URL + '/content/' + SITE_REPO + '/sections');
+    // 🖊️ Прэв'ю чарнавіка: у рэжыме ?look=<токен> чытаем НЕапублікаваны чарнавік (worker валідуе токен, чужы → published)
+    const _look = new URLSearchParams(location.search).get('look');
+    const response = await fetch(API_URL + '/content/' + SITE_REPO + '/sections' + (_look ? '?draft=' + encodeURIComponent(_look) : ''));
     const data = await response.json();
     if (siteData) siteData._sections = data; // запомніць — каб перарэндэрыць пры змене мовы
     renderDynamicSections(data);
