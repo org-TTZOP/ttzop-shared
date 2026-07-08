@@ -2325,9 +2325,10 @@ function _edModalOpen(el) {
   // 🎨 колеры з ЖЫВОЙ старонкі (іменаванне тэма-зменных заблытанае → чытаем computed). Мадалка = як картка.
   const rootCs = getComputedStyle(document.documentElement);
   const fg = getComputedStyle(el).color || '#1a1a1a'; // колер САМОГА рэдагаванага тэксту (дакладна як на старонцы)
-  // фон: бліжэйшы продак з непразрыстым фонам (картка/секцыя)
+  // фон: бліжэйшы продак з ПОЎНАСЦЮ НЕПРАЗРЫСТЫМ фонам (альфа=1) — інакш мадалка паўпразрыстая (шкляныя карткі rgba<1)
   let card = el, bg = '';
-  while (card) { const cb = getComputedStyle(card).backgroundColor; if (cb && cb !== 'rgba(0, 0, 0, 0)' && cb !== 'transparent') { bg = cb; break; } card = card.parentElement; }
+  const _opaque = c => { if (!c || c === 'transparent') return false; const m = c.match(/rgba?\(([^)]+)\)/); if (!m) return true; const a = m[1].split(',')[3]; return a === undefined || parseFloat(a) >= 0.999; };
+  while (card) { const cb = getComputedStyle(card).backgroundColor; if (_opaque(cb)) { bg = cb; break; } card = card.parentElement; }
   if (!bg) bg = rootCs.getPropertyValue('--card-bg').trim() || '#fff';
   const accent = rootCs.getPropertyValue('--accent').trim() || rootCs.getPropertyValue('--color-primary').trim() || '#f97316';
   const box = _edModalEl.querySelector('.ed-modal-box'); // інлайн-var перакрываюць CSS-фолбэкі
