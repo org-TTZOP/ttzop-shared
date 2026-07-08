@@ -2095,7 +2095,7 @@ async function init() {
   // 🖊️ слайс A: рэжым праўкі на месцы — толькі ?edit=1 і токен супадае (гасцявая 📋-спасылка без edit=1 не правіць)
   const _qs = new URLSearchParams(location.search);
   _dEdit = _qs.get('edit') === '1' && !!siteData.lookToken && _qs.get('look') === siteData.lookToken;
-  if (_dEdit) _dEditBind();
+  if (_dEdit) { document.body.classList.add('ds-edit'); _dEditBind(); } // ds-edit → кнопкі/спасылкі секцый інертныя (рэдагуеш, не купляеш)
 
   const primary = getPrimaryLang(siteData);
   const saved = localStorage.getItem('ttzop_lang');
