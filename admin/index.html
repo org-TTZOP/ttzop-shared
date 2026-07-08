@@ -7920,7 +7920,43 @@ function _lookApplyCheck() {
 }
 window.addEventListener('hashchange', () => { if (_panelShown) _lookApplyCheck(); });
 // асноўны шлях «✓ Выбраць»: прэв'ю шле выбар сюды і само закрываецца — панэль ужо адкрытая, дублікат не ствараецца
-try { new BroadcastChannel('ttzop-look').onmessage = e => { if (_panelShown && e.data?.p && e.data?.d) _lookApplyPair(e.data.p, e.data.d); }; } catch {}
+// 🖊️ Фаза D — двухтабны сінхрон прэв'ю↔панэль (BroadcastChannel 'ttzop-look'):
+// оверлэй шле {t:'d-hello'} → панэль аддае каталог параметраў; {t:'d-set',id,key,val} → панэль піша ў
+// siteSectionsState → чарнавік → адказ {t:'d-sync'} → оверлэй перачытвае. Палітра/дызайн — стары шлях {p,d}.
+let _lookChan = null;
+try {
+  _lookChan = new BroadcastChannel('ttzop-look');
+  _lookChan.onmessage = e => {
+    const d = e.data || {};
+    if (d.p && d.d) { if (_panelShown) _lookApplyPair(d.p, d.d); return; } // стары шлях: палітра+дызайн
+    if (d.t === 'd-hello') { _lookChan.postMessage({ t: 'd-cat', cat: _dCatalog() }); return; } // оверлэй прачынаецца → каталог (адзіная крыніца — тут)
+    if (d.t === 'd-set') { _dApply(d.id, d.key, d.val); return; } // праўка з оверлэя → чарнавік
+  };
+} catch {}
+// каталог параметраў выгляду для оверлэя (лэйблы праз t() — оверлэй не дублюе SECTION_PROPS/SITE_VIEW_TYPES)
+function _dCatalog() {
+  return {
+    section: t('nav_sitepage'), viewLabel: t('ss_view_type'),
+    views: Object.keys(SITE_VIEW_TYPES).map(k => ({ k, icon: SITE_VIEW_TYPES[k].icon, label: t('vt_' + k) })),
+    props: SECTION_PROPS.map(p => ({ key: p.key, label: t(p.label), type: p.type,
+      options: (p.options || []).map(o => ({ v: o, label: p.labels?.[o] ? t(p.labels[o]) : o })) }))
+  };
+}
+// прымяніць праўку з оверлэя: знайсці экзэмпляр у siteSectionsState → fields[key] → чарнавік → адказ d-sync
+async function _dApply(id, key, val) {
+  const prev = currentNodeState;
+  if (!siteSectionsState.data) await loadNodeEditor(siteSectionsState); // ленавая загрузка дрэва Структуры
+  const node = (siteSectionsState.data?.nodes || []).find(n => n._instId === id || n.id === 'ssec-' + id);
+  if (!node) return;
+  node.fields = node.fields || {};
+  node.fields[key] = val;
+  if (key === 'type') delete node.fields.typeId; // Фаза C: рэзалв праз fields.type
+  _siteSectionsSave(); // рэбілд global `sections` (тая ж праекцыя, што і ручная праўка)
+  try { await fetch(API, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'write', repo: REPO, password, file: 'content/sections.json', content: JSON.stringify(sections, null, 2) }) }); } catch {}
+  _lookChan?.postMessage({ t: 'd-sync' }); // оверлэй перачытае чарнавік
+  if (currentPage === 'sitepage') { currentNodeState = siteSectionsState; renderNodeEditor(siteSectionsState); } // Табліца-праекцыя ў дрэве абнаўляецца (той жа fields[key])
+  else if (prev) currentNodeState = prev; // не крадзём фокус чужога РМ
+}
 function _navSetPending(page, id) { // механізм «сфакусаваць пасля загрузкі» па старонцы
   if (page === 'clients') _pendingClientOpen = id;
   else if (page === 'orders') _pendingOrderOpen = id;
@@ -11679,7 +11715,7 @@ function _lookOpen() { // flush: токен мусіць даляцець у KV 
   const created = !settings.lookToken;
   const url = _lookUrl();
   _settingsSaveFlush();
-  window.open(url, '_blank');
+  window.open(url + '&edit=1', '_blank'); // Фаза D: 👁 уладальніка → рэжым рэдагавання (📋-спасылка застаецца без edit — госць толькі глядзіць)
   if (created) { currentNodeState = themeState; renderNodeEditor(themeState); } // паказаць адрас/📋/🚫
 }
 // ануляваць прэв'ю: ВЫДАЛІЦЬ токен — разасланы адрас памірае адразу, прэв'ю выключана да наступнага 👁

@@ -432,6 +432,8 @@ const UI_T = {
     subdomain_free: '✅ {subdomain}.ttzop.com — szabad!', subdomain_check_err: 'Ellenőrzési hiba',
   },
 };
+// 🖊️ Фаза D: падказка, калі оверлэй-рэдактар не бачыць адкрытай панэлі (post-merge — без праўкі 13 мега-радкоў)
+;(() => { const M = { be:'Адкрыйце панэль кіравання, каб рэдагаваць', en:'Open the admin panel to edit', uk:'Відкрийте панель керування, щоб редагувати', ru:'Откройте панель управления, чтобы редактировать', pl:'Otwórz panel, aby edytować', de:'Öffnen Sie das Panel zum Bearbeiten', fr:'Ouvrez le panneau pour modifier', es:'Abre el panel para editar', it:'Apri il pannello per modificare', pt:'Abra o painel para editar', zh:'打开管理面板进行编辑', ar:'افتح لوحة التحكم للتعديل', hu:'Nyissa meg a panelt a szerkesztéshez' }; Object.keys(M).forEach(l => { if (UI_T[l]) UI_T[l].look_edit_nopanel = M[l]; }); })();
 function getUI() { return UI_T[currentUiLang] || UI_T.be; }
 
 function getPrimaryLang(data) {
@@ -2154,15 +2156,65 @@ function initLookPreview(data) {
   // бягучыя (захаваныя ў панэлі) варыянты — аранжавая рамка, каб бачыць «адкуль сышоў» пры пераборы
   const row = (list, kind) => list.map(n =>
     `<button class="look-opt${n.fields?._current ? ' cur' : ''}" data-kind="${kind}" data-id="${_svcEsc(n.id)}" onclick="_lookPick('${kind}','${_svcEsc(n.id)}')">${_svcEsc(_lookName(n))}</button>`).join('');
+  // 🖊️ Фаза D: рэжым рэдагавання (👁 адкрывае &edit=1) — блок «Секцыя → Тып → параметры», сінхрон з панэллю
+  const edit = new URLSearchParams(location.search).get('edit') === '1';
   const el = document.createElement('div');
   el.id = 'look-panel';
   el.innerHTML = `
     <div class="look-note">${_svcEsc(getUI().look_note)}</div>
     <div class="look-row"><span class="look-lbl">🎨 ${_svcEsc(getUI().look_colors)}</span>${row(pals, 'p')}</div>
     <div class="look-row"><span class="look-lbl">🧩 ${_svcEsc(getUI().look_designs)}</span>${row(des, 'd')}</div>
+    ${edit ? `<div id="look-edit" class="look-row" style="flex-direction:column;align-items:stretch;gap:6px"></div>` : ''}
     <button class="look-apply" onclick="_lookApply()">✓ ${_svcEsc(getUI().look_apply)}</button>`;
   document.body.appendChild(el);
   _lookRefresh();
+  if (edit) _dEditInit();
+}
+// ── Фаза D: двухтабны сінхрон прэв'ю↔панэль (BroadcastChannel 'ttzop-look') ──
+let _dCat = null, _dSecId = null, _dChan = null;
+function _dEditInit() {
+  try { _dChan = new BroadcastChannel('ttzop-look'); } catch { return; }
+  _dChan.addEventListener('message', e => {
+    const d = e.data || {};
+    if (d.t === 'd-cat') { _dCat = d.cat; _dEditRender(); }
+    else if (d.t === 'd-sync') _dReload();
+  });
+  _dChan.postMessage({ t: 'd-hello' }); // папрасіць каталог у адкрытай панэлі
+  setTimeout(() => { const w = document.getElementById('look-edit'); if (w && !_dCat) w.innerHTML = `<span class="look-lbl">${_svcEsc(getUI().look_edit_nopanel)}</span>`; }, 1600);
+}
+function _dSecs() { const s = siteData?._sections; return (Array.isArray(s?.sections) ? s.sections : []).filter(x => x && x.kind !== 'folder' && x.kind !== 'file' && x.type && SITE_VIEWS[x.type]); }
+function _dVicon(k) { return _dCat?.views.find(v => v.k === k)?.icon || ''; }
+function _dSecTitle(s) { const tt = s.title; const nm = (tt && typeof tt === 'object') ? (tt[currentLang] || Object.values(tt).find(Boolean)) : tt; return nm || _dCat?.views.find(v => v.k === s.type)?.label || s.id; }
+function _dEditRender() {
+  const w = document.getElementById('look-edit'); if (!w || !_dCat) return;
+  const secs = _dSecs();
+  if (!secs.some(s => s.id === _dSecId)) _dSecId = secs[0]?.id || null;
+  const sec = secs.find(s => s.id === _dSecId);
+  const sst = 'padding:4px 8px;border-radius:6px;border:1px solid rgba(128,128,128,.4);background:rgba(0,0,0,.15);color:inherit;font-size:.82rem;max-width:180px';
+  const o = (v, sel, lbl) => `<option value="${_svcEsc(v)}"${v === sel ? ' selected' : ''}>${_svcEsc(lbl)}</option>`;
+  const secSel = `<select onchange="_dSecPick(this.value)" style="${sst}">${secs.map(s => o(s.id, _dSecId, (_dVicon(s.type) + ' ' + _dSecTitle(s)).trim())).join('')}</select>`;
+  let ctrls = '';
+  if (sec) {
+    ctrls += `<label style="display:flex;flex-direction:column;gap:2px;font-size:.72rem;opacity:.85">${_svcEsc(_dCat.viewLabel)}<select onchange="_dChange('type',this.value)" style="${sst}">${_dCat.views.map(v => o(v.k, sec.type, v.icon + ' ' + v.label)).join('')}</select></label>`;
+    ctrls += _dCat.props.map(p => {
+      const cur = (sec.disp && sec.disp[p.key] != null) ? sec.disp[p.key] : (p.type === 'number' ? '' : (p.options[0] && p.options[0].v));
+      const inp = p.type === 'number'
+        ? `<input type="number" min="0" value="${_svcEsc(cur == null ? '' : cur)}" onchange="_dChange('${p.key}',this.value)" style="${sst};max-width:64px">`
+        : `<select onchange="_dChange('${p.key}',this.value)" style="${sst}">${p.options.map(op => o(op.v, cur, op.label)).join('')}</select>`;
+      return `<label style="display:flex;flex-direction:column;gap:2px;font-size:.72rem;opacity:.85">${_svcEsc(p.label)}${inp}</label>`;
+    }).join('');
+  }
+  w.innerHTML = `<span class="look-lbl">🧱 ${_svcEsc(_dCat.section)}</span>${secSel}<div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:4px">${ctrls}</div>`;
+}
+function _dSecPick(id) { _dSecId = id; _dEditRender(); }
+function _dChange(key, val) { if (_dSecId && _dChan) _dChan.postMessage({ t: 'd-set', id: _dSecId, key, val }); } // → панэль піша ў чарнавік
+async function _dReload() { // панэль паведаміла, што чарнавік абноўлены → перачытаць і перарэндэрыць
+  try {
+    const tok = new URLSearchParams(location.search).get('look');
+    const r = await fetch(API_URL + '/content/' + SITE_REPO + '/sections?draft=' + encodeURIComponent(tok) + '&cb=' + Date.now());
+    const data = await r.json();
+    siteData._sections = data; renderDynamicSections(data); _dEditRender();
+  } catch (e) {}
 }
 function _lookPick(kind, id) { _lookSel[kind] = id; _lookRefresh(); }
 function _lookRefresh() {
