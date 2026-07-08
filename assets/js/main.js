@@ -2243,9 +2243,13 @@ function _dSecBar(id, canUp, canDown, hidden) {
   const mv = (on, dir, arr) => `<button class="ds-eb-btn"${on ? '' : ' disabled'} onclick="event.stopPropagation();_dMove('${_dsEsc(id)}','${dir}')" title="${dir === 'up' ? _svcEsc(_dL('Уверх', 'Up')) : _svcEsc(_dL('Уніз', 'Down'))}">${arr}</button>`;
   return `<div class="ds-editbar" contenteditable="false">${mv(canUp, 'up', '▲')}${mv(canDown, 'down', '▼')}<button class="ds-eb-btn ds-eb-menu" onclick="event.stopPropagation();_dSecMenu('${_dsEsc(id)}',this)" title="${_svcEsc(_dL('Меню', 'Menu'))}">⋯</button></div>`;
 }
-async function _dMove(id, dir) { // перастаўленне сярод сясцёр таго ж узроўню ў чарнавіку
-  const tok = new URLSearchParams(location.search).get('look');
-  try { await _draftPost({ action: 'draft_move', repo: SITE_REPO, lookToken: tok, id, dir }); await _dReload(); } catch (e) {}
+async function _dMove(id, dir) { // рух адносна БАЧНАГА суседа (DOM = рэальны візуальны парадак; мінае пустыя/схаваныя)
+  const wrap = document.getElementById('sec-' + id); if (!wrap) return;
+  const sibs = [...wrap.parentElement.children].filter(c => c.id && c.id.indexOf('sec-') === 0); // сваякі-секцыі таго ж кантэйнера
+  const i = sibs.indexOf(wrap); const ref = dir === 'up' ? sibs[i - 1] : sibs[i + 1];
+  if (!ref) return; // край — няма куды
+  const refId = ref.id.slice(4); const tok = new URLSearchParams(location.search).get('look');
+  try { await _draftPost({ action: 'draft_move', repo: SITE_REPO, lookToken: tok, id, refId, pos: dir === 'up' ? 'before' : 'after' }); await _dReload(); } catch (e) {}
 }
 function _dMenuClose() { const m = document.getElementById('ds-menu'); if (m) m.remove(); document.removeEventListener('mousedown', _dMenuOutside, true); }
 function _dMenuOutside(e) { const m = document.getElementById('ds-menu'); if (m && !m.contains(e.target)) _dMenuClose(); }
