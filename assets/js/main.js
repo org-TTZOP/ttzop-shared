@@ -1026,7 +1026,7 @@ function renderDynamicSections(data) {
   const _dsProp = (inst, k) => (inst.disp || {})[k] ?? ({ previewN: inst.previewN, collapsed: inst.collapsed ? 'yes' : undefined, layoutView: inst.dispLayout }[k]);
   const instHtml = (inst, d, idx, sibN) => {
     const t0 = _sv(inst.title), s0 = _sv(inst.subtitle);
-    const ebar = _dSecBar(inst.id, idx > 0, idx < sibN - 1, inst.enabled === false); // ▲▼ + ⋯ (толькі edit)
+    const ebar = _dSecBar(inst.id, idx > 0, idx < sibN - 1, inst.enabled !== false); // ▲▼ ● ⋯ (толькі edit)
     const eCls = _dEdit ? ` ds-editable${inst.enabled === false ? ' ds-hidden' : ''}` : '';
     const alignL = _dsProp(inst, 'headAlign') === 'left'; // выраўноўванне загалоўка (верхні ўзровень; глыбей і так злева)
     // 🖊️ слайс A: у edit-рэжыме загаловак/падзагаловак — рэдагавальныя НА МЕСЦЫ; у edit паказваем нават пустыя (каб дадаць)
@@ -1052,7 +1052,7 @@ function renderDynamicSections(data) {
   const folderHtml = (f, d, idx, sibN) => {
     const name = _dsEsc(_sv(f.name));
     const inner = renderKids(f.id, d + 1);
-    const ebar = _dSecBar(f.id, idx > 0, idx < sibN - 1, f.enabled === false); // ▲▼ + ⋯ раздзела-Папкі
+    const ebar = _dSecBar(f.id, idx > 0, idx < sibN - 1, f.enabled !== false); // ▲▼ ● ⋯ раздзела-Папкі
     const eCls = _dEdit ? ` ds-editable${f.enabled === false ? ' ds-hidden' : ''}` : '';
     return d === 0
       ? `<section id="sec-${_dsEsc(f.id)}" class="section ${band++ % 2 ? 's-alt' : 's-light'}${eCls}"><div class="container">${ebar}${_foldWrap(f.collapsed, name ? `<h2 class="section-title">${name}</h2>` : '', inner)}</div></section>`
@@ -2237,11 +2237,14 @@ function _dEditRender() { // ніжняя панэль: цяпер толькі 
   w.innerHTML = `<span class="look-lbl" style="opacity:.8">🖊 ${_svcEsc(_dL('Рэдагуйце секцыі на старонцы: ▲▼ парадак · ⋯ меню', 'Edit sections on the page: ▲▼ order · ⋯ menu'))}</span>`;
 }
 function _dSecById(id) { const s = siteData?._sections; return (Array.isArray(s?.sections) ? s.sections : []).find(x => x && x.id === id) || null; }
-// ▲▼ + ⋯ панэлька рэдактара секцыі/раздзела (генерычна для любога вузла; толькі edit-рэжым) — люстэрка радка панэлі
-function _dSecBar(id, canUp, canDown, hidden) {
+// зялёная кропка «Актыўна» — тое самае прадстаўленне, што ў панэлі (.node-active-dot): active → паказ на сайце (inst.enabled)
+function _dDot(active) { return `<span class="ds-dot${active ? '' : ' off'}"></span>`; }
+// ▲▼ + ● + ⋯ панэлька рэдактара секцыі/раздзела (генерычна для любога вузла; толькі edit-рэжым) — люстэрка радка панэлі
+function _dSecBar(id, canUp, canDown, active) {
   if (!_dEdit) return '';
   const mv = (on, dir, arr) => `<button class="ds-eb-btn"${on ? '' : ' disabled'} onclick="event.stopPropagation();_dMove('${_dsEsc(id)}','${dir}')" title="${dir === 'up' ? _svcEsc(_dL('Уверх', 'Up')) : _svcEsc(_dL('Уніз', 'Down'))}">${arr}</button>`;
-  return `<div class="ds-editbar" contenteditable="false">${mv(canUp, 'up', '▲')}${mv(canDown, 'down', '▼')}<button class="ds-eb-btn ds-eb-menu" onclick="event.stopPropagation();_dSecMenu('${_dsEsc(id)}',this)" title="${_svcEsc(_dL('Меню', 'Menu'))}">⋯</button></div>`;
+  const dot = `<button class="ds-eb-btn ds-eb-dot" onclick="event.stopPropagation();_dSecSetEnabled('${_dsEsc(id)}',${!active})" title="${active ? _svcEsc(_dL('Актыўна — паказана', 'Active — shown')) : _svcEsc(_dL('Схавана', 'Hidden'))}">${_dDot(active)}</button>`;
+  return `<div class="ds-editbar" contenteditable="false">${dot}${mv(canUp, 'up', '▲')}${mv(canDown, 'down', '▼')}<button class="ds-eb-btn ds-eb-menu" onclick="event.stopPropagation();_dSecMenu('${_dsEsc(id)}',this)" title="${_svcEsc(_dL('Меню', 'Menu'))}">⋯</button></div>`;
 }
 async function _dMove(id, dir) { // рух адносна БАЧНАГА суседа (DOM = рэальны візуальны парадак; мінае пустыя/схаваныя)
   const wrap = document.getElementById('sec-' + id); if (!wrap) return;
@@ -2270,7 +2273,7 @@ function _dSecMenu(id, btn) { // папавер: ● схаваць/паказа
     return `<label class="ds-mp">${_svcEsc(p.name)}${ctrl}</label>`;
   }).join('');
   const m = document.createElement('div'); m.id = 'ds-menu'; m.className = 'ds-menu';
-  m.innerHTML = mi(hidden ? '👁' : '🙈', hidden ? _dL('Паказаць', 'Show') : _dL('Схаваць', 'Hide'), `_dSecSetEnabled('${_dsEsc(id)}',${hidden})`)
+  m.innerHTML = mi(_dDot(!hidden), hidden ? _dL('Актываваць', 'Activate') : _dL('Схаваць', 'Hide'), `_dSecSetEnabled('${_dsEsc(id)}',${hidden})`) // ● канон панэлі (Актыўна/Схаваць)
     + mi('✎', _dL('Назва', 'Title'), `_dSecFocusTitle('${_dsEsc(id)}')`)
     + (params ? `<div class="ds-mi-sep">🎨 ${_svcEsc(_dL('Параметры', 'Params'))}</div><div class="ds-mparams">${params}</div>` : '');
   document.body.appendChild(m);

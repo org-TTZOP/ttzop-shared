@@ -396,6 +396,11 @@ body.ds-edit #site-sections .ds-editbar button { pointer-events: auto !important
 .ds-eb-btn:hover:not([disabled]) { background: var(--accent,#f97316); }
 .ds-eb-btn[disabled] { opacity: .3; cursor: default; }
 .ds-eb-menu { font-weight: 700; }
+.ds-eb-dot { background: transparent !important; }
+/* зялёная кропка «Актыўна» — люстэрка панэльнай .node-active-dot */
+.ds-dot { width: 10px; height: 10px; border-radius: 50%; border: 2px solid #22c55e; background: #22c55e; display: inline-block; transition: background .2s; }
+.ds-dot.off { background: transparent; }
+.ds-mi .ds-dot { flex-shrink: 0; }
 /* ⋯ меню-папавер секцыі */
 .ds-menu { position: absolute; z-index: 10002; min-width: 180px; max-width: 240px; padding: 6px; border-radius: 12px; background: var(--card-bg,#1f2430); color: var(--text-main,#eee); border: 1px solid var(--accent,#f97316); box-shadow: 0 12px 40px rgba(0,0,0,.5); display: flex; flex-direction: column; gap: 3px; }
 .ds-mi { display: flex; align-items: center; gap: 8px; padding: 8px 10px; border: none; border-radius: 8px; background: transparent; color: inherit; font-size: .9rem; cursor: pointer; text-align: left; }
