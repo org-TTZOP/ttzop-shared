@@ -2223,7 +2223,9 @@ async function _dReload() { // перачытаць чарнавік і пера
     const tok = new URLSearchParams(location.search).get('look');
     const r = await fetch(API_URL + '/content/' + SITE_REPO + '/sections?draft=' + encodeURIComponent(tok) + '&cb=' + Date.now());
     const data = await r.json();
-    siteData._sections = data; renderDynamicSections(data); _dEditRender();
+    siteData._sections = data; renderDynamicSections(data);
+    initReveal(); // 🎯 ФІКС (як пры змене мовы v4.601): перарэндэраныя секцыі — НОВЫЯ DOM-вузлы; без паўторнага reveal-назіральніка завісаюць схаванымі (.js-reveal без .in-view)
+    _dEditRender();
   } catch (e) {}
 }
 function _lookPick(kind, id) { _lookSel[kind] = id; _lookRefresh(); }
