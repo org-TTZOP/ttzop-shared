@@ -2200,7 +2200,7 @@ function _dEditRender() {
   if (!secs.length) { w.innerHTML = `<span class="look-lbl">🧱 —</span>`; return; }
   if (!secs.some(s => s.id === _dSecId)) _dSecId = secs[0].id;
   const sec = secs.find(s => s.id === _dSecId);
-  const sst = 'padding:4px 8px;border-radius:6px;border:1px solid rgba(128,128,128,.4);background:rgba(0,0,0,.15);color:inherit;font-size:.82rem;max-width:170px';
+  const sst = 'padding:4px 8px;border-radius:6px;border:1px solid rgba(255,255,255,.2);background:#1f2430;color:#eee;font-size:.82rem;max-width:170px'; // суцэльны цёмны фон (опцыі — правіла ў style.css), каб чыталіся на цёмнай панэлі
   const o = (v, sel, lbl) => `<option value="${_svcEsc(v)}"${v === sel ? ' selected' : ''}>${_svcEsc(lbl)}</option>`;
   const secSel = `<select onchange="_dSecPick(this.value)" style="${sst}">${secs.map(s => o(s.id, _dSecId, ((_SEC_TICON[s.type] || '') + ' ' + _dSecTitle(s)).trim())).join('')}</select>`;
   const typeSel = `<label style="display:flex;flex-direction:column;gap:2px;font-size:.72rem;opacity:.85">${_svcEsc(_dL('Тып', 'Type'))}<select onchange="_dChange('type',this.value)" style="${sst}">${_SEC_TYPES.map(k => o(k, sec.type, (_SEC_TICON[k] || '') + ' ' + k)).join('')}</select></label>`;

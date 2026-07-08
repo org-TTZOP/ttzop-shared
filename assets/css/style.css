@@ -346,6 +346,9 @@ html[data-d-stamp="on"] #hero { position: relative; }
 #look-panel .look-opt:hover { color: #fff; }
 #look-panel .look-opt.cur { border-color: #f5a83d; } /* аранжавая рамка = бягучыя захаваныя налады сайта */
 #look-panel .look-opt.on { background: #2ea052; color: #fff; }
+/* Фаза D: выпадальнікі рэдактара секцый — цёмны попап опцый (інакш белы тэкст на светлым сістэмным фоне) */
+#look-panel #look-edit select { background: #1f2430; color: #eee; }
+#look-panel #look-edit select option { background: #1f2430; color: #eee; }
 #look-panel .look-apply { margin-top: 2px; background: #fff; color: #111; border: none; border-radius: 10px;
   padding: 10px 18px; font: 800 0.88rem 'Manrope', sans-serif; cursor: pointer; }
 #look-panel .look-apply:hover { background: #e8f5ec; }
