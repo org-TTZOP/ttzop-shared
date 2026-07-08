@@ -871,12 +871,13 @@ function _cardHtml(o) {
     ? `<img class="post-cover" src="${_dsEsc(o.cover)}" alt="" loading="lazy" style="width:100%;border-radius:8px;margin-bottom:12px;object-fit:cover;aspect-ratio:16/9">`
     : (o.icon ? `<div class="service-icon">${_dsEsc(o.icon)}</div>` : '');
   const meta = o.meta ? `<div class="post-date text-muted" style="font-size:0.82rem;margin-bottom:6px">${_dsEsc(o.meta)}</div>` : '';
-  const text = o.text ? `<div class="service-desc text-muted" style="margin-top:8px">${_dsEsc(o.text)}</div>` : '';
+  // 🖊️ слайс C: o.titleEd/o.textEd — edit-атрыбуты (толькі cards перадаюць; посты не). Пусты тэкст у edit — паказваем для плейсхолдэра
+  const text = (o.text || o.textEd) ? `<div class="service-desc text-muted" style="margin-top:8px"${o.textEd || ''}>${_dsEsc(o.text)}</div>` : '';
   // o.badge — куточак-бэйдж любой карткі (паслугі: Хіт/Новае/…; генерычна для ўсіх спажыўцоў _cardHtml)
   const badge = o.badge ? `<span style="position:absolute;top:10px;inset-inline-end:10px;background:var(--accent,#f97316);color:#fff;font-size:0.72rem;font-weight:700;padding:3px 9px;border-radius:999px;letter-spacing:0.03em">${_dsEsc(o.badge)}</span>` : '';
   const style = ` style="position:relative${o.onClick ? ';cursor:pointer' : ''}"`; // relative — якар для бэйджа
   const click = o.onClick ? ` onclick="${o.onClick}"` : '';
-  return `<article class="card ${o.cls || ''}"${click}${style}>${badge}${media}${meta}<h3 class="service-title">${_dsEsc(o.title)}</h3>${text}${o.footer || ''}</article>`;
+  return `<article class="card ${o.cls || ''}"${click}${style}>${badge}${media}${meta}<h3 class="service-title"${o.titleEd || ''}>${_dsEsc(o.title)}</h3>${text}${o.footer || ''}</article>`;
 }
 
 // Узроўневы загаловак групы (матрошка): d=0 — акцэнт-рыса, глыбей — драбней+водступ. Спажыўцы: cards (папкі Каталога), gallery (🗂 альбомы)
@@ -889,7 +890,7 @@ const SITE_VIEWS = {
   text: inst => {
     const c = inst.content || {};
     const img = _sv(c.image) ? `<div class="about-image"><img src="${_dsEsc(_sv(c.image))}" alt="" loading="lazy"></div>` : '';
-    const bodyEd = _dEdit ? ` contenteditable="true" data-ed="body:${_dsEsc(inst.id)}" data-ph="${_dsEsc(getUI().ed_body || 'Тэкст')}"` : ''; // 🖊️ слайс B: цела рэдагуецца на месцы (body = HTML → захоўваем innerHTML)
+    const bodyEd = _edAttr(inst.id, 'content.body', 'html', getUI().ed_body); // 🖊️ слайс B: цела рэдагуецца на месцы (body = HTML → innerHTML)
     return `<div class="about-inner"><div class="about-content"><div class="about-text"${bodyEd}>${_sv(c.body)}</div></div>${img}</div>`;
   },
   // сетка картак (Паслугі/Перавагі); item з id+price → кнопка кошыка; it.group → падзагаловак групы (папка ў дрэве Паслуг)
@@ -899,7 +900,7 @@ const SITE_VIEWS = {
     // (узровень 0 — буйны з акцэнт-рысай; глыбей — драбнейшыя з водступам). Легасі без path → адзін узровень з group.
     const _grpHead = _dsGroupHead; // агульны хэлпер узроўневых загалоўкаў (DRY з галерэяй)
     let lastPath = [];
-    return `<div class="grid grid-3">${items.map(it => {
+    return `<div class="grid grid-3">${items.map((it, _i) => {
       const path = Array.isArray(it.path) ? it.path.map(x => _sv(x)).filter(Boolean) : (_sv(it.group) ? [_sv(it.group)] : []);
       let head = '';
       let same = 0; while (same < path.length && same < lastPath.length && path[same] === lastPath[same]) same++;
@@ -934,13 +935,15 @@ const SITE_VIEWS = {
         ? `<p class="service-price">${ui.price_quote}</p>`
         : price ? `<p class="service-price">${pm === 'from' ? _dsEsc(ui.price_from_pfx) + ' ' : ''}<span class="price-amount" data-price="${_dsEsc(price)}" data-currency="${_dsEsc(cur)}">${_dsEsc(price)} ${_dsEsc(cur)}</span>${ff === 'subscription' ? ' ' + _dsEsc(_sv(it.period) === 'year' ? ui.per_year : ui.per_month) : ''}</p>` : '';
       const badge = _sv(it.badge) === 'custom' ? _sv(it.badgeText) : (_sv(it.badge) ? ui['badge_' + _sv(it.badge)] || '' : '');
-      return head + _cardHtml({ cls: 'service-card', icon: _sv(it.icon) || '🔧', title: name, text: _sv(it.text), badge, footer: priceHtml + btn });
+      return head + _cardHtml({ cls: 'service-card', icon: _sv(it.icon) || '🔧', title: name, text: _sv(it.text), badge, footer: priceHtml + btn,
+        titleEd: _edAttr(inst.id, 'content.items.' + _i + '.title', 'text', getUI().ed_title), // 🖊️ слайс C: назва/апісанне карткі на месцы (цэны — не, канверсія)
+        textEd: _edAttr(inst.id, 'content.items.' + _i + '.text', 'text', getUI().ed_body) });
     }).join('')}</div>`;
   },
   // табліца назва↔кошт (Цэны)
   list: inst => {
     const rows = inst.content?.rows || [];
-    return `<table class="prices-table"><tbody>${rows.map(r => { const price = _sv(r.value), cur = _sv(r.currency); return `<tr><td>${_dsEsc(_sv(r.name))}</td><td class="price-amount" data-price="${_dsEsc(price)}" data-currency="${_dsEsc(cur)}">${_dsEsc(price)} ${_dsEsc(cur)}</td></tr>`; }).join('')}</tbody></table>`;
+    return `<table class="prices-table"><tbody>${rows.map((r, _i) => { const price = _sv(r.value), cur = _sv(r.currency); return `<tr><td${_edAttr(inst.id, 'content.rows.' + _i + '.name', 'text', getUI().ed_title)}>${_dsEsc(_sv(r.name))}</td><td class="price-amount" data-price="${_dsEsc(price)}" data-currency="${_dsEsc(cur)}">${_dsEsc(price)} ${_dsEsc(cur)}</td></tr>`; }).join('')}</tbody></table>`;
   },
   // акардэон пытанне/адказ (FAQ)
   accordion: inst => {
@@ -1017,10 +1020,9 @@ function renderDynamicSections(data) {
   const instHtml = (inst, d) => {
     const t0 = _sv(inst.title), s0 = _sv(inst.subtitle);
     const alignL = _dsProp(inst, 'headAlign') === 'left'; // выраўноўванне загалоўка (верхні ўзровень; глыбей і так злева)
-    // 🖊️ слайс A: у edit-рэжыме загаловак/падзагаловак — рэдагавальныя НА МЕСЦЫ (contenteditable + data-ed); у edit паказваем нават пустыя (каб дадаць)
-    const _ed = f => _dEdit ? ` contenteditable="true" data-ed="${f}:${_dsEsc(inst.id)}" data-ph="${_dsEsc(f === 'title' ? (getUI().ed_title || 'Загаловак') : (getUI().ed_subtitle || 'Падзагаловак'))}"` : '';
-    const title = (t0 || _dEdit) ? `<${hTag(d)} class="section-title"${_ed('title')} style="${d ? `font-size:${Math.max(1, 1.5 - d * 0.2)}rem;text-align:left` : (alignL ? 'text-align:left' : '')}">${_dsEsc(t0)}</${hTag(d)}>` : '';
-    const sub = (s0 || _dEdit) ? `<p class="section-subtitle text-muted"${_ed('subtitle')}${(d || alignL) ? ' style="text-align:left"' : ''}>${_dsEsc(s0)}</p>` : '';
+    // 🖊️ слайс A: у edit-рэжыме загаловак/падзагаловак — рэдагавальныя НА МЕСЦЫ; у edit паказваем нават пустыя (каб дадаць)
+    const title = (t0 || _dEdit) ? `<${hTag(d)} class="section-title"${_edAttr(inst.id, 'title', 'ml', getUI().ed_title)} style="${d ? `font-size:${Math.max(1, 1.5 - d * 0.2)}rem;text-align:left` : (alignL ? 'text-align:left' : '')}">${_dsEsc(t0)}</${hTag(d)}>` : '';
+    const sub = (s0 || _dEdit) ? `<p class="section-subtitle text-muted"${_edAttr(inst.id, 'subtitle', 'ml', getUI().ed_subtitle)}${(d || alignL) ? ' style="text-align:left"' : ''}>${_dsEsc(s0)}</p>` : '';
     const body = _foldWrap(_dsProp(inst, 'collapsed') === 'yes', title, sub + SITE_VIEWS[inst.type](inst) + renderKids(inst.id, d + 1)); // + генерычныя дзеці экзэмпляра (фота/папкі/укладзеныя секцыі)
     // CSS-класы каталога (спажывае style.css) + data-атрыбуты пасля-рэндэрных крокаў (_dsApplyDisplay)
     const cols = _dsProp(inst, 'gridCols'), w = _dsProp(inst, 'secWidth'), pad = _dsProp(inst, 'secPad');
@@ -2258,16 +2260,19 @@ async function _dReload() { // перачытаць чарнавік і пера
   } catch (e) {}
 }
 // 🖊️ слайс A: праўка кантэнту НА МЕСЦЫ — focusout з [data-ed] → draft_set з укладзеным шляхам (дэлегавана, перажывае перарэндэры)
+// 🖊️ атрыбут рэдагавальнага элемента: data-ed="{instId}::{path}::{mode}" (mode: text|html|ml). Новае поле = адзін выклік.
+function _edAttr(id, path, mode, ph) {
+  return _dEdit ? ` contenteditable="true" data-ed="${_dsEsc(id + '::' + path + '::' + (mode || 'text'))}"${ph ? ` data-ph="${_dsEsc(ph)}"` : ''}` : '';
+}
 let _dEditBound = false;
 function _dEditBind() {
   if (_dEditBound) return; _dEditBound = true;
-  document.addEventListener('keydown', e => { const el = e.target.closest && e.target.closest('[data-ed]'); if (el && e.key === 'Enter' && !e.shiftKey && !(el.dataset.ed || '').startsWith('body')) { e.preventDefault(); el.blur(); } }); // Enter = скончыць (загалоўкі); у целе (body) — новы радок
+  document.addEventListener('keydown', e => { const el = e.target.closest && e.target.closest('[data-ed]'); if (el && e.key === 'Enter' && !e.shiftKey && !(el.dataset.ed || '').endsWith('::html')) { e.preventDefault(); el.blur(); } }); // Enter=скончыць; html-палі (body) — новы радок
   document.addEventListener('focusout', async e => {
     const el = e.target.closest && e.target.closest('[data-ed]'); if (!el) return;
-    const [field, id] = (el.dataset.ed || '').split(':'); if (!field || !id) return;
-    let path, val;
-    if (field === 'body') { path = 'content.body'; val = el.innerHTML.trim(); } // цела Тэкст-секцыі = HTML (richtext) → innerHTML
-    else { path = field + '.' + currentLang; val = el.textContent.trim(); } // title/subtitle — ml-палі, плоскі тэкст
+    const [id, path0, mode] = (el.dataset.ed || '').split('::'); if (!id || !path0) return;
+    const path = mode === 'ml' ? path0 + '.' + currentLang : path0; // ml-палі (title/subtitle) → {бягучая мова}
+    const val = mode === 'html' ? el.innerHTML.trim() : el.textContent.trim(); // body — HTML; астатняе — плоскі тэкст
     const tok = new URLSearchParams(location.search).get('look');
     try { await fetch(API_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'draft_set', repo: SITE_REPO, lookToken: tok, id, path, val }) }); } catch (e2) {}
   });
