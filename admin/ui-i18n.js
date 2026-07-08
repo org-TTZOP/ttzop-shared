@@ -1989,6 +1989,14 @@ Object.assign(ADMIN_UI.zh, { look_publish:'发布网站', look_publish_q:'发布
 Object.assign(ADMIN_UI.ar, { look_publish:'نشر الموقع', look_publish_q:'نشر المسودة الحالية؟ ستصبح التغييرات مرئية لجميع الزوار.', look_published:'تم نشر الموقع ✓', look_publish_none:'لا توجد تغييرات غير منشورة', look_publish_hint:'يتم حفظ تعديلات الصفحة كمسودة وتظل غير مرئية للزوار حتى تضغط على «نشر». تعرض المعاينة المسودة.', look_reset:'تجاهل المسودة', look_reset_q:'تجاهل جميع التعديلات غير المنشورة والعودة إلى الموقع المنشور؟', look_reset_done:'تم تجاهل المسودة' });
 Object.assign(ADMIN_UI.hu, { look_publish:'Webhely közzététele', look_publish_q:'Közzéteszi az aktuális piszkozatot? A módosítások minden látogató számára láthatóvá válnak.', look_published:'Webhely közzétéve ✓', look_publish_none:'Nincsenek közzé nem tett módosítások', look_publish_hint:'Az oldalmódosítások piszkozatként mentődnek, és a látogatók számára láthatatlanok maradnak, amíg a „Közzététel” gombra nem kattint. Az előnézet a piszkozatot mutatja.', look_reset:'Piszkozat elvetése', look_reset_q:'Elveti az összes közzé nem tett módosítást, és visszaáll a közzétett webhelyre?', look_reset_done:'Piszkozat elvetve' });
 
+// 🎨🧩 Фаза C-part4: выпадальнікі актыўнага выгляду (Каляровая схема · Паводзіны) у секцыі «Прагляд» (замест ○ «Бягучая»)
+;(() => { const A = {
+  be:['Каляровая схема:','Паводзіны сайта:'], en:['Color scheme:','Site behavior:'], uk:['Колірна схема:','Поведінка сайту:'],
+  ru:['Цветовая схема:','Поведение сайта:'], pl:['Schemat kolorów:','Zachowanie strony:'], de:['Farbschema:','Verhalten:'],
+  fr:['Palette :','Comportement :'], es:['Esquema de color:','Comportamiento:'], it:['Schema colori:','Comportamento:'],
+  pt:['Esquema de cores:','Comportamento:'], zh:['配色方案：','网站行为：'], ar:['نظام الألوان:','سلوك الموقع:'], hu:['Színséma:','Viselkedés:']
+}; Object.keys(A).forEach(l => { if (ADMIN_UI[l]) { ADMIN_UI[l].look_active_palette = A[l][0]; ADMIN_UI[l].look_active_design = A[l][1]; } }); })();
+
 // 🧩 Table-праекцыя ўласцівасцяў выгляду (адна ўніверсальная табліца замест N Flat-секцый) — загалоўкі слупкоў
 Object.assign(ADMIN_UI.be, { st_props_title:'Уласцівасці выгляду', st_col_group:'Група', st_col_param:'Параметр', st_col_value:'Значэнне' });
 Object.assign(ADMIN_UI.en, { st_props_title:'Display properties', st_col_group:'Group', st_col_param:'Parameter', st_col_value:'Value' });
