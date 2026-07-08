@@ -363,14 +363,21 @@ html[data-d-stamp="on"] #hero { position: relative; }
 [data-edm]:empty::before { content: attr(data-ph); opacity: .45; font-style: italic; }
 /* 🖊️ Мадалка WYSIWYG (прыгожы тэкст) */
 #ed-modal { position: fixed; inset: 0; z-index: 10001; background: rgba(0,0,0,.55); display: none; align-items: center; justify-content: center; padding: 16px; }
-.ed-modal-box { background: #fff; color: #1a1a1a; border-radius: 14px; width: min(680px,96vw); max-height: 88vh; display: flex; flex-direction: column; box-shadow: 0 20px 60px rgba(0,0,0,.4); overflow: hidden; }
-/* Quill snow — заўсёды белае поле + цёмны тэкст (чытэльна незалежна ад тэмы сайта) */
-#ed-modal .ql-toolbar { border: none; border-bottom: 1px solid #e5e5e5; border-radius: 14px 14px 0 0; background: #f7f7f8; }
-#ed-modal .ql-container { border: none; flex: 1; overflow-y: auto; font-size: 1rem; }
-#ed-modal .ql-editor { min-height: 200px; color: #1a1a1a; line-height: 1.6; }
-#ed-modal .ql-editor.ql-blank::before { color: #999; font-style: italic; }
+/* мадалка = картка старонкі (колеры з тэмы сайта) */
+.ed-modal-box { background: var(--card-bg,#fff); color: var(--text-main,#1a1a1a); border-radius: 14px; width: min(680px,96vw); max-height: 88vh; display: flex; flex-direction: column; box-shadow: 0 20px 60px rgba(0,0,0,.4); overflow: hidden; }
+#ed-modal .ql-toolbar { border: none; border-bottom: 1px solid var(--border-color,#e5e5e5); border-radius: 14px 14px 0 0; background: color-mix(in srgb, var(--card-bg,#f7f7f8) 92%, var(--text-main,#000)); }
+#ed-modal .ql-container { border: none; flex: 1; overflow-y: auto; font-size: 1rem; color: var(--text-main,#1a1a1a); }
+#ed-modal .ql-editor { min-height: 200px; color: var(--text-main,#1a1a1a); line-height: 1.6; }
+#ed-modal .ql-editor.ql-blank::before { color: var(--text-muted,#999); font-style: italic; }
+/* Quill toolbar іконкі — пад тэму (як у панэлі) */
+#ed-modal .ql-toolbar .ql-stroke { stroke: var(--text-main,#444); }
+#ed-modal .ql-toolbar .ql-fill { fill: var(--text-main,#444); }
+#ed-modal .ql-toolbar .ql-picker { color: var(--text-main,#444); }
+#ed-modal .ql-toolbar button:hover .ql-stroke, #ed-modal .ql-toolbar button.ql-active .ql-stroke { stroke: var(--accent,#f97316); }
+#ed-modal .ql-toolbar button:hover .ql-fill, #ed-modal .ql-toolbar button.ql-active .ql-fill { fill: var(--accent,#f97316); }
+#ed-modal .ql-picker-options { background: var(--card-bg,#fff); color: var(--text-main,#1a1a1a); }
 .ed-modal-quill { display: flex; flex-direction: column; flex: 1; min-height: 0; overflow: hidden; }
-.ed-modal-foot { display: flex; justify-content: flex-end; gap: 8px; padding: 10px 14px; border-top: 1px solid #e5e5e5; }
+.ed-modal-foot { display: flex; justify-content: flex-end; gap: 8px; padding: 10px 14px; border-top: 1px solid var(--border-color,#e5e5e5); }
 .ed-modal-foot button { padding: 8px 18px; border-radius: 9px; border: none; cursor: pointer; font-weight: 600; }
 .ed-cancel { background: rgba(128,128,128,.18); color: inherit; }
 .ed-save { background: #f97316; color: #fff; }
