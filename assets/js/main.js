@@ -5,7 +5,9 @@
 
 async function loadSiteData() {
   try {
-    const response = await fetch(API_URL + '/content/' + SITE_REPO + '/settings');
+    // #4: у рэжыме прэв'ю (?look=токен) чытаем settings з непублікаваным выглядам (draft appearance-ключы)
+    const _look = new URLSearchParams(location.search).get('look');
+    const response = await fetch(API_URL + '/content/' + SITE_REPO + '/settings' + (_look ? '?draft=' + encodeURIComponent(_look) : ''));
     const data = await response.json();
     return data;
   } catch (e) {
