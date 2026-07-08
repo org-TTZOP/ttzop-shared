@@ -355,6 +355,12 @@ html[data-d-stamp="on"] #hero { position: relative; }
 /* Фаза D: выпадальнікі рэдактара секцый — цёмны попап опцый (інакш белы тэкст на светлым сістэмным фоне) */
 #look-panel #look-edit select { background: #1f2430; color: #eee; }
 #look-panel #look-edit select option { background: #1f2430; color: #eee; }
+/* Згортванне панэлькі прэв'ю (каб не замінала рэдагаваць старонку) */
+.look-toggle { position: absolute; top: 6px; right: 10px; background: rgba(255,255,255,.14); border: none; color: #eee; border-radius: 8px; padding: 1px 9px; cursor: pointer; font-size: .8rem; line-height: 1.5; z-index: 1; }
+.look-toggle:hover { background: rgba(255,255,255,.26); }
+#look-panel.look-min { padding: 6px 12px; }
+#look-panel.look-min > :not(.look-toggle) { display: none !important; }
+#look-panel.look-min .look-toggle { position: static; }
 #look-panel .look-apply { margin-top: 2px; background: #fff; color: #111; border: none; border-radius: 10px;
   padding: 10px 18px; font: 800 0.88rem 'Manrope', sans-serif; cursor: pointer; }
 #look-panel .look-apply:hover { background: #e8f5ec; }

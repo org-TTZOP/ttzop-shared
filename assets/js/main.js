@@ -438,6 +438,7 @@ const UI_T = {
 ;(() => { const M = { be:'Адкрыйце панэль кіравання, каб рэдагаваць', en:'Open the admin panel to edit', uk:'Відкрийте панель керування, щоб редагувати', ru:'Откройте панель управления, чтобы редактировать', pl:'Otwórz panel, aby edytować', de:'Öffnen Sie das Panel zum Bearbeiten', fr:'Ouvrez le panneau pour modifier', es:'Abre el panel para editar', it:'Apri il pannello per modificare', pt:'Abra o painel para editar', zh:'打开管理面板进行编辑', ar:'افتح لوحة التحكم للتعديل', hu:'Nyissa meg a panelt a szerkesztéshez' }; Object.keys(M).forEach(l => { if (UI_T[l]) UI_T[l].look_edit_nopanel = M[l]; }); })();
 // 🖊️ слайс A: плейсхолдэры пустога загалоўка/падзагалоўка + падказка аўта-захавання ў edit-рэжыме
 ;(() => { const T = { be:['Загаловак','Падзагаловак'], en:['Heading','Subheading'], uk:['Заголовок','Підзаголовок'], ru:['Заголовок','Подзаголовок'], pl:['Nagłówek','Podtytuł'], de:['Überschrift','Untertitel'], fr:['Titre','Sous-titre'], es:['Título','Subtítulo'], it:['Titolo','Sottotitolo'], pt:['Título','Subtítulo'], zh:['标题','副标题'], ar:['العنوان','العنوان الفرعي'], hu:['Címsor','Alcím'] }; Object.keys(T).forEach(l => { if (UI_T[l]) { UI_T[l].ed_title = T[l][0]; UI_T[l].ed_subtitle = T[l][1]; } }); })();
+;(() => { const M = { be:'Згарнуць / разгарнуць панэль', en:'Collapse / expand panel', uk:'Згорнути / розгорнути панель', ru:'Свернуть / развернуть панель', pl:'Zwiń / rozwiń panel', de:'Panel ein-/ausklappen', fr:'Réduire / agrandir le panneau', es:'Contraer / expandir panel', it:'Comprimi / espandi pannello', pt:'Recolher / expandir painel', zh:'折叠 / 展开面板', ar:'طيّ / توسيع اللوحة', hu:'Panel össze-/kinyitása' }; Object.keys(M).forEach(l => { if (UI_T[l]) UI_T[l].look_min = M[l]; }); })();
 ;(() => { const A = { be:'✎ Клікні на тэкст — праўкі захоўваюцца аўтаматычна', en:'✎ Click text — edits save automatically', uk:'✎ Клікни на текст — зміни зберігаються автоматично', ru:'✎ Кликни на текст — правки сохраняются автоматически', pl:'✎ Kliknij tekst — zmiany zapisują się automatycznie', de:'✎ Text anklicken — Änderungen speichern automatisch', fr:'✎ Cliquez sur le texte — enregistrement automatique', es:'✎ Haz clic en el texto — se guarda automáticamente', it:'✎ Clicca sul testo — salvataggio automatico', pt:'✎ Clica no texto — guarda automaticamente', zh:'✎ 点击文字 — 自动保存', ar:'✎ انقر على النص — يُحفظ تلقائيًا', hu:'✎ Kattints a szövegre — automatikusan mentődik' }; Object.keys(A).forEach(l => { if (UI_T[l]) UI_T[l].ed_autosave = A[l]; }); })();
 // #1: look_note цяпер праўдзівы — прэв'ю паказвае РЭАЛЬНЫ чарнавік (Фаза A/D), а не «канцэпт» (post-merge перакрывае стары інлайн)
 ;(() => { const M = { be:'Прэв\'ю чарнавіка — так убачаць наведвальнікі пасля публікацыі', en:'Draft preview — this is how visitors will see it after publishing', uk:'Перегляд чернетки — так побачать відвідувачі після публікації', ru:'Просмотр черновика — так увидят посетители после публикации', pl:'Podgląd wersji roboczej — tak zobaczą to odwiedzający po opublikowaniu', de:'Entwurfsvorschau — so sehen es Besucher nach der Veröffentlichung', fr:'Aperçu du brouillon — voici ce que verront les visiteurs après publication', es:'Vista previa del borrador: así lo verán los visitantes tras publicar', it:'Anteprima della bozza: così la vedranno i visitatori dopo la pubblicazione', pt:'Pré-visualização do rascunho — é assim que os visitantes verão após publicar', zh:'草稿预览 — 发布后访客将看到此效果', ar:'معاينة المسودة — هكذا سيراها الزوار بعد النشر', hu:'Piszkozat előnézete — így látják a látogatók a közzététel után' }; Object.keys(M).forEach(l => { if (UI_T[l]) UI_T[l].look_note = M[l]; }); })();
@@ -2174,6 +2175,7 @@ function initLookPreview(data) {
   const el = document.createElement('div');
   el.id = 'look-panel';
   el.innerHTML = `
+    <button class="look-toggle" onclick="_lookToggle()" title="${_svcEsc(getUI().look_min)}" aria-label="${_svcEsc(getUI().look_min)}">▾</button>
     <div class="look-note">${_svcEsc(getUI().look_note)}</div>
     ${edit ? `<div style="font-size:.68rem;color:#7fd07f;text-align:center;margin-top:-3px">${_svcEsc(getUI().ed_autosave)}</div>` : ''}
     <div class="look-row"><span class="look-lbl">🎨 ${_svcEsc(getUI().look_colors)}</span>${row(pals, 'p')}</div>
@@ -2183,6 +2185,14 @@ function initLookPreview(data) {
   document.body.appendChild(el);
   _lookRefresh();
   if (edit) _dEditInit();
+  try { if (localStorage.getItem('ttzop_look_min') === '1') _lookToggle(); } catch {} // аднавіць згорнуты стан
+}
+// 🖊️ Згарнуць/разгарнуць панэльку прэв'ю (шмат месца замінае рэдагаваць старонку) — стан у localStorage
+function _lookToggle() {
+  const el = document.getElementById('look-panel'); if (!el) return;
+  const min = el.classList.toggle('look-min');
+  const btn = el.querySelector('.look-toggle'); if (btn) btn.textContent = min ? '▴' : '▾';
+  try { localStorage.setItem('ttzop_look_min', min ? '1' : ''); } catch {}
 }
 // ── 🖊️ Фаза D (АДЗІНЫ ШЛЯХ) — самадастатковы рэдактар параметраў секцыі ў прэв'ю ──
 // Адзін таб, без панэлі/BroadcastChannel (працуе на Тэсла Atom): піша ў чарнавік ПРАМА праз worker
