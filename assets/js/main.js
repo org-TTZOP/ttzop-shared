@@ -2322,6 +2322,20 @@ function _edModalOpen(el) {
     _edModalEl.addEventListener('mousedown', e => { if (e.target === _edModalEl) _edModalClose(); }); // клік па фоне закрывае
   }
   const html = el.innerHTML;
+  // 🎨 колеры з ЖЫВОЙ старонкі (іменаванне тэма-зменных заблытанае → чытаем computed). Мадалка = як картка.
+  const cs = getComputedStyle(document.body);
+  const rootCs = getComputedStyle(document.documentElement);
+  const fg = cs.color || '#1a1a1a';
+  // фон карткі: рэальная картка на старонцы → яе bg; інакш акцэнт-var/фон цела
+  let card = document.querySelector('.service-card, .post-card, .card, .about-text');
+  let bg = '';
+  while (card) { const cb = getComputedStyle(card).backgroundColor; if (cb && cb !== 'rgba(0, 0, 0, 0)' && cb !== 'transparent') { bg = cb; break; } card = card.parentElement; }
+  if (!bg) bg = rootCs.getPropertyValue('--card-bg').trim() || cs.backgroundColor || '#fff';
+  const accent = rootCs.getPropertyValue('--accent').trim() || rootCs.getPropertyValue('--color-primary').trim() || '#f97316';
+  const box = _edModalEl.querySelector('.ed-modal-box'); // інлайн-var перакрываюць CSS-фолбэкі
+  box.style.setProperty('--card-bg', bg); box.style.setProperty('--text-main', fg);
+  box.style.setProperty('--text-muted', cs.color); box.style.setProperty('--accent', accent);
+  box.style.setProperty('--border-color', 'color-mix(in srgb, ' + fg + ' 22%, transparent)');
   _edModalEl.style.display = 'flex';
   _edQuillLoad().then(() => {
     const host = _edModalEl.querySelector('.ed-modal-quill');
