@@ -1971,6 +1971,21 @@ const ADMIN_UI = {
   },
 };
 
+// 🧩 Table-праекцыя ўласцівасцяў выгляду (адна ўніверсальная табліца замест N Flat-секцый) — загалоўкі слупкоў
+Object.assign(ADMIN_UI.be, { st_props_title:'Уласцівасці выгляду', st_col_group:'Група', st_col_param:'Параметр', st_col_value:'Значэнне' });
+Object.assign(ADMIN_UI.en, { st_props_title:'Display properties', st_col_group:'Group', st_col_param:'Parameter', st_col_value:'Value' });
+Object.assign(ADMIN_UI.uk, { st_props_title:'Властивості вигляду', st_col_group:'Група', st_col_param:'Параметр', st_col_value:'Значення' });
+Object.assign(ADMIN_UI.ru, { st_props_title:'Свойства вида', st_col_group:'Группа', st_col_param:'Параметр', st_col_value:'Значение' });
+Object.assign(ADMIN_UI.pl, { st_props_title:'Właściwości wyglądu', st_col_group:'Grupa', st_col_param:'Parametr', st_col_value:'Wartość' });
+Object.assign(ADMIN_UI.de, { st_props_title:'Anzeige-Eigenschaften', st_col_group:'Gruppe', st_col_param:'Parameter', st_col_value:'Wert' });
+Object.assign(ADMIN_UI.fr, { st_props_title:'Propriétés d\'affichage', st_col_group:'Groupe', st_col_param:'Paramètre', st_col_value:'Valeur' });
+Object.assign(ADMIN_UI.es, { st_props_title:'Propiedades de visualización', st_col_group:'Grupo', st_col_param:'Parámetro', st_col_value:'Valor' });
+Object.assign(ADMIN_UI.it, { st_props_title:'Proprietà di visualizzazione', st_col_group:'Gruppo', st_col_param:'Parametro', st_col_value:'Valore' });
+Object.assign(ADMIN_UI.pt, { st_props_title:'Propriedades de exibição', st_col_group:'Grupo', st_col_param:'Parâmetro', st_col_value:'Valor' });
+Object.assign(ADMIN_UI.zh, { st_props_title:'显示属性', st_col_group:'分组', st_col_param:'参数', st_col_value:'值' });
+Object.assign(ADMIN_UI.ar, { st_props_title:'خصائص العرض', st_col_group:'المجموعة', st_col_param:'المعلمة', st_col_value:'القيمة' });
+Object.assign(ADMIN_UI.hu, { st_props_title:'Megjelenítési tulajdonságok', st_col_group:'Csoport', st_col_param:'Paraméter', st_col_value:'Érték' });
+
 // ── Runtime ──────────────────────────────────────────────────────────────────
 
 let adminLang = (() => {

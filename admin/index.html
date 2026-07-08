@@ -3128,18 +3128,44 @@ const SECTION_PROPS = [
   { key: 'carousel',   group: 'spg_move',   type: 'select', label: 'sp_carousel',  options: ['no', 'yes'], labels: { no: 'spv_no', yes: 'spv_yes' } },
 ];
 const _sectionPropDef = p => p.type === 'number' ? 0 : p.options[0]; // дэфолт = першая опцыя
-// Генератар Flat-секцый па групах каталога: тып (дэфолты) / экзэмпляр (inherit = «Як у Тыпе»)
+// Дысплэй значэння параметру (raw → тэкст для слупка «Значэнне»): пуста → inherit (экзэмпляр) ці дэфолт (тып);
+// select → лэйбл праз p.labels; number → лічба; inherit → «Як у Тыпе»
+function _sectionPropShow(p, raw, inherit) {
+  const eff = (raw == null || raw === '') ? (inherit ? 'inherit' : _sectionPropDef(p)) : raw;
+  if (p.type === 'number') return String(eff);
+  if (eff === 'inherit') return t('ss_inherit_type');
+  return p.labels?.[eff] ? t(p.labels[eff]) : String(eff);
+}
+// 🧩 5-ы падвід Table — ПРАЕКЦЫЯ: адна ўніверсальная табліца ўласцівасцяў замест N Flat-секцый.
+// Радкі — з код-каталога SECTION_PROPS (dataFn, фіксаваныя: без ➕/✕), слупок «Значэнне» рэдагуецца
+// праз row-✎ і біндзіцца ў ПЛОСКІ fields[key] (rowBind) — НЕ масіў-накапляльнік, каб inst.disp/_dsProp/
+// рэзалв «экзэмпляр→тып→дэфолт» не чапаць (нулявая міграцыя). Слупок Група + сартыроўка/фільтр = ПРОДАКФПФ.
 function _sectionPropSections(inherit, visibleFn) {
-  return [...new Set(SECTION_PROPS.map(p => p.group))].map(g => ({
-    type: 'flat', id: 'sp-' + g, title: g, editable: true,
-    onEdit: (form, s) => _nodeFlatSectionEdit(form, s, 'sp-' + g),
+  return [{
+    type: 'table', id: 'secprops', dataKey: 'secprops', title: 'st_props_title', keepOrder: true, rowEditable: true,
     ...(visibleFn ? { visible: visibleFn } : {}),
-    blocks: SECTION_PROPS.filter(p => p.group === g).map(p => p.type === 'number'
-      ? { key: p.key, type: 'number', label: p.label, readOnly: () => true }
-      : { key: p.key, type: 'select', label: p.label, readOnly: () => true,
-          options: inherit ? ['inherit', ...p.options] : p.options,
-          labelMap: { ...(inherit ? { inherit: 'ss_inherit_type' } : {}), ...p.labels } })
-  }));
+    columns: [
+      { key: 'group', label: 'st_col_group' },
+      { key: 'param', label: 'st_col_param' },
+      { key: 'value', label: 'st_col_value' }
+    ],
+    dataFn: form => SECTION_PROPS.map(p => ({
+      _id: p.key, group: t(p.group), param: t(p.label),
+      value: _sectionPropShow(p, form.fields?.[p.key], inherit),           // тэкст для слупка
+      val: form.fields?.[p.key] ?? (inherit ? 'inherit' : _sectionPropDef(p)), // raw для мадала праўкі
+      _p: p })),
+    rowSchemaFor: row => [row._p.type === 'number' // пер-радковая схема: кожны параметр — свой тып/опцыі
+      ? { key: 'val', type: 'number', label: 'st_col_value' }
+      : { key: 'val', type: 'select', label: 'st_col_value',
+          options: inherit ? ['inherit', ...row._p.options] : row._p.options,
+          labelMap: { ...(inherit ? { inherit: 'ss_inherit_type' } : {}), ...row._p.labels } }],
+    rowBind: { write: (form, rowId, fields) => { // праекцыя: запіс у плоскі fields[key] (як стары Flat-блок)
+      const p = SECTION_PROPS.find(x => x.key === rowId);
+      let v = fields.val;
+      if (p?.type === 'number') v = v === '' || v == null ? 0 : +v;
+      (form.fields || (form.fields = {}))[rowId] = v;
+    } }
+  }];
 }
 // Table-секцыя «Змест» для list-тыпу (адна фабрыка — без дублявання канфігу па тыпах)
 function _siteRowsSection(vt, rowSchema) {
@@ -4977,7 +5003,8 @@ function _nodeTableSectionHtml(form, section, s, mover = '') {
   }
   const visTotal = sortedRows.length;
   const visible = view === 'full' ? sortedRows : sortedRows.slice(0, _TBL_PREVIEW);
-  const hasActs = section.rowEditable || section.rowDeletable;
+  // row-✎/✕ хаваюцца на залочанай/сістэмнай секцыі (кансістэнтна з addItem: «✎ = можна рэдагаваць»)
+  const hasActs = (section.rowEditable || section.rowDeletable) && !_secLocked(form, section) && !_nodeSysContent(form);
   const colCount = columns.length + (hasActs ? 1 : 0);
   const actCell = row => !hasActs ? '' : `<td style="${tdSt};white-space:nowrap;text-align:right">${
     section.rowEditable ? `<button class="node-btn-round" title="${t('sec_edit')}" onclick="_accRowEdit('${fid}','${section.dataKey}','${escHtml(String(row._id||''))}')">✎</button>` : ''}${
@@ -10503,23 +10530,28 @@ function _accRowModal(form, s, dataKey, rowId) {
   if (_secLockedByKey(form, s, dataKey)) { showAlert(t('node_locked_msg')); return; } // 🔒 секцыя
   const schema = FORM_SCHEMAS[form.formSchema || s._formSchema];
   const sec = (!Array.isArray(schema) && schema?.sections || []).find(x => x.dataKey === dataKey);
-  if (!sec?.rowSchema) return;
-  const row = rowId ? (form.fields?.[dataKey] || []).find(r => r._id === rowId) : null;
+  if (!sec) return;
+  // праекцыя: радкі з каталога (dataFn), а не масіў fields[dataKey]
+  const rows = sec.dataFn ? (sec.dataFn(form, s) || []) : (form.fields?.[dataKey] || []);
+  const row = rowId ? rows.find(r => r._id === rowId) : null;
+  // праекцыя: пер-радковая схема (кожны параметр — свой тып/опцыі); накапляльнік: агульная rowSchema
+  const rowSchema = sec.rowSchemaFor ? sec.rowSchemaFor(row, form, s) : sec.rowSchema;
+  if (!rowSchema) return;
   _nfmCtxForm = form; // дынамічныя опцыі (напр. групы сегмента) чытаюць даныя гэтай формы
-  _nfmApplySchema(Object.assign(sec.rowSchema.map(c => ({ ...c })), { _noName: true }));
-  _nfmTitle((rowId ? t('sec_edit') : t('tbl_add_record')) + ' · ' + t(sec.title)); // кантэкст: што дадаём/рэдагуем
+  _nfmApplySchema(Object.assign(rowSchema.map(c => ({ ...c })), { _noName: true }));
+  _nfmTitle((rowId ? t('sec_edit') : t('tbl_add_record')) + ' · ' + (row?.param || t(sec.title))); // кантэкст: што дадаём/рэдагуем (праекцыя — назва параметру)
   const modal = document.getElementById('node-form-modal'); modal.dataset.mode = 'add';
-  sec.rowSchema.forEach(c => {
+  rowSchema.forEach(c => {
     const val = row?.[c.key] ?? (typeof c.default === 'function' ? c.default() : (c.default ?? ''));
     if (c.type === 'time') { _timeSet('nfm-f-' + c.key, val); return; } // час: сінхранізаваць абедзве круцёлкі + схаваны input
     if (c.type === 'multiselect') { _nfmSetMulti('nfm-f-' + c.key, row?.[c.key] || []); return; } // адзначыць чэкбоксы па масіве
     const el = document.getElementById('nfm-f-' + c.key); if (el) el.value = val;
   });
   // залежныя multiselect: перафільтраваць пасля таго як выстаўлены астатнія палі (напр. кандыдаты па тыпе) — захоўваючы абранае
-  sec.rowSchema.forEach(c => { if (c.type === 'multiselect') _nfmRerenderMulti(c.key); });
+  rowSchema.forEach(c => { if (c.type === 'multiselect') _nfmRerenderMulti(c.key); });
   // ініцыялізаваць onChange-залежнасці па загружаных значэннях (напр. pick→бачнасць candidates)
-  sec.rowSchema.forEach(c => { if (c.onChange) c.onChange(document.getElementById('nfm-f-' + c.key)?.value); });
-  if (rowId) { // кнопка Выдаліць — унутры акна Рэдагаваць (не ў радку табліцы)
+  rowSchema.forEach(c => { if (c.onChange) c.onChange(document.getElementById('nfm-f-' + c.key)?.value); });
+  if (rowId && !sec.rowBind) { // кнопка Выдаліць — унутры акна Рэдагаваць (праекцыя: радкі каталожныя, не выдаляюцца)
     const w = document.getElementById('nfm-fields');
     if (w) w.insertAdjacentHTML('beforeend', `<button type="button" style="margin-top:6px;width:100%;padding:9px 12px;border:1px solid #ef4444;border-radius:8px;background:transparent;color:#ef4444;cursor:pointer;font-weight:700" onclick="_accRowModalDelete('${form.id}','${dataKey}','${rowId}')">🗑 ${escHtml(t('btn_del_item'))}</button>`);
   }
@@ -10528,12 +10560,13 @@ function _accRowModal(form, s, dataKey, rowId) {
 }
 function _accRowModalDelete(formId, dataKey, rowId) { nodeCloseFormModal(); _accRowDelete(formId, dataKey, rowId); } // _accRowDelete мае ўласнае пацверджанне
 function _accRowApply(form, dataKey, rowId, fields) {
+  const schema = FORM_SCHEMAS[form.formSchema || currentNodeState?._formSchema]; // секцыя-накапляльнік: калі мае rowSort — трымаць сортаваным у сховішчы (напр. графік)
+  const sec = (!Array.isArray(schema) && schema?.sections || []).find(x => x.dataKey === dataKey);
+  if (sec?.rowBind) { sec.rowBind.write(form, rowId, fields); nodeRender(); nodeSave(); return; } // праекцыя: піша ў плоскі fields[key], не ў масіў
   const f = form.fields || (form.fields = {});
   if (!Array.isArray(f[dataKey])) f[dataKey] = [];
   if (rowId) { const r = f[dataKey].find(x => x._id === rowId); if (r) Object.assign(r, fields); }
   else f[dataKey].push(Object.assign({ _id: 'r' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6) }, fields));
-  const schema = FORM_SCHEMAS[form.formSchema || currentNodeState?._formSchema]; // секцыя-накапляльнік: калі мае rowSort — трымаць сортаваным у сховішчы (напр. графік)
-  const sec = (!Array.isArray(schema) && schema?.sections || []).find(x => x.dataKey === dataKey);
   if (sec?.rowSort) f[dataKey].sort(sec.rowSort);
   nodeRender(); nodeSave();
   if (sec?.rowWarn) { const w = sec.rowWarn(f[dataKey]); if (w) showAlert(w); } // генерычнае папярэджанне валідацыі (не блакуе захаванне)
