@@ -2343,7 +2343,7 @@ function _edModalOpen(el) {
   const box = _edModalEl.querySelector('.ed-modal-box'); // інлайн-var перакрываюць CSS-фолбэкі
   box.style.setProperty('--card-bg', bg); box.style.setProperty('--text-main', fg);
   box.style.setProperty('--text-muted', 'color-mix(in srgb, ' + fg + ' 60%, transparent)'); box.style.setProperty('--accent', accent);
-  box.style.setProperty('--border-color', 'color-mix(in srgb, ' + fg + ' 22%, transparent)');
+  box.style.setProperty('--border-color', 'color-mix(in srgb, ' + fg + ' 42%, transparent)');
   _edModalEl.style.display = 'flex';
   _edQuillLoad().then(() => {
     const host = _edModalEl.querySelector('.ed-modal-quill');

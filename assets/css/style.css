@@ -362,9 +362,9 @@ html[data-d-stamp="on"] #hero { position: relative; }
 [data-edm]:hover { box-shadow: 0 0 0 1px #f97316; background: rgba(249,115,22,.07); }
 [data-edm]:empty::before { content: attr(data-ph); opacity: .45; font-style: italic; }
 /* 🖊️ Мадалка WYSIWYG (прыгожы тэкст) */
-#ed-modal { position: fixed; inset: 0; z-index: 10001; background: rgba(0,0,0,.55); display: none; align-items: center; justify-content: center; padding: 16px; }
-/* мадалка = картка старонкі (колеры з тэмы сайта) */
-.ed-modal-box { background: var(--card-bg,#fff); color: var(--text-main,#1a1a1a); border-radius: 14px; width: min(680px,96vw); max-height: 88vh; display: flex; flex-direction: column; box-shadow: 0 20px 60px rgba(0,0,0,.4); overflow: hidden; }
+#ed-modal { position: fixed; inset: 0; z-index: 10001; background: rgba(0,0,0,.62); display: none; align-items: center; justify-content: center; padding: 16px; }
+/* мадалка = картка старонкі (колеры з тэмы сайта); выразная рамка+подсвет каб не злівалася з цёмным оверлэем */
+.ed-modal-box { background: var(--card-bg,#fff); color: var(--text-main,#1a1a1a); border-radius: 14px; width: min(680px,96vw); max-height: 88vh; display: flex; flex-direction: column; border: 1px solid var(--border-color,#0002); box-shadow: 0 0 0 1px var(--accent,#f97316), 0 24px 70px rgba(0,0,0,.6); overflow: hidden; }
 #ed-modal .ql-toolbar { border: none; border-bottom: 1px solid var(--border-color,#e5e5e5); border-radius: 14px 14px 0 0; background: color-mix(in srgb, var(--card-bg,#f7f7f8) 92%, var(--text-main,#000)); }
 #ed-modal .ql-container { border: none; flex: 1; overflow-y: auto; font-size: 1rem; color: var(--text-main,#1a1a1a); }
 #ed-modal .ql-editor { min-height: 200px; color: var(--text-main,#1a1a1a); line-height: 1.6; }
