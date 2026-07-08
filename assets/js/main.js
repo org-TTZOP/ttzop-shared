@@ -2281,9 +2281,11 @@ function _dEditBind() {
     const path = mode === 'ml' ? path0 + '.' + currentLang : path0; // ml-палі (title/subtitle) → {бягучая мова}
     const val = mode === 'html' ? el.innerHTML.trim() : el.textContent.trim(); // body — HTML; астатняе — плоскі тэкст
     const tok = new URLSearchParams(location.search).get('look');
-    _draftPost({ action: 'draft_set', repo: SITE_REPO, lookToken: tok, id, path, val }); // праз чаргу (без гонкі)
+    _draftPost({ action: 'draft_set', repo: SITE_REPO, lookToken: tok, id, path, val }).then(() => _edFlash(el)); // праз чаргу + зялёны флэш «захавана»
   });
 }
+// ✓ кароткі візуальны водгук «захавана» на элеменце пасля запісу ў чарнавік
+function _edFlash(el) { if (!el || !el.isConnected) return; el.classList.add('ed-saved'); setTimeout(() => el.classList.remove('ed-saved'), 750); }
 function _lookPick(kind, id) { _lookSel[kind] = id; _lookRefresh(); }
 function _lookRefresh() {
   document.querySelectorAll('.look-opt').forEach(b => b.classList.toggle('on', _lookSel[b.dataset.kind] === b.dataset.id));
