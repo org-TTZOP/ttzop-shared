@@ -2311,7 +2311,7 @@ function _dSecCount(sec) { // лік пазіцый (ліставая) ці дз
 }
 function _dTrashItems(originId) { // карані груп, выдаленыя З гэтага кантэйнера (origin===id; null = верхні ўзровень/старонка)
   const s = siteData?._sections; const tr = Array.isArray(s?._trash) ? s._trash : [];
-  return tr.filter(x => x && x._grpRoot && (x._origParentId || null) === (originId || null));
+  return tr.filter(x => x && x._groupRoot && (x._origParentId || null) === (originId || null)); // тыя ж палі, што панэль (_nodeTrashList)
 }
 function _dInfoClose() { const m = document.getElementById('ds-info'); if (m) m.remove(); document.removeEventListener('mousedown', _dInfoOutside, true); }
 function _dInfoOutside(e) { const m = document.getElementById('ds-info'); if (m && !m.contains(e.target)) _dInfoClose(); }
