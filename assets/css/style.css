@@ -349,8 +349,9 @@ html[data-d-stamp="on"] #hero { position: relative; }
 /* 🖊️ Слайс A: праўка кантэнту НА МЕСЦЫ (edit-рэжым прэв'ю) — рамка-падказка + плейсхолдэр пустога.
    box-shadow (без outline-offset і без transition) хугае бокс → без мільгацення на мяжы hover-зоны. */
 [data-ed] { cursor: text; border-radius: 5px; }
-[data-ed]:hover { box-shadow: 0 0 0 2px var(--accent, #f97316); background: rgba(249,115,22,.07); }
-[data-ed]:focus { outline: none; box-shadow: 0 0 0 3px var(--accent, #f97316); background: rgba(249,115,22,.12); }
+/* фірменны аранжавы TTZOP (#f97316) — заўсёды, незалежна ад тэмы сайта; тонкая рамка */
+[data-ed]:hover { box-shadow: 0 0 0 1px #f97316; background: rgba(249,115,22,.07); }
+[data-ed]:focus { outline: none; box-shadow: 0 0 0 2px #f97316; background: rgba(249,115,22,.12); }
 [data-ed]:empty::before { content: attr(data-ph); opacity: .45; font-style: italic; }
 /* Фаза D: выпадальнікі рэдактара секцый — цёмны попап опцый (інакш белы тэкст на светлым сістэмным фоне) */
 #look-panel #look-edit select { background: #1f2430; color: #eee; }
