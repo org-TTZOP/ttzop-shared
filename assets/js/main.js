@@ -2181,8 +2181,7 @@ let _dSecId = null;
 // спрошчаны лэйбл: be для славянскіх моў інтэрфейсу, en для астатніх (оверлэй — інструмент уладальніка;
 // каталог параметраў — люстэрка панэльнага SECTION_PROPS, але кароткі: тыпы паказаны іконка+код без перакладу)
 const _dL = (be, en) => (['be', 'ru', 'uk'].includes(currentUiLang) ? be : en);
-const _SEC_TYPES = ['text', 'cards', 'list', 'accordion', 'gallery', 'testimonials', 'brands', 'posts', 'hero', 'footer'];
-const _SEC_TICON = { text: '📄', cards: '🃏', list: '💰', accordion: '❓', gallery: '🖼️', testimonials: '💬', brands: '🚗', posts: '📰', hero: '🔝', footer: '🔚' };
+const _SEC_TICON = { text: '📄', cards: '🃏', list: '💰', accordion: '❓', gallery: '🖼️', testimonials: '💬', brands: '🚗', posts: '📰', hero: '🔝', footer: '🔚' }; // іконка тыпу для подпісу секцыі (сам Тып мяняецца ў панэлі, не ў прэв'ю)
 function _secCat() { return [
   { key: 'gridCols',   name: _dL('Калонкі', 'Columns'),   opts: [['auto', _dL('Аўта', 'Auto')], ['c1', '1'], ['c2', '2'], ['c3', '3'], ['c4', '4']] },
   { key: 'layoutView', name: _dL('Выгляд', 'View'),       opts: [['off', _dL('Аўта', 'Auto')], ['cards', _dL('Карткі', 'Cards')], ['list', _dL('Спіс', 'List')]] },
@@ -2203,12 +2202,12 @@ function _dEditRender() {
   const sst = 'padding:4px 8px;border-radius:6px;border:1px solid rgba(255,255,255,.2);background:#1f2430;color:#eee;font-size:.82rem;max-width:170px'; // суцэльны цёмны фон (опцыі — правіла ў style.css), каб чыталіся на цёмнай панэлі
   const o = (v, sel, lbl) => `<option value="${_svcEsc(v)}"${v === sel ? ' selected' : ''}>${_svcEsc(lbl)}</option>`;
   const secSel = `<select onchange="_dSecPick(this.value)" style="${sst}">${secs.map(s => o(s.id, _dSecId, ((_SEC_TICON[s.type] || '') + ' ' + _dSecTitle(s)).trim())).join('')}</select>`;
-  const typeSel = `<label style="display:flex;flex-direction:column;gap:2px;font-size:.72rem;opacity:.85">${_svcEsc(_dL('Тып', 'Type'))}<select onchange="_dChange('type',this.value)" style="${sst}">${_SEC_TYPES.map(k => o(k, sec.type, (_SEC_TICON[k] || '') + ' ' + k)).join('')}</select></label>`;
+  // Тып секцыі ў прэв'ю НЕ мяняем (эканомім месца на экране; тып рэдагуецца ў панэлі — Структура)
   const props = _secCat().map(p => {
     const cur = (sec.disp && sec.disp[p.key] != null) ? sec.disp[p.key] : p.opts[0][0];
     return `<label style="display:flex;flex-direction:column;gap:2px;font-size:.72rem;opacity:.85">${_svcEsc(p.name)}<select onchange="_dChange('${p.key}',this.value)" style="${sst}">${p.opts.map(op => o(op[0], cur, op[1])).join('')}</select></label>`;
   }).join('');
-  w.innerHTML = `<span class="look-lbl">🧱 ${_svcEsc(_dL('Секцыя', 'Section'))}</span>${secSel}<div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:4px">${typeSel}${props}</div>`;
+  w.innerHTML = `<span class="look-lbl">🧱 ${_svcEsc(_dL('Секцыя', 'Section'))}</span>${secSel}<div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:4px">${props}</div>`;
 }
 function _dSecPick(id) { _dSecId = id; _dEditRender(); }
 async function _dChange(key, val) { // прама ў чарнавік праз worker (lookToken), потым перарэндэр
