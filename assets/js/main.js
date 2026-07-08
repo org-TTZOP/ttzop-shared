@@ -2232,9 +2232,9 @@ function _secCat() { return [ // люстэрка SECTION_PROPS панэлі (у
 function _dEditInit() { _dEditRender(); }
 function _dSecs() { const s = siteData?._sections; return (Array.isArray(s?.sections) ? s.sections : []).filter(x => x && x.kind !== 'folder' && x.kind !== 'file' && x.type && SITE_VIEWS[x.type]); }
 function _dSecTitle(s) { const tt = s.title; const nm = (tt && typeof tt === 'object') ? (tt[currentLang] || Object.values(tt).find(Boolean)) : tt; return nm || s.type || s.id; }
-function _dEditRender() { // ніжняя панэль: цяпер толькі падказка — параметры/парадак пераехалі ў ⋯ самой секцыі (кансалідацыя)
+function _dEditRender() { // ніжняя панэль: падказка + ⓘ узроўню СТАРОНКІ (Сметніца верхніх секцый); параметры/парадак — у ⋯ самой секцыі
   const w = document.getElementById('look-edit'); if (!w) return;
-  w.innerHTML = `<span class="look-lbl" style="opacity:.8">🖊 ${_svcEsc(_dL('Рэдагуйце секцыі на старонцы: ▲▼ парадак · ⋯ меню', 'Edit sections on the page: ▲▼ order · ⋯ menu'))}</span>`;
+  w.innerHTML = `<span class="look-lbl" style="opacity:.8">🖊 ${_svcEsc(_dL('Секцыі: ● ▲▼ ⓘ ⋯ на старонцы', 'Sections: ● ▲▼ ⓘ ⋯ on page'))}</span><button class="ds-eb-btn" onclick="_dSecInfo(null,this)" title="${_svcEsc(_dL('Старонка: інфа і Сметніца', 'Page: info & Trash'))}" style="margin-left:8px">ⓘ</button>`;
 }
 function _dSecById(id) { const s = siteData?._sections; return (Array.isArray(s?.sections) ? s.sections : []).find(x => x && x.id === id) || null; }
 // зялёная кропка «Актыўна» — тое самае прадстаўленне, што ў панэлі (.node-active-dot): active → паказ на сайце (inst.enabled)
@@ -2244,7 +2244,8 @@ function _dSecBar(id, canUp, canDown, active) {
   if (!_dEdit) return '';
   const mv = (on, dir, arr) => `<button class="ds-eb-btn"${on ? '' : ' disabled'} onclick="event.stopPropagation();_dMove('${_dsEsc(id)}','${dir}')" title="${dir === 'up' ? _svcEsc(_dL('Уверх', 'Up')) : _svcEsc(_dL('Уніз', 'Down'))}">${arr}</button>`;
   const dot = `<button class="ds-eb-btn ds-eb-dot" onclick="event.stopPropagation();_dSecSetEnabled('${_dsEsc(id)}',${!active})" title="${active ? _svcEsc(_dL('Актыўна — паказана', 'Active — shown')) : _svcEsc(_dL('Схавана', 'Hidden'))}">${_dDot(active)}</button>`;
-  return `<div class="ds-editbar" contenteditable="false">${dot}${mv(canUp, 'up', '▲')}${mv(canDown, 'down', '▼')}<button class="ds-eb-btn ds-eb-menu" onclick="event.stopPropagation();_dSecMenu('${_dsEsc(id)}',this)" title="${_svcEsc(_dL('Меню', 'Menu'))}">⋯</button></div>`;
+  const info = `<button class="ds-eb-btn" onclick="event.stopPropagation();_dSecInfo('${_dsEsc(id)}',this)" title="${_svcEsc(_dL('Інфа і Сметніца', 'Info & Trash'))}">ⓘ</button>`;
+  return `<div class="ds-editbar" contenteditable="false">${dot}${mv(canUp, 'up', '▲')}${mv(canDown, 'down', '▼')}${info}<button class="ds-eb-btn ds-eb-menu" onclick="event.stopPropagation();_dSecMenu('${_dsEsc(id)}',this)" title="${_svcEsc(_dL('Меню', 'Menu'))}">⋯</button></div>`;
 }
 async function _dMove(id, dir) { // рух адносна БАЧНАГА суседа (DOM = рэальны візуальны парадак; мінае пустыя/схаваныя)
   const wrap = document.getElementById('sec-' + id); if (!wrap) return;
@@ -2275,6 +2276,7 @@ function _dSecMenu(id, btn) { // папавер: ● схаваць/паказа
   const m = document.createElement('div'); m.id = 'ds-menu'; m.className = 'ds-menu';
   m.innerHTML = mi(_dDot(!hidden), hidden ? _dL('Актываваць', 'Activate') : _dL('Схаваць', 'Hide'), `_dSecSetEnabled('${_dsEsc(id)}',${hidden})`) // ● канон панэлі (Актыўна/Схаваць)
     + mi('✎', _dL('Назва', 'Title'), `_dSecFocusTitle('${_dsEsc(id)}')`)
+    + mi('🗑', _dL('Выдаліць', 'Delete'), `_dSecDelete('${_dsEsc(id)}')`)
     + (params ? `<div class="ds-mi-sep">🎨 ${_svcEsc(_dL('Параметры', 'Params'))}</div><div class="ds-mparams">${params}</div>` : '');
   document.body.appendChild(m);
   const r = btn.getBoundingClientRect(); // размясціць пад кнопкай, не за краем экрана
@@ -2294,6 +2296,50 @@ function _dSecFocusTitle(id) { // ✎ скрол+фокус на inline-зага
   const t = host.querySelector('[data-ed$="::ml"], [data-ed]'); host.scrollIntoView({ behavior: 'smooth', block: 'center' });
   if (t) setTimeout(() => { t.focus(); const sel = getSelection(); const rg = document.createRange(); rg.selectNodeContents(t); rg.collapse(false); sel.removeAllRanges(); sel.addRange(rg); }, 320);
 }
+function _dSecDelete(id) { // 🗑 → Сметніца чарнавіка (не назусім)
+  _dMenuClose();
+  const sec = _dSecById(id); const nm = _dSecTitle(sec) || id;
+  siteConfirm(_dL('Выдаліць у Сметніцу?', 'Move to Trash?') + '\n«' + nm + '»', async () => {
+    const tok = new URLSearchParams(location.search).get('look');
+    try { await _draftPost({ action: 'draft_delete', repo: SITE_REPO, lookToken: tok, id }); await _dReload(); } catch (e) {}
+  }, true);
+}
+function _dSecCount(sec) { // лік пазіцый (ліставая) ці дзяцей (раздзел)
+  const s = siteData?._sections; const all = Array.isArray(s?.sections) ? s.sections : [];
+  if (sec.kind === 'folder') return all.filter(x => x && (x.parentId || null) === sec.id).length;
+  const c = sec.content || {}; let n = 0; ['items', 'posts', 'rows'].forEach(k => { if (Array.isArray(c[k])) n += c[k].length; }); return n || 0;
+}
+function _dTrashItems(originId) { // карані груп, выдаленыя З гэтага кантэйнера (origin===id; null = верхні ўзровень/старонка)
+  const s = siteData?._sections; const tr = Array.isArray(s?._trash) ? s._trash : [];
+  return tr.filter(x => x && x._grpRoot && (x._origParentId || null) === (originId || null));
+}
+function _dInfoClose() { const m = document.getElementById('ds-info'); if (m) m.remove(); document.removeEventListener('mousedown', _dInfoOutside, true); }
+function _dInfoOutside(e) { const m = document.getElementById('ds-info'); if (m && !m.contains(e.target)) _dInfoClose(); }
+function _dSecInfo(id, btn) { // ⓘ драўэр: інфа секцыі + СВАЯ Сметніца (id=null → узровень старонкі). Люстэрка ⓘ-Папкі панэлі
+  if (document.getElementById('ds-info')) { _dInfoClose(); return; }
+  const sec = id ? _dSecById(id) : null;
+  const row = (k, v) => `<div class="ds-inf-row"><b>${_svcEsc(k)}:</b> ${_svcEsc(v)}</div>`;
+  let info;
+  if (sec) {
+    const typeName = sec.kind === 'folder' ? _dL('Раздзел', 'Folder') : ((_SEC_TICON[sec.type] || '') + ' ' + (sec.type || '')).trim();
+    info = row(_dL('Тып', 'Type'), typeName) + row(_dL('Назва', 'Title'), _dSecTitle(sec)) + row(sec.kind === 'folder' ? _dL('Дзяцей', 'Children') : _dL('Пазіцый', 'Items'), _dSecCount(sec)) + `<div class="ds-inf-row" style="opacity:.55"><b>id:</b> ${_svcEsc(sec.id)}</div>`;
+  } else {
+    const s = siteData?._sections; const cnt = (Array.isArray(s?.sections) ? s.sections : []).filter(x => x && x.kind !== 'file').length;
+    info = `<div class="ds-inf-row"><b>${_svcEsc(_dL('Старонка', 'Page'))}</b></div>` + row(_dL('Секцый', 'Sections'), cnt);
+  }
+  const trash = _dTrashItems(id);
+  const trHtml = trash.length ? trash.map(x => `<div class="ds-tr-row"><span class="ds-tr-nm">🗑 ${_svcEsc(_dSecTitle(x) || x.id)}</span><span class="ds-tr-acts"><button class="ds-eb-btn" onclick="_dTrashRestore('${_dsEsc(x.id)}')" title="${_svcEsc(_dL('Аднавіць', 'Restore'))}">♻</button><button class="ds-eb-btn" onclick="_dTrashPurge('${_dsEsc(x.id)}')" title="${_svcEsc(_dL('Выдаліць назаўжды', 'Delete forever'))}">✕</button></span></div>`).join('')
+    : `<div class="ds-inf-row" style="opacity:.55">${_svcEsc(_dL('Сметніца пустая', 'Trash empty'))}</div>`;
+  const m = document.createElement('div'); m.id = 'ds-info'; m.className = 'ds-menu ds-info';
+  m.innerHTML = `<div class="ds-mi-sep">ℹ️ ${_svcEsc(_dL('Інфармацыя', 'Info'))}</div>${info}<div class="ds-mi-sep">🗑 ${_svcEsc(_dL('Сметніца', 'Trash'))}</div>${trHtml}`;
+  document.body.appendChild(m);
+  const r = btn.getBoundingClientRect();
+  m.style.top = (r.bottom + 6 + scrollY) + 'px';
+  m.style.left = Math.max(8, Math.min(r.right - m.offsetWidth + scrollX, scrollX + innerWidth - m.offsetWidth - 8)) + 'px';
+  setTimeout(() => document.addEventListener('mousedown', _dInfoOutside, true), 0);
+}
+async function _dTrashRestore(id) { _dInfoClose(); const tok = new URLSearchParams(location.search).get('look'); try { await _draftPost({ action: 'draft_restore', repo: SITE_REPO, lookToken: tok, id }); await _dReload(); } catch (e) {} }
+function _dTrashPurge(id) { siteConfirm(_dL('Выдаліць назаўжды?', 'Delete forever?'), async () => { _dInfoClose(); const tok = new URLSearchParams(location.search).get('look'); try { await _draftPost({ action: 'draft_purge', repo: SITE_REPO, lookToken: tok, id }); await _dReload(); } catch (e) {} }, true); }
 function _dSecPick(id) { _dSecId = id; }
 async function _dChange(key, val) { // прама ў чарнавік праз worker (lookToken), потым перарэндэр
   if (!_dSecId) return;

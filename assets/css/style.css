@@ -408,6 +408,14 @@ body.ds-edit #site-sections .ds-editbar button { pointer-events: auto !important
 .ds-mi-sep { padding: 8px 10px 2px; font-size: .78rem; opacity: .6; }
 .ds-mparams { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; padding: 4px 6px 6px; }
 .ds-mp { display: flex; flex-direction: column; gap: 2px; font-size: .72rem; opacity: .9; }
+/* ⓘ драўэр: інфа секцыі + Сметніца */
+.ds-info { min-width: 210px; }
+.ds-inf-row { padding: 3px 10px; font-size: .82rem; }
+.ds-inf-row b { opacity: .7; font-weight: 600; }
+.ds-tr-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 4px 8px 4px 10px; }
+.ds-tr-nm { font-size: .84rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ds-tr-acts { display: flex; gap: 3px; flex-shrink: 0; }
+.ds-tr-acts .ds-eb-btn { background: rgba(128,128,128,.18); color: inherit; }
 /* Фаза D: выпадальнікі рэдактара секцый — цёмны попап опцый (інакш белы тэкст на светлым сістэмным фоне) */
 #look-panel #look-edit select { background: #1f2430; color: #eee; }
 #look-panel #look-edit select option { background: #1f2430; color: #eee; }
