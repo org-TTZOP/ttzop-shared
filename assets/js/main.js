@@ -2296,33 +2296,48 @@ function _dEditBind() {
 }
 // ✓ кароткі візуальны водгук «захавана» на элеменце пасля запісу ў чарнавік
 function _edFlash(el) { if (!el || !el.isConnected) return; el.classList.add('ed-saved'); setTimeout(() => el.classList.remove('ed-saved'), 750); }
-// 🖊️ МАДАЛКА-WYSIWYG для прыгожага цела (Тэкст-секцыі, Навіны). Лёгкі свой рэдактар (Selection API), без Quill.
-let _edModalEl = null, _edModalCtx = null;
+// 🖊️ МАДАЛКА-WYSIWYG для прыгожага цела (Тэкст-секцыі, Навіны) — той жа Quill, што і ў панэлі (прывычна кліенту).
+// Quill грузіцца ЛЯНІВА толькі ў edit-рэжыме (звычайны наведвальнік не плаціць за ~200КБ).
+let _edModalEl = null, _edModalCtx = null, _edQuill = null, _edQuillP = null;
+function _edQuillLoad() { // адзін раз падгрузіць Quill CSS+JS з unpkg (як admin)
+  if (window.Quill) return Promise.resolve();
+  if (_edQuillP) return _edQuillP;
+  _edQuillP = new Promise((res, rej) => {
+    if (!document.querySelector('link[data-quill]')) { const l = document.createElement('link'); l.rel = 'stylesheet'; l.href = 'https://unpkg.com/quill@2.0.2/dist/quill.snow.css'; l.setAttribute('data-quill', '1'); document.head.appendChild(l); }
+    const s = document.createElement('script'); s.src = 'https://unpkg.com/quill@2.0.2/dist/quill.js'; s.onload = res; s.onerror = rej; document.head.appendChild(s);
+  });
+  return _edQuillP;
+}
 function _edModalOpen(el) {
   const [id, path] = (el.dataset.edm || '').split('::'); if (!id || !path) return;
   _edModalCtx = { el, id, path };
   const ui = getUI();
   if (!_edModalEl) {
     _edModalEl = document.createElement('div'); _edModalEl.id = 'ed-modal';
-    const tb = (cmd, arg, lbl, title) => `<button type="button" title="${_svcEsc(title || '')}" onmousedown="event.preventDefault()" onclick="_edCmd('${cmd}'${arg ? `,'${arg}'` : ''})">${lbl}</button>`;
     _edModalEl.innerHTML = `<div class="ed-modal-box">
-      <div class="ed-modal-tb">${tb('bold', '', '<b>B</b>', 'Тлусты')}${tb('italic', '', '<i>I</i>', 'Курсіў')}${tb('formatBlock', 'h3', 'H', 'Загаловак')}${tb('insertUnorderedList', '', '•', 'Спіс')}${tb('insertOrderedList', '', '1.', 'Нумар. спіс')}${tb('removeFormat', '', '✕', 'Ачысціць фармат')}</div>
-      <div class="ed-modal-area" contenteditable="true"></div>
+      <div class="ed-modal-quill"></div>
       <div class="ed-modal-foot"><button type="button" class="ed-cancel" onclick="_edModalClose()">${_svcEsc(ui.reader_close || 'Закрыць')}</button><button type="button" class="ed-save" onclick="_edModalSave()">💾 ${_svcEsc(ui.ed_save || 'Захаваць')}</button></div>
     </div>`;
     document.body.appendChild(_edModalEl);
     _edModalEl.addEventListener('mousedown', e => { if (e.target === _edModalEl) _edModalClose(); }); // клік па фоне закрывае
   }
-  _edModalEl.querySelector('.ed-modal-area').innerHTML = el.innerHTML;
+  const html = el.innerHTML;
   _edModalEl.style.display = 'flex';
-  setTimeout(() => _edModalEl.querySelector('.ed-modal-area').focus(), 40);
+  _edQuillLoad().then(() => {
+    const host = _edModalEl.querySelector('.ed-modal-quill');
+    if (!_edQuill) { // адзін інстанс, той жа toolbar-канфіг што ў панэлі (nodeInitRichtext)
+      _edQuill = new Quill(host, { theme: 'snow', modules: { toolbar: [[{ header: [1, 2, 3, false] }], ['bold', 'italic', 'underline'], [{ list: 'ordered' }, { list: 'bullet' }], ['link'], ['clean']] } });
+    }
+    _edQuill.root.innerHTML = html; // сыпем бягучае цела
+    setTimeout(() => _edQuill.focus(), 40);
+  }).catch(() => { console.warn('[ttzop] Quill load failed'); _edModalClose(); });
 }
-function _edCmd(cmd, arg) { document.execCommand(cmd, false, arg || (cmd === 'formatBlock' ? 'h3' : undefined)); _edModalEl.querySelector('.ed-modal-area').focus(); }
 function _edModalClose() { if (_edModalEl) _edModalEl.style.display = 'none'; _edModalCtx = null; }
 function _edModalSave() {
-  if (!_edModalCtx) return;
+  if (!_edModalCtx || !_edQuill) return;
   const { el, id, path } = _edModalCtx;
-  const html = _edModalEl.querySelector('.ed-modal-area').innerHTML.trim();
+  let html = _edQuill.root.innerHTML.trim();
+  if (html === '<p><br></p>') html = ''; // пусты Quill
   el.innerHTML = html; _edFlash(el); _edModalClose(); // адразу на старонцы + флэш
   const tok = new URLSearchParams(location.search).get('look');
   _draftPost({ action: 'draft_set', repo: SITE_REPO, lookToken: tok, id, path, val: html }); // праз чаргу
