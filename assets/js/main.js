@@ -997,7 +997,8 @@ function renderDynamicSections(data) {
     (Array.isArray(c.images) ? c.images : []).forEach((im, i) => raw.push({ kind: 'file', id: im.id || inst.id + '-f' + i, parentId: im.albumId || inst.id, url: _sv(im.url || im), thumbUrl: im.thumbUrl, caption: im.caption, enabled: im.hidden !== true }));
     (Array.isArray(c.albums) ? c.albums : []).slice().sort((x, y) => (x.order ?? 0) - (y.order ?? 0)).forEach(a => raw.push({ kind: 'folder', id: a.id, name: a.name, parentId: a.parentId || inst.id, enabled: a.hidden !== true }));
   });
-  const list = raw.filter(s => s && s.enabled !== false && (s.kind === 'folder' || s.kind === 'file' || SITE_VIEWS[s.type]));
+  // у edit-рэжыме схаваныя (enabled===false) секцыі ЗАСТАЮЦЦА бачныя (цьмяныя) — каб іх можна было вярнуць праз ⋯
+  const list = raw.filter(s => s && (_dEdit || s.enabled !== false) && (s.kind === 'folder' || s.kind === 'file' || SITE_VIEWS[s.type]));
   const kidsOf = pid => list.filter(x => (x.parentId || null) === pid);
   // 🪆 МЕГАПРАВІЛА «ПУСТАЯ ГАЛІНА НЕ ПУБЛІКУЕЦЦА» (адзінае месца правіла; канон — CLAUDE.md 🧱 Матрошка):
   // раздзел, у паддрэве якога НЯМА ніводнай бачнай секцыі-ліста, на сайт не трапляе. ЧАМУ: пустая
@@ -1023,8 +1024,10 @@ function renderDynamicSections(data) {
   const _foldWrap = (collapsed, head, inner) => (collapsed && head) ? `<details class="ds-fold"><summary>${head}</summary>${inner}</details>` : head + inner;
   // 🎛 уласцівасць секцыі (каталог SECTION_PROPS): рэзалв печаны панэллю ў inst.disp; лег. v4.593 — асобныя ключы
   const _dsProp = (inst, k) => (inst.disp || {})[k] ?? ({ previewN: inst.previewN, collapsed: inst.collapsed ? 'yes' : undefined, layoutView: inst.dispLayout }[k]);
-  const instHtml = (inst, d) => {
+  const instHtml = (inst, d, idx, sibN) => {
     const t0 = _sv(inst.title), s0 = _sv(inst.subtitle);
+    const ebar = _dSecBar(inst.id, idx > 0, idx < sibN - 1, inst.enabled === false); // ▲▼ + ⋯ (толькі edit)
+    const eCls = _dEdit ? ` ds-editable${inst.enabled === false ? ' ds-hidden' : ''}` : '';
     const alignL = _dsProp(inst, 'headAlign') === 'left'; // выраўноўванне загалоўка (верхні ўзровень; глыбей і так злева)
     // 🖊️ слайс A: у edit-рэжыме загаловак/падзагаловак — рэдагавальныя НА МЕСЦЫ; у edit паказваем нават пустыя (каб дадаць)
     const title = (t0 || _dEdit) ? `<${hTag(d)} class="section-title"${_edAttr(inst.id, 'title', 'ml', getUI().ed_title)} style="${d ? `font-size:${Math.max(1, 1.5 - d * 0.2)}rem;text-align:left` : (alignL ? 'text-align:left' : '')}">${_dsEsc(t0)}</${hTag(d)}>` : '';
@@ -1043,15 +1046,17 @@ function renderDynamicSections(data) {
     const bandProp = _dsProp(inst, 'band'); // фонавая паласа: auto = чаргаванне, light/accent = яўная (лічыльнік не спажываецца)
     const bandCls = bandProp === 'light' ? 's-light' : bandProp === 'accent' ? 's-accent' : (band++ % 2 ? 's-alt' : 's-light');
     return d === 0
-      ? `<section id="sec-${_dsEsc(inst.id)}"${disp} class="section ${bandCls}${cls ? ' ' + cls : ''}"><div class="container">${body}</div></section>`
-      : `<div id="sec-${_dsEsc(inst.id)}"${disp}${cls ? ` class="${cls}"` : ''} style="margin:20px 0 0 ${Math.min(d - 1, 3) * 14}px">${body}</div>`; // укладзены блок — водступ па глыбіні
+      ? `<section id="sec-${_dsEsc(inst.id)}"${disp} class="section ${bandCls}${cls ? ' ' + cls : ''}${eCls}"><div class="container">${ebar}${body}</div></section>`
+      : `<div id="sec-${_dsEsc(inst.id)}"${disp} class="${cls}${eCls}" style="margin:20px 0 0 ${Math.min(d - 1, 3) * 14}px">${ebar}${body}</div>`; // укладзены блок — водступ па глыбіні
   };
-  const folderHtml = (f, d) => {
+  const folderHtml = (f, d, idx, sibN) => {
     const name = _dsEsc(_sv(f.name));
     const inner = renderKids(f.id, d + 1);
+    const ebar = _dSecBar(f.id, idx > 0, idx < sibN - 1, f.enabled === false); // ▲▼ + ⋯ раздзела-Папкі
+    const eCls = _dEdit ? ` ds-editable${f.enabled === false ? ' ds-hidden' : ''}` : '';
     return d === 0
-      ? `<section id="sec-${_dsEsc(f.id)}" class="section ${band++ % 2 ? 's-alt' : 's-light'}"><div class="container">${_foldWrap(f.collapsed, name ? `<h2 class="section-title">${name}</h2>` : '', inner)}</div></section>`
-      : `<div id="sec-${_dsEsc(f.id)}" style="margin:20px 0 0 ${Math.min(d - 1, 3) * 14}px">${_foldWrap(f.collapsed, name ? _dsGroupHead(_sv(f.name), d - 1) : '', inner)}</div>`;
+      ? `<section id="sec-${_dsEsc(f.id)}" class="section ${band++ % 2 ? 's-alt' : 's-light'}${eCls}"><div class="container">${ebar}${_foldWrap(f.collapsed, name ? `<h2 class="section-title">${name}</h2>` : '', inner)}</div></section>`
+      : `<div id="sec-${_dsEsc(f.id)}"${eCls ? ` class="${eCls.trim()}"` : ''} style="margin:20px 0 0 ${Math.min(d - 1, 3) * 14}px">${ebar}${_foldWrap(f.collapsed, name ? _dsGroupHead(_sv(f.name), d - 1) : '', inner)}</div>`;
   };
   // 📎 генерычны ФайлБлок дрэва: фота — плітка з лайтбоксам (суседнія файлы зліваюцца ў адну сетку)
   const _fileTile = f => { const url = _dsEsc(_sv(f.url)); return `<div class="tile-item tile-item-clickable" onclick="openLightbox('${url}')">${_sv(f.caption) ? `<div class="tile-caption">${_dsEsc(_sv(f.caption))}</div>` : ''}<img src="${url}" alt="" loading="lazy"></div>`; };
@@ -1059,7 +1064,7 @@ function renderDynamicSections(data) {
     const kids = kidsOf(pid).filter(x => x.kind === 'folder' ? _branchHasLeaf(x.id) : x.kind === 'file' ? true : _instHasContent(x)); // мегаправіла: пустая галіна/секцыя не публікуецца
     const out = []; let files = [];
     const flush = () => { if (files.length) { out.push(`<div class="tile-grid">${files.map(_fileTile).join('')}</div>`); files = []; } };
-    kids.forEach(x => { if (x.kind === 'file') files.push(x); else { flush(); out.push(x.kind === 'folder' ? folderHtml(x, d) : instHtml(x, d)); } });
+    kids.forEach((x, i) => { if (x.kind === 'file') files.push(x); else { flush(); out.push(x.kind === 'folder' ? folderHtml(x, d, i, kids.length) : instHtml(x, d, i, kids.length)); } }); // idx/len → ▲▼ на канцах недаступныя
     flush();
     return out.join('');
   };
@@ -2227,26 +2232,62 @@ function _secCat() { return [ // люстэрка SECTION_PROPS панэлі (у
 function _dEditInit() { _dEditRender(); }
 function _dSecs() { const s = siteData?._sections; return (Array.isArray(s?.sections) ? s.sections : []).filter(x => x && x.kind !== 'folder' && x.kind !== 'file' && x.type && SITE_VIEWS[x.type]); }
 function _dSecTitle(s) { const tt = s.title; const nm = (tt && typeof tt === 'object') ? (tt[currentLang] || Object.values(tt).find(Boolean)) : tt; return nm || s.type || s.id; }
-function _dEditRender() {
+function _dEditRender() { // ніжняя панэль: цяпер толькі падказка — параметры/парадак пераехалі ў ⋯ самой секцыі (кансалідацыя)
   const w = document.getElementById('look-edit'); if (!w) return;
-  const secs = _dSecs();
-  if (!secs.length) { w.innerHTML = `<span class="look-lbl">🧱 —</span>`; return; }
-  if (!secs.some(s => s.id === _dSecId)) _dSecId = secs[0].id;
-  const sec = secs.find(s => s.id === _dSecId);
-  const sst = 'padding:4px 8px;border-radius:6px;border:1px solid rgba(255,255,255,.2);background:#1f2430;color:#eee;font-size:.82rem;max-width:170px'; // суцэльны цёмны фон (опцыі — правіла ў style.css), каб чыталіся на цёмнай панэлі
-  const o = (v, sel, lbl) => `<option value="${_svcEsc(v)}"${v === sel ? ' selected' : ''}>${_svcEsc(lbl)}</option>`;
-  const secSel = `<select onchange="_dSecPick(this.value)" style="${sst}">${secs.map(s => o(s.id, _dSecId, ((_SEC_TICON[s.type] || '') + ' ' + _dSecTitle(s)).trim())).join('')}</select>`;
-  // Тып секцыі ў прэв'ю НЕ мяняем (эканомім месца на экране; тып рэдагуецца ў панэлі — Структура)
-  const props = _secCat().map(p => {
-    const cur = (sec.disp && sec.disp[p.key] != null) ? sec.disp[p.key] : (p.num ? 0 : p.opts[0][0]);
-    const ctrl = p.num // лічбавае поле (previewN) — оверлэй умее і select, і number
-      ? `<input type="number" min="0" value="${_svcEsc(cur == null ? 0 : cur)}" onchange="_dChange('${p.key}',this.value)" style="${sst};max-width:64px">`
-      : `<select onchange="_dChange('${p.key}',this.value)" style="${sst}">${p.opts.map(op => o(op[0], cur, op[1])).join('')}</select>`;
-    return `<label style="display:flex;flex-direction:column;gap:2px;font-size:.72rem;opacity:.85">${_svcEsc(p.name)}${ctrl}</label>`;
-  }).join('');
-  w.innerHTML = `<span class="look-lbl">🧱 ${_svcEsc(_dL('Секцыя', 'Section'))}</span>${secSel}<div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:4px">${props}</div>`;
+  w.innerHTML = `<span class="look-lbl" style="opacity:.8">🖊 ${_svcEsc(_dL('Рэдагуйце секцыі на старонцы: ▲▼ парадак · ⋯ меню', 'Edit sections on the page: ▲▼ order · ⋯ menu'))}</span>`;
 }
-function _dSecPick(id) { _dSecId = id; _dEditRender(); }
+function _dSecById(id) { const s = siteData?._sections; return (Array.isArray(s?.sections) ? s.sections : []).find(x => x && x.id === id) || null; }
+// ▲▼ + ⋯ панэлька рэдактара секцыі/раздзела (генерычна для любога вузла; толькі edit-рэжым) — люстэрка радка панэлі
+function _dSecBar(id, canUp, canDown, hidden) {
+  if (!_dEdit) return '';
+  const mv = (on, dir, arr) => `<button class="ds-eb-btn"${on ? '' : ' disabled'} onclick="event.stopPropagation();_dMove('${_dsEsc(id)}','${dir}')" title="${dir === 'up' ? _svcEsc(_dL('Уверх', 'Up')) : _svcEsc(_dL('Уніз', 'Down'))}">${arr}</button>`;
+  return `<div class="ds-editbar" contenteditable="false">${mv(canUp, 'up', '▲')}${mv(canDown, 'down', '▼')}<button class="ds-eb-btn ds-eb-menu" onclick="event.stopPropagation();_dSecMenu('${_dsEsc(id)}',this)" title="${_svcEsc(_dL('Меню', 'Menu'))}">⋯</button></div>`;
+}
+async function _dMove(id, dir) { // перастаўленне сярод сясцёр таго ж узроўню ў чарнавіку
+  const tok = new URLSearchParams(location.search).get('look');
+  try { await _draftPost({ action: 'draft_move', repo: SITE_REPO, lookToken: tok, id, dir }); await _dReload(); } catch (e) {}
+}
+function _dMenuClose() { const m = document.getElementById('ds-menu'); if (m) m.remove(); document.removeEventListener('mousedown', _dMenuOutside, true); }
+function _dMenuOutside(e) { const m = document.getElementById('ds-menu'); if (m && !m.contains(e.target)) _dMenuClose(); }
+function _dSecMenu(id, btn) { // папавер: ● схаваць/паказаць · ✎ назва · 🎨 параметры (для гэтай секцыі)
+  if (document.getElementById('ds-menu')) { _dMenuClose(); return; }
+  _dSecId = id; // мэтавая секцыя для _dChange (параметры)
+  const sec = _dSecById(id); const hidden = sec && sec.enabled === false;
+  const isFolder = sec && sec.kind === 'folder';
+  const mi = (icon, label, onclick) => `<button class="ds-mi" onclick="${onclick}">${icon} ${_svcEsc(label)}</button>`;
+  const sst = 'padding:4px 8px;border-radius:6px;border:1px solid var(--border-color,#8884);background:var(--card-bg,#1f2430);color:inherit;font-size:.82rem;width:100%';
+  const o = (v, selv, lbl) => `<option value="${_svcEsc(v)}"${v === selv ? ' selected' : ''}>${_svcEsc(lbl)}</option>`;
+  // параметры выгляду — толькі для секцый (не раздзелаў-Папак: у іх няма disp-мадэлі)
+  const params = isFolder ? '' : _secCat().map(p => {
+    const cur = (sec && sec.disp && sec.disp[p.key] != null) ? sec.disp[p.key] : (p.num ? 0 : p.opts[0][0]);
+    const ctrl = p.num
+      ? `<input type="number" min="0" value="${_svcEsc(cur == null ? 0 : cur)}" onchange="_dMenuChange('${p.key}',this.value)" style="${sst}">`
+      : `<select onchange="_dMenuChange('${p.key}',this.value)" style="${sst}">${p.opts.map(op => o(op[0], cur, op[1])).join('')}</select>`;
+    return `<label class="ds-mp">${_svcEsc(p.name)}${ctrl}</label>`;
+  }).join('');
+  const m = document.createElement('div'); m.id = 'ds-menu'; m.className = 'ds-menu';
+  m.innerHTML = mi(hidden ? '👁' : '🙈', hidden ? _dL('Паказаць', 'Show') : _dL('Схаваць', 'Hide'), `_dSecSetEnabled('${_dsEsc(id)}',${hidden})`)
+    + mi('✎', _dL('Назва', 'Title'), `_dSecFocusTitle('${_dsEsc(id)}')`)
+    + (params ? `<div class="ds-mi-sep">🎨 ${_svcEsc(_dL('Параметры', 'Params'))}</div><div class="ds-mparams">${params}</div>` : '');
+  document.body.appendChild(m);
+  const r = btn.getBoundingClientRect(); // размясціць пад кнопкай, не за краем экрана
+  m.style.top = (r.bottom + 6 + scrollY) + 'px';
+  m.style.left = Math.max(8, Math.min(r.right - m.offsetWidth + scrollX, scrollX + innerWidth - m.offsetWidth - 8)) + 'px';
+  setTimeout(() => document.addEventListener('mousedown', _dMenuOutside, true), 0);
+}
+async function _dMenuChange(key, val) { _dMenuClose(); await _dChange(key, val); } // параметр з меню → чарнавік
+async function _dSecSetEnabled(id, enabled) { // ● схаваць/паказаць (enabled — поле inst, праз draft_set path)
+  _dMenuClose();
+  const tok = new URLSearchParams(location.search).get('look');
+  try { await _draftPost({ action: 'draft_set', repo: SITE_REPO, lookToken: tok, id, path: 'enabled', val: !!enabled }); await _dReload(); } catch (e) {}
+}
+function _dSecFocusTitle(id) { // ✎ скрол+фокус на inline-загаловак секцыі
+  _dMenuClose();
+  const host = document.getElementById('sec-' + id); if (!host) return;
+  const t = host.querySelector('[data-ed$="::ml"], [data-ed]'); host.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  if (t) setTimeout(() => { t.focus(); const sel = getSelection(); const rg = document.createRange(); rg.selectNodeContents(t); rg.collapse(false); sel.removeAllRanges(); sel.addRange(rg); }, 320);
+}
+function _dSecPick(id) { _dSecId = id; }
 async function _dChange(key, val) { // прама ў чарнавік праз worker (lookToken), потым перарэндэр
   if (!_dSecId) return;
   const tok = new URLSearchParams(location.search).get('look');
