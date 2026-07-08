@@ -436,6 +436,8 @@ const UI_T = {
 };
 // 🖊️ Фаза D: падказка, калі оверлэй-рэдактар не бачыць адкрытай панэлі (post-merge — без праўкі 13 мега-радкоў)
 ;(() => { const M = { be:'Адкрыйце панэль кіравання, каб рэдагаваць', en:'Open the admin panel to edit', uk:'Відкрийте панель керування, щоб редагувати', ru:'Откройте панель управления, чтобы редактировать', pl:'Otwórz panel, aby edytować', de:'Öffnen Sie das Panel zum Bearbeiten', fr:'Ouvrez le panneau pour modifier', es:'Abre el panel para editar', it:'Apri il pannello per modificare', pt:'Abra o painel para editar', zh:'打开管理面板进行编辑', ar:'افتح لوحة التحكم للتعديل', hu:'Nyissa meg a panelt a szerkesztéshez' }; Object.keys(M).forEach(l => { if (UI_T[l]) UI_T[l].look_edit_nopanel = M[l]; }); })();
+// 🖊️ слайс A: плейсхолдэры пустога загалоўка/падзагалоўка ў edit-рэжыме
+;(() => { const T = { be:['Загаловак','Падзагаловак'], en:['Heading','Subheading'], uk:['Заголовок','Підзаголовок'], ru:['Заголовок','Подзаголовок'], pl:['Nagłówek','Podtytuł'], de:['Überschrift','Untertitel'], fr:['Titre','Sous-titre'], es:['Título','Subtítulo'], it:['Titolo','Sottotitolo'], pt:['Título','Subtítulo'], zh:['标题','副标题'], ar:['العنوان','العنوان الفرعي'], hu:['Címsor','Alcím'] }; Object.keys(T).forEach(l => { if (UI_T[l]) { UI_T[l].ed_title = T[l][0]; UI_T[l].ed_subtitle = T[l][1]; } }); })();
 // #1: look_note цяпер праўдзівы — прэв'ю паказвае РЭАЛЬНЫ чарнавік (Фаза A/D), а не «канцэпт» (post-merge перакрывае стары інлайн)
 ;(() => { const M = { be:'Прэв\'ю чарнавіка — так убачаць наведвальнікі пасля публікацыі', en:'Draft preview — this is how visitors will see it after publishing', uk:'Перегляд чернетки — так побачать відвідувачі після публікації', ru:'Просмотр черновика — так увидят посетители после публикации', pl:'Podgląd wersji roboczej — tak zobaczą to odwiedzający po opublikowaniu', de:'Entwurfsvorschau — so sehen es Besucher nach der Veröffentlichung', fr:'Aperçu du brouillon — voici ce que verront les visiteurs après publication', es:'Vista previa del borrador: así lo verán los visitantes tras publicar', it:'Anteprima della bozza: così la vedranno i visitatori dopo la pubblicazione', pt:'Pré-visualização do rascunho — é assim que os visitantes verão após publicar', zh:'草稿预览 — 发布后访客将看到此效果', ar:'معاينة المسودة — هكذا سيراها الزوار بعد النشر', hu:'Piszkozat előnézete — így látják a látogatók a közzététel után' }; Object.keys(M).forEach(l => { if (UI_T[l]) UI_T[l].look_note = M[l]; }); })();
 function getUI() { return UI_T[currentUiLang] || UI_T.be; }
@@ -1012,8 +1014,10 @@ function renderDynamicSections(data) {
   const instHtml = (inst, d) => {
     const t0 = _sv(inst.title), s0 = _sv(inst.subtitle);
     const alignL = _dsProp(inst, 'headAlign') === 'left'; // выраўноўванне загалоўка (верхні ўзровень; глыбей і так злева)
-    const title = t0 ? `<${hTag(d)} class="section-title" style="${d ? `font-size:${Math.max(1, 1.5 - d * 0.2)}rem;text-align:left` : (alignL ? 'text-align:left' : '')}">${_dsEsc(t0)}</${hTag(d)}>` : '';
-    const sub = s0 ? `<p class="section-subtitle text-muted"${(d || alignL) ? ' style="text-align:left"' : ''}>${_dsEsc(s0)}</p>` : '';
+    // 🖊️ слайс A: у edit-рэжыме загаловак/падзагаловак — рэдагавальныя НА МЕСЦЫ (contenteditable + data-ed); у edit паказваем нават пустыя (каб дадаць)
+    const _ed = f => _dEdit ? ` contenteditable="true" data-ed="${f}:${_dsEsc(inst.id)}" data-ph="${_dsEsc(f === 'title' ? (getUI().ed_title || 'Загаловак') : (getUI().ed_subtitle || 'Падзагаловак'))}"` : '';
+    const title = (t0 || _dEdit) ? `<${hTag(d)} class="section-title"${_ed('title')} style="${d ? `font-size:${Math.max(1, 1.5 - d * 0.2)}rem;text-align:left` : (alignL ? 'text-align:left' : '')}">${_dsEsc(t0)}</${hTag(d)}>` : '';
+    const sub = (s0 || _dEdit) ? `<p class="section-subtitle text-muted"${_ed('subtitle')}${(d || alignL) ? ' style="text-align:left"' : ''}>${_dsEsc(s0)}</p>` : '';
     const body = _foldWrap(_dsProp(inst, 'collapsed') === 'yes', title, sub + SITE_VIEWS[inst.type](inst) + renderKids(inst.id, d + 1)); // + генерычныя дзеці экзэмпляра (фота/папкі/укладзеныя секцыі)
     // CSS-класы каталога (спажывае style.css) + data-атрыбуты пасля-рэндэрных крокаў (_dsApplyDisplay)
     const cols = _dsProp(inst, 'gridCols'), w = _dsProp(inst, 'secWidth'), pad = _dsProp(inst, 'secPad');
@@ -2083,6 +2087,10 @@ function _renderSitePaused(lang) {
 async function init() {
   siteData = await loadSiteData();
   if (!siteData) return;
+  // 🖊️ слайс A: рэжым праўкі на месцы — толькі ?edit=1 і токен супадае (гасцявая 📋-спасылка без edit=1 не правіць)
+  const _qs = new URLSearchParams(location.search);
+  _dEdit = _qs.get('edit') === '1' && !!siteData.lookToken && _qs.get('look') === siteData.lookToken;
+  if (_dEdit) _dEditBind();
 
   const primary = getPrimaryLang(siteData);
   const saved = localStorage.getItem('ttzop_lang');
@@ -2178,6 +2186,7 @@ function initLookPreview(data) {
 // Адзін таб, без панэлі/BroadcastChannel (працуе на Тэсла Atom): піша ў чарнавік ПРАМА праз worker
 // draft_set (аўтарызацыя lookToken са спасылкі), потым перачытвае чарнавік і перарэндэрвае старонку.
 let _dSecId = null;
+let _dEdit = false; // 🖊️ слайс A: рэжым праўкі кантэнту НА МЕСЦЫ (contenteditable) — усталёўваецца ў init пры ?edit=1 + супадзенні токена
 // спрошчаны лэйбл: be для славянскіх моў інтэрфейсу, en для астатніх (оверлэй — інструмент уладальніка;
 // каталог параметраў — люстэрка панэльнага SECTION_PROPS, але кароткі: тыпы паказаны іконка+код без перакладу)
 const _dL = (be, en) => (['be', 'ru', 'uk'].includes(currentUiLang) ? be : en);
@@ -2234,6 +2243,19 @@ async function _dReload() { // перачытаць чарнавік і пера
     initReveal(); // 🎯 ФІКС (як пры змене мовы v4.601): перарэндэраныя секцыі — НОВЫЯ DOM-вузлы; без паўторнага reveal-назіральніка завісаюць схаванымі (.js-reveal без .in-view)
     _dEditRender();
   } catch (e) {}
+}
+// 🖊️ слайс A: праўка кантэнту НА МЕСЦЫ — focusout з [data-ed] → draft_set з укладзеным шляхам (дэлегавана, перажывае перарэндэры)
+let _dEditBound = false;
+function _dEditBind() {
+  if (_dEditBound) return; _dEditBound = true;
+  document.addEventListener('keydown', e => { const el = e.target.closest && e.target.closest('[data-ed]'); if (el && e.key === 'Enter') { e.preventDefault(); el.blur(); } }); // Enter = скончыць, не новы радок
+  document.addEventListener('focusout', async e => {
+    const el = e.target.closest && e.target.closest('[data-ed]'); if (!el) return;
+    const [field, id] = (el.dataset.ed || '').split(':'); if (!field || !id) return;
+    const path = (field === 'title' || field === 'subtitle') ? field + '.' + currentLang : field; // ml-палі → {бягучая мова}
+    const tok = new URLSearchParams(location.search).get('look');
+    try { await fetch(API_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'draft_set', repo: SITE_REPO, lookToken: tok, id, path, val: el.textContent.trim() }) }); } catch (e2) {}
+  });
 }
 function _lookPick(kind, id) { _lookSel[kind] = id; _lookRefresh(); }
 function _lookRefresh() {

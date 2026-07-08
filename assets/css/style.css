@@ -346,6 +346,11 @@ html[data-d-stamp="on"] #hero { position: relative; }
 #look-panel .look-opt:hover { color: #fff; }
 #look-panel .look-opt.cur { border-color: #f5a83d; } /* аранжавая рамка = бягучыя захаваныя налады сайта */
 #look-panel .look-opt.on { background: #2ea052; color: #fff; }
+/* 🖊️ Слайс A: праўка кантэнту НА МЕСЦЫ (edit-рэжым прэв'ю) — рамка-падказка + плейсхолдэр пустога */
+[data-ed] { cursor: text; transition: outline .12s ease; border-radius: 4px; }
+[data-ed]:hover { outline: 1px dashed rgba(128,128,128,.55); outline-offset: 3px; }
+[data-ed]:focus { outline: 2px solid var(--accent, #f97316); outline-offset: 3px; }
+[data-ed]:empty::before { content: attr(data-ph); opacity: .4; font-style: italic; }
 /* Фаза D: выпадальнікі рэдактара секцый — цёмны попап опцый (інакш белы тэкст на светлым сістэмным фоне) */
 #look-panel #look-edit select { background: #1f2430; color: #eee; }
 #look-panel #look-edit select option { background: #1f2430; color: #eee; }
