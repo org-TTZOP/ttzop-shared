@@ -2238,23 +2238,30 @@ async function _dReload() { // перачытаць чарнавік і пера
 function _lookPick(kind, id) { _lookSel[kind] = id; _lookRefresh(); }
 function _lookRefresh() {
   document.querySelectorAll('.look-opt').forEach(b => b.classList.toggle('on', _lookSel[b.dataset.kind] === b.dataset.id));
-  const nodes = siteData.themeTree || [];
-  const pal = nodes.find(n => n.id === _lookSel.p), d = nodes.find(n => n.id === _lookSel.d);
-  if (!pal || !d) return;
-  const vars = {}; Object.entries(_LOOK_SLOTS).forEach(([k, cssVar]) => { const hx = pal.fields?.[k]; if (/^#[0-9a-fA-F]{6}$/.test(hx || '')) vars[cssVar] = hx; });
-  const base = _LOOK_BASES.includes(pal.fields?.base) ? pal.fields.base : (_LOOK_BASES.includes(pal.id) ? pal.id : 'steel');
-  applyTheme({ themeColors: { base, vars, design: d.fields || {} } }); // жывое ўжыванне (без захавання)
+  const tc = _lookTC(); if (!tc) return;
+  applyTheme({ themeColors: tc }); // жывое ўжыванне (захаванне ў чарнавік — «✓ Выбраць»)
   initHeroPhoto(); // восі heroPhoto/marquee/stamp маглі пераключыцца
   initMarquee();
   initStamp(siteData);
 }
-function _lookApply() {
-  const p = _lookSel.p, d = _lookSel.d;
-  // панэль і сайт — адзін дамен: шлём выбар ва ЎЖО АДКРЫТУЮ ўкладку панэлі і закрываем прэв'ю
-  try { new BroadcastChannel('ttzop-look').postMessage({ p, d }); } catch {}
-  window.close(); // спрацуе, калі ўкладка адкрыта праз 👁 (window.open)
-  // укладка адкрыта напрамую па спасылцы (закрыць нельга) → fallback: вядзем у панэль хэшам
-  setTimeout(() => { location.href = '/admin/#look=' + encodeURIComponent(p) + '/' + encodeURIComponent(d); }, 400);
+// {base,vars,design} з выбранай палітры+паводзін — агульны для жывога прэв'ю і захавання ў чарнавік
+function _lookTC() {
+  const nodes = siteData.themeTree || [];
+  const pal = nodes.find(n => n.id === _lookSel.p), d = nodes.find(n => n.id === _lookSel.d);
+  if (!pal || !d) return null;
+  const vars = {}; Object.entries(_LOOK_SLOTS).forEach(([k, cssVar]) => { const hx = pal.fields?.[k]; if (/^#[0-9a-fA-F]{6}$/.test(hx || '')) vars[cssVar] = hx; });
+  const base = _LOOK_BASES.includes(pal.fields?.base) ? pal.fields.base : (_LOOK_BASES.includes(pal.id) ? pal.id : 'steel');
+  return { base, vars, design: d.fields || {} };
+}
+// 🎨 «✓ Выбраць» — захаваць тэму (палітра+паводзіны) у ЧАРНАВІК ПРАМА праз worker draft_theme (lookToken).
+// Самадастаткова, адзін таб — працуе на Тэсла Atom (без BroadcastChannel/навігацыі ў панэль).
+async function _lookApply() {
+  const tc = _lookTC(); if (!tc) return;
+  const tok = new URLSearchParams(location.search).get('look');
+  try {
+    await fetch(API_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'draft_theme', repo: SITE_REPO, lookToken: tok, theme: _lookSel.p, activeDesign: _lookSel.d, themeColors: tc }) });
+    const btn = document.querySelector('#look-panel .look-apply'); if (btn) { const t0 = btn.textContent; btn.textContent = '✓'; setTimeout(() => { btn.textContent = t0; }, 1400); } // фідбэк
+  } catch (e) {}
 }
 
 // 🎛 Бягучы радок (data-d-marquee=on, прэсэт «Штамп»): стужка паслуг/коштаў пад hero.
