@@ -437,7 +437,7 @@ const UI_T = {
 // 🖊️ Фаза D: падказка, калі оверлэй-рэдактар не бачыць адкрытай панэлі (post-merge — без праўкі 13 мега-радкоў)
 ;(() => { const M = { be:'Адкрыйце панэль кіравання, каб рэдагаваць', en:'Open the admin panel to edit', uk:'Відкрийте панель керування, щоб редагувати', ru:'Откройте панель управления, чтобы редактировать', pl:'Otwórz panel, aby edytować', de:'Öffnen Sie das Panel zum Bearbeiten', fr:'Ouvrez le panneau pour modifier', es:'Abre el panel para editar', it:'Apri il pannello per modificare', pt:'Abra o painel para editar', zh:'打开管理面板进行编辑', ar:'افتح لوحة التحكم للتعديل', hu:'Nyissa meg a panelt a szerkesztéshez' }; Object.keys(M).forEach(l => { if (UI_T[l]) UI_T[l].look_edit_nopanel = M[l]; }); })();
 // 🖊️ слайс A: плейсхолдэры пустога загалоўка/падзагалоўка + падказка аўта-захавання ў edit-рэжыме
-;(() => { const T = { be:['Загаловак','Падзагаловак','Тэкст…'], en:['Heading','Subheading','Text…'], uk:['Заголовок','Підзаголовок','Текст…'], ru:['Заголовок','Подзаголовок','Текст…'], pl:['Nagłówek','Podtytuł','Tekst…'], de:['Überschrift','Untertitel','Text…'], fr:['Titre','Sous-titre','Texte…'], es:['Título','Subtítulo','Texto…'], it:['Titolo','Sottotitolo','Testo…'], pt:['Título','Subtítulo','Texto…'], zh:['标题','副标题','文本…'], ar:['العنوان','العنوان الفرعي','نص…'], hu:['Címsor','Alcím','Szöveg…'] }; Object.keys(T).forEach(l => { if (UI_T[l]) { UI_T[l].ed_title = T[l][0]; UI_T[l].ed_subtitle = T[l][1]; UI_T[l].ed_body = T[l][2]; } }); })();
+;(() => { const T = { be:['Загаловак','Падзагаловак','Тэкст…','Дата','Захаваць'], en:['Heading','Subheading','Text…','Date','Save'], uk:['Заголовок','Підзаголовок','Текст…','Дата','Зберегти'], ru:['Заголовок','Подзаголовок','Текст…','Дата','Сохранить'], pl:['Nagłówek','Podtytuł','Tekst…','Data','Zapisz'], de:['Überschrift','Untertitel','Text…','Datum','Speichern'], fr:['Titre','Sous-titre','Texte…','Date','Enregistrer'], es:['Título','Subtítulo','Texto…','Fecha','Guardar'], it:['Titolo','Sottotitolo','Testo…','Data','Salva'], pt:['Título','Subtítulo','Texto…','Data','Guardar'], zh:['标题','副标题','文本…','日期','保存'], ar:['العنوان','العنوان الفرعي','نص…','التاريخ','حفظ'], hu:['Címsor','Alcím','Szöveg…','Dátum','Mentés'] }; Object.keys(T).forEach(l => { if (UI_T[l]) { UI_T[l].ed_title = T[l][0]; UI_T[l].ed_subtitle = T[l][1]; UI_T[l].ed_body = T[l][2]; UI_T[l].ed_date = T[l][3]; UI_T[l].ed_save = T[l][4]; } }); })();
 ;(() => { const M = { be:'Згарнуць / разгарнуць панэль', en:'Collapse / expand panel', uk:'Згорнути / розгорнути панель', ru:'Свернуть / развернуть панель', pl:'Zwiń / rozwiń panel', de:'Panel ein-/ausklappen', fr:'Réduire / agrandir le panneau', es:'Contraer / expandir panel', it:'Comprimi / espandi pannello', pt:'Recolher / expandir painel', zh:'折叠 / 展开面板', ar:'طيّ / توسيع اللوحة', hu:'Panel össze-/kinyitása' }; Object.keys(M).forEach(l => { if (UI_T[l]) UI_T[l].look_min = M[l]; }); })();
 ;(() => { const A = { be:'✎ Клікні на тэкст — праўкі захоўваюцца аўтаматычна', en:'✎ Click text — edits save automatically', uk:'✎ Клікни на текст — зміни зберігаються автоматично', ru:'✎ Кликни на текст — правки сохраняются автоматически', pl:'✎ Kliknij tekst — zmiany zapisują się automatycznie', de:'✎ Text anklicken — Änderungen speichern automatisch', fr:'✎ Cliquez sur le texte — enregistrement automatique', es:'✎ Haz clic en el texto — se guarda automáticamente', it:'✎ Clicca sul testo — salvataggio automatico', pt:'✎ Clica no texto — guarda automaticamente', zh:'✎ 点击文字 — 自动保存', ar:'✎ انقر على النص — يُحفظ تلقائيًا', hu:'✎ Kattints a szövegre — automatikusan mentődik' }; Object.keys(A).forEach(l => { if (UI_T[l]) UI_T[l].ed_autosave = A[l]; }); })();
 // #1: look_note цяпер праўдзівы — прэв'ю паказвае РЭАЛЬНЫ чарнавік (Фаза A/D), а не «канцэпт» (post-merge перакрывае стары інлайн)
@@ -870,9 +870,9 @@ function _cardHtml(o) {
   const media = o.cover
     ? `<img class="post-cover" src="${_dsEsc(o.cover)}" alt="" loading="lazy" style="width:100%;border-radius:8px;margin-bottom:12px;object-fit:cover;aspect-ratio:16/9">`
     : (o.icon ? `<div class="service-icon">${_dsEsc(o.icon)}</div>` : '');
-  const meta = o.meta ? `<div class="post-date text-muted" style="font-size:0.82rem;margin-bottom:6px">${_dsEsc(o.meta)}</div>` : '';
-  // 🖊️ слайс C: o.titleEd/o.textEd — edit-атрыбуты (толькі cards перадаюць; посты не). Пусты тэкст у edit — паказваем для плейсхолдэра
-  const text = (o.text || o.textEd) ? `<div class="service-desc text-muted" style="margin-top:8px"${o.textEd || ''}>${_dsEsc(o.text)}</div>` : '';
+  const meta = (o.meta || o.metaEd) ? `<div class="post-date text-muted" style="font-size:0.82rem;margin-bottom:6px"${o.metaEd || ''}>${_dsEsc(o.meta)}</div>` : '';
+  // 🖊️ o.titleEd/o.textEd/o.metaEd — edit-атрыбуты. o.textHtml=true → цела сырое (richtext, не эскейпім). Пустое ў edit — для плейсхолдэра
+  const text = (o.text || o.textEd) ? `<div class="service-desc text-muted" style="margin-top:8px"${o.textEd || ''}>${o.textHtml ? (o.text || '') : _dsEsc(o.text)}</div>` : '';
   // o.badge — куточак-бэйдж любой карткі (паслугі: Хіт/Новае/…; генерычна для ўсіх спажыўцоў _cardHtml)
   const badge = o.badge ? `<span style="position:absolute;top:10px;inset-inline-end:10px;background:var(--accent,#f97316);color:#fff;font-size:0.72rem;font-weight:700;padding:3px 9px;border-radius:999px;letter-spacing:0.03em">${_dsEsc(o.badge)}</span>` : '';
   const style = ` style="position:relative${o.onClick ? ';cursor:pointer' : ''}"`; // relative — якар для бэйджа
@@ -890,7 +890,7 @@ const SITE_VIEWS = {
   text: inst => {
     const c = inst.content || {};
     const img = _sv(c.image) ? `<div class="about-image"><img src="${_dsEsc(_sv(c.image))}" alt="" loading="lazy"></div>` : '';
-    const bodyEd = _edAttr(inst.id, 'content.body', 'html', getUI().ed_body); // 🖊️ слайс B: цела рэдагуецца на месцы (body = HTML → innerHTML)
+    const bodyEd = _edAttr(inst.id, 'content.body', 'rich', getUI().ed_body); // 🖊️ цела — клік адкрывае мадалку WYSIWYG
     return `<div class="about-inner"><div class="about-content"><div class="about-text"${bodyEd}>${_sv(c.body)}</div></div>${img}</div>`;
   },
   // сетка картак (Паслугі/Перавагі); item з id+price → кнопка кошыка; it.group → падзагаловак групы (папка ў дрэве Паслуг)
@@ -966,13 +966,19 @@ const SITE_VIEWS = {
   // 📰 артыкулы (Навіны/Блог) праз глабальную картку-анонс + універсальны чытач (reader.js):
   // клік па картцы → мадалка (openPostReader); кнопка «↗ Чытаць у новым акне» → асобнае акно. hidden не паказваюцца.
   posts: inst => {
-    const posts = (inst.content?.posts || []).filter(p => !p.hidden);
-    return `<div class="grid grid-3">${posts.map((p, i) => {
-      const key = String(p.id || inst.id + ':' + i); // стабільны id паста (дып-лінк #post= перажывае перасартаванне); фолбэк — індэкс для старых даных
+    const all = inst.content?.posts || []; const ui = getUI();
+    // арыгінальны індэкс (не фільтраваны) — каб edit-шлях content.posts.{i} супадаў нават пры схаваных пастах
+    return `<div class="grid grid-3">${all.map((p, i) => ({ p, i })).filter(x => !x.p.hidden).map(({ p, i }) => {
+      const key = String(p.id || inst.id + ':' + i); // стабільны id паста (дып-лінк #post= перажывае перасартаванне)
       _sitePostReg[key] = p; // рэестр для чытача (цела=HTML, у onclick не ўставіш)
       const excerpt = _sv(p.body).replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 130); // тэкставы ўрывак без тэгаў
-      const winBtn = `<button onclick="event.stopPropagation();openPostReaderWindow('${_dsEsc(key)}')" style="margin-top:10px;padding:6px 12px;border:1px solid var(--accent,#f97316);border-radius:8px;background:transparent;color:var(--accent,#f97316);font-weight:600;font-size:0.85rem;cursor:pointer">↗ ${_dsEsc(getUI().read_in_tab)}</button>`;
-      return _cardHtml({ cls: 'post-card', cover: _sv(p.cover), meta: _sv(p.date), title: _sv(p.title), text: excerpt ? excerpt + (excerpt.length >= 130 ? '…' : '') : '', footer: winBtn, onClick: `openPostReader('${_dsEsc(key)}')` });
+      const winBtn = `<button onclick="event.stopPropagation();openPostReaderWindow('${_dsEsc(key)}')" style="margin-top:10px;padding:6px 12px;border:1px solid var(--accent,#f97316);border-radius:8px;background:transparent;color:var(--accent,#f97316);font-weight:600;font-size:0.85rem;cursor:pointer">↗ ${_dsEsc(ui.read_in_tab)}</button>`;
+      return _cardHtml({ cls: 'post-card', cover: _sv(p.cover), meta: _sv(p.date), title: _sv(p.title),
+        text: _dEdit ? _sv(p.body) : (excerpt ? excerpt + (excerpt.length >= 130 ? '…' : '') : ''), textHtml: _dEdit, // 🖊️ edit: поўнае цела (HTML→мадалка); інакш урывак
+        footer: winBtn, onClick: _dEdit ? '' : `openPostReader('${_dsEsc(key)}')`, // edit: картку не адкрываем чытачом
+        titleEd: _edAttr(inst.id, 'content.posts.' + i + '.title', 'ml', ui.ed_title),
+        metaEd: _edAttr(inst.id, 'content.posts.' + i + '.date', 'text', ui.ed_date),
+        textEd: _edAttr(inst.id, 'content.posts.' + i + '.body', 'rich', ui.ed_body) });
     }).join('')}</div>`;
   },
 };
@@ -2260,9 +2266,12 @@ async function _dReload() { // перачытаць чарнавік і пера
   } catch (e) {}
 }
 // 🖊️ слайс A: праўка кантэнту НА МЕСЦЫ — focusout з [data-ed] → draft_set з укладзеным шляхам (дэлегавана, перажывае перарэндэры)
-// 🖊️ атрыбут рэдагавальнага элемента: data-ed="{instId}::{path}::{mode}" (mode: text|html|ml). Новае поле = адзін выклік.
+// 🖊️ атрыбут рэдагавальнага элемента. mode text|ml — inline contenteditable; mode rich — клік адкрывае
+// мадалку WYSIWYG (доўгае/прыгожае цела). Новае поле = адзін выклік.
 function _edAttr(id, path, mode, ph) {
-  return _dEdit ? ` contenteditable="true" data-ed="${_dsEsc(id + '::' + path + '::' + (mode || 'text'))}"${ph ? ` data-ph="${_dsEsc(ph)}"` : ''}` : '';
+  if (!_dEdit) return '';
+  if (mode === 'rich') return ` data-edm="${_dsEsc(id + '::' + path)}" data-ph="${_dsEsc(ph || '')}" class="ds-edm" title="${_dsEsc(ph || '')}"`;
+  return ` contenteditable="true" data-ed="${_dsEsc(id + '::' + path + '::' + (mode || 'text'))}"${ph ? ` data-ph="${_dsEsc(ph)}"` : ''}`;
 }
 // 🔒 ЧАРГА draft-запісаў: draft_set/draft_theme — read-modify-write адзін sections/settings-чарнавік →
 // паралельныя праўкі перазапісвалі б адна адну. Серыялізуем усе праз адзін ланцуг промісаў.
@@ -2274,7 +2283,8 @@ function _draftPost(body) {
 let _dEditBound = false;
 function _dEditBind() {
   if (_dEditBound) return; _dEditBound = true;
-  document.addEventListener('keydown', e => { const el = e.target.closest && e.target.closest('[data-ed]'); if (el && e.key === 'Enter' && !e.shiftKey && !(el.dataset.ed || '').endsWith('::html')) { e.preventDefault(); el.blur(); } }); // Enter=скончыць; html-палі (body) — новы радок
+  document.addEventListener('keydown', e => { const el = e.target.closest && e.target.closest('[data-ed]'); if (el && e.key === 'Enter' && !e.shiftKey && !(el.dataset.ed || '').endsWith('::html')) { e.preventDefault(); el.blur(); } }); // Enter=скончыць
+  document.addEventListener('click', e => { const el = e.target.closest && e.target.closest('.ds-edm'); if (el) { e.preventDefault(); e.stopPropagation(); _edModalOpen(el); } }); // rich-цела → мадалка WYSIWYG
   document.addEventListener('focusout', async e => {
     const el = e.target.closest && e.target.closest('[data-ed]'); if (!el) return;
     const [id, path0, mode] = (el.dataset.ed || '').split('::'); if (!id || !path0) return;
@@ -2286,6 +2296,37 @@ function _dEditBind() {
 }
 // ✓ кароткі візуальны водгук «захавана» на элеменце пасля запісу ў чарнавік
 function _edFlash(el) { if (!el || !el.isConnected) return; el.classList.add('ed-saved'); setTimeout(() => el.classList.remove('ed-saved'), 750); }
+// 🖊️ МАДАЛКА-WYSIWYG для прыгожага цела (Тэкст-секцыі, Навіны). Лёгкі свой рэдактар (Selection API), без Quill.
+let _edModalEl = null, _edModalCtx = null;
+function _edModalOpen(el) {
+  const [id, path] = (el.dataset.edm || '').split('::'); if (!id || !path) return;
+  _edModalCtx = { el, id, path };
+  const ui = getUI();
+  if (!_edModalEl) {
+    _edModalEl = document.createElement('div'); _edModalEl.id = 'ed-modal';
+    const tb = (cmd, arg, lbl, title) => `<button type="button" title="${_svcEsc(title || '')}" onmousedown="event.preventDefault()" onclick="_edCmd('${cmd}'${arg ? `,'${arg}'` : ''})">${lbl}</button>`;
+    _edModalEl.innerHTML = `<div class="ed-modal-box">
+      <div class="ed-modal-tb">${tb('bold', '', '<b>B</b>', 'Тлусты')}${tb('italic', '', '<i>I</i>', 'Курсіў')}${tb('formatBlock', 'h3', 'H', 'Загаловак')}${tb('insertUnorderedList', '', '•', 'Спіс')}${tb('insertOrderedList', '', '1.', 'Нумар. спіс')}${tb('removeFormat', '', '✕', 'Ачысціць фармат')}</div>
+      <div class="ed-modal-area" contenteditable="true"></div>
+      <div class="ed-modal-foot"><button type="button" class="ed-cancel" onclick="_edModalClose()">${_svcEsc(ui.reader_close || 'Закрыць')}</button><button type="button" class="ed-save" onclick="_edModalSave()">💾 ${_svcEsc(ui.ed_save || 'Захаваць')}</button></div>
+    </div>`;
+    document.body.appendChild(_edModalEl);
+    _edModalEl.addEventListener('mousedown', e => { if (e.target === _edModalEl) _edModalClose(); }); // клік па фоне закрывае
+  }
+  _edModalEl.querySelector('.ed-modal-area').innerHTML = el.innerHTML;
+  _edModalEl.style.display = 'flex';
+  setTimeout(() => _edModalEl.querySelector('.ed-modal-area').focus(), 40);
+}
+function _edCmd(cmd, arg) { document.execCommand(cmd, false, arg || (cmd === 'formatBlock' ? 'h3' : undefined)); _edModalEl.querySelector('.ed-modal-area').focus(); }
+function _edModalClose() { if (_edModalEl) _edModalEl.style.display = 'none'; _edModalCtx = null; }
+function _edModalSave() {
+  if (!_edModalCtx) return;
+  const { el, id, path } = _edModalCtx;
+  const html = _edModalEl.querySelector('.ed-modal-area').innerHTML.trim();
+  el.innerHTML = html; _edFlash(el); _edModalClose(); // адразу на старонцы + флэш
+  const tok = new URLSearchParams(location.search).get('look');
+  _draftPost({ action: 'draft_set', repo: SITE_REPO, lookToken: tok, id, path, val: html }); // праз чаргу
+}
 function _lookPick(kind, id) { _lookSel[kind] = id; _lookRefresh(); }
 function _lookRefresh() {
   document.querySelectorAll('.look-opt').forEach(b => b.classList.toggle('on', _lookSel[b.dataset.kind] === b.dataset.id));

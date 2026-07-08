@@ -354,7 +354,24 @@ html[data-d-stamp="on"] #hero { position: relative; }
 [data-ed]:focus { outline: none; box-shadow: 0 0 0 2px #f97316; background: rgba(249,115,22,.12); }
 [data-ed]:empty::before { content: attr(data-ph); opacity: .45; font-style: italic; }
 /* ✓ флэш «захавана» пасля запісу ў чарнавік */
-[data-ed].ed-saved { box-shadow: 0 0 0 2px #22c55e !important; background: rgba(34,197,94,.14) !important; transition: box-shadow .2s ease, background .2s ease; }
+[data-ed].ed-saved, .ds-edm.ed-saved { box-shadow: 0 0 0 2px #22c55e !important; background: rgba(34,197,94,.14) !important; transition: box-shadow .2s ease, background .2s ease; }
+/* рэдагавальнае заўсёды клікабельнае (нават унутры інертнай картки з pointer-events:none) */
+[data-ed], .ds-edm { pointer-events: auto; }
+/* .ds-edm — прыгожае цела (клік адкрывае мадалку WYSIWYG) */
+.ds-edm { cursor: pointer; border-radius: 5px; min-height: 1.2em; }
+.ds-edm:hover { box-shadow: 0 0 0 1px #f97316; background: rgba(249,115,22,.07); }
+.ds-edm:empty::before { content: attr(data-ph); opacity: .45; font-style: italic; }
+/* 🖊️ Мадалка WYSIWYG (прыгожы тэкст) */
+#ed-modal { position: fixed; inset: 0; z-index: 10001; background: rgba(0,0,0,.55); display: none; align-items: center; justify-content: center; padding: 16px; }
+.ed-modal-box { background: var(--surface,#fff); color: var(--fg,#111); border-radius: 14px; width: min(680px,96vw); max-height: 88vh; display: flex; flex-direction: column; box-shadow: 0 20px 60px rgba(0,0,0,.4); overflow: hidden; }
+.ed-modal-tb { display: flex; gap: 4px; padding: 8px; border-bottom: 1px solid var(--border,#8883); flex-wrap: wrap; }
+.ed-modal-tb button { min-width: 36px; height: 34px; border: 1px solid var(--border,#8883); background: rgba(128,128,128,.1); color: inherit; border-radius: 7px; cursor: pointer; font-size: .95rem; }
+.ed-modal-tb button:hover { background: #f97316; color: #fff; border-color: #f97316; }
+.ed-modal-area { padding: 14px 16px; overflow-y: auto; flex: 1; min-height: 180px; line-height: 1.6; outline: none; }
+.ed-modal-foot { display: flex; justify-content: flex-end; gap: 8px; padding: 10px 14px; border-top: 1px solid var(--border,#8883); }
+.ed-modal-foot button { padding: 8px 18px; border-radius: 9px; border: none; cursor: pointer; font-weight: 600; }
+.ed-cancel { background: rgba(128,128,128,.18); color: inherit; }
+.ed-save { background: #f97316; color: #fff; }
 /* edit-рэжым: кнопкі/спасылкі/лайтбокс/пост-карткі секцый ІНЕРТНЫЯ (рэдагуеш, а не купляеш; рэдагавальны тэкст [data-ed] застаецца клікабельным) */
 body.ds-edit #site-sections button,
 body.ds-edit #site-sections a[href],
