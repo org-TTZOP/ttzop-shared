@@ -7912,8 +7912,9 @@ function _lookApplyPair(pid, did) { // агульны фінал: з хэша (f
     settings.theme = pid; settings.activeDesign = did; // Фаза C-part4: актыўны выбар — праз settings, не ○
     _themeProject(); _settingsSaveKick();
     _settingsSaveFlush(); // неадкладна ў KV (без debounce) — сайт падхопіць хутчэй
-    if (currentPage !== 'theme') document.querySelector('.nav-item[data-page="theme"]')?.click(); // паказаць РМ (без банера «Вярнуцца»)
-    currentNodeState = themeState; renderNodeEditor(themeState); // выпадальнікі абнаўляюцца АДРАЗУ
+    // Прагляд цяпер у РМ Структура сайта → адкрываем яго (не Выгляд сайта); выпадальнікі абновяцца пры рэндэры
+    if (currentPage !== 'sitepage') document.querySelector('.nav-item[data-page="sitepage"]')?.click();
+    else if (typeof loadSitePageEditor === 'function') loadSitePageEditor(); // ужо на Структуры → перарэндзіць
   }, { label: t('btn_save'), danger: false });
 }
 function _lookApplyCheck() {
