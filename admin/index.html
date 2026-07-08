@@ -7944,8 +7944,7 @@ function _dCatalog() {
 }
 // прымяніць праўку з оверлэя: знайсці экзэмпляр у siteSectionsState → fields[key] → чарнавік → адказ d-sync
 async function _dApply(id, key, val) {
-  const prev = currentNodeState;
-  if (!siteSectionsState.data) await loadNodeEditor(siteSectionsState); // ленавая загрузка дрэва Структуры
+  if (!siteSectionsState.data) _buildSitePageNodes(); // дрэва Структуры з глабальнага `sections` (чысты білдэр — без fetch/render/фокусу)
   const node = (siteSectionsState.data?.nodes || []).find(n => n._instId === id || n.id === 'ssec-' + id);
   if (!node) return;
   node.fields = node.fields || {};
@@ -7955,7 +7954,6 @@ async function _dApply(id, key, val) {
   try { await fetch(API, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'write', repo: REPO, password, file: 'content/sections.json', content: JSON.stringify(sections, null, 2) }) }); } catch {}
   _lookChan?.postMessage({ t: 'd-sync' }); // оверлэй перачытае чарнавік
   if (currentPage === 'sitepage') { currentNodeState = siteSectionsState; renderNodeEditor(siteSectionsState); } // Табліца-праекцыя ў дрэве абнаўляецца (той жа fields[key])
-  else if (prev) currentNodeState = prev; // не крадзём фокус чужога РМ
 }
 function _navSetPending(page, id) { // механізм «сфакусаваць пасля загрузкі» па старонцы
   if (page === 'clients') _pendingClientOpen = id;
