@@ -416,6 +416,15 @@ body.ds-edit #site-sections .ds-editbar button { pointer-events: auto !important
 .ds-tr-nm { font-size: .84rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .ds-tr-acts { display: flex; gap: 3px; flex-shrink: 0; }
 .ds-tr-acts .ds-eb-btn { background: rgba(128,128,128,.18); color: inherit; }
+/* 🃏 пер-пазіцыйны радок (карткі/навіны/FAQ/водгукі/брэнды/радкі) */
+.ds-item { position: relative; }
+.ds-item-bar { top: 4px; right: 4px; gap: 2px; padding: 2px; }
+.ds-item-bar .ds-eb-btn { min-width: 22px; height: 22px; font-size: .72rem; }
+.ds-item.ds-hidden, .card.ds-hidden, .prices-table tr.ds-hidden { opacity: .5; }
+/* радок у ячэйцы табліцы прайса — інлайн (не absolute) */
+.ds-item-td { width: 1%; white-space: nowrap; vertical-align: middle; }
+.ds-item-td .ds-editbar { position: static; background: transparent; box-shadow: none; backdrop-filter: none; padding: 0; }
+body.ds-edit #site-sections .ds-item-bar button, body.ds-edit #site-sections .ds-item-td button { pointer-events: auto !important; cursor: pointer !important; }
 /* Фаза D: выпадальнікі рэдактара секцый — цёмны попап опцый (інакш белы тэкст на светлым сістэмным фоне) */
 #look-panel #look-edit select { background: #1f2430; color: #eee; }
 #look-panel #look-edit select option { background: #1f2430; color: #eee; }

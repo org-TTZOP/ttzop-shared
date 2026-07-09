@@ -875,9 +875,9 @@ function _cardHtml(o) {
   const text = (o.text || o.textEd) ? `<div class="service-desc text-muted" style="margin-top:8px"${o.textEd || ''}>${o.textHtml ? (o.text || '') : _dsEsc(o.text)}</div>` : '';
   // o.badge — куточак-бэйдж любой карткі (паслугі: Хіт/Новае/…; генерычна для ўсіх спажыўцоў _cardHtml)
   const badge = o.badge ? `<span style="position:absolute;top:10px;inset-inline-end:10px;background:var(--accent,#f97316);color:#fff;font-size:0.72rem;font-weight:700;padding:3px 9px;border-radius:999px;letter-spacing:0.03em">${_dsEsc(o.badge)}</span>` : '';
-  const style = ` style="position:relative${o.onClick ? ';cursor:pointer' : ''}"`; // relative — якар для бэйджа
+  const style = ` style="position:relative${o.onClick ? ';cursor:pointer' : ''}"`; // relative — якар для бэйджа/радка рэдактара
   const click = o.onClick ? ` onclick="${o.onClick}"` : '';
-  return `<article class="card ${o.cls || ''}"${click}${style}>${badge}${media}${meta}<h3 class="service-title"${o.titleEd || ''}>${_dsEsc(o.title)}</h3>${text}${o.footer || ''}</article>`;
+  return `<article class="card ${o.cls || ''}${o.dim ? ' ds-hidden' : ''}"${click}${style}>${o.edbar || ''}${badge}${media}${meta}<h3 class="service-title"${o.titleEd || ''}>${_dsEsc(o.title)}</h3>${text}${o.footer || ''}</article>`;
 }
 
 // Узроўневы загаловак групы (матрошка): d=0 — акцэнт-рыса, глыбей — драбней+водступ. Спажыўцы: cards (папкі Каталога), gallery (🗂 альбомы)
@@ -936,6 +936,7 @@ const SITE_VIEWS = {
         : price ? `<p class="service-price">${pm === 'from' ? _dsEsc(ui.price_from_pfx) + ' ' : ''}<span class="price-amount" data-price="${_dsEsc(price)}" data-currency="${_dsEsc(cur)}">${_dsEsc(price)} ${_dsEsc(cur)}</span>${ff === 'subscription' ? ' ' + _dsEsc(_sv(it.period) === 'year' ? ui.per_year : ui.per_month) : ''}</p>` : '';
       const badge = _sv(it.badge) === 'custom' ? _sv(it.badgeText) : (_sv(it.badge) ? ui['badge_' + _sv(it.badge)] || '' : '');
       return head + _cardHtml({ cls: 'service-card', icon: _sv(it.icon) || '🔧', title: name, text: _sv(it.text), badge, footer: priceHtml + btn,
+        edbar: _dItemBar(inst.id, 'items', _i, items.length, it.hidden !== true), dim: it.hidden === true, // 🃏 пер-пазіцыйны радок ● ▲▼ 🗑
         titleEd: _edAttr(inst.id, 'content.items.' + _i + '.title', 'text', getUI().ed_title), // 🖊️ слайс C: назва/апісанне карткі на месцы (цэны — не, канверсія)
         textEd: _edAttr(inst.id, 'content.items.' + _i + '.text', 'text', getUI().ed_body) });
     }).join('')}</div>`;
@@ -943,12 +944,12 @@ const SITE_VIEWS = {
   // табліца назва↔кошт (Цэны)
   list: inst => {
     const rows = inst.content?.rows || [];
-    return `<table class="prices-table"><tbody>${rows.map((r, _i) => { const price = _sv(r.value), cur = _sv(r.currency); return `<tr><td${_edAttr(inst.id, 'content.rows.' + _i + '.name', 'text', getUI().ed_title)}>${_dsEsc(_sv(r.name))}</td><td class="price-amount" data-price="${_dsEsc(price)}" data-currency="${_dsEsc(cur)}">${_dsEsc(price)} ${_dsEsc(cur)}</td></tr>`; }).join('')}</tbody></table>`;
+    return `<table class="prices-table"><tbody>${rows.map((r, _i) => { const price = _sv(r.value), cur = _sv(r.currency); const bar = _dEdit ? `<td class="ds-item-td">${_dItemBar(inst.id, 'rows', _i, rows.length, r.hidden !== true)}</td>` : ''; return `<tr${_dEdit && r.hidden === true ? ' class="ds-hidden"' : ''}><td${_edAttr(inst.id, 'content.rows.' + _i + '.name', 'text', getUI().ed_title)}>${_dsEsc(_sv(r.name))}</td><td class="price-amount" data-price="${_dsEsc(price)}" data-currency="${_dsEsc(cur)}">${_dsEsc(price)} ${_dsEsc(cur)}</td>${bar}</tr>`; }).join('')}</tbody></table>`;
   },
   // акардэон пытанне/адказ (FAQ)
   accordion: inst => {
     const items = inst.content?.items || [];
-    return `<div class="faq-list">${items.map(it => `<div class="faq-item"><button class="faq-question" onclick="this.parentElement.classList.toggle('open');const a=this.nextElementSibling;a.style.maxHeight=a.style.maxHeight?'':a.scrollHeight+'px'">${_dsEsc(_sv(it.q))}<span class="faq-arrow">▼</span></button><div class="faq-answer"><p>${_sv(it.a)}</p></div></div>`).join('')}</div>`;
+    return `<div class="faq-list">${items.map((it, _i) => _dItemWrap(inst.id, 'items', _i, items.length, it.hidden !== true, `<div class="faq-item"><button class="faq-question" onclick="this.parentElement.classList.toggle('open');const a=this.nextElementSibling;a.style.maxHeight=a.style.maxHeight?'':a.scrollHeight+'px'">${_dsEsc(_sv(it.q))}<span class="faq-arrow">▼</span></button><div class="faq-answer"><p>${_sv(it.a)}</p></div></div>`)).join('')}</div>`;
   },
   // Галерэя — БЕЗ уласнай мадэлі: фота = генерычныя {kind:'file'}-радкі дрэва, рэндэрацца
   // універсальна ў renderDynamicSections (у ЛЮБОЙ галіне/секцыі); тып пакінуты як шыльда экзэмпляра
@@ -956,24 +957,25 @@ const SITE_VIEWS = {
   // водгукі
   testimonials: inst => {
     const items = inst.content?.items || [];
-    return `<div class="grid grid-3">${items.map(it => `<div class="card testimonial-card"><div class="testimonial-stars">${'★'.repeat(Math.max(1, Math.min(5, +_sv(it.stars) || 5)))}</div><p class="testimonial-text">"${_dsEsc(_sv(it.text))}"</p><p class="testimonial-author">— ${_dsEsc(_sv(it.author))}</p></div>`).join('')}</div>`;
+    return `<div class="grid grid-3">${items.map((it, _i) => _dItemWrap(inst.id, 'items', _i, items.length, it.hidden !== true, `<div class="card testimonial-card"><div class="testimonial-stars">${'★'.repeat(Math.max(1, Math.min(5, +_sv(it.stars) || 5)))}</div><p class="testimonial-text">"${_dsEsc(_sv(it.text))}"</p><p class="testimonial-author">— ${_dsEsc(_sv(it.author))}</p></div>`)).join('')}</div>`;
   },
   // лагатыпы марак/партнёраў
   brands: inst => {
     const items = inst.content?.items || [];
-    return `<div class="brands-grid">${items.map(it => `<div class="brand-item">${_sv(it.logo) ? `<img src="${_dsEsc(_sv(it.logo))}" alt="${_dsEsc(_sv(it.name))}">` : _dsEsc(_sv(it.name))}</div>`).join('')}</div>`;
+    return `<div class="brands-grid">${items.map((it, _i) => _dItemWrap(inst.id, 'items', _i, items.length, it.hidden !== true, `<div class="brand-item">${_sv(it.logo) ? `<img src="${_dsEsc(_sv(it.logo))}" alt="${_dsEsc(_sv(it.name))}">` : _dsEsc(_sv(it.name))}</div>`)).join('')}</div>`;
   },
   // 📰 артыкулы (Навіны/Блог) праз глабальную картку-анонс + універсальны чытач (reader.js):
   // клік па картцы → мадалка (openPostReader); кнопка «↗ Чытаць у новым акне» → асобнае акно. hidden не паказваюцца.
   posts: inst => {
     const all = inst.content?.posts || []; const ui = getUI();
     // арыгінальны індэкс (не фільтраваны) — каб edit-шлях content.posts.{i} супадаў нават пры схаваных пастах
-    return `<div class="grid grid-3">${all.map((p, i) => ({ p, i })).filter(x => !x.p.hidden).map(({ p, i }) => {
+    return `<div class="grid grid-3">${all.map((p, i) => ({ p, i })).filter(x => _dEdit || !x.p.hidden).map(({ p, i }) => { // edit: схаваныя таксама (цьмяныя, каб вярнуць)
       const key = String(p.id || inst.id + ':' + i); // стабільны id паста (дып-лінк #post= перажывае перасартаванне)
       _sitePostReg[key] = p; // рэестр для чытача (цела=HTML, у onclick не ўставіш)
       const excerpt = _sv(p.body).replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 130); // тэкставы ўрывак без тэгаў
       const winBtn = `<button onclick="event.stopPropagation();openPostReaderWindow('${_dsEsc(key)}')" style="margin-top:10px;padding:6px 12px;border:1px solid var(--accent,#f97316);border-radius:8px;background:transparent;color:var(--accent,#f97316);font-weight:600;font-size:0.85rem;cursor:pointer">↗ ${_dsEsc(ui.read_in_tab)}</button>`;
       return _cardHtml({ cls: 'post-card', cover: _sv(p.cover), meta: _sv(p.date), title: _sv(p.title),
+        edbar: _dItemBar(inst.id, 'posts', i, all.length, p.hidden !== true), dim: p.hidden === true, // 🃏 пер-пазіцыйны радок навіны
         text: _dEdit ? _sv(p.body) : (excerpt ? excerpt + (excerpt.length >= 130 ? '…' : '') : ''), textHtml: _dEdit, // 🖊️ edit: поўнае цела (HTML→мадалка); інакш урывак
         footer: winBtn, onClick: _dEdit ? '' : `openPostReader('${_dsEsc(key)}')`, // edit: картку не адкрываем чытачом
         titleEd: _edAttr(inst.id, 'content.posts.' + i + '.title', 'ml', ui.ed_title),
@@ -2327,8 +2329,11 @@ function _dSecInfo(id, btn) { // ⓘ драўэр: інфа секцыі + СВ�
     const s = siteData?._sections; const cnt = (Array.isArray(s?.sections) ? s.sections : []).filter(x => x && x.kind !== 'file').length;
     info = `<div class="ds-inf-row"><b>${_svcEsc(_dL('Старонка', 'Page'))}</b></div>` + row(_dL('Секцый', 'Sections'), cnt);
   }
-  const trash = _dTrashItems(id);
-  const trHtml = trash.length ? trash.map(x => `<div class="ds-tr-row"><span class="ds-tr-nm">🗑 ${_svcEsc(_dSecTitle(x) || x.id)}</span><span class="ds-tr-acts"><button class="ds-eb-btn" onclick="_dTrashRestore('${_dsEsc(x.id)}')" title="${_svcEsc(_dL('Аднавіць', 'Restore'))}">♻</button><button class="ds-eb-btn" onclick="_dTrashPurge('${_dsEsc(x.id)}')" title="${_svcEsc(_dL('Выдаліць назаўжды', 'Delete forever'))}">✕</button></span></div>`).join('')
+  const nodes = _dTrashItems(id), items = id ? _dItemTrashOf(id) : []; // выдаленыя дзеці-секцыі + выдаленыя пазіцыі
+  const trRow = (nm, restore, purge) => `<div class="ds-tr-row"><span class="ds-tr-nm">🗑 ${_svcEsc(nm)}</span><span class="ds-tr-acts"><button class="ds-eb-btn" onclick="${restore}" title="${_svcEsc(_dL('Аднавіць', 'Restore'))}">♻</button><button class="ds-eb-btn" onclick="${purge}" title="${_svcEsc(_dL('Выдаліць назаўжды', 'Delete forever'))}">✕</button></span></div>`;
+  const trHtml = (nodes.length || items.length)
+    ? nodes.map(x => trRow(_dSecTitle(x) || x.id, `_dTrashRestore('${_dsEsc(x.id)}')`, `_dTrashPurge('${_dsEsc(x.id)}')`)).join('')
+      + items.map(x => trRow(_dItemLabel(x), `_dItemRestore('${_dsEsc(x._trashId)}')`, `_dItemPurge('${_dsEsc(x._trashId)}')`)).join('')
     : `<div class="ds-inf-row" style="opacity:.55">${_svcEsc(_dL('Сметніца пустая', 'Trash empty'))}</div>`;
   const m = document.createElement('div'); m.id = 'ds-info'; m.className = 'ds-menu ds-info';
   m.innerHTML = `<div class="ds-mi-sep">ℹ️ ${_svcEsc(_dL('Інфармацыя', 'Info'))}</div>${info}<div class="ds-mi-sep">🗑 ${_svcEsc(_dL('Сметніца', 'Trash'))}</div>${trHtml}`;
@@ -2341,6 +2346,24 @@ function _dSecInfo(id, btn) { // ⓘ драўэр: інфа секцыі + СВ�
 async function _dTrashRestore(id) { _dInfoClose(); const tok = new URLSearchParams(location.search).get('look'); try { await _draftPost({ action: 'draft_restore', repo: SITE_REPO, lookToken: tok, id }); await _dReload(); } catch (e) {} }
 function _dTrashPurge(id) { siteConfirm(_dL('Выдаліць назаўжды?', 'Delete forever?'), async () => { _dInfoClose(); const tok = new URLSearchParams(location.search).get('look'); try { await _draftPost({ action: 'draft_purge', repo: SITE_REPO, lookToken: tok, id }); await _dReload(); } catch (e) {} }, true); }
 function _dSecPick(id) { _dSecId = id; }
+// 🃏 ПЕР-ПАЗІЦЫЙНЫ радок (карткі/навіны/радкі/FAQ/водгукі/брэнды): ● ▲▼ 🗑 (кампактны; ⓘ-трэш пазіцый — у ⓘ секцыі)
+function _dItemBar(secId, key, idx, total, active) {
+  if (!_dEdit) return '';
+  const a = _dsEsc(secId), k = _dsEsc(key);
+  const mv = (on, dir, arr) => `<button class="ds-eb-btn"${on ? '' : ' disabled'} onclick="event.stopPropagation();_dItemMove('${a}','${k}',${idx},'${dir}')" title="${dir === 'up' ? _svcEsc(_dL('Уверх', 'Up')) : _svcEsc(_dL('Уніз', 'Down'))}">${arr}</button>`;
+  const dot = `<button class="ds-eb-btn ds-eb-dot" onclick="event.stopPropagation();_dItemActive('${a}','${k}',${idx},${!active})" title="${active ? _svcEsc(_dL('Актыўна', 'Active')) : _svcEsc(_dL('Схавана', 'Hidden'))}">${_dDot(active)}</button>`;
+  const del = `<button class="ds-eb-btn" onclick="event.stopPropagation();_dItemDelete('${a}','${k}',${idx})" title="${_svcEsc(_dL('Выдаліць', 'Delete'))}">🗑</button>`;
+  return `<div class="ds-editbar ds-item-bar" contenteditable="false">${dot}${mv(idx > 0, 'up', '▲')}${mv(idx < total - 1, 'down', '▼')}${del}</div>`;
+}
+async function _dItemMove(id, key, idx, dir) { const tok = new URLSearchParams(location.search).get('look'); try { await _draftPost({ action: 'draft_item', op: 'move', repo: SITE_REPO, lookToken: tok, id, key, idx, dir }); await _dReload(); } catch (e) {} }
+async function _dItemActive(id, key, idx, active) { const tok = new URLSearchParams(location.search).get('look'); try { await _draftPost({ action: 'draft_set', repo: SITE_REPO, lookToken: tok, id, path: 'content.' + key + '.' + idx + '.hidden', val: !active }); await _dReload(); } catch (e) {} }
+function _dItemDelete(id, key, idx) { siteConfirm(_dL('Выдаліць пазіцыю ў Сметніцу?', 'Move item to Trash?'), async () => { const tok = new URLSearchParams(location.search).get('look'); try { await _draftPost({ action: 'draft_item', op: 'delete', repo: SITE_REPO, lookToken: tok, id, key, idx }); await _dReload(); } catch (e) {} }, true); }
+async function _dItemRestore(trashId) { _dInfoClose(); const tok = new URLSearchParams(location.search).get('look'); try { await _draftPost({ action: 'draft_item', op: 'restore', repo: SITE_REPO, lookToken: tok, trashId }); await _dReload(); } catch (e) {} }
+function _dItemPurge(trashId) { siteConfirm(_dL('Выдаліць назаўжды?', 'Delete forever?'), async () => { _dInfoClose(); const tok = new URLSearchParams(location.search).get('look'); try { await _draftPost({ action: 'draft_item', op: 'purge', repo: SITE_REPO, lookToken: tok, trashId }); await _dReload(); } catch (e) {} }, true); }
+function _dItemTrashOf(secId) { const s = siteData?._sections; const tr = Array.isArray(s?._trash) ? s._trash : []; return tr.filter(x => x && x._itemKey && x._itemOf === secId); } // выдаленыя пазіцыі гэтай секцыі
+function _dItemLabel(x) { return (_sv(x.title) || _sv(x.name) || _sv(x.q) || _sv(x.author) || _sv(x.text) || _dL('Пазіцыя', 'Item')).replace(/<[^>]*>/g, ' ').slice(0, 40); }
+// генерычны абгортнік пазіцыі (div-тыпы: FAQ/водгукі/брэнды) — position:relative + радок; па-за edit вяртае html як ёсць
+function _dItemWrap(secId, key, idx, total, active, html) { return _dEdit ? `<div class="ds-item${active ? '' : ' ds-hidden'}">${_dItemBar(secId, key, idx, total, active)}${html}</div>` : html; }
 async function _dChange(key, val) { // прама ў чарнавік праз worker (lookToken), потым перарэндэр
   if (!_dSecId) return;
   const tok = new URLSearchParams(location.search).get('look');
