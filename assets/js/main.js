@@ -2468,7 +2468,7 @@ function _dEditBind() {
     const path = mode === 'ml' ? path0 + '.' + currentLang : path0; // ml-палі (title/subtitle) → {бягучая мова}
     const val = mode === 'html' ? el.innerHTML.trim() : el.textContent.trim(); // body — HTML; астатняе — плоскі тэкст
     const tok = new URLSearchParams(location.search).get('look');
-    _draftPost({ action: 'draft_set', repo: SITE_REPO, lookToken: tok, id, path, val }).then(() => _edFlash(el)); // праз чаргу + зялёны флэш «захавана»
+    _draftPost({ action: 'draft_set', repo: SITE_REPO, lookToken: tok, id, path, val, html: mode === 'html' }).then(() => _edFlash(el)); // праз чаргу + зялёны флэш «захавана»; html→серверная санітызацыя
   });
 }
 // ✓ кароткі візуальны водгук «захавана» на элеменце пасля запісу ў чарнавік
@@ -2539,7 +2539,7 @@ function _edModalSave() {
   if (html === '<p><br></p>') html = ''; // пусты Quill
   el.innerHTML = html; _edFlash(el); _edModalClose(); // адразу на старонцы + флэш
   const tok = new URLSearchParams(location.search).get('look');
-  _draftPost({ action: 'draft_set', repo: SITE_REPO, lookToken: tok, id, path, val: html }); // праз чаргу
+  _draftPost({ action: 'draft_set', repo: SITE_REPO, lookToken: tok, id, path, val: html, html: true }); // праз чаргу; html→серверная санітызацыя
 }
 function _lookPick(kind, id) { _lookSel[kind] = id; _lookRefresh(); }
 function _lookRefresh() {
