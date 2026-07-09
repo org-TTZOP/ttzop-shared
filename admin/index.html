@@ -385,6 +385,7 @@
     ::highlight(rt-find-current) { background: #ff9800; color: #000; }
   </style>
   <script src="ui-i18n.js"></script>
+  <script type="module" src="../assets/js/booking.js"></script><!-- 📅 агульны модуль занятасці (той жа файл імпартуе воркер) -->
   <script src="../assets/js/reader.js"></script><!-- 📄 універсальны чытач дакумента (справаздачы і інш.) -->
 </head>
 <body>
@@ -7983,9 +7984,9 @@ function _bookableServices() {
   }).filter(x => x.duration > 0);
 }
 // ── B2: алгарытм вольных слотаў (графік рэсурсу − занятыя запісы − буферы) ──
-function _toMin(hhmm) { const m = /^(\d{1,2}):(\d{2})$/.exec(hhmm || ''); return m ? +m[1] * 60 + +m[2] : null; }
+function _toMin(hhmm) { return TTZOP_BOOKING.toMin(hhmm); } // 📅 агульны модуль booking.js — панэль/сайт/воркер лічаць час адным кодам
 // хв→«ЧЧ:ММ»; падтрымлівае ПАДОЎЖАНЫЯ хвіліны >24г (напр. 1500→«25:00», начная бронь) — round-trip праз _toMin захаваны (25:00→1500)
-function _fromMin(min) { return String(Math.floor(min / 60)).padStart(2, '0') + ':' + String(((min % 60) + 60) % 60).padStart(2, '0'); }
+function _fromMin(min) { return TTZOP_BOOKING.fromMin(min); }
 // ДЫСПЛЭЙ часу з пазнакай суседняга дня: <1440→«ЧЧ:ММ»; ≥1440→«01:00 +1» (падоўжаная вось начной броні). Захоўванне застаецца _fromMin («25:00»).
 function _hhmmDay(min) { const dn = Math.floor(min / 1440), b = ((min % 1440) + 1440) % 1440; return _fromMin(b) + (dn > 0 ? ` +${dn}` : dn < 0 ? ` ${dn}` : ''); }
 // дзень-нумары радка графіка (ISO 1=Пн..7=Нд): новае `days:[...]` або легасі `day` (адзін/'*'); [] = штодня
@@ -8128,21 +8129,7 @@ function _segmentPool(seg) {
 }
 // «ЧЫТАЙ АБОДВА» — заняткі рэсурсаў запісам: [{resourceId, start, end}]. Адзіная крыніца ісціны «што займае запіс»:
 // новая мадэль assignments[] (multi-resource) АБО legacy (resourceId/personId/placeId/equipmentIds займаюць [time, time+duration]).
-function _apptResourceUses(a) {
-  if (Array.isArray(a.assignments) && a.assignments.length) {
-    const out = a.assignments.map(x => ({ resourceId: x.resourceId, start: _toMin(x.from), end: _toMin(x.to) })).filter(u => u.resourceId && u.start != null && u.end != null);
-    // ad-hoc equipmentIds (па-за харэаграфіяй) — займаюць увесь дыяпазон запісу (інакш нябачныя для канфліктаў/стужкі)
-    if (Array.isArray(a.equipmentIds) && a.equipmentIds.length && out.length) {
-      const lo = Math.min(...out.map(u => u.start)), hi = Math.max(...out.map(u => u.end));
-      a.equipmentIds.forEach(id => { if (id && !out.some(u => u.resourceId === id)) out.push({ resourceId: id, start: lo, end: hi }); });
-    }
-    return out;
-  }
-  const st = _toMin(a.time); if (st == null) return [];
-  const end = st + Math.max(5, +a.duration || 0);
-  const ids = [...new Set([a.resourceId, a.personId, a.placeId, ...(Array.isArray(a.equipmentIds) ? a.equipmentIds : [])].filter(Boolean))];
-  return ids.map(resourceId => ({ resourceId, start: st, end }));
-}
+function _apptResourceUses(a) { return TTZOP_BOOKING.apptResourceUses(a); }
 // інтэрвалы занятасці рэсурсу на дату (з трэйлінг-буферам) — праз _apptResourceUses (чытай абодва)
 // excludeId — выключыць запіс (напр. сам запіс пры праверцы «ці заняты рэсурс ІНШЫМ»)
 function _resourceBusyIntervals(resId, date, excludeId) {
@@ -8152,7 +8139,7 @@ function _resourceBusyIntervals(resId, date, excludeId) {
   return out;
 }
 // нумар дня (дні ад эпохі) — база АБСАЛЮТНЫХ хвілін: абс = _dayNum(date)*1440 + HQ-хвіліна дня (#2b крок 4)
-function _dayNum(date) { const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(date || ''); return m ? Math.round(Date.UTC(+m[1], +m[2] - 1, +m[3]) / 86400000) : 0; }
+function _dayNum(date) { return TTZOP_BOOKING.dayNum(date); }
 // занятасць рэсурсу ў АБСАЛЮТНЫХ хвілінах, сумежныя дні D-1..D+1 — начная бронь з суседняга дзелавога дня трапляе ў акно (23:00→01:00 «учора» блакуе «сёння» 00:30, і наадварот)
 function _resourceBusyAbs(resId, date, excludeId) {
   const out = [];
@@ -8245,7 +8232,7 @@ let appointmentsState = {
     const v = _cubeBuild().voxels.find(x => x.appt.id === node.id);
     c.sel = null; c._selId = v ? _voxKey(v) : null; // sel пераразлічыцца з _selId пры рэндэры (highlight + sel-kin усіх этапаў запісу)
   },
-  _trashEnabled: true, // канон: выдаленне запісу (🗑) → Сметніца (♻-аднаўляльна), асобна ад скасавання (статус). Персіст у appointments.json (load/save)
+  _trashEnabled: true, // канон: выдаленне запісу (🗑) → Сметніца (♻-аднаўляльна), асобна ад скасавання (статус). Персіст у D1 (deleted_at), сінк праз appt_sync
   _emptyHtml: () => `<div style="padding:8px 0;font-size:0.85rem;color:var(--muted)">${t('folder_empty')}</div>`
 };
 function _apptChildrenSort(a, b) {
@@ -8253,7 +8240,7 @@ function _apptChildrenSort(a, b) {
   if (a.fields?.drawerType === 'appt-date') return (b.name || '').localeCompare(a.name || ''); // навейшы дзень зверху
   return (a.fields?.time || '').localeCompare(b.fields?.time || ''); // запісы дня — па часе
 }
-// дэфолтнае апісанне Формы-0 Запісы — толькі калі карыстальнік яшчэ не задаваў/не сціраў (захоўваемае ў appointments.json праз _hostDescription)
+// дэфолтнае апісанне Формы-0 Запісы — толькі калі карыстальнік яшчэ не задаваў/не сціраў (захоўваецца ў settings.apptHostDescription)
 const _APPT_HOST_DESC_DEFAULT = 'Бронь і запісы кліентаў на час. 🧊 Куб-сканер: выберыце паслугу → вядзіце плоскасць па восі часу → клік па зялёным кубіку = бронь.';
 function _appointmentsAddHost() { // host-Форма-0 (трымае UI фільтра/сартыроўкі)
   const s = appointmentsState; if (!s.data) return;
@@ -8282,7 +8269,7 @@ function _appointmentsBuildTree(arr) {
         fields: { drawerType: 'appt_item', ...a, id: aid }, createdAt: a.createdAt });
     });
   });
-  appointmentsState.data = { nodes, trash: appointmentsState._trash || [] }; // trash перажывае перабудову дрэва (захоўваецца ў _trash, персіст у appointments.json)
+  appointmentsState.data = { nodes, trash: appointmentsState._trash || [] }; // trash перажывае перабудову дрэва (захоўваецца ў _trash, персіст у D1 deleted_at)
   _appointmentsAddHost();
 }
 // вузлы-запісы → плоскі масіў для захавання (WHITELIST палёў — каб выпадковы мусар не трапляў; id з вузла, не з fields)
@@ -8300,9 +8287,22 @@ async function _ensureServicesLoaded() {
 async function _ensureAppointmentsLoaded() {
   if (appointmentsState.data) return;
   let arr = [];
-  try { const res = await fetch(API, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'read', repo: REPO, password, file: 'content/appointments.json' }) });
-    if (res.ok) { const j = await res.json(); arr = Array.isArray(j?.appointments) ? j.appointments : []; appointmentsState._hostDescription = j?.hostDescription; appointmentsState._trash = Array.isArray(j?.trash) ? j.trash : []; } } catch {} // undefined → дэфолтнае апісанне Формы-0; trash — выдаленыя запісы (♻-аднаўляльныя)
+  // 📅 Крыніца праўды — D1 (`appt_list`; воркер сам ляніва пераносіць стары блоб). Апісанне Формы-0 —
+  // звычайная налада, жыве ў settings (не ў сховішчы запісаў).
+  try { const res = await fetch(API, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'appt_list', repo: REPO, password }) });
+    if (res.ok) { const j = await res.json(); arr = Array.isArray(j?.appointments) ? j.appointments : []; appointmentsState._trash = Array.isArray(j?.trash) ? j.trash : []; } } catch {} // trash — выдаленыя запісы (♻-аднаўляльныя, deleted_at у D1)
+  appointmentsState._hostDescription = settings.apptHostDescription; // undefined → дэфолтнае апісанне Формы-0
+  _apptSnapshot(arr, appointmentsState._trash); // база для дыф-сінку: пішам толькі тое, што сапраўды змянілася
   _appointmentsBuildTree(arr);
+}
+// 🔀 ЗДЫМАК для дыф-сінку: id → серыялізаваны запіс на момант загрузкі/захавання.
+// Навошта: панэль больш НЕ перазапісвае ўвесь спіс. Інакш бронь кліента, што прыйшла паміж
+// загрузкай і захаваннем, была б моўчкі сцёртая (той самы клас багу, што і згуба запісаў у блобе).
+let _apptSnap = new Map();
+function _apptSnapshot(arr, trash) {
+  _apptSnap = new Map();
+  (arr || []).forEach(a => _apptSnap.set(a.id, JSON.stringify(a)));
+  (trash || []).forEach(a => _apptSnap.set(a.id, JSON.stringify(a)));
 }
 // ці бранявальная паслуга (duration>0) — для гейта кнопкі 📅 у кошыку заказу
 function _isBookableServiceId(id) { return _bookableServices().some(x => x.id === id); }
@@ -8420,17 +8420,24 @@ async function _appointmentsSave() {
   const host = s.data?.nodes?.find(n => n.id === 'appt-host'); // апісанне Формы-0 — захоўваемае (рэдагавальнае праз 📝, сціранне трымаецца)
   if (host) s._hostDescription = host.description || ''; // sync: каб перастварэнне host не вярнула дэфолт
   s._trash = s.data?.trash || []; // sync: выдаленыя запісы (Сметніца) — каб перабудова дрэва не згубіла
-  const payload = { appointments: _appointmentsToArray(), trash: s._trash };
-  if (s._hostDescription !== undefined) payload.hostDescription = s._hostDescription;
+  if (s._hostDescription !== undefined && settings.apptHostDescription !== s._hostDescription) { settings.apptHostDescription = s._hostDescription; _settingsSaveKick(); } // налада → у settings, не ў сховішча запісаў
+  // 🔀 ДЫФ-СІНК: шлём толькі змененае. Радок, якога няма ні ў жывых, ні ў Сметніцы, знік назаўжды (✕).
+  const live = _appointmentsToArray(), trash = s._trash, records = [], seen = new Set();
+  live.forEach(a => { seen.add(a.id); if (_apptSnap.get(a.id) !== JSON.stringify(a)) records.push({ a }); });
+  trash.forEach(n => { seen.add(n.id); if (_apptSnap.get(n.id) !== JSON.stringify(n)) records.push({ a: n, deletedAt: n._deletedAt || new Date().toISOString() }); });
+  const purge = [..._apptSnap.keys()].filter(id => !seen.has(id));
+  if (!records.length && !purge.length) { s.saving = false; if (st) st.style.opacity = '0'; return; } // 💸 нічога не змянілася — не турбуем сервер
   try {
-    await fetch(API, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'write', repo: REPO, password, file: 'content/appointments.json', content: JSON.stringify(payload, null, 2) }) });
+    const res = await fetch(API, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'appt_sync', repo: REPO, password, records, purge }) });
+    if (!res.ok) throw new Error('sync');
+    _apptSnapshot(live, trash); // новы базіс — інакш наступнае захаванне слала б тое самае паўторна
     if (st) { st.textContent = '✓'; setTimeout(() => { st.style.opacity = '0'; }, 1200); }
   } catch (e) { if (st) st.textContent = t('err'); } finally { s.saving = false; }
 }
 // ════════════════════════════════════════
 // 🧊 3D-КУБ ЗАНЯТАСЦІ (Тэставы РМ) — воксельная мадэль Чалавек × Месца × Час
 // Этап 1+3+4: асобны РМ, CSS-3D рэндэр толькі каляровых кубікаў, паварот мышкай, клік→дэталі запісу.
-// Дадзеныя — з рэальных табліц (запісы content/appointments.json + рэсурсы companyTree).
+// Дадзеныя — з рэальных табліц (запісы D1 `appointments` + рэсурсы companyTree).
 // ════════════════════════════════════════
 // cubeTestState = камера/UI-стан ВЫГЛЯДУ куба; дадзеныя запісаў — з appointmentsState (адзіная крыніца, праз _cubeAppts)
 let cubeTestState = { rot: { x: -22, y: -36 }, zoom: 1, pan: { x: 0, y: 0 }, drag: null, touch: null, date: null, sel: null, _loaded: false, _sc: 1,
