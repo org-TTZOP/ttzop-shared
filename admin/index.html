@@ -11639,7 +11639,13 @@ function _lookToken() {
   if (!settings.lookToken) { settings.lookToken = Math.random().toString(36).slice(2, 12); _settingsSaveKick(); }
   return settings.lookToken;
 }
-function _lookUrl() { return location.origin + '/?look=' + _lookToken(); }
+// 🔑 АСОБНЫ токен ЗАПІСУ ў чарнавік (draft_*): lookToken толькі ЧЫТАЕ і шэрыцца з гасцямі,
+// таму права праўкі ён даваць не можа. Трапляе ў спасылку 👁 (&ed=), ніколі ў 📋-спасылку.
+function _editToken() {
+  if (!settings.editToken) { settings.editToken = Math.random().toString(36).slice(2, 12) + Math.random().toString(36).slice(2, 12); _settingsSaveKick(); }
+  return settings.editToken;
+}
+function _lookUrl() { return location.origin + '/?look=' + _lookToken(); } // гасцявая: прагляд чарнавіка без права праўкі
 function _lookBodyHtml() {
   const has = !!settings.lookToken; // без токена прэв'ю ВЫКЛЮЧАНА: 📋/🚫/адрас не паказваем, 👁 створыць токен
   // Фаза C-part4: актыўны выгляд выбіраецца ТУТ (2 выпадальнікі) — ○ «Бягучая» прыбраны з палітраў/паводзін
@@ -11689,17 +11695,17 @@ async function _siteResetDraft() {
     } catch (e) { showAlert(t('err') + ': ' + e.message); }
   }, { danger: true, label: t('look_reset') });
 }
-function _lookOpen() { // flush: токен мусіць даляцець у KV да загрузкі сайта
+function _lookOpen() { // flush: токены мусяць даляцець у KV да загрузкі сайта
   const created = !settings.lookToken;
-  const url = _lookUrl();
+  const url = _lookUrl(), ed = _editToken(); // 👁 уладальніка нясе АБА токены: look (чытаць чарнавік) + ed (пісаць)
   _settingsSaveFlush();
-  window.open(url + '&edit=1', '_blank'); // Фаза D: 👁 уладальніка → рэжым рэдагавання (📋-спасылка застаецца без edit — госць толькі глядзіць)
+  window.open(url + '&edit=1&ed=' + encodeURIComponent(ed), '_blank'); // Фаза D: 👁 → рэдагаванне (📋-спасылка без edit/ed — госць толькі глядзіць)
   if (created) { currentNodeState = themeState; renderNodeEditor(themeState); } // паказаць адрас/📋/🚫
 }
 // ануляваць прэв'ю: ВЫДАЛІЦЬ токен — разасланы адрас памірае адразу, прэв'ю выключана да наступнага 👁
 function _lookRevoke() {
   showConfirm(t('look_revoke_q'), () => {
-    delete settings.lookToken;
+    delete settings.lookToken; delete settings.editToken; // 🚫 адклікаем абодва: разасланы адрас і права праўкі паміраюць разам
     _settingsSaveKick(); _settingsSaveFlush();
     currentNodeState = themeState; renderNodeEditor(themeState);
   }, { label: t('look_revoke'), danger: true });
