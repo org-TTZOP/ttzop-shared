@@ -425,6 +425,14 @@ body.ds-edit #site-sections .ds-editbar button { pointer-events: auto !important
 .ds-item-td { width: 1%; white-space: nowrap; vertical-align: middle; }
 .ds-item-td .ds-editbar { position: static; background: transparent; box-shadow: none; backdrop-filter: none; padding: 0; }
 body.ds-edit #site-sections .ds-item-bar button, body.ds-edit #site-sections .ds-item-td button { pointer-events: auto !important; cursor: pointer !important; }
+/* ✎ мадалка палёў пазіцыі */
+.ds-fmodal { position: fixed; inset: 0; z-index: 10003; background: rgba(0,0,0,.55); display: flex; align-items: center; justify-content: center; padding: 16px; }
+.ds-fmbox { background: var(--card-bg,#1f2430); color: var(--text-main,#eee); border-radius: 14px; width: min(460px,96vw); max-height: 88vh; display: flex; flex-direction: column; border: 1px solid var(--accent,#f97316); box-shadow: 0 20px 60px rgba(0,0,0,.5); overflow: hidden; }
+.ds-fmbody { padding: 14px 16px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; }
+.ds-fl { display: flex; flex-direction: column; gap: 3px; font-size: .82rem; }
+.ds-fl > span { opacity: .8; }
+.ds-ff { padding: 7px 9px; border-radius: 7px; border: 1px solid var(--border-color,#8884); background: rgba(128,128,128,.1); color: inherit; font-size: .9rem; font-family: inherit; }
+.ds-fmfoot { display: flex; justify-content: flex-end; gap: 8px; padding: 10px 14px; border-top: 1px solid var(--border-color,#8884); }
 /* Фаза D: выпадальнікі рэдактара секцый — цёмны попап опцый (інакш белы тэкст на светлым сістэмным фоне) */
 #look-panel #look-edit select { background: #1f2430; color: #eee; }
 #look-panel #look-edit select option { background: #1f2430; color: #eee; }
