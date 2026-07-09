@@ -149,6 +149,26 @@ const UI_T = {
     verify_btn: 'Пацвердзіць і адправіць заказ', verify_checking: 'Правяраем...', site_paused: 'Сайт часова прыпынены',
     verify_err: 'Увядзіце 6-значны код', verify_err_wrong: 'Няправільны код',
     done_title: 'Заказ прыняты!',
+    // 📝 №3а: анкета «Свой сайт» (сайт нараджаецца напоўнены)
+    intake_title: "Пра вашу справу",
+    intake_hint: "Запоўніце — і сайт адразу будзе ваш. Можна прапусціць і зрабіць пазней у панэлі.",
+    intake_company: "Назва кампаніі",
+    intake_company_ph: "Кавярня «Зерне»",
+    intake_field: "Сфера дзейнасці",
+    intake_field_ph: "Кава і выпечка",
+    intake_about: "Кароткае апісанне",
+    intake_about_ph: "1-2 сказы пра тое, чым вы займаецеся",
+    intake_phone: "Тэлефон",
+    intake_phone_ph: "+375 29 123-45-67",
+    intake_address: "Адрас",
+    intake_address_ph: "г. Мінск, вул. Няміга 5",
+    intake_offers: "Галоўныя прапановы",
+    intake_offers_hint: "Да трох. Цана неабавязковая — без яе будзе «па дамове».",
+    intake_offer_name: "Назва",
+    intake_offer_price: "Цана",
+    intake_skip: "Прапусціць",
+    intake_submit: "Гатова →",
+    intake_saving: "Захаванне…",
     done_subdomain: 'Дзякуй! Ваш сайт <b style="color:#f97316">{domain}</b> ствараецца.<br>Вы атрымаеце ліст на <b style="color:#e8eaf0">{email}</b> калі ён будзе гатовы.',
     done_regular: 'Дзякуй! Мы звяжамся з вамі па email <b style="color:#e8eaf0">{email}</b> у бліжэйшы час.',
     done_close: 'Закрыць',
@@ -172,6 +192,26 @@ const UI_T = {
     verify_btn: 'Confirm and place order', verify_checking: 'Checking...', site_paused: 'Site temporarily paused',
     verify_err: 'Enter the 6-digit code', verify_err_wrong: 'Incorrect code',
     done_title: 'Order accepted!',
+    // 📝 №3а: анкета «Свой сайт» (сайт нараджаецца напоўнены)
+    intake_title: "About your business",
+    intake_hint: "Fill this in and the site is yours right away. You can skip and do it later in the panel.",
+    intake_company: "Company name",
+    intake_company_ph: "Zerne Coffee",
+    intake_field: "Field of work",
+    intake_field_ph: "Coffee and pastry",
+    intake_about: "Short description",
+    intake_about_ph: "1-2 sentences about what you do",
+    intake_phone: "Phone",
+    intake_phone_ph: "+1 555 123-4567",
+    intake_address: "Address",
+    intake_address_ph: "5 Main St, Springfield",
+    intake_offers: "Main offers",
+    intake_offers_hint: "Up to three. Price is optional — without it we show «on request».",
+    intake_offer_name: "Name",
+    intake_offer_price: "Price",
+    intake_skip: "Skip",
+    intake_submit: "Done →",
+    intake_saving: "Saving…",
     done_subdomain: 'Thank you! Your site <b style="color:#f97316">{domain}</b> is being created.<br>You will receive an email at <b style="color:#e8eaf0">{email}</b> when it\'s ready.',
     done_regular: 'Thank you! We will contact you at <b style="color:#e8eaf0">{email}</b> shortly.',
     done_close: 'Close',
@@ -195,6 +235,26 @@ const UI_T = {
     verify_btn: 'Підтвердити і відправити замовлення', verify_checking: 'Перевіряємо...', site_paused: 'Сайт тимчасово призупинено',
     verify_err: 'Введіть 6-значний код', verify_err_wrong: 'Невірний код',
     done_title: 'Замовлення прийнято!',
+    // 📝 №3а: анкета «Свой сайт» (сайт нараджаецца напоўнены)
+    intake_title: "Про вашу справу",
+    intake_hint: "Заповніть — і сайт одразу буде ваш. Можна пропустити й зробити пізніше в панелі.",
+    intake_company: "Назва компанії",
+    intake_company_ph: "Кав'ярня «Зерно»",
+    intake_field: "Сфера діяльності",
+    intake_field_ph: "Кава і випічка",
+    intake_about: "Короткий опис",
+    intake_about_ph: "1-2 речення про те, чим ви займаєтесь",
+    intake_phone: "Телефон",
+    intake_phone_ph: "+380 67 123-45-67",
+    intake_address: "Адреса",
+    intake_address_ph: "м. Київ, вул. Хрещатик 5",
+    intake_offers: "Головні пропозиції",
+    intake_offers_hint: "До трьох. Ціна необов'язкова — без неї буде «за домовленістю».",
+    intake_offer_name: "Назва",
+    intake_offer_price: "Ціна",
+    intake_skip: "Пропустити",
+    intake_submit: "Готово →",
+    intake_saving: "Збереження…",
     done_subdomain: 'Дякуємо! Ваш сайт <b style="color:#f97316">{domain}</b> створюється.<br>Ви отримаєте лист на <b style="color:#e8eaf0">{email}</b> коли він буде готовий.',
     done_regular: 'Дякуємо! Ми зв\'яжемося з вами по email <b style="color:#e8eaf0">{email}</b> найближчим часом.',
     done_close: 'Закрити',
@@ -218,6 +278,26 @@ const UI_T = {
     verify_btn: 'Подтвердить и отправить заказ', verify_checking: 'Проверяем...', site_paused: 'Сайт временно приостановлен',
     verify_err: 'Введите 6-значный код', verify_err_wrong: 'Неверный код',
     done_title: 'Заказ принят!',
+    // 📝 №3а: анкета «Свой сайт» (сайт нараджаецца напоўнены)
+    intake_title: "О вашем деле",
+    intake_hint: "Заполните — и сайт сразу будет вашим. Можно пропустить и сделать позже в панели.",
+    intake_company: "Название компании",
+    intake_company_ph: "Кофейня «Зерно»",
+    intake_field: "Сфера деятельности",
+    intake_field_ph: "Кофе и выпечка",
+    intake_about: "Краткое описание",
+    intake_about_ph: "1-2 предложения о том, чем вы занимаетесь",
+    intake_phone: "Телефон",
+    intake_phone_ph: "+7 900 123-45-67",
+    intake_address: "Адрес",
+    intake_address_ph: "г. Москва, ул. Тверская 5",
+    intake_offers: "Главные предложения",
+    intake_offers_hint: "До трёх. Цена необязательна — без неё будет «по договорённости».",
+    intake_offer_name: "Название",
+    intake_offer_price: "Цена",
+    intake_skip: "Пропустить",
+    intake_submit: "Готово →",
+    intake_saving: "Сохранение…",
     done_subdomain: 'Спасибо! Ваш сайт <b style="color:#f97316">{domain}</b> создаётся.<br>Вы получите письмо на <b style="color:#e8eaf0">{email}</b> когда он будет готов.',
     done_regular: 'Спасибо! Мы свяжемся с вами по email <b style="color:#e8eaf0">{email}</b> в ближайшее время.',
     done_close: 'Закрыть',
@@ -241,6 +321,26 @@ const UI_T = {
     verify_btn: 'Potwierdź i złóż zamówienie', verify_checking: 'Sprawdzamy...', site_paused: 'Strona tymczasowo wstrzymana',
     verify_err: 'Wprowadź 6-cyfrowy kod', verify_err_wrong: 'Nieprawidłowy kod',
     done_title: 'Zamówienie przyjęte!',
+    // 📝 №3а: анкета «Свой сайт» (сайт нараджаецца напоўнены)
+    intake_title: "O Twojej firmie",
+    intake_hint: "Wypełnij — i strona od razu będzie Twoja. Możesz pominąć i zrobić to później w panelu.",
+    intake_company: "Nazwa firmy",
+    intake_company_ph: "Kawiarnia «Ziarno»",
+    intake_field: "Branża",
+    intake_field_ph: "Kawa i wypieki",
+    intake_about: "Krótki opis",
+    intake_about_ph: "1-2 zdania o tym, czym się zajmujesz",
+    intake_phone: "Telefon",
+    intake_phone_ph: "+48 555 111 222",
+    intake_address: "Adres",
+    intake_address_ph: "ul. Długa 5, Kraków",
+    intake_offers: "Główne oferty",
+    intake_offers_hint: "Do trzech. Cena opcjonalna — bez niej pokażemy «do uzgodnienia».",
+    intake_offer_name: "Nazwa",
+    intake_offer_price: "Cena",
+    intake_skip: "Pomiń",
+    intake_submit: "Gotowe →",
+    intake_saving: "Zapisywanie…",
     done_subdomain: 'Dziękujemy! Twoja strona <b style="color:#f97316">{domain}</b> jest tworzona.<br>Otrzymasz email na <b style="color:#e8eaf0">{email}</b> gdy będzie gotowa.',
     done_regular: 'Dziękujemy! Skontaktujemy się z Tobą przez email <b style="color:#e8eaf0">{email}</b> wkrótce.',
     done_close: 'Zamknij',
@@ -264,6 +364,26 @@ const UI_T = {
     verify_btn: 'Bestätigen und bestellen', verify_checking: 'Überprüfen...', site_paused: 'Website vorübergehend pausiert',
     verify_err: 'Geben Sie den 6-stelligen Code ein', verify_err_wrong: 'Falscher Code',
     done_title: 'Bestellung aufgenommen!',
+    // 📝 №3а: анкета «Свой сайт» (сайт нараджаецца напоўнены)
+    intake_title: "Über Ihr Unternehmen",
+    intake_hint: "Ausfüllen — und die Website gehört sofort Ihnen. Sie können überspringen und es später im Panel machen.",
+    intake_company: "Firmenname",
+    intake_company_ph: "Café «Korn»",
+    intake_field: "Branche",
+    intake_field_ph: "Kaffee und Gebäck",
+    intake_about: "Kurzbeschreibung",
+    intake_about_ph: "1-2 Sätze darüber, was Sie tun",
+    intake_phone: "Telefon",
+    intake_phone_ph: "+49 151 1234567",
+    intake_address: "Adresse",
+    intake_address_ph: "Hauptstraße 5, Berlin",
+    intake_offers: "Hauptangebote",
+    intake_offers_hint: "Bis zu drei. Preis optional — ohne ihn zeigen wir «auf Anfrage».",
+    intake_offer_name: "Name",
+    intake_offer_price: "Preis",
+    intake_skip: "Überspringen",
+    intake_submit: "Fertig →",
+    intake_saving: "Speichern…",
     done_subdomain: 'Danke! Ihre Website <b style="color:#f97316">{domain}</b> wird erstellt.<br>Sie erhalten eine E-Mail an <b style="color:#e8eaf0">{email}</b>, wenn sie fertig ist.',
     done_regular: 'Danke! Wir werden Sie per E-Mail an <b style="color:#e8eaf0">{email}</b> in Kürze kontaktieren.',
     done_close: 'Schließen',
@@ -287,6 +407,26 @@ const UI_T = {
     verify_btn: 'Confirmer et passer la commande', verify_checking: 'Vérification...', site_paused: 'Site temporairement suspendu',
     verify_err: 'Saisissez le code à 6 chiffres', verify_err_wrong: 'Code incorrect',
     done_title: 'Commande acceptée !',
+    // 📝 №3а: анкета «Свой сайт» (сайт нараджаецца напоўнены)
+    intake_title: "À propos de votre activité",
+    intake_hint: "Remplissez — et le site est à vous tout de suite. Vous pouvez passer et le faire plus tard dans le panneau.",
+    intake_company: "Nom de l'entreprise",
+    intake_company_ph: "Café «Grain»",
+    intake_field: "Secteur d'activité",
+    intake_field_ph: "Café et pâtisserie",
+    intake_about: "Brève description",
+    intake_about_ph: "1-2 phrases sur ce que vous faites",
+    intake_phone: "Téléphone",
+    intake_phone_ph: "+33 6 12 34 56 78",
+    intake_address: "Adresse",
+    intake_address_ph: "5 rue Principale, Paris",
+    intake_offers: "Offres principales",
+    intake_offers_hint: "Jusqu'à trois. Prix facultatif — sans lui, nous affichons «sur demande».",
+    intake_offer_name: "Nom",
+    intake_offer_price: "Prix",
+    intake_skip: "Passer",
+    intake_submit: "Terminé →",
+    intake_saving: "Enregistrement…",
     done_subdomain: 'Merci ! Votre site <b style="color:#f97316">{domain}</b> est en cours de création.<br>Vous recevrez un email à <b style="color:#e8eaf0">{email}</b> quand il sera prêt.',
     done_regular: 'Merci ! Nous vous contacterons par email à <b style="color:#e8eaf0">{email}</b> sous peu.',
     done_close: 'Fermer',
@@ -310,6 +450,26 @@ const UI_T = {
     verify_btn: 'Confirmar y realizar pedido', verify_checking: 'Verificando...', site_paused: 'Sitio temporalmente pausado',
     verify_err: 'Introduce el código de 6 dígitos', verify_err_wrong: 'Código incorrecto',
     done_title: '¡Pedido aceptado!',
+    // 📝 №3а: анкета «Свой сайт» (сайт нараджаецца напоўнены)
+    intake_title: "Sobre su negocio",
+    intake_hint: "Complete y el sitio será suyo de inmediato. Puede omitir y hacerlo después en el panel.",
+    intake_company: "Nombre de la empresa",
+    intake_company_ph: "Cafetería «Grano»",
+    intake_field: "Sector",
+    intake_field_ph: "Café y repostería",
+    intake_about: "Descripción breve",
+    intake_about_ph: "1-2 frases sobre lo que hace",
+    intake_phone: "Teléfono",
+    intake_phone_ph: "+34 600 123 456",
+    intake_address: "Dirección",
+    intake_address_ph: "C/ Mayor 5, Madrid",
+    intake_offers: "Ofertas principales",
+    intake_offers_hint: "Hasta tres. El precio es opcional — sin él mostramos «a convenir».",
+    intake_offer_name: "Nombre",
+    intake_offer_price: "Precio",
+    intake_skip: "Omitir",
+    intake_submit: "Listo →",
+    intake_saving: "Guardando…",
     done_subdomain: '¡Gracias! Tu sitio <b style="color:#f97316">{domain}</b> está siendo creado.<br>Recibirás un email en <b style="color:#e8eaf0">{email}</b> cuando esté listo.',
     done_regular: '¡Gracias! Nos pondremos en contacto contigo por email en <b style="color:#e8eaf0">{email}</b> en breve.',
     done_close: 'Cerrar',
@@ -333,6 +493,26 @@ const UI_T = {
     verify_btn: 'Conferma e invia ordine', verify_checking: 'Verifica...', site_paused: 'Sito temporaneamente sospeso',
     verify_err: 'Inserisci il codice a 6 cifre', verify_err_wrong: 'Codice errato',
     done_title: 'Ordine accettato!',
+    // 📝 №3а: анкета «Свой сайт» (сайт нараджаецца напоўнены)
+    intake_title: "Sulla tua attività",
+    intake_hint: "Compila e il sito sarà subito tuo. Puoi saltare e farlo dopo nel pannello.",
+    intake_company: "Nome dell'azienda",
+    intake_company_ph: "Caffè «Chicco»",
+    intake_field: "Settore",
+    intake_field_ph: "Caffè e pasticceria",
+    intake_about: "Breve descrizione",
+    intake_about_ph: "1-2 frasi su cosa fai",
+    intake_phone: "Telefono",
+    intake_phone_ph: "+39 320 1234567",
+    intake_address: "Indirizzo",
+    intake_address_ph: "Via Roma 5, Milano",
+    intake_offers: "Offerte principali",
+    intake_offers_hint: "Fino a tre. Il prezzo è facoltativo — senza mostriamo «su richiesta».",
+    intake_offer_name: "Nome",
+    intake_offer_price: "Prezzo",
+    intake_skip: "Salta",
+    intake_submit: "Fatto →",
+    intake_saving: "Salvataggio…",
     done_subdomain: "Grazie! Il tuo sito <b style=\"color:#f97316\">{domain}</b> è in creazione.<br>Riceverai un'email all'indirizzo <b style=\"color:#e8eaf0\">{email}</b> quando sarà pronto.",
     done_regular: 'Grazie! Ti contatteremo per email a <b style="color:#e8eaf0">{email}</b> a breve.',
     done_close: 'Chiudi',
@@ -356,6 +536,26 @@ const UI_T = {
     verify_btn: 'Confirmar e fazer pedido', verify_checking: 'Verificando...', site_paused: 'Site temporariamente pausado',
     verify_err: 'Insira o código de 6 dígitos', verify_err_wrong: 'Código incorreto',
     done_title: 'Pedido aceito!',
+    // 📝 №3а: анкета «Свой сайт» (сайт нараджаецца напоўнены)
+    intake_title: "Sobre o seu negócio",
+    intake_hint: "Preencha — e o site será seu imediatamente. Pode ignorar e fazer depois no painel.",
+    intake_company: "Nome da empresa",
+    intake_company_ph: "Cafeteria «Grão»",
+    intake_field: "Área de atuação",
+    intake_field_ph: "Café e pastelaria",
+    intake_about: "Breve descrição",
+    intake_about_ph: "1-2 frases sobre o que faz",
+    intake_phone: "Telefone",
+    intake_phone_ph: "+351 912 345 678",
+    intake_address: "Endereço",
+    intake_address_ph: "Rua Principal 5, Lisboa",
+    intake_offers: "Principais ofertas",
+    intake_offers_hint: "Até três. O preço é opcional — sem ele mostramos «sob consulta».",
+    intake_offer_name: "Nome",
+    intake_offer_price: "Preço",
+    intake_skip: "Ignorar",
+    intake_submit: "Concluído →",
+    intake_saving: "A guardar…",
     done_subdomain: 'Obrigado! Seu site <b style="color:#f97316">{domain}</b> está sendo criado.<br>Você receberá um email em <b style="color:#e8eaf0">{email}</b> quando estiver pronto.',
     done_regular: 'Obrigado! Entraremos em contato por email em <b style="color:#e8eaf0">{email}</b> em breve.',
     done_close: 'Fechar',
@@ -379,6 +579,26 @@ const UI_T = {
     verify_btn: '确认并提交订单', verify_checking: '验证中...', site_paused: '网站暂时暂停',
     verify_err: '请输入6位验证码', verify_err_wrong: '验证码错误',
     done_title: '订单已受理！',
+    // 📝 №3а: анкета «Свой сайт» (сайт нараджаецца напоўнены)
+    intake_title: "关于您的业务",
+    intake_hint: "填写后，网站立即属于您。也可以跳过，稍后在面板中填写。",
+    intake_company: "公司名称",
+    intake_company_ph: "「谷粒」咖啡馆",
+    intake_field: "经营领域",
+    intake_field_ph: "咖啡与烘焙",
+    intake_about: "简短描述",
+    intake_about_ph: "用1-2句话介绍您的业务",
+    intake_phone: "电话",
+    intake_phone_ph: "+86 138 0013 8000",
+    intake_address: "地址",
+    intake_address_ph: "北京市朝阳区主街5号",
+    intake_offers: "主要服务",
+    intake_offers_hint: "最多三项。价格可选 — 不填则显示「面议」。",
+    intake_offer_name: "名称",
+    intake_offer_price: "价格",
+    intake_skip: "跳过",
+    intake_submit: "完成 →",
+    intake_saving: "保存中…",
     done_subdomain: '感谢！您的网站 <b style="color:#f97316">{domain}</b> 正在创建中。<br>准备好后，我们将发送邮件至 <b style="color:#e8eaf0">{email}</b>。',
     done_regular: '感谢！我们将尽快通过邮箱 <b style="color:#e8eaf0">{email}</b> 与您联系。',
     done_close: '关闭',
@@ -402,6 +622,26 @@ const UI_T = {
     verify_btn: 'تأكيد وإرسال الطلب', verify_checking: 'جارٍ التحقق...', site_paused: 'الموقع متوقف مؤقتًا',
     verify_err: 'أدخل الرمز المكون من 6 أرقام', verify_err_wrong: 'رمز غير صحيح',
     done_title: 'تم قبول الطلب!',
+    // 📝 №3а: анкета «Свой сайт» (сайт нараджаецца напоўнены)
+    intake_title: "عن عملك",
+    intake_hint: "املأ البيانات — وسيصبح الموقع لك فوراً. يمكنك التخطي والقيام بذلك لاحقاً في اللوحة.",
+    intake_company: "اسم الشركة",
+    intake_company_ph: "مقهى «الحبة»",
+    intake_field: "مجال العمل",
+    intake_field_ph: "القهوة والمخبوزات",
+    intake_about: "وصف مختصر",
+    intake_about_ph: "جملة أو جملتان عما تقوم به",
+    intake_phone: "الهاتف",
+    intake_phone_ph: "+971 50 123 4567",
+    intake_address: "العنوان",
+    intake_address_ph: "شارع الرئيسي 5، دبي",
+    intake_offers: "العروض الرئيسية",
+    intake_offers_hint: "حتى ثلاثة. السعر اختياري — بدونه سنعرض «حسب الطلب».",
+    intake_offer_name: "الاسم",
+    intake_offer_price: "السعر",
+    intake_skip: "تخطي",
+    intake_submit: "تم ←",
+    intake_saving: "جارٍ الحفظ…",
     done_subdomain: 'شكراً! موقعك <b style="color:#f97316">{domain}</b> قيد الإنشاء.<br>ستتلقى بريداً إلكترونياً على <b style="color:#e8eaf0">{email}</b> عندما يكون جاهزاً.',
     done_regular: 'شكراً! سنتواصل معك على البريد الإلكتروني <b style="color:#e8eaf0">{email}</b> قريباً.',
     done_close: 'إغلاق',
@@ -425,6 +665,26 @@ const UI_T = {
     verify_btn: 'Megerősítés és rendelés leadása', verify_checking: 'Ellenőrzés...', site_paused: 'A webhely átmenetileg szünetel',
     verify_err: 'Adja meg a 6 jegyű kódot', verify_err_wrong: 'Hibás kód',
     done_title: 'Rendelés elfogadva!',
+    // 📝 №3а: анкета «Свой сайт» (сайт нараджаецца напоўнены)
+    intake_title: "Az Ön vállalkozásáról",
+    intake_hint: "Töltse ki — és az oldal azonnal az Öné. Kihagyhatja, és később megteheti a panelen.",
+    intake_company: "Cégnév",
+    intake_company_ph: "«Szem» Kávézó",
+    intake_field: "Tevékenységi kör",
+    intake_field_ph: "Kávé és pékáru",
+    intake_about: "Rövid leírás",
+    intake_about_ph: "1-2 mondat arról, mivel foglalkozik",
+    intake_phone: "Telefon",
+    intake_phone_ph: "+36 30 123 4567",
+    intake_address: "Cím",
+    intake_address_ph: "Fő utca 5, Budapest",
+    intake_offers: "Fő ajánlatok",
+    intake_offers_hint: "Legfeljebb három. Az ár nem kötelező — nélküle «megegyezés szerint» jelenik meg.",
+    intake_offer_name: "Név",
+    intake_offer_price: "Ár",
+    intake_skip: "Kihagyás",
+    intake_submit: "Kész →",
+    intake_saving: "Mentés…",
     done_subdomain: 'Köszönjük! A(z) <b style="color:#f97316">{domain}</b> weboldala létrehozás alatt áll.<br>Értesítjük e-mailben a(z) <b style="color:#e8eaf0">{email}</b> címen, amikor elkészül.',
     done_regular: 'Köszönjük! Hamarosan felvesszük Önnel a kapcsolatot a(z) <b style="color:#e8eaf0">{email}</b> e-mail-cíemen.',
     done_close: 'Bezárás',
@@ -1698,7 +1958,8 @@ async function detectLangByIp(activeLangs) {
 }
 
 
-let orderStep = 'privacy'; // privacy → form → verify → done
+let orderStep = 'privacy'; // privacy → form → verify → [intake] → done
+let orderIntake = null;    // №3а: адказы анкеты «Свой сайт» (null = прапушчана)
 let orderEmail = '';
 let orderDelivery = '', orderDeliveryCost = null, orderDeliveryZone = ''; // C2a/C2b: адрас + налічаны кошт + зона дастаўкі
 let privacyVersion = '';
@@ -1761,7 +2022,7 @@ function showModal(step, privacyHtml = '') {
         <div style="padding:24px 24px 16px;border-bottom:1px solid #2a2f45">
           <div style="font-family:'Unbounded',sans-serif;font-size:1rem;font-weight:700;color:#e8eaf0">${getUI().form_title}</div>
           <div style="font-size:0.85rem;color:#6b7280;margin-top:4px">📋 ${cartSummary}</div>
-          ${stepsHtml(1, 3)}
+          ${stepsHtml(1, _stepTot())}
         </div>
         <div style="padding:24px">
           ${needSubdomain ? `
@@ -1813,7 +2074,7 @@ function showModal(step, privacyHtml = '') {
         <div style="padding:24px 24px 16px;border-bottom:1px solid #2a2f45">
           <div style="font-family:'Unbounded',sans-serif;font-size:1rem;font-weight:700;color:#e8eaf0">${getUI().verify_title}</div>
           <div style="font-size:0.85rem;color:#6b7280;margin-top:4px">${getUI().verify_sent} ${orderEmail}</div>
-          ${stepsHtml(2, 3)}
+          ${stepsHtml(2, _stepTot())}
         </div>
         <div style="padding:24px">
           <div style="margin-bottom:16px">
@@ -1833,11 +2094,44 @@ function showModal(step, privacyHtml = '') {
       if (e.key === 'Enter') verifyOrderCode();
     });
 
+  } else if (step === 'intake') { // 📝 №3а: анкета «Свой сайт» — сайт нараджаецца напоўнены. «Прапусціць» = ранейшыя паводзіны
+    const ui = getUI();
+    const inp = (id, ph, extra = '') => `<input type="text" id="${id}" placeholder="${_svcEsc(ph)}" ${extra}
+      style="width:100%;padding:11px 13px;background:#1e2335;border:1.5px solid #2a2f45;border-radius:8px;color:#e8eaf0;font-family:'Manrope',sans-serif;font-size:0.9rem" />`;
+    const lbl = t => `<label style="display:block;font-size:0.78rem;font-weight:600;color:#6b7280;text-transform:uppercase;letter-spacing:0.07em;margin:14px 0 6px">${_svcEsc(t)}</label>`;
+    const offerRow = i => `<div style="display:flex;gap:8px;margin-bottom:8px">
+      <div style="flex:2">${inp('ik-off-name-' + i, ui.intake_offer_name)}</div>
+      <div style="flex:1">${inp('ik-off-price-' + i, ui.intake_offer_price)}</div></div>`;
+    modal.innerHTML = `
+      <div style="background:#181c27;border:1px solid #2a2f45;border-radius:16px;max-width:520px;width:100%;max-height:86vh;display:flex;flex-direction:column;overflow:hidden;position:relative">
+        <button onclick="closeOrderModal()" style="position:absolute;top:14px;right:14px;background:none;border:none;color:#6b7280;cursor:pointer;font-size:1.2rem;line-height:1;padding:4px;border-radius:4px;z-index:1" onmouseenter="this.style.color='#e8eaf0'" onmouseleave="this.style.color='#6b7280'">✕</button>
+        <div style="padding:24px 24px 16px;border-bottom:1px solid #2a2f45">
+          <div style="font-family:'Unbounded',sans-serif;font-size:1rem;font-weight:700;color:#e8eaf0">${_svcEsc(ui.intake_title)}</div>
+          <div style="font-size:0.85rem;color:#6b7280;margin-top:4px">${_svcEsc(ui.intake_hint)}</div>
+          ${stepsHtml(3, _stepTot())}
+        </div>
+        <div style="padding:20px 24px;overflow-y:auto">
+          ${lbl(ui.intake_company)}${inp('ik-company', ui.intake_company_ph)}
+          ${lbl(ui.intake_field)}${inp('ik-field', ui.intake_field_ph)}
+          ${lbl(ui.intake_about)}<textarea id="ik-about" rows="3" placeholder="${_svcEsc(ui.intake_about_ph)}"
+            style="width:100%;padding:11px 13px;background:#1e2335;border:1.5px solid #2a2f45;border-radius:8px;color:#e8eaf0;font-family:'Manrope',sans-serif;font-size:0.9rem;resize:vertical"></textarea>
+          ${lbl(ui.intake_phone)}${inp('ik-phone', ui.intake_phone_ph)}
+          ${lbl(ui.intake_address)}${inp('ik-address', ui.intake_address_ph)}
+          ${lbl(ui.intake_offers)}
+          <div style="font-size:0.75rem;color:#6b7280;margin:-2px 0 8px">${_svcEsc(ui.intake_offers_hint)}</div>
+          ${[0, 1, 2].map(offerRow).join('')}
+          <div id="intake-error" style="display:none;color:#ef4444;font-size:0.85rem;margin-top:8px"></div>
+        </div>
+        <div style="padding:16px 24px 22px;border-top:1px solid #2a2f45;display:flex;gap:10px">
+          <button onclick="submitIntake(true)" style="flex:1;padding:12px;background:none;border:1.5px solid #2a2f45;border-radius:8px;color:#6b7280;font-family:'Manrope',sans-serif;font-size:0.9rem;font-weight:600;cursor:pointer">${_svcEsc(ui.intake_skip)}</button>
+          <button id="intake-submit-btn" onclick="submitIntake(false)" style="flex:2;padding:12px;background:#f97316;border:none;border-radius:8px;color:#fff;font-family:'Manrope',sans-serif;font-size:0.9rem;font-weight:700;cursor:pointer">${_svcEsc(ui.intake_submit)}</button>
+        </div>
+      </div>`;
   } else if (step === 'done') {
     const isSubdomain = !!desiredSubdomain;
     modal.innerHTML = `
       <div style="background:#181c27;border:1px solid #2a2f45;border-radius:16px;max-width:420px;width:100%;padding:48px 32px;text-align:center">
-        <div style="display:flex;justify-content:center;margin-bottom:24px">${stepsHtml(3, 3)}</div>
+        <div style="display:flex;justify-content:center;margin-bottom:24px">${stepsHtml(_stepTot(), _stepTot())}</div>
         <div style="font-size:3rem;margin-bottom:16px">${isSubdomain ? '🚀' : '✅'}</div>
         <div style="font-family:'Unbounded',sans-serif;font-size:1rem;font-weight:700;color:#e8eaf0;margin-bottom:8px">${getUI().done_title}</div>
         <div style="font-size:0.9rem;color:#6b7280;margin-bottom:24px">${isSubdomain
@@ -1909,6 +2203,30 @@ async function checkSubdomainAvailability(subdomain) {
   } catch {
     if (status) { status.textContent = getUI().subdomain_check_err; status.style.color = '#ef4444'; }
     subdomainAvailable = false;
+  }
+}
+
+// Агульны лік крокаў мадала: анкета (№3а) — толькі для заказу «Свой сайт»
+function _stepTot() { return desiredSubdomain ? 4 : 3; }
+// 📝 №3а: сабраць анкету і завяршыць заказ. skip=true → orderIntake застаецца null (паводзіны да №3а).
+// Валідацыі «абавязковых» палёў НЯМА свядома: анкета цалкам апцыянальная, сервер сам нармалізуе і абрэжа.
+async function submitIntake(skip) {
+  const btn = document.getElementById('intake-submit-btn');
+  const errEl = document.getElementById('intake-error');
+  const val = id => (document.getElementById(id)?.value || '').trim();
+  if (!skip) {
+    const offers = [0, 1, 2].map(i => ({ name: val('ik-off-name-' + i), price: val('ik-off-price-' + i) })).filter(o => o.name);
+    const ik = { companyName: val('ik-company'), field: val('ik-field'), about: val('ik-about'),
+      phone: val('ik-phone'), address: val('ik-address'), offers };
+    orderIntake = Object.values(ik).some(v => (Array.isArray(v) ? v.length : v)) ? ik : null; // усё пустое = тое ж «прапусціць»
+  }
+  if (btn) { btn.disabled = true; btn.textContent = getUI().intake_saving; }
+  try {
+    await registerOrder();
+    showModal('done');
+  } catch (e) {
+    if (errEl) { errEl.style.display = 'block'; errEl.textContent = e.message || getUI().form_err_connection; }
+    if (btn) { btn.disabled = false; btn.textContent = getUI().intake_submit; }
   }
 }
 
@@ -2003,7 +2321,8 @@ async function registerOrder() {
       siteLanguages: orderSiteLangs.length > 0 ? orderSiteLangs : undefined,
       ...(orderDelivery ? { deliveryAddress: orderDelivery } : {}), // C2a: выбраны адрас дастаўкі
       ...(orderDeliveryCost != null ? { deliveryCost: orderDeliveryCost, deliveryZone: orderDeliveryZone } : {}), // C2b: налічаны кошт+зона
-      ...(desiredSubdomain ? { desiredSubdomain } : {})
+      ...(desiredSubdomain ? { desiredSubdomain } : {}),
+      ...(orderIntake ? { intake: orderIntake } : {}) // №3а: анкета «Свой сайт» (апцыянальная)
     })
   });
   if (!regRes.ok) {
@@ -2034,9 +2353,9 @@ async function verifyOrderCode() {
       return;
     }
 
-    // 2. Захоўваем кліента ў базу (праз Worker) — агульны шлях з кабінет-заказам
+    // 2. №3а: «Свой сайт» → крок анкеты (сайт народзіцца напоўнены). Іншыя заказы — як раней.
+    if (desiredSubdomain) { showModal('intake'); return; }
     await registerOrder();
-
     showModal('done');
   } catch {
     errEl.textContent = ui.form_err_connection;
