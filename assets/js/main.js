@@ -2439,7 +2439,25 @@ function _dAddOptionsHtml(parentId) {
   const mi = (icon, label, onclick) => `<button class="ds-mi" onclick="${onclick}">${icon} ${_svcEsc(label)}</button>`;
   const pid = parentId ? `'${_dsEsc(parentId)}'` : 'null';
   return _D_ADD_TYPES.map(t => mi(t[1], _dL(t[2], t[3]), `_dAddNode('section','${t[0]}',${pid})`)).join('')
-    + mi('📁', _dL('Раздзел', 'Folder'), `_dAddNode('folder','',${pid})`);
+    + mi('📁', _dL('Раздзел', 'Folder'), `_dAddNode('folder','',${pid})`)
+    + mi('📷', _dL('Фота', 'Photo'), `_dFileAdd(${pid})`);
+}
+// 📷 бяспечная загрузка фота на месцы: image-only + ≤4МБ (сервер таксама правярае); base64 → draft_file → новы ФайлБлок
+function _fileToB64(f) { return new Promise((res, rej) => { const r = new FileReader(); r.onload = () => res(String(r.result).split(',')[1] || ''); r.onerror = rej; r.readAsDataURL(f); }); }
+function _dFileAdd(parentId) {
+  _dMenuClose();
+  const inp = document.createElement('input'); inp.type = 'file'; inp.accept = 'image/*'; inp.multiple = true;
+  inp.onchange = async () => {
+    const files = [...(inp.files || [])].slice(0, 10); const tok = new URLSearchParams(location.search).get('look');
+    let skipped = 0, ok = 0;
+    for (const f of files) {
+      if (!f.type.startsWith('image/') || f.size > 4 * 1024 * 1024) { skipped++; continue; } // толькі выявы ≤4МБ (сервер дублюе праверку)
+      try { const data = await _fileToB64(f); const r = await _draftPost({ action: 'draft_file', repo: SITE_REPO, lookToken: tok, parentId: parentId || null, contentType: f.type, data }); if (r && r.ok) ok++; else skipped++; } catch (e) { skipped++; } // праз чаргу (без гонкі з draft_set)
+    }
+    if (ok) await _dReload();
+    if (skipped) siteConfirm(_dL('Прапушчана файлаў: ', 'Files skipped: ') + skipped + '\n' + _dL('(толькі выявы да 4 МБ)', '(images up to 4 MB only)'), () => {});
+  };
+  inp.click();
 }
 function _dAddMenu(parentId, btn) { // пікер «Дадаць» на ўзроўні старонкі (з ніжняй панэлі)
   if (document.getElementById('ds-menu')) { _dMenuClose(); return; }
