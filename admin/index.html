@@ -2396,6 +2396,7 @@ async function _bootAfterAuth() {
   // пераключалка ёсць і на login-экране (login-lang-picker), і ў тапбары — чалавек выбірае сам)
   await loadSections();
   showPanel();
+  if (_wizActive()) _wizGo(); // 🧭 новы сайт — правесці ўладальніка па 4 кроках (existing сайты: wizardStep undefined → нічога)
 }
 
 let _resetEmail = ''; // email, для якога запытаны код скіду (фіксуецца пры адпраўцы — поле магло змяніцца)
@@ -7955,14 +7956,44 @@ function _navReturnGo() {
   const ret = _navReturn; _navReturn = null; _navClearPick(); _navBannerRender();
   if (ret) { _navFlowClick = true; document.querySelector(`.nav-item[data-page="${ret.page}"]`)?.click(); }
 }
+
+// ═══ 🧭 МАЙСТАР ПЕРШАГА ЎВАХОДУ (№3б) ═══
+// НЕ новы UI-фрэймворк: гэта паслядоўнасць звычайных `_navToNode`-пераходаў + той самы банер,
+// што ўжо абслугоўвае «← Вярнуцца» і рэжым выбару. Крокі — дэкларатыўны каталог.
+// Прагрэс жыве ў `settings.wizardStep`. Ключавое: поле ствараецца ТОЛЬКІ пры стварэнні сайта
+// (`_buildInitialSettings`), таму на існуючых сайтах яно undefined і майстар не выскоквае.
+const WIZARD_STEPS = [
+  { page: 'general',  node: () => (settings.companyTree || []).find(n => n.contentType === 'company-logos')?.id, hint: 'wiz_logo' },
+  { page: 'general',  node: () => (settings.companyTree || []).find(n => n.parentId == null && n.fields)?.id,    hint: 'wiz_contacts' },
+  { page: 'theme',    hint: 'wiz_colors' },
+  { page: 'sections', hint: 'wiz_catalog' }
+];
+const _wizActive = () => typeof settings.wizardStep === 'number' && settings.wizardStep >= 0 && settings.wizardStep < WIZARD_STEPS.length;
+function _wizGo() { // перайсці на бягучы крок
+  if (!_wizActive()) { _navBannerRender(); return; }
+  const st = WIZARD_STEPS[settings.wizardStep];
+  _navToNode(st.page, st.node ? st.node() : null); // банер перамалюецца ўнутры
+}
+function _wizNext() { if (!_wizActive()) return; settings.wizardStep++; _settingsSaveKick(); _wizGo(); }
+function _wizSkip() { // «Пазней» — майстар больш не паказваецца (−1 = свядома завершаны)
+  showConfirm(t('wiz_skip_confirm'), () => { settings.wizardStep = -1; _settingsSaveKick(); _navBannerRender(); }, { danger: false });
+}
+
 function _navBannerRender() {
   let b = document.getElementById('nav-return-banner');
-  if (!_navReturn && !_navPick) { if (b) b.remove(); return; }
+  if (!_navReturn && !_navPick && !_wizActive()) { if (b) b.remove(); return; }
   if (!b) { b = document.createElement('div'); b.id = 'nav-return-banner'; b.style.cssText = 'position:fixed;top:0;left:0;right:0;z-index:100000;background:var(--accent);color:#fff;padding:10px 16px;display:flex;align-items:center;gap:12px;justify-content:center;font-weight:600;box-shadow:0 2px 10px rgba(0,0,0,.45)'; document.body.appendChild(b); }
   const originLabel = _navReturn ? (document.querySelector(`.nav-item[data-page="${_navReturn.page}"] span:last-child`)?.textContent?.trim() || '') : '';
   const hint = _navPick ? `<span>«✓ ${escHtml(t('nav_select'))}»</span>` : ''; // рэжым выбару: падказка
-  const back = `<button onclick="_navReturnGo()" style="background:rgba(0,0,0,0.25);color:#fff;border:none;border-radius:6px;padding:5px 14px;cursor:pointer;font-weight:700">${_navPick ? '✕ ' + escHtml(t('btn_cancel')) : '← ' + escHtml(t('nav_return'))}${originLabel && !_navPick ? ': ' + escHtml(originLabel) : ''}</button>`;
-  b.innerHTML = hint + back;
+  const back = (_navReturn || _navPick) ? `<button onclick="_navReturnGo()" style="background:rgba(0,0,0,0.25);color:#fff;border:none;border-radius:6px;padding:5px 14px;cursor:pointer;font-weight:700">${_navPick ? '✕ ' + escHtml(t('btn_cancel')) : '← ' + escHtml(t('nav_return'))}${originLabel && !_navPick ? ': ' + escHtml(originLabel) : ''}</button>` : '';
+  // 🧭 Майстар першага ўваходу — той самы банер (не новы элемент): «Крок N з M · падказка · Далей · Пазней»
+  const wizBtn = (label, fn, solid) => `<button onclick="${fn}" style="background:${solid ? '#fff' : 'rgba(0,0,0,0.25)'};color:${solid ? 'var(--accent)' : '#fff'};border:none;border-radius:6px;padding:5px 14px;cursor:pointer;font-weight:700">${escHtml(label)}</button>`;
+  const last = _wizActive() && settings.wizardStep === WIZARD_STEPS.length - 1;
+  const wiz = _wizActive()
+    ? `<span>${escHtml(t('wiz_step').replace('{n}', settings.wizardStep + 1).replace('{m}', WIZARD_STEPS.length))}: ${escHtml(t(WIZARD_STEPS[settings.wizardStep].hint))}</span>`
+      + wizBtn(last ? t('wiz_finish') : t('wiz_next') + ' →', '_wizNext()', true) + wizBtn(t('wiz_later'), '_wizSkip()')
+    : '';
+  b.innerHTML = wiz + hint + back;
 }
 function goToClientCard(clientId) { _navToNode('clients', clientId); }
 function goToOrder(orderId) { _navToNode('orders', orderId); }
