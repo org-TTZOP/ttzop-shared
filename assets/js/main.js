@@ -134,7 +134,8 @@ function _applyPriceConversion() {
 }
 
 const UI_T = {
-  be: { show_more:'Паказаць яшчэ', show_less:'Скрыць', view_toggle:'Карткі / Спіс',
+  be: {
+    book_title: "Запіс на {name}", book_date: "Дата", book_time: "Час", book_loading: "Шукаем вольны час…", book_none: "На гэты дзень вольнага часу няма", book_confirm: "Запісацца на {d} а {t}?", book_done: "Гатова! Вы запісаны на {d} а {t}. Дэталі — у кабінеце.", book_taken: "Гэты час толькі што занялі. Выберыце іншы.", book_login: "Каб запісацца, увайдзіце ў кабінет", book_err: "Не атрымалася. Паспрабуйце пазней", show_more:'Паказаць яшчэ', show_less:'Скрыць', view_toggle:'Карткі / Спіс',
     hours_your_tz: 'у вашым поясе:', sched_dayoff: 'выходны', sched_everyday: 'Штодня',
     cart_title: 'Кошык: {n} паслуг(і)', cart_clear: 'Ачысціць', cart_order: 'Аформіць заказ →', cart_remove: 'Выдаліць', cart_subtotal: 'Сума', cart_delivery: 'Дастаўка', cart_total: 'Разам', cart_empty: 'Кошык пусты', cab_chat: 'Чат', cab_logout: 'Выйсці', cab_cabinet: 'Кабінет', cart_address: 'Адрас дастаўкі', cart_addr_none: 'Дадаць адрас у кабінеце', cab_logout_confirm: 'Выйсці з кабінета? Наступны ўваход — толькі праз новы код на email.',
     cart_added: '🛒 У кошыку ({n})', cta_book: 'Запісацца', price_from_pfx:'ад', price_quote:'Па дамове', badge_hit:'Хіт', badge_new:'Новае', badge_promo:'Акцыя', chat_book_pfx:'Хачу запісацца: {name}', ask_btn:'Спытаць', chat_ask_pfx:'Пытанне пра: {name}', sub_btn:'Аформіць падпіску', chat_sub_pfx:'Хачу аформіць падпіску: {name}', per_month:'/мес', per_year:'/год', look_note:'Рэжым прагляду канцэптаў — гэта НЕ рэальны выгляд сайта', look_colors:'Колеры', look_designs:'Паводзіны', look_apply:'Выбраць гэты варыянт', add_to_cart: '🛒 У кошык', reader_pdfprint: 'PDF / Друк', reader_close: 'Закрыць', reader_share: 'Падзяліцца', reader_copied: 'Скапіравана', read_in_tab: 'Чытаць у новым акне', read_more: 'Чытаць далей',
@@ -177,7 +178,8 @@ const UI_T = {
     subdomain_invalid: 'Толькі малыя літары, лічбы і злучок. Ад 3 да 30 знакаў.',
     subdomain_free: '✅ {subdomain}.ttzop.com — вольны!', subdomain_check_err: 'Памылка праверкі',
   },
-  en: { show_more:'Show more', show_less:'Hide', view_toggle:'Cards / List',
+  en: {
+    book_title: "Book {name}", book_date: "Date", book_time: "Time", book_loading: "Looking for free time…", book_none: "No free time on this day", book_confirm: "Book {d} at {t}?", book_done: "Done! You are booked for {d} at {t}. Details are in your account.", book_taken: "That time was just taken. Please pick another.", book_login: "Sign in to your account to book", book_err: "Something went wrong. Please try later", show_more:'Show more', show_less:'Hide', view_toggle:'Cards / List',
     hours_your_tz: 'your time:', sched_dayoff: 'day off', sched_everyday: 'Every day',
     cart_title: 'Cart: {n} item(s)', cart_clear: 'Clear', cart_order: 'Place order →', cart_remove: 'Remove', cart_subtotal: 'Subtotal', cart_delivery: 'Delivery', cart_total: 'Total', cart_empty: 'Cart is empty', cab_chat: 'Chat', cab_logout: 'Log out', cab_cabinet: 'Account', cart_address: 'Delivery address', cart_addr_none: 'Add an address in your account', cab_logout_confirm: 'Log out? Next time you\'ll need a new email code to sign in.',
     cart_added: '🛒 In cart ({n})', cta_book: 'Book now', price_from_pfx:'from', price_quote:'Price on request', badge_hit:'Top', badge_new:'New', badge_promo:'Sale', chat_book_pfx:'I would like to book: {name}', ask_btn:'Ask a question', chat_ask_pfx:'Question about: {name}', sub_btn:'Subscribe', chat_sub_pfx:'I would like to subscribe: {name}', per_month:'/mo', per_year:'/yr', look_note:'Concept preview mode — this is NOT the live site look', look_colors:'Colors', look_designs:'Behavior', look_apply:'Choose this look', add_to_cart: '🛒 Add to cart', reader_pdfprint: 'PDF / Print', reader_close: 'Close', reader_share: 'Share', reader_copied: 'Copied', read_in_tab: 'Read in new tab', read_more: 'Read more',
@@ -220,7 +222,8 @@ const UI_T = {
     subdomain_invalid: 'Only lowercase letters, numbers and hyphens. 3 to 30 characters.',
     subdomain_free: '✅ {subdomain}.ttzop.com — available!', subdomain_check_err: 'Check error',
   },
-  uk: { show_more:'Показати ще', show_less:'Сховати', view_toggle:'Картки / Список',
+  uk: {
+    book_title: "Запис на {name}", book_date: "Дата", book_time: "Час", book_loading: "Шукаємо вільний час…", book_none: "На цей день вільного часу немає", book_confirm: "Записатися на {d} о {t}?", book_done: "Готово! Вас записано на {d} о {t}. Деталі — в кабінеті.", book_taken: "Цей час щойно зайняли. Оберіть інший.", book_login: "Щоб записатися, увійдіть до кабінету", book_err: "Не вдалося. Спробуйте пізніше", show_more:'Показати ще', show_less:'Сховати', view_toggle:'Картки / Список',
     hours_your_tz: 'у вашому поясі:', sched_dayoff: 'вихідний', sched_everyday: 'Щодня',
     cart_title: 'Кошик: {n} послуг(и)', cart_clear: 'Очистити', cart_order: 'Оформити замовлення →', cart_remove: 'Видалити', cart_subtotal: 'Сума', cart_delivery: 'Доставка', cart_total: 'Разом', cart_empty: 'Кошик порожній', cab_chat: 'Чат', cab_logout: 'Вийти', cab_cabinet: 'Кабінет', cart_address: 'Адреса доставки', cart_addr_none: 'Додати адресу в кабінеті', cab_logout_confirm: 'Вийти з кабінету? Наступний вхід — лише через новий код на email.',
     cart_added: '🛒 У кошику ({n})', cta_book: 'Записатися', price_from_pfx:'від', price_quote:'За домовленістю', badge_hit:'Хіт', badge_new:'Нове', badge_promo:'Акція', chat_book_pfx:'Хочу записатися: {name}', ask_btn:'Запитати', chat_ask_pfx:'Питання про: {name}', sub_btn:'Оформити підписку', chat_sub_pfx:'Хочу оформити підписку: {name}', per_month:'/міс', per_year:'/рік', look_note:'Режим перегляду концептів — це НЕ реальний вигляд сайту', look_colors:'Кольори', look_designs:'Поведінка', look_apply:'Обрати цей варіант', add_to_cart: '🛒 У кошик', reader_pdfprint: 'PDF / Друк', reader_close: 'Закрити', reader_share: 'Поділитися', reader_copied: 'Скопійовано', read_in_tab: 'Читати в новій вкладці', read_more: 'Читати далі',
@@ -263,7 +266,8 @@ const UI_T = {
     subdomain_invalid: 'Тільки малі літери, цифри і дефіс. Від 3 до 30 символів.',
     subdomain_free: '✅ {subdomain}.ttzop.com — вільний!', subdomain_check_err: 'Помилка перевірки',
   },
-  ru: { show_more:'Показать ещё', show_less:'Скрыть', view_toggle:'Карточки / Список',
+  ru: {
+    book_title: "Запись на {name}", book_date: "Дата", book_time: "Время", book_loading: "Ищем свободное время…", book_none: "На этот день свободного времени нет", book_confirm: "Записаться на {d} в {t}?", book_done: "Готово! Вы записаны на {d} в {t}. Детали — в кабинете.", book_taken: "Это время только что заняли. Выберите другое.", book_login: "Чтобы записаться, войдите в кабинет", book_err: "Не получилось. Попробуйте позже", show_more:'Показать ещё', show_less:'Скрыть', view_toggle:'Карточки / Список',
     hours_your_tz: 'в вашем поясе:', sched_dayoff: 'выходной', sched_everyday: 'Ежедневно',
     cart_title: 'Корзина: {n} услуг(и)', cart_clear: 'Очистить', cart_order: 'Оформить заказ →', cart_remove: 'Удалить', cart_subtotal: 'Сумма', cart_delivery: 'Доставка', cart_total: 'Итого', cart_empty: 'Корзина пуста', cab_chat: 'Чат', cab_logout: 'Выйти', cab_cabinet: 'Кабинет', cart_address: 'Адрес доставки', cart_addr_none: 'Добавить адрес в кабинете', cab_logout_confirm: 'Выйти из кабинета? Следующий вход — только через новый код на email.',
     cart_added: '🛒 В корзине ({n})', cta_book: 'Записаться', price_from_pfx:'от', price_quote:'По договорённости', badge_hit:'Хит', badge_new:'Новое', badge_promo:'Акция', chat_book_pfx:'Хочу записаться: {name}', ask_btn:'Спросить', chat_ask_pfx:'Вопрос о: {name}', sub_btn:'Оформить подписку', chat_sub_pfx:'Хочу оформить подписку: {name}', per_month:'/мес', per_year:'/год', look_note:'Режим просмотра концептов — это НЕ реальный вид сайта', look_colors:'Цвета', look_designs:'Поведение', look_apply:'Выбрать этот вариант', add_to_cart: '🛒 В корзину', reader_pdfprint: 'PDF / Печать', reader_close: 'Закрыть', reader_share: 'Поделиться', reader_copied: 'Скопировано', read_in_tab: 'Читать в новой вкладке', read_more: 'Читать далее',
@@ -306,7 +310,8 @@ const UI_T = {
     subdomain_invalid: 'Только строчные буквы, цифры и дефис. От 3 до 30 символов.',
     subdomain_free: '✅ {subdomain}.ttzop.com — свободен!', subdomain_check_err: 'Ошибка проверки',
   },
-  pl: { show_more:'Pokaż więcej', show_less:'Ukryj', view_toggle:'Karty / Lista',
+  pl: {
+    book_title: "Rezerwacja: {name}", book_date: "Data", book_time: "Godzina", book_loading: "Szukamy wolnych terminów…", book_none: "Brak wolnych terminów tego dnia", book_confirm: "Zarezerwować {d} o {t}?", book_done: "Gotowe! Rezerwacja na {d} o {t}. Szczegóły w panelu klienta.", book_taken: "Ten termin właśnie zajęto. Wybierz inny.", book_login: "Zaloguj się, aby zarezerwować", book_err: "Nie udało się. Spróbuj później", show_more:'Pokaż więcej', show_less:'Ukryj', view_toggle:'Karty / Lista',
     hours_your_tz: 'u Ciebie:', sched_dayoff: 'wolne', sched_everyday: 'Codziennie',
     cart_title: 'Koszyk: {n} usług(i)', cart_clear: 'Wyczyść', cart_order: 'Złóż zamówienie →', cart_remove: 'Usuń', cart_subtotal: 'Suma', cart_delivery: 'Dostawa', cart_total: 'Razem', cart_empty: 'Koszyk jest pusty', cab_chat: 'Czat', cab_logout: 'Wyloguj', cab_cabinet: 'Konto', cart_address: 'Adres dostawy', cart_addr_none: 'Dodaj adres w koncie', cab_logout_confirm: 'Wylogować się? Następne logowanie będzie wymagać nowego kodu e-mail.',
     cart_added: '🛒 W koszyku ({n})', cta_book: 'Umów się', price_from_pfx:'od', price_quote:'Cena do uzgodnienia', badge_hit:'Hit', badge_new:'Nowość', badge_promo:'Promocja', chat_book_pfx:'Chcę się umówić: {name}', ask_btn:'Zapytaj', chat_ask_pfx:'Pytanie o: {name}', sub_btn:'Subskrybuj', chat_sub_pfx:'Chcę wykupić subskrypcję: {name}', per_month:'/mies.', per_year:'/rok', look_note:'Tryb podglądu koncepcji — to NIE jest realny wygląd strony', look_colors:'Kolory', look_designs:'Zachowanie', look_apply:'Wybierz ten wariant', add_to_cart: '🛒 Do koszyka', reader_pdfprint: 'PDF / Drukuj', reader_close: 'Zamknij', reader_share: 'Udostępnij', reader_copied: 'Skopiowano', read_in_tab: 'Otwórz w nowej karcie', read_more: 'Czytaj dalej',
@@ -349,7 +354,8 @@ const UI_T = {
     subdomain_invalid: 'Tylko małe litery, cyfry i myślnik. Od 3 do 30 znaków.',
     subdomain_free: '✅ {subdomain}.ttzop.com — wolny!', subdomain_check_err: 'Błąd sprawdzania',
   },
-  de: { show_more:'Mehr anzeigen', show_less:'Ausblenden', view_toggle:'Karten / Liste',
+  de: {
+    book_title: "Termin: {name}", book_date: "Datum", book_time: "Uhrzeit", book_loading: "Freie Zeiten werden gesucht…", book_none: "An diesem Tag sind keine Termine frei", book_confirm: "Termin am {d} um {t} buchen?", book_done: "Fertig! Ihr Termin: {d} um {t}. Details im Kundenkonto.", book_taken: "Dieser Termin wurde gerade vergeben. Bitte wählen Sie einen anderen.", book_login: "Zum Buchen bitte im Kundenkonto anmelden", book_err: "Hat nicht geklappt. Bitte später versuchen", show_more:'Mehr anzeigen', show_less:'Ausblenden', view_toggle:'Karten / Liste',
     hours_your_tz: 'bei Ihnen:', sched_dayoff: 'geschlossen', sched_everyday: 'Täglich',
     cart_title: 'Warenkorb: {n} Leistung(en)', cart_clear: 'Leeren', cart_order: 'Bestellen →', cart_remove: 'Entfernen', cart_subtotal: 'Zwischensumme', cart_delivery: 'Lieferung', cart_total: 'Gesamt', cart_empty: 'Warenkorb ist leer', cab_chat: 'Chat', cab_logout: 'Abmelden', cab_cabinet: 'Konto', cart_address: 'Lieferadresse', cart_addr_none: 'Adresse im Konto hinzufügen', cab_logout_confirm: 'Abmelden? Für die nächste Anmeldung benötigen Sie einen neuen E-Mail-Code.',
     cart_added: '🛒 Im Warenkorb ({n})', cta_book: 'Termin buchen', price_from_pfx:'ab', price_quote:'Preis auf Anfrage', badge_hit:'Top', badge_new:'Neu', badge_promo:'Aktion', chat_book_pfx:'Ich möchte einen Termin buchen: {name}', ask_btn:'Frage stellen', chat_ask_pfx:'Frage zu: {name}', sub_btn:'Abonnieren', chat_sub_pfx:'Ich möchte abonnieren: {name}', per_month:'/Mon.', per_year:'/Jahr', look_note:'Konzept-Vorschau — NICHT das echte Erscheinungsbild der Website', look_colors:'Farben', look_designs:'Verhalten', look_apply:'Diesen Look wählen', add_to_cart: '🛒 In den Warenkorb', reader_pdfprint: 'PDF / Druck', reader_close: 'Schließen', reader_share: 'Teilen', reader_copied: 'Kopiert', read_in_tab: 'In neuem Tab öffnen', read_more: 'Weiterlesen',
@@ -392,7 +398,8 @@ const UI_T = {
     subdomain_invalid: 'Nur Kleinbuchstaben, Ziffern und Bindestriche. 3 bis 30 Zeichen.',
     subdomain_free: '✅ {subdomain}.ttzop.com — verfügbar!', subdomain_check_err: 'Prüffehler',
   },
-  fr: { show_more:'Afficher plus', show_less:'Masquer', view_toggle:'Cartes / Liste',
+  fr: {
+    book_title: "Réserver : {name}", book_date: "Date", book_time: "Heure", book_loading: "Recherche de créneaux…", book_none: "Aucun créneau libre ce jour-là", book_confirm: "Réserver le {d} à {t} ?", book_done: "C'est fait ! Rendez-vous le {d} à {t}. Détails dans votre espace client.", book_taken: "Ce créneau vient d'être pris. Choisissez-en un autre.", book_login: "Connectez-vous à votre espace pour réserver", book_err: "Échec. Réessayez plus tard", show_more:'Afficher plus', show_less:'Masquer', view_toggle:'Cartes / Liste',
     hours_your_tz: 'chez vous :', sched_dayoff: 'fermé', sched_everyday: 'Tous les jours',
     cart_title: 'Panier : {n} service(s)', cart_clear: 'Vider', cart_order: 'Passer la commande →', cart_remove: 'Supprimer', cart_subtotal: 'Sous-total', cart_delivery: 'Livraison', cart_total: 'Total', cart_empty: 'Le panier est vide', cab_chat: 'Chat', cab_logout: 'Se déconnecter', cab_cabinet: 'Compte', cart_address: 'Adresse de livraison', cart_addr_none: 'Ajouter une adresse dans le compte', cab_logout_confirm: 'Se déconnecter ? La prochaine connexion nécessitera un nouveau code par e-mail.',
     cart_added: '🛒 Dans le panier ({n})', cta_book: 'Prendre RDV', price_from_pfx:'dès', price_quote:'Prix sur demande', badge_hit:'Top', badge_new:'Nouveau', badge_promo:'Promo', chat_book_pfx:'Je souhaite réserver : {name}', ask_btn:'Poser une question', chat_ask_pfx:'Question sur : {name}', sub_btn:'S\'abonner', chat_sub_pfx:'Je souhaite m\'abonner : {name}', per_month:'/mois', per_year:'/an', look_note:'Mode aperçu de concepts — ce n’est PAS l’apparence réelle du site', look_colors:'Couleurs', look_designs:'Comportement', look_apply:'Choisir ce style', add_to_cart: '🛒 Ajouter au panier', reader_pdfprint: 'PDF / Impr.', reader_close: 'Fermer', reader_share: 'Partager', reader_copied: 'Copié', read_in_tab: 'Ouvrir dans un onglet', read_more: 'Lire la suite',
@@ -435,7 +442,8 @@ const UI_T = {
     subdomain_invalid: 'Uniquement minuscules, chiffres et tirets. 3 à 30 caractères.',
     subdomain_free: '✅ {subdomain}.ttzop.com — disponible!', subdomain_check_err: 'Erreur de vérification',
   },
-  es: { show_more:'Mostrar más', show_less:'Ocultar', view_toggle:'Tarjetas / Lista',
+  es: {
+    book_title: "Reservar: {name}", book_date: "Fecha", book_time: "Hora", book_loading: "Buscando horas libres…", book_none: "No hay horas libres ese día", book_confirm: "¿Reservar el {d} a las {t}?", book_done: "¡Listo! Cita el {d} a las {t}. Detalles en tu cuenta.", book_taken: "Esa hora acaba de ocuparse. Elige otra.", book_login: "Inicia sesión para reservar", book_err: "No se pudo. Inténtalo más tarde", show_more:'Mostrar más', show_less:'Ocultar', view_toggle:'Tarjetas / Lista',
     hours_your_tz: 'en tu zona:', sched_dayoff: 'cerrado', sched_everyday: 'Todos los días',
     cart_title: 'Carrito: {n} servicio(s)', cart_clear: 'Vaciar', cart_order: 'Realizar pedido →', cart_remove: 'Eliminar', cart_subtotal: 'Subtotal', cart_delivery: 'Envío', cart_total: 'Total', cart_empty: 'El carrito está vacío', cab_chat: 'Chat', cab_logout: 'Cerrar sesión', cab_cabinet: 'Cuenta', cart_address: 'Dirección de entrega', cart_addr_none: 'Añadir dirección en tu cuenta', cab_logout_confirm: '¿Cerrar sesión? La próxima vez necesitarás un nuevo código por correo.',
     cart_added: '🛒 En el carrito ({n})', cta_book: 'Reservar', price_from_pfx:'desde', price_quote:'Precio a convenir', badge_hit:'Top', badge_new:'Nuevo', badge_promo:'Oferta', chat_book_pfx:'Quiero reservar: {name}', ask_btn:'Preguntar', chat_ask_pfx:'Pregunta sobre: {name}', sub_btn:'Suscribirse', chat_sub_pfx:'Quiero suscribirme: {name}', per_month:'/mes', per_year:'/año', look_note:'Modo de vista previa de conceptos — NO es el aspecto real del sitio', look_colors:'Colores', look_designs:'Comportamiento', look_apply:'Elegir esta variante', add_to_cart: '🛒 Añadir al carrito', reader_pdfprint: 'PDF / Imprimir', reader_close: 'Cerrar', reader_share: 'Compartir', reader_copied: 'Copiado', read_in_tab: 'Abrir en pestaña nueva', read_more: 'Leer más',
@@ -478,7 +486,8 @@ const UI_T = {
     subdomain_invalid: 'Solo minúsculas, números y guiones. De 3 a 30 caracteres.',
     subdomain_free: '✅ {subdomain}.ttzop.com — disponible!', subdomain_check_err: 'Error de verificación',
   },
-  it: { show_more:'Mostra altro', show_less:'Nascondi', view_toggle:'Schede / Elenco',
+  it: {
+    book_title: "Prenota: {name}", book_date: "Data", book_time: "Ora", book_loading: "Cerchiamo orari liberi…", book_none: "Nessun orario libero in questo giorno", book_confirm: "Prenotare il {d} alle {t}?", book_done: "Fatto! Appuntamento il {d} alle {t}. Dettagli nell'area clienti.", book_taken: "Questo orario è appena stato preso. Scegline un altro.", book_login: "Accedi all'area clienti per prenotare", book_err: "Non è riuscito. Riprova più tardi", show_more:'Mostra altro', show_less:'Nascondi', view_toggle:'Schede / Elenco',
     hours_your_tz: 'da te:', sched_dayoff: 'chiuso', sched_everyday: 'Ogni giorno',
     cart_title: 'Carrello: {n} servizio/i', cart_clear: 'Svuota', cart_order: 'Effettua ordine →', cart_remove: 'Rimuovi', cart_subtotal: 'Subtotale', cart_delivery: 'Consegna', cart_total: 'Totale', cart_empty: 'Il carrello è vuoto', cab_chat: 'Chat', cab_logout: 'Esci', cab_cabinet: 'Account', cart_address: 'Indirizzo di consegna', cart_addr_none: 'Aggiungi un indirizzo nel tuo account', cab_logout_confirm: 'Uscire? Al prossimo accesso servirà un nuovo codice via e-mail.',
     cart_added: '🛒 Nel carrello ({n})', cta_book: 'Prenota', price_from_pfx:'da', price_quote:'Prezzo su richiesta', badge_hit:'Top', badge_new:'Novità', badge_promo:'Offerta', chat_book_pfx:'Vorrei prenotare: {name}', ask_btn:'Chiedi', chat_ask_pfx:'Domanda su: {name}', sub_btn:'Abbonati', chat_sub_pfx:'Vorrei abbonarmi: {name}', per_month:'/mese', per_year:'/anno', look_note:'Anteprima dei concept — NON è l’aspetto reale del sito', look_colors:'Colori', look_designs:'Comportamento', look_apply:'Scegli questa variante', add_to_cart: '🛒 Aggiungi al carrello', reader_pdfprint: 'PDF / Stampa', reader_close: 'Chiudi', reader_share: 'Condividi', reader_copied: 'Copiato', read_in_tab: 'Apri in nuova scheda', read_more: 'Leggi tutto',
@@ -521,7 +530,8 @@ const UI_T = {
     subdomain_invalid: 'Solo lettere minuscole, numeri e trattini. Da 3 a 30 caratteri.',
     subdomain_free: '✅ {subdomain}.ttzop.com — disponibile!', subdomain_check_err: 'Errore di verifica',
   },
-  pt: { show_more:'Mostrar mais', show_less:'Ocultar', view_toggle:'Cartões / Lista',
+  pt: {
+    book_title: "Marcar: {name}", book_date: "Data", book_time: "Hora", book_loading: "A procurar horários livres…", book_none: "Não há horários livres neste dia", book_confirm: "Marcar {d} às {t}?", book_done: "Pronto! Marcação em {d} às {t}. Detalhes na sua conta.", book_taken: "Esse horário acabou de ser ocupado. Escolha outro.", book_login: "Entre na sua conta para marcar", book_err: "Não foi possível. Tente mais tarde", show_more:'Mostrar mais', show_less:'Ocultar', view_toggle:'Cartões / Lista',
     hours_your_tz: 'no seu fuso:', sched_dayoff: 'fechado', sched_everyday: 'Todos os dias',
     cart_title: 'Carrinho: {n} serviço(s)', cart_clear: 'Limpar', cart_order: 'Fazer pedido →', cart_remove: 'Remover', cart_subtotal: 'Subtotal', cart_delivery: 'Entrega', cart_total: 'Total', cart_empty: 'O carrinho está vazio', cab_chat: 'Chat', cab_logout: 'Sair', cab_cabinet: 'Conta', cart_address: 'Endereço de entrega', cart_addr_none: 'Adicionar endereço na sua conta', cab_logout_confirm: 'Sair? No próximo acesso será necessário um novo código por e-mail.',
     cart_added: '🛒 No carrinho ({n})', cta_book: 'Agendar', price_from_pfx:'desde', price_quote:'Preço sob consulta', badge_hit:'Top', badge_new:'Novo', badge_promo:'Promoção', chat_book_pfx:'Quero agendar: {name}', ask_btn:'Perguntar', chat_ask_pfx:'Pergunta sobre: {name}', sub_btn:'Subscrever', chat_sub_pfx:'Quero subscrever: {name}', per_month:'/mês', per_year:'/ano', look_note:'Modo de pré-visualização — NÃO é a aparência real do site', look_colors:'Cores', look_designs:'Comportamento', look_apply:'Escolher esta variante', add_to_cart: '🛒 Adicionar ao carrinho', reader_pdfprint: 'PDF / Imprimir', reader_close: 'Fechar', reader_share: 'Partilhar', reader_copied: 'Copiado', read_in_tab: 'Abrir em novo separador', read_more: 'Ler mais',
@@ -564,7 +574,8 @@ const UI_T = {
     subdomain_invalid: 'Apenas letras minúsculas, números e hífens. De 3 a 30 caracteres.',
     subdomain_free: '✅ {subdomain}.ttzop.com — disponível!', subdomain_check_err: 'Erro de verificação',
   },
-  zh: { show_more:'显示更多', show_less:'收起', view_toggle:'卡片 / 列表',
+  zh: {
+    book_title: "预约：{name}", book_date: "日期", book_time: "时间", book_loading: "正在查找空闲时间…", book_none: "当天没有空闲时间", book_confirm: "预约 {d} {t}？", book_done: "完成！已为您预约 {d} {t}。详情请见客户中心。", book_taken: "该时段刚被占用，请另选一个。", book_login: "请先登录客户中心再预约", book_err: "操作失败，请稍后再试", show_more:'显示更多', show_less:'收起', view_toggle:'卡片 / 列表',
     hours_your_tz: '您的时间：', sched_dayoff: '休息', sched_everyday: '每天',
     cart_title: '购物车：{n} 项服务', cart_clear: '清空', cart_order: '下单 →', cart_remove: '删除', cart_subtotal: '小计', cart_delivery: '配送', cart_total: '合计', cart_empty: '购物车为空', cab_chat: '聊天', cab_logout: '退出', cab_cabinet: '我的账户', cart_address: '配送地址', cart_addr_none: '在账户中添加地址', cab_logout_confirm: '确定退出吗？下次登录需要新的邮箱验证码。',
     cart_added: '🛒 已加入购物车（{n}）', cta_book: '立即预约', price_from_pfx:'低至', price_quote:'价格面议', badge_hit:'热门', badge_new:'新品', badge_promo:'促销', chat_book_pfx:'我想预约：{name}', ask_btn:'咨询', chat_ask_pfx:'咨询：{name}', sub_btn:'订阅', chat_sub_pfx:'我想订阅：{name}', per_month:'/月', per_year:'/年', look_note:'概念预览模式 — 这不是网站的真实外观', look_colors:'颜色', look_designs:'行为', look_apply:'选择此方案', add_to_cart: '🛒 加入购物车', reader_pdfprint: 'PDF / 打印', reader_close: '关闭', reader_share: '分享', reader_copied: '已复制', read_in_tab: '在新标签页打开', read_more: '阅读更多',
@@ -607,7 +618,8 @@ const UI_T = {
     subdomain_invalid: '只能使用小写字母、数字和连字符。3至30个字符。',
     subdomain_free: '✅ {subdomain}.ttzop.com — 可用！', subdomain_check_err: '检查错误',
   },
-  ar: { show_more:'عرض المزيد', show_less:'إخفاء', view_toggle:'بطاقات / قائمة',
+  ar: {
+    book_title: "حجز: {name}", book_date: "التاريخ", book_time: "الوقت", book_loading: "جارٍ البحث عن أوقات متاحة…", book_none: "لا توجد أوقات متاحة في هذا اليوم", book_confirm: "الحجز في {d} الساعة {t}؟", book_done: "تم! حجزك في {d} الساعة {t}. التفاصيل في حسابك.", book_taken: "تم حجز هذا الوقت للتو. اختر وقتًا آخر.", book_login: "سجّل الدخول إلى حسابك للحجز", book_err: "لم ينجح. حاول لاحقًا", show_more:'عرض المزيد', show_less:'إخفاء', view_toggle:'بطاقات / قائمة',
     hours_your_tz: 'بتوقيتك:', sched_dayoff: 'إجازة', sched_everyday: 'كل يوم',
     cart_title: 'السلة: {n} خدمة', cart_clear: 'إفراغ', cart_order: '← تقديم الطلب', cart_remove: 'حذف', cart_subtotal: 'المجموع الفرعي', cart_delivery: 'التوصيل', cart_total: 'الإجمالي', cart_empty: 'السلة فارغة', cab_chat: 'الدردشة', cab_logout: 'خروج', cab_cabinet: 'حسابي', cart_address: 'عنوان التوصيل', cart_addr_none: 'أضف عنوانًا في حسابك', cab_logout_confirm: 'تسجيل الخروج؟ ستحتاج إلى رمز بريد إلكتروني جديد للدخول مرة أخرى.',
     cart_added: '({n}) 🛒 في السلة', cta_book: 'احجز الآن', price_from_pfx:'ابتداءً من', price_quote:'السعر عند الطلب', badge_hit:'الأكثر طلباً', badge_new:'جديد', badge_promo:'عرض', chat_book_pfx:'أرغب في الحجز: {name}', ask_btn:'اسأل', chat_ask_pfx:'سؤال عن: {name}', sub_btn:'اشترك', chat_sub_pfx:'أرغب في الاشتراك: {name}', per_month:'/شهر', per_year:'/سنة', look_note:'وضع معاينة المفاهيم — هذا ليس المظهر الحقيقي للموقع', look_colors:'الألوان', look_designs:'السلوك', look_apply:'اختيار هذا الشكل', add_to_cart: '🛒 أضف إلى السلة', reader_pdfprint: 'PDF / طباعة', reader_close: 'إغلاق', reader_share: 'مشاركة', reader_copied: 'تم النسخ', read_in_tab: 'فتح في تبويب جديد', read_more: 'اقرأ المزيد',
@@ -650,7 +662,8 @@ const UI_T = {
     subdomain_invalid: 'أحرف صغيرة وأرقام وشرطات فقط. من 3 إلى 30 حرفاً.',
     subdomain_free: '✅ {subdomain}.ttzop.com — متاح!', subdomain_check_err: 'خطأ في التحقق',
   },
-  hu: { show_more:'Továbbiak', show_less:'Elrejtés', view_toggle:'Kártyák / Lista',
+  hu: {
+    book_title: "Időpont: {name}", book_date: "Dátum", book_time: "Időpont", book_loading: "Szabad időpontok keresése…", book_none: "Ezen a napon nincs szabad időpont", book_confirm: "Lefoglalja: {d} {t}?", book_done: "Kész! Időpontja: {d} {t}. Részletek a fiókjában.", book_taken: "Ezt az időpontot épp lefoglalták. Válasszon másikat.", book_login: "A foglaláshoz jelentkezzen be a fiókjába", book_err: "Nem sikerült. Próbálja később", show_more:'Továbbiak', show_less:'Elrejtés', view_toggle:'Kártyák / Lista',
     hours_your_tz: 'nálad:', sched_dayoff: 'zárva', sched_everyday: 'Minden nap',
     cart_title: 'Kosár: {n} szolgáltatás', cart_clear: 'Ürítés', cart_order: 'Rendelés leadása →', cart_remove: 'Törlés', cart_subtotal: 'Részösszeg', cart_delivery: 'Szállítás', cart_total: 'Összesen', cart_empty: 'A kosár üres', cab_chat: 'Csevegés', cab_logout: 'Kijelentkezés', cab_cabinet: 'Fiók', cart_address: 'Szállítási cím', cart_addr_none: 'Adj hozzá címet a fiókban', cab_logout_confirm: 'Kijelentkezik? A következő belépéshez új e-mail kód szükséges.',
     cart_added: '🛒 Kosárban ({n})', cta_book: 'Időpontfoglalás', price_from_pfx:'már', price_quote:'Ár megegyezés szerint', badge_hit:'Sláger', badge_new:'Új', badge_promo:'Akció', chat_book_pfx:'Időpontot szeretnék foglalni: {name}', ask_btn:'Kérdezek', chat_ask_pfx:'Kérdés erről: {name}', sub_btn:'Előfizetés', chat_sub_pfx:'Elő szeretnék fizetni: {name}', per_month:'/hó', per_year:'/év', look_note:'Koncepció-előnézet — ez NEM a webhely valódi kinézete', look_colors:'Színek', look_designs:'Viselkedés', look_apply:'Ezt választom', add_to_cart: '🛒 Kosárba', reader_pdfprint: 'PDF / Nyomt.', reader_close: 'Bezárás', reader_share: 'Megosztás', reader_copied: 'Másolva', read_in_tab: 'Megnyitás új lapon', read_more: 'Tovább olvasom',
@@ -1175,8 +1188,10 @@ const SITE_VIEWS = {
       const ff = _sv(it.fulfil) || (_sv(it.cta) === 'chat' ? 'inquiry' : 'cart');
       const nameArg = `'${_dsEsc(name).replace(/'/g,'&#39;')}'`;
       let btn = '';
-      if (ff === 'booking') {
-        btn = `<button onclick="event.stopPropagation();chatAboutItem(${nameArg},'chat_book_pfx')" style="${btnStyle}">📅 ${ui.cta_book}</button>`;
+      if (ff === 'booking') { // 📅 мадалка вольных слотаў; легасі-пазіцыя без id → чат (рашальнік не ведае, што браніраваць)
+        btn = it.id
+          ? `<button onclick="event.stopPropagation();openSlotsModal('${_dsEsc(it.id)}',${nameArg})" style="${btnStyle}">📅 ${ui.cta_book}</button>`
+          : `<button onclick="event.stopPropagation();chatAboutItem(${nameArg},'chat_book_pfx')" style="${btnStyle}">📅 ${ui.cta_book}</button>`;
       } else if (ff === 'inquiry') {
         btn = `<button onclick="event.stopPropagation();chatAboutItem(${nameArg},'chat_ask_pfx')" style="${btnStyle}">💬 ${ui.ask_btn}</button>`;
       } else if (ff === 'subscription') { // 🔁 S1/S2 дыспетчар: «Свой сайт» → order-flow стварэння сайта; іншыя → аўта-афармленне ў кабінеце
@@ -1698,12 +1713,111 @@ function openCabinet(view = 'chat') {
   ov.addEventListener('click', e => { if (e.target === ov) closeCabinet(); }); // клік па фоне = закрыць
   document.body.appendChild(ov);
 }
-function closeCabinet() { document.getElementById('cabinet-overlay')?.remove(); setTimeout(() => { _cabinetRefreshSession(); _cabinetRefreshUnread(); }, 500); } // remove (не hide) — спыняе палінг; пасля закрыцця абнаўляем Імя/email/адрасы (маглі змяніць у кабінеце) + непрачытаныя
+function closeCabinet() { document.getElementById('cabinet-overlay')?.remove(); setTimeout(() => { _cabinetRefreshSession(); _cabinetRefreshUnread(); bookIntentApply(); }, 500); } // remove (не hide) — спыняе палінг; пасля закрыцця абнаўляем Імя/email/адрасы (маглі змяніць у кабінеце) + непрачытаныя
 // 💬 чат пра пазіцыю каталога (генерычна: pfxKey = UI_T-ключ тэксту прадзапаўнення — запіс/запыт);
 // прадзапаўненне праз localStorage (iframe same-origin) → кабінет-чат
 function chatAboutItem(name, pfxKey) {
   try { localStorage.setItem('ttzop_chat_prefill', (getUI()[pfxKey] || '{name}').replace('{name}', name)); } catch {}
   openCabinet('chat');
+}
+
+// ═══ 📅 МАДАЛКА ВОЛЬНЫХ СЛОТАЎ (№2б) ═══
+// Слоты лічыць СЕРВЕР (booking_slots) — кліент не бачыць ні чужых броняў, ні id рэсурсаў.
+// Бронь патрабуе сесіі кабінета: без яе кладзем намер (як ttzop_sub_intent) і адкрываем кабінет.
+const _BK_DAYS = 14; // колькі дзён паказваем у пікеры
+let _bkState = { itemId: '', name: '', date: '', slots: [], busy: false };
+
+function _bkDayLabel(iso) { // «пн, 3 жн» — праз Intl на бягучай мове інтэрфейсу (без хардкоду назваў дзён)
+  try { return new Date(iso + 'T12:00:00Z').toLocaleDateString(currentUiLang || 'be', { weekday: 'short', day: 'numeric', month: 'short', timeZone: 'UTC' }); }
+  catch { return iso; }
+}
+function _bkDays() {
+  const out = [], t = new Date();
+  for (let i = 0; i < _BK_DAYS; i++) { const d = new Date(Date.UTC(t.getFullYear(), t.getMonth(), t.getDate() + i)); out.push(d.toISOString().slice(0, 10)); }
+  return out;
+}
+function openSlotsModal(itemId, name) {
+  _bkState = { itemId, name, date: _bkDays()[0], slots: [], busy: false };
+  document.getElementById('bk-modal')?.remove();
+  const ov = document.createElement('div');
+  ov.id = 'bk-modal';
+  ov.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.55);z-index:10002;display:flex;align-items:center;justify-content:center;padding:16px';
+  const ui = getUI();
+  ov.innerHTML = `<div style="background:var(--surface,#181c27);border:1px solid var(--border,#2a2f45);border-radius:14px;max-width:440px;width:100%;max-height:86vh;overflow:auto;padding:18px;box-shadow:0 16px 48px rgba(0,0,0,0.5)">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;margin-bottom:14px">
+      <div style="font-weight:700;font-size:1.02rem;color:var(--text,#e8eaf0)">${_dsEsc((ui.book_title || '{name}').replace('{name}', name))}</div>
+      <button onclick="document.getElementById('bk-modal').remove()" style="background:none;border:none;color:var(--muted,#9aa1ad);cursor:pointer;font-size:1.1rem;line-height:1">✕</button>
+    </div>
+    <div style="font-size:0.8rem;color:var(--muted,#9aa1ad);margin-bottom:6px">${_dsEsc(ui.book_date || '')}</div>
+    <div id="bk-days" style="display:flex;gap:6px;overflow-x:auto;padding-bottom:8px;margin-bottom:12px"></div>
+    <div style="font-size:0.8rem;color:var(--muted,#9aa1ad);margin-bottom:6px">${_dsEsc(ui.book_time || '')}</div>
+    <div id="bk-slots" style="display:flex;flex-wrap:wrap;gap:6px;min-height:40px"></div>
+  </div>`;
+  ov.addEventListener('click', e => { if (e.target === ov) ov.remove(); });
+  document.body.appendChild(ov);
+  _bkRenderDays();
+  _bkLoadSlots();
+}
+function _bkRenderDays() {
+  const box = document.getElementById('bk-days'); if (!box) return;
+  box.innerHTML = _bkDays().map(d => {
+    const on = d === _bkState.date;
+    return `<button onclick="_bkPickDate('${d}')" style="flex:0 0 auto;padding:7px 10px;border-radius:8px;cursor:pointer;font-size:0.8rem;white-space:nowrap;border:1px solid ${on ? 'var(--accent,#f97316)' : 'var(--border,#2a2f45)'};background:${on ? 'var(--accent,#f97316)' : 'transparent'};color:${on ? '#fff' : 'var(--text,#e8eaf0)'}">${_dsEsc(_bkDayLabel(d))}</button>`;
+  }).join('');
+}
+function _bkPickDate(d) { _bkState.date = d; _bkRenderDays(); _bkLoadSlots(); }
+async function _bkLoadSlots() {
+  const box = document.getElementById('bk-slots'); if (!box) return;
+  const ui = getUI();
+  box.innerHTML = `<div style="color:var(--muted,#9aa1ad);font-size:0.85rem;padding:8px 0">${_dsEsc(ui.book_loading || '…')}</div>`;
+  let slots = [];
+  try {
+    const r = await fetch(API_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'booking_slots', repo: SITE_REPO, serviceId: _bkState.itemId, date: _bkState.date, lang: currentUiLang }) });
+    if (r.ok) slots = (await r.json()).slots || [];
+  } catch {}
+  _bkState.slots = slots;
+  if (!document.getElementById('bk-modal')) return; // мадалку закрылі, пакуль чакалі адказ
+  box.innerHTML = slots.length
+    ? slots.map(t => `<button onclick="_bkPickTime('${_dsEsc(t)}')" style="padding:8px 12px;border-radius:8px;border:1px solid var(--border,#2a2f45);background:transparent;color:var(--text,#e8eaf0);cursor:pointer;font-size:0.86rem">${_dsEsc(t)}</button>`).join('')
+    : `<div style="color:var(--muted,#9aa1ad);font-size:0.85rem;padding:8px 0">${_dsEsc(ui.book_none || '')}</div>`;
+}
+function _bkPickTime(time) {
+  const ui = getUI(), d = _bkDayLabel(_bkState.date);
+  siteConfirm((ui.book_confirm || '{d} {t}?').replace('{d}', d).replace('{t}', time), () => _bkBook(time), false);
+}
+async function _bkBook(time) {
+  const ui = getUI();
+  const token = localStorage.getItem('ttzop_portal_token');
+  if (!token) { // не ўвайшоў — намер перажывае ўваход (той жа патэрн, што ttzop_sub_intent)
+    try { localStorage.setItem('ttzop_book_intent', JSON.stringify({ id: _bkState.itemId, name: _bkState.name, date: _bkState.date, time })); } catch {}
+    document.getElementById('bk-modal')?.remove();
+    siteConfirm(ui.book_login || '', () => openCabinet('chat'), false);
+    return;
+  }
+  if (_bkState.busy) return; _bkState.busy = true;
+  let res = {};
+  try {
+    const r = await fetch(API_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'portal_book', repo: SITE_REPO, token, serviceId: _bkState.itemId, date: _bkState.date, time }) });
+    res = await r.json();
+  } catch { res = { error: 'net' }; }
+  _bkState.busy = false;
+  if (res.ok) {
+    document.getElementById('bk-modal')?.remove();
+    siteConfirm((ui.book_done || '').replace('{d}', _bkDayLabel(_bkState.date)).replace('{t}', time), () => openCabinet('chat'), false);
+    return;
+  }
+  if (res.error === 'slot_taken') { siteConfirm(ui.book_taken || '', () => {}, false); _bkLoadSlots(); return; } // хтосьці апярэдзіў — паказваем свежы спіс
+  siteConfirm(ui.book_err || '', () => {}, false);
+}
+// намер броні перажыў уваход у кабінет → дабраніраваць (клічацца пасля вяртання з кабінета)
+function bookIntentApply() {
+  let it = null;
+  try { it = JSON.parse(localStorage.getItem('ttzop_book_intent') || 'null'); localStorage.removeItem('ttzop_book_intent'); } catch {}
+  if (!it || !localStorage.getItem('ttzop_portal_token')) return;
+  openSlotsModal(it.id, it.name); // слоты маглі змяніцца, пакуль ён уваходзіў → не бранюем моўчкі, паказваем спіс
+  _bkState.date = it.date; _bkRenderDays(); _bkLoadSlots();
 }
 // 🔁 S1: «Падпісацца» на картцы → намер у localStorage (як chat_prefill) → кабінет; пасля ўваходу
 // portal.html сам пацвердзіць (portalSubIntentApply) і аформіць падпіску (portal_subscribe)

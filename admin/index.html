@@ -7968,21 +7968,7 @@ function goToResourceCard(resId) { _navToNode('general', resId); } // рэсур
 
 // ═══ ЗАПІС НА ЧАС — РМ «Запісы» (Фаза B1) ═══
 // Бранявальныя паслугі (duration>0) для select. Чытаем з servicesState (калі загружаны) або з апублікаваных
-function _bookableServices() {
-  // E1b: бранявальнасць/працягласць з сегментаў харэаграфіі; легасі duration/resourceIds — fallback (да фазы F multi-resource рашальніка)
-  const nodes = servicesState?.data?.nodes || [];
-  // К1 «Каталог»: браніруюцца толькі пазіцыі спосабу 📅 (legacy без fulfil — старая логіка duration>0)
-  return nodes.filter(n => n.type === 'form' && (!n.fields?.fulfil || n.fields.fulfil === 'booking')).map(n => {
-    const f = n.fields || {};
-    const segs = Array.isArray(f._segments) ? f._segments : [];
-    const segLen = segs.filter(_segActive).reduce((m, sg) => Math.max(m, (+sg.offset || 0) + (+sg.duration || 0)), 0); // даўжыня = апошні канец актыўнага сегмента («Без» не лічыцца)
-    const duration = segLen || (+f.duration || 0);
-    const resourceIds = segs.length ? [...new Set(segs.flatMap(sg => Array.isArray(sg.candidates) ? sg.candidates : []))] : (Array.isArray(f.resourceIds) ? f.resourceIds : []);
-    // рашальнік F1 заўжды чакае сегменты: легасі (адзін рэсурс, увесь час) → сінтэз аднаго дэфолтнага сегмента (candidates=legacy resourceIds, тып не важны калі candidates зададзены)
-    const segments = segs.length ? segs : (duration > 0 ? [{ _id: 's0', type: 'person', candidates: resourceIds, offset: 0, duration }] : []);
-    return { id: n.id, name: f.name || _nodeName(n) || '?', duration, bufferAfter: +f.bufferAfter || 0, resourceIds, _segments: segments, _groups: Array.isArray(f._groups) ? f._groups : [] };
-  }).filter(x => x.duration > 0);
-}
+function _bookableServices() { return TTZOP_BOOKING.bookableServices(servicesState?.data?.nodes || []); } // 📅 модуль booking.js — той жа спіс бачаць сайт і воркер
 // ── B2: алгарытм вольных слотаў (графік рэсурсу − занятыя запісы − буферы) ──
 function _toMin(hhmm) { return TTZOP_BOOKING.toMin(hhmm); } // 📅 агульны модуль booking.js — панэль/сайт/воркер лічаць час адным кодам
 // хв→«ЧЧ:ММ»; падтрымлівае ПАДОЎЖАНЫЯ хвіліны >24г (напр. 1500→«25:00», начная бронь) — round-trip праз _toMin захаваны (25:00→1500)
@@ -7990,17 +7976,13 @@ function _fromMin(min) { return TTZOP_BOOKING.fromMin(min); }
 // ДЫСПЛЭЙ часу з пазнакай суседняга дня: <1440→«ЧЧ:ММ»; ≥1440→«01:00 +1» (падоўжаная вось начной броні). Захоўванне застаецца _fromMin («25:00»).
 function _hhmmDay(min) { const dn = Math.floor(min / 1440), b = ((min % 1440) + 1440) % 1440; return _fromMin(b) + (dn > 0 ? ` +${dn}` : dn < 0 ? ` ${dn}` : ''); }
 // дзень-нумары радка графіка (ISO 1=Пн..7=Нд): новае `days:[...]` або легасі `day` (адзін/'*'); [] = штодня
-function _schedRowDays(r) {
-  if (Array.isArray(r.days)) return r.days.map(String);
-  if (r.day && r.day !== '*') return [String(r.day)];
-  return [];
-}
+function _schedRowDays(r) { return TTZOP_BOOKING.schedRowDays(r); }
 // інтэрвал цераз поўнач (начная змена): «Да» ≤ «З» → «Да» належыць наступнаму дню (напр. 22:00–04:00)
 function _schedOvernight(from, to) { const f = _toMin(from), t = _toMin(to); return f != null && t != null && t <= f; }
 // подпіс інтэрвалу графіка: «09:00–18:00» або «22:00–04:00 +1» (пазнака пераходу цераз поўнач)
 function _schedIvLabel(from, to) { return `${from}–${to}${_schedOvernight(from, to) ? ' +1' : ''}`; }
 // інтэрвал графіка ў ПАДОЎЖАНЫХ хвілінах {from,to}: начная змена (to≤from) → to+1440 (вось цягнецца за поўнач; аснова начной броні #2b). Дзённы інтэрвал — без змены.
-function _schedIvMin(iv) { if (!iv) return null; const f = _toMin(iv.from), t = _toMin(iv.to); if (f == null || t == null) return null; return { from: f, to: t <= f ? t + 1440 : t }; }
+function _schedIvMin(iv) { return TTZOP_BOOKING.schedIvMin(iv); }
 // сартыроўка радкоў графіка па дні (мін. дзень; штодня=0 зверху) → часе пачатку — каб адзін дзень быў згрупаваны і па парадку
 function _schedRowSort(a, b) { const md = r => { const ds = _schedRowDays(r).map(Number); return ds.length ? Math.min(...ds) : 0; }; return md(a) - md(b) || ((_toMin(a.from) ?? 9999) - (_toMin(b.from) ?? 9999)); }
 // папярэджанне пры перакрыцці інтэрвалаў графіка (тыднёвая вось хв: dow*1440+хв, начная змена → +1440 у наступны дзень — ловіць і між-дзённыя накладанні)
@@ -8023,13 +8005,7 @@ function _ianaTimezones() { // поўны афіцыйны спіс IANA; fallba
 }
 function _viewerTz() { try { return Intl.DateTimeFormat().resolvedOptions().timeZone || ''; } catch { return ''; } } // пояс гледача (у панэлі = браўзер адміна; на сайце = госць)
 // зрух пояса (хв ад UTC) на момант date — праз Intl (улік DST)
-function _tzOffsetMin(tz, date) {
-  try {
-    const p = {}; new Intl.DateTimeFormat('en-US', { timeZone: tz, hour12: false, year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit' }).formatToParts(date).forEach(x => p[x.type] = x.value);
-    const asUTC = Date.UTC(+p.year, +p.month - 1, +p.day, p.hour === '24' ? 0 : +p.hour, +p.minute, +p.second);
-    return Math.round((asUTC - date.getTime()) / 60000);
-  } catch { return null; }
-}
+function _tzOffsetMin(tz, date) { return TTZOP_BOOKING.tzOffsetMin(tz, date); }
 // «HH:MM у поясе fromTz на дату isoDate» → {time:'HH:MM', dayShift} у поясе toTz (з улікам DST; dayShift=±1 пры пераходзе цераз поўнач)
 function _tzConvertHHMM(hhmm, isoDate, fromTz, toTz) {
   const m = /^(\d{1,2}):(\d{2})$/.exec(hhmm || ''); if (!m || !/^\d{4}-\d{2}-\d{2}$/.test(isoDate)) return null;
@@ -8050,22 +8026,11 @@ function _tzIntervalText(iv, isoDate, fromTz, toTz) {
     return (a && b) ? `${a.time}${sh(a.dayShift)}–${b.time}${sh(b.dayShift)}` : `${x.from}–${x.to}`; }).join(', ');
 }
 // пояс офіса рэсурсу (рэсурс → папка «Рэсурсы» → офіс; або сам офіс/філіял нясе пояс). '' калі не зададзены.
-function _resourceTz(resId) {
-  const tree = settings.companyTree || []; const n = tree.find(x => x.id === resId); if (!n) return '';
-  if (n.fields && n.fields.timezone) return n.fields.timezone; // офіс/філіял сам нясе пояс
-  const folder = tree.find(x => x.id === n.parentId); const office = tree.find(x => x.id === folder?.parentId);
-  return office?.fields?.timezone || '';
-}
+function _resourceTz(resId) { return TTZOP_BOOKING.resourceTz(settings.companyTree || [], resId); }
 // пояс галаўнога офіса (HQ) — вузел companyTree з parentId==null (апорны пояс восі Куба, #2b)
-function _hqTz() { const tree = settings.companyTree || []; const hq = tree.find(x => x.parentId == null && x.fields); return hq?.fields?.timezone || ''; }
+function _hqTz() { return TTZOP_BOOKING.hqTz(settings.companyTree || []); }
 // зрух branch→HQ (хв): дадаць да лакальнага насценнага часу філіяла, каб атрымаць час у поясе HQ. 0 калі пояс не зададзены/супадае/адзін офіс → нулявая розніца з наіўным.
-function _tzDeltaMin(resId, isoDate) {
-  const bt = _resourceTz(resId), ht = _hqTz(); if (!bt || !ht || bt === ht) return 0;
-  const [Y, Mo, D] = (isoDate || '').split('-').map(Number); if (!Y) return 0;
-  const inst = new Date(Date.UTC(Y, Mo - 1, D, 12)); // зрух на поўдзень дзелавога дня (DST праз Intl)
-  const bo = _tzOffsetMin(bt, inst), ho = _tzOffsetMin(ht, inst); if (bo == null || ho == null) return 0;
-  return ho - bo;
-}
+function _tzDeltaMin(resId, isoDate) { return TTZOP_BOOKING.tzDeltaMin(settings.companyTree || [], resId, isoDate); }
 // ── ДВА ВАРЫЯНТЫ ЧАСУ (#2b): асноўны = пояс HQ (_hhmmDay, «+1» за поўнач); лакальны час філіяла — у дужках, ТОЛЬКІ калі пояс рэсурсу ≠ HQ. Захаваны HH:MM = HQ насценны час.
 function _apptLocalHHMM(hhmm, resId, date) { // HQ насценны → лакальны насценны філіяла рэсурсу ('' калі не трэба/немагчыма)
   const bt = _resourceTz(resId), ht = _hqTz(); if (!bt || !ht || bt === ht || !hhmm) return '';
@@ -8106,27 +8071,14 @@ function _formatScheduleText(rows, langCode) {
   return parts.join(', ');
 }
 // графік рэсурсу на дзень тыдня (ISO 1=Пн..7=Нд): уласны _schedule, fallback на філіял (офіс)
-function _resourceSchedule(resourceId, dow) {
-  const tree = settings.companyTree || []; const res = tree.find(n => n.id === resourceId);
-  // дзень-канкрэтныя радкі перакрываюць «штодня»; калі ёсць (рабочыя АБО выходны) — толькі яны (выходны → пусты графік, без fallback на офіс)
-  const dayRows = node => { const rows = node?.fields?._schedule || []; const spec = rows.filter(s => _schedRowDays(s).includes(String(dow))); return spec.length ? spec : rows.filter(s => !_schedRowDays(s).length); };
-  const hoursOf = rows => rows.filter(s => s.from && s.to).map(s => ({ from: s.from, to: s.to }));
-  const ownRows = dayRows(res); if (ownRows.length) return hoursOf(ownRows); // рэсурс мае ўласны радок на гэты дзень
-  const folder = tree.find(n => n.id === res?.parentId); const office = tree.find(n => n.id === folder?.parentId); // рэсурс → папка «Рэсурсы» → офіс
-  return hoursOf(dayRows(office));
-}
+function _resourceSchedule(resourceId, dow) { return TTZOP_BOOKING.resourceSchedule(settings.companyTree || [], resourceId, dow); }
 // ── F1: MULTI-RESOURCE РАШАЛЬНІК (харэаграфія: сегменты × рэсурсы × час, з улікам груп/палітык) ──
 // рэжым выбару рэсурсу этапу: any(любы свайго тыпу) / specific(толькі candidates) / none(этап без рэсурсу). Інфер для легасі.
-function _segPick(seg) { return seg.pick || (Array.isArray(seg.candidates) && seg.candidates.length ? 'specific' : 'any'); }
+function _segPick(seg) { return TTZOP_BOOKING.segPick(seg); }
 // этап «жывы» для рашальніка/куба: мае працягласць І не «Без» (none = яўная адсутнасць рэсурсу, прапускаецца)
-function _segActive(seg) { return +seg.duration > 0 && _segPick(seg) !== 'none'; }
+function _segActive(seg) { return TTZOP_BOOKING.segActive(seg); }
 // прыдатныя рэсурсы сегмента паводле рэжыму: specific→candidates, any→любы свайго тыпу, none→пуста
-function _segmentPool(seg) {
-  const all = _allResources(), pick = _segPick(seg);
-  if (pick === 'none') return [];
-  if (pick === 'specific') return (Array.isArray(seg.candidates) ? seg.candidates : []).filter(id => all.some(r => r.id === id));
-  return all.filter(r => r.type === (seg.type || 'person')).map(r => r.id); // any
-}
+function _segmentPool(seg) { return TTZOP_BOOKING.segmentPool(settings.companyTree || [], seg); }
 // «ЧЫТАЙ АБОДВА» — заняткі рэсурсаў запісам: [{resourceId, start, end}]. Адзіная крыніца ісціны «што займае запіс»:
 // новая мадэль assignments[] (multi-resource) АБО legacy (resourceId/personId/placeId/equipmentIds займаюць [time, time+duration]).
 function _apptResourceUses(a) { return TTZOP_BOOKING.apptResourceUses(a); }
@@ -8134,74 +8086,22 @@ function _apptResourceUses(a) { return TTZOP_BOOKING.apptResourceUses(a); }
 // excludeId — выключыць запіс (напр. сам запіс пры праверцы «ці заняты рэсурс ІНШЫМ»)
 function _resourceBusyIntervals(resId, date, excludeId) {
   const out = [];
-  _appointmentsToArray().filter(a => a.date === date && a.status !== 'cancelled' && a.id !== excludeId).forEach(a =>
+  _appointmentsToArray().filter(a => a.date === date && !TTZOP_BOOKING.isDead(a.status) && a.id !== excludeId).forEach(a => // isDead: cancelled+no_show вызваляюць рэсурс — як у рашальніку і D1
     _apptResourceUses(a).forEach(u => { if (u.resourceId === resId) out.push({ start: u.start, end: u.end + (+a.bufferAfter || 0) }); }));
   return out;
 }
 // нумар дня (дні ад эпохі) — база АБСАЛЮТНЫХ хвілін: абс = _dayNum(date)*1440 + HQ-хвіліна дня (#2b крок 4)
 function _dayNum(date) { return TTZOP_BOOKING.dayNum(date); }
 // занятасць рэсурсу ў АБСАЛЮТНЫХ хвілінах, сумежныя дні D-1..D+1 — начная бронь з суседняга дзелавога дня трапляе ў акно (23:00→01:00 «учора» блакуе «сёння» 00:30, і наадварот)
-function _resourceBusyAbs(resId, date, excludeId) {
-  const out = [];
-  for (let off = -1; off <= 1; off++) {
-    const d = new Date(date + 'T00:00:00'); d.setDate(d.getDate() + off); const dd = _isoDay(d), base = _dayNum(dd) * 1440;
-    _appointmentsToArray().filter(a => a.date === dd && a.status !== 'cancelled' && a.id !== excludeId).forEach(a =>
-      _apptResourceUses(a).forEach(u => { if (u.resourceId === resId) out.push({ start: base + u.start, end: base + u.end + (+a.bufferAfter || 0) }); }));
-  }
-  return out;
-}
+// 📅 кантэкст рашальніка для модуля booking.js: дрэва кампаніі + бягучыя запісы (панэль трымае іх у стэйце)
+function _bkCtx() { return { tree: settings.companyTree || [], appointments: _appointmentsToArray() }; }
+function _resourceBusyAbs(resId, date, excludeId) { return TTZOP_BOOKING.resourceBusyAbs(_appointmentsToArray(), resId, date, excludeId); }
 // рэсурс вольны ў акне [start,end]: працуе паводле графіка (графік не зададзены → увесь дзень) І няма перасячэння з занятым
-function _resourceFreeInWindow(resId, date, start, end) { // start/end у HQ-хвілінах (апорны пояс)
-  const dl = _tzDeltaMin(resId, date); // branch→HQ зрух; 0 пры адным поясе
-  const d = new Date(date + 'T00:00:00'); let dow = d.getDay(); dow = dow === 0 ? 7 : dow;
-  const sched = _resourceSchedule(resId, dow); // графік — лакальны насценны час філіяла
-  if (sched.length && !sched.some(iv => { const m = _schedIvMin(iv); return m && start >= m.from + dl && end <= m.to + dl; })) return false; // +dl: графік філіяла → HQ; _schedIvMin: начная змена за поўнач
-  const base = _dayNum(date) * 1440; // акно → абсалютны момант
-  return !_resourceBusyAbs(resId, date).some(b => (base + start) < b.end && (base + end) > b.start); // абсалютны момант: крос-датавая занятасць (начная бронь суседняга дзелавога дня)
-}
+function _resourceFreeInWindow(resId, date, start, end) { return TTZOP_BOOKING.resourceFreeInWindow(_bkCtx(), resId, date, start, end); }
 // прызначыць рэсурс кожнаму сегменту на старт T (backtracking з улікам груп: strict=той самы, prefer=прыярытэт той самы, any=незалежна; адзін рэсурс не можа быць у акнах, што перасякаюцца)
-function _assignSegments(segs, groups, T, date, branchId) {
-  const policyOf = gid => groups.find(g => g._id === gid)?.policy || 'any';
-  const wins = segs.map(sg => { const o = +sg.offset || 0; return { start: T + o, end: T + o + Math.max(1, +sg.duration || 0) }; });
-  const pools = segs.map((sg, i) => _branchScopePool(_segmentPool(sg), branchId).filter(rid => _resourceFreeInWindow(rid, date, wins[i].start, wins[i].end))); // branchId — рэсурсы толькі бягучага філіяла
-  if (pools.some(p => !p.length)) return null; // нейкі сегмент не мае вольнага рэсурсу
-  const assign = new Array(segs.length).fill(null), groupChosen = {};
-  const overlapsUsed = (i, rid) => segs.some((_, j) => j !== i && assign[j] === rid && wins[i].start < wins[j].end && wins[j].start < wins[i].end);
-  const bt = i => {
-    if (i >= segs.length) return true;
-    const gid = segs[i].groupId, pol = gid ? policyOf(gid) : 'any';
-    let cands = pools[i];
-    if (gid && groupChosen[gid] != null) { const ch = groupChosen[gid];
-      if (pol === 'strict') cands = pools[i].includes(ch) ? [ch] : [];            // строга той самы
-      else if (pol === 'prefer') cands = pools[i].includes(ch) ? [ch, ...pools[i].filter(r => r !== ch)] : pools[i]; // прыярытэт той самы
-    }
-    for (const rid of cands) {
-      if (overlapsUsed(i, rid)) continue;
-      assign[i] = rid; const prev = groupChosen[gid];
-      if (gid && (pol === 'strict' || pol === 'prefer') && groupChosen[gid] == null) groupChosen[gid] = rid;
-      if (bt(i + 1)) return true;
-      assign[i] = null; if (gid && groupChosen[gid] === rid && prev == null) groupChosen[gid] = prev;
-    }
-    return false;
-  };
-  if (!bt(0)) return null;
-  return segs.map((sg, i) => ({ segId: sg._id || ('s' + i), resourceId: assign[i], from: _fromMin(wins[i].start), to: _fromMin(wins[i].end) }));
-}
+function _assignSegments(segs, groups, T, date, branchId) { return TTZOP_BOOKING.assignSegments(_bkCtx(), segs, groups, T, date, branchId); }
 // вольныя слоты паслугі-харэаграфіі на дату: [{time, assignments:[{segId,resourceId,from,to}]}]
-function _choreographyFreeSlots(svc, date, branchId) {
-  const segs = (svc._segments || []).filter(_segActive); // «Без» (none) этапы прапускаюцца — рэсурс не шукаецца
-  if (!segs.length || !date) return [];
-  const groups = svc._groups || [];
-  const total = segs.reduce((m, sg) => Math.max(m, (+sg.offset || 0) + (+sg.duration || 0)), 0);
-  const d = new Date(date + 'T00:00:00'); let dow = d.getDay(); dow = dow === 0 ? 7 : dow;
-  // дыяпазон дня = аб'яднанне графікаў усіх кандыдатаў; нічога не зададзена → 08:00–20:00
-  let lo = 24 * 60, hi = 0;
-  [...new Set(segs.flatMap(sg => _branchScopePool(_segmentPool(sg), branchId)))].forEach(rid => { const dl = _tzDeltaMin(rid, date); _resourceSchedule(rid, dow).forEach(iv => { const m = _schedIvMin(iv); if (m) { lo = Math.min(lo, m.from + dl); hi = Math.max(hi, m.to + dl); } }); }); // +dl: графік філіяла → HQ-пояс; начная змена → hi>1440
-  if (lo >= hi) { lo = 8 * 60; hi = 20 * 60; }
-  const STEP = 15, out = [];
-  for (let T = Math.ceil(lo / STEP) * STEP; T + total <= hi; T += STEP) { const a = _assignSegments(segs, groups, T, date, branchId); if (a) out.push({ time: _fromMin(T), assignments: a }); }
-  return out;
-}
+function _choreographyFreeSlots(svc, date, branchId) { return TTZOP_BOOKING.choreographyFreeSlots(_bkCtx(), svc, date, branchId); }
 let appointmentsState = {
   data: null, saving: false, selected: new Set(), expanded: new Set(), _movePanel: false, _relocateId: null,
   _section: 'appointments', _editorId: 'appointments-editor', _rootType: 'appt-root', _spaceOnly: true,
@@ -9502,7 +9402,7 @@ function _apptSlotPick(i) {
 // ці перасякаецца запіс (любы з яго рэсурсаў) з існуючым — каб не дапусціць падвойнага браніравання (multi-resource праз _apptResourceUses)
 function _apptConflictRec(rec, excludeId) {
   const uses = _apptResourceUses(rec); if (!uses.length) return false;
-  const others = _appointmentsToArray().filter(a => a.date === rec.date && a.status !== 'cancelled' && a.id !== excludeId);
+  const others = _appointmentsToArray().filter(a => a.date === rec.date && !TTZOP_BOOKING.isDead(a.status) && a.id !== excludeId); // тая ж семантыка «занята», што ў рашальніку/D1
   return uses.some(u => others.some(a => _apptResourceUses(a).some(o => o.resourceId === u.resourceId && u.start < o.end + (+a.bufferAfter || 0) && u.end > o.start))); // чытай абодва (legacy/assignments)
 }
 function _adminCreateAppointment(fields) {
@@ -10311,11 +10211,7 @@ function _allResources() {
   });
 }
 // рэсурсы пула, абмежаваныя філіялам (офісам); пусты ці '*' (усе філіялы) → без фільтра
-function _branchScopePool(ids, branchId) {
-  if (!branchId || branchId === '*') return ids;
-  const off = Object.fromEntries(_allResources().map(r => [r.id, r.office]));
-  return ids.filter(id => off[id] === branchId);
-}
+function _branchScopePool(ids, branchId) { return TTZOP_BOOKING.branchScopePool(settings.companyTree || [], ids, branchId); }
 // Даміграцыя (Фаза A3): кожны офіс/філіял (companyStructure) мусіць мець папку «Рэсурсы». Дадаём адсутныя — не чапаючы наяўнае.
 function _companyEnsureResourceFolders() {
   const tree = settings.companyTree; if (!Array.isArray(tree)) return;
