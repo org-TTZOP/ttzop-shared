@@ -1988,6 +1988,20 @@ Object.assign(ADMIN_UI.pt, { look_publish:'Publicar site', look_publish_q:'Publi
 Object.assign(ADMIN_UI.zh, { look_publish:'发布网站', look_publish_q:'发布当前草稿？更改将对所有访客可见。', look_published:'网站已发布 ✓', look_publish_none:'没有未发布的更改', look_publish_hint:'页面修改保存为草稿，在您点击“发布”之前对访客不可见。预览显示草稿。', look_reset:'放弃草稿', look_reset_q:'放弃所有未发布的修改并恢复到已发布的网站？', look_reset_done:'草稿已放弃' });
 Object.assign(ADMIN_UI.ar, { look_publish:'نشر الموقع', look_publish_q:'نشر المسودة الحالية؟ ستصبح التغييرات مرئية لجميع الزوار.', look_published:'تم نشر الموقع ✓', look_publish_none:'لا توجد تغييرات غير منشورة', look_publish_hint:'يتم حفظ تعديلات الصفحة كمسودة وتظل غير مرئية للزوار حتى تضغط على «نشر». تعرض المعاينة المسودة.', look_reset:'تجاهل المسودة', look_reset_q:'تجاهل جميع التعديلات غير المنشورة والعودة إلى الموقع المنشور؟', look_reset_done:'تم تجاهل المسودة' });
 Object.assign(ADMIN_UI.hu, { look_publish:'Webhely közzététele', look_publish_q:'Közzéteszi az aktuális piszkozatot? A módosítások minden látogató számára láthatóvá válnak.', look_published:'Webhely közzétéve ✓', look_publish_none:'Nincsenek közzé nem tett módosítások', look_publish_hint:'Az oldalmódosítások piszkozatként mentődnek, és a látogatók számára láthatatlanok maradnak, amíg a „Közzététel” gombra nem kattint. Az előnézet a piszkozatot mutatja.', look_reset:'Piszkozat elvetése', look_reset_q:'Elveti az összes közzé nem tett módosítást, és visszaáll a közzétett webhelyre?', look_reset_done:'Piszkozat elvetve' });
+// 🔔 банер «ёсць неапублікаваныя змены старонкі» (X-TTZOP-Draft-Dirty → _draftBannerRender)
+Object.assign(ADMIN_UI.be, { draft_dirty_msg:'Ёсць неапублікаваныя змены старонкі — наведвальнікі іх яшчэ не бачаць' });
+Object.assign(ADMIN_UI.en, { draft_dirty_msg:'There are unpublished page changes — visitors can’t see them yet' });
+Object.assign(ADMIN_UI.uk, { draft_dirty_msg:'Є неопубліковані зміни сторінки — відвідувачі їх ще не бачать' });
+Object.assign(ADMIN_UI.ru, { draft_dirty_msg:'Есть неопубликованные изменения страницы — посетители их ещё не видят' });
+Object.assign(ADMIN_UI.pl, { draft_dirty_msg:'Są nieopublikowane zmiany strony — odwiedzający jeszcze ich nie widzą' });
+Object.assign(ADMIN_UI.de, { draft_dirty_msg:'Es gibt unveröffentlichte Seitenänderungen — Besucher sehen sie noch nicht' });
+Object.assign(ADMIN_UI.fr, { draft_dirty_msg:'Des modifications de page non publiées existent — les visiteurs ne les voient pas encore' });
+Object.assign(ADMIN_UI.es, { draft_dirty_msg:'Hay cambios de página sin publicar — los visitantes aún no los ven' });
+Object.assign(ADMIN_UI.it, { draft_dirty_msg:'Ci sono modifiche alla pagina non pubblicate — i visitatori non le vedono ancora' });
+Object.assign(ADMIN_UI.pt, { draft_dirty_msg:'Há alterações da página por publicar — os visitantes ainda não as veem' });
+Object.assign(ADMIN_UI.zh, { draft_dirty_msg:'页面有未发布的更改 — 访客尚未看到' });
+Object.assign(ADMIN_UI.ar, { draft_dirty_msg:'توجد تغييرات غير منشورة في الصفحة — لا يراها الزوار بعد' });
+Object.assign(ADMIN_UI.hu, { draft_dirty_msg:'Vannak közzé nem tett oldalmódosítások — a látogatók még nem látják őket' });
 
 // 🎨🧩 Фаза C-part4: выпадальнікі актыўнага выгляду (Каляровая схема · Паводзіны) у секцыі «Прагляд» (замест ○ «Бягучая»)
 ;(() => { const A = {

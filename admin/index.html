@@ -1944,6 +1944,7 @@ window.fetch = (url, opts) => {
   const p = _rawFetch(url, opts);
   if (!b || !b.file) return p;
   return p.then(res => {
+    const _dd = res.headers.get('X-TTZOP-Draft-Dirty'); if (_dd !== null) _draftDirtySet(b.file, _dd === '1'); // 🔔 сігнал банера «ёсць неапублікаваныя змены»
     if (b.action === 'read') { const rv = res.headers.get('X-TTZOP-Rev'); if (rv !== null) _fileRevs[b.file] = parseInt(rv) || 0; }
     else if (b.action === 'write') {
       if (res.ok) { // сінхрон ЗАЎСЁДЫ з адказу (запіс-без-rev таксама бампае — інакш фальшывы «канфлікт сам з сабой»)
@@ -2561,7 +2562,7 @@ function getSectionIcon(key) { return SECTION_ICONS[key] || '📋'; }
 const EDITABLE_SECTIONS = ['header', 'services', 'files', 'faq', 'advantages', 'testimonials', 'howWeWork', 'promotions', 'prices'];
 let currentNodeState = null;
 let filesState = { data: null, saving: false, selected: new Set(), expanded: new Set(), _movePanel: false, _relocateId: null, _section: 'files' };
-let servicesState = { data: null, saving: false, selected: new Set(), expanded: new Set(), _movePanel: false, _relocateId: null, _section: 'services', _formSchema: 'services', _itemsClass: 'services-edit-list', _itemHtml: null, _renderFn: () => renderServicesEditor(), _saveFn: () => servicesSave(), _emptyHtml: () => `<div style="padding:8px 0;font-size:0.85rem;color:var(--muted)">${t('empty_services')}</div>`,
+let servicesState = { data: null, saving: false, selected: new Set(), expanded: new Set(), _movePanel: false, _relocateId: null, _section: 'services', _formSchema: 'services', _itemsClass: 'services-edit-list', _itemHtml: null, _newInactive: true, /* 🌑 новыя Папкі/пазіцыі Каталога нараджаюцца НеАктыўнымі (● выкл): кліент дапілоўвае → уключае → трапляе на сайт (праекцыя жывая, рашэнне 2026-07-10) */ _renderFn: () => renderServicesEditor(), _saveFn: () => servicesSave(), _emptyHtml: () => `<div style="padding:8px 0;font-size:0.85rem;color:var(--muted)">${t('empty_services')}</div>`,
   _formNameHtml: form => escHtml(form.fields?.name || _nodeName(form) || '—'), // sections-форма _noName → назва з fields.name
   // міграцыя: старыя item-паслугі → form (палі item ляжалі проста на вузле); усе вузлы мусяць мець formSchema:'services' (як clientDetails)
   _normalizeFn: data => data.nodes.forEach(n => {
@@ -3501,7 +3502,7 @@ const _SITE_SOURCES = {
           ...(f.fulfil === 'subscription' && f.period ? { period: f.period } : {}),
           ...(path.length ? { group: path[path.length - 1], path } : {}) }); // group = апошняя папка (зваротная сумяшчальнасць старога рэндэру)
       }
-      if (n.type === 'folder') walk(n.id, n.name ? [...path, n.name] : path); // безназоўная папка не дае ўзроўню
+      if (n.type === 'folder' && n.active !== false) walk(n.id, n.name ? [...path, n.name] : path); // безназоўная папка не дае ўзроўню; ● выкл на Папцы хавае ЎСЁ паддрэва з сайта (🌑 _newInactive)
     });
     walk(null, []);
     return { items };
@@ -6689,7 +6690,7 @@ async function nodeAddFolder(parentId) {
     if (s._localOnly) {
       const id = s._section + '_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 5);
       const childCt = parentId ? _nodeCfg(s, s.data.nodes.find(n => n.id === parentId), '_childFolderType') : null; // генерычны хук: продак задае тып новых падпапак (эталон: Структура сайта → sitepage-folder)
-      s.data.nodes.push({ id, type: 'folder', parentId: parentId || null, name, ...(childCt ? { contentType: childCt } : {}), order: s.data.nodes.filter(n => n.parentId === (parentId || null)).length, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() }); // ААП: order сярод УСІХ сясцёр (форм+папак), не толькі папак
+      s.data.nodes.push({ id, type: 'folder', parentId: parentId || null, name, ...(childCt ? { contentType: childCt } : {}), ...(_newNodeInactive(s, parentId) ? { active: false } : {}), order: s.data.nodes.filter(n => n.parentId === (parentId || null)).length, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() }); // ААП: order сярод УСІХ сясцёр (форм+папак), не толькі папак; 🌑 _newInactive → новае НеАктыўнае
       if (parentId) s.expanded.add(parentId);
       s.focusedId = id; // фокус на новую папку → _sectionsSave знойдзе правільную секцыю для _projectSection (+ UX)
       nodeRender(); nodeSave(); return;
@@ -7998,6 +7999,27 @@ function _navBannerRender() {
       + wizBtn(last ? t('wiz_finish') : t('wiz_next') + ' →', '_wizNext()', true) + wizBtn(t('wiz_later'), '_wizSkip()')
     : '';
   b.innerHTML = wiz + hint + back;
+}
+// 🔔 БАНЕР «ЁСЦЬ НЕАПУБЛІКАВАНЫЯ ЗМЕНЫ» (генерычны, безыменны): сервер шле X-TTZOP-Draft-Dirty на read/write
+// draft-файлаў (sections/settings-выгляд) — вушка fetch кліча _draftDirtySet. Кліент з любога РМ бачыць,
+// што старонка чакае 🚀 Апублікаваць (западня «рэдагую Каталог/Структуру, а сайт не мяняецца» закрыта).
+let _draftDirtyFiles = {};
+function _draftDirtySet(file, dirty) {
+  if (!!_draftDirtyFiles[file] === dirty) return;
+  _draftDirtyFiles[file] = dirty; _draftBannerRender();
+}
+function _draftBannerClear() { _draftDirtyFiles = {}; _draftBannerRender(); } // пасля 🚀/♻️ (publish/reset)
+function _draftBannerRender() {
+  const dirty = Object.values(_draftDirtyFiles).some(Boolean);
+  let b = document.getElementById('draft-dirty-banner');
+  if (!dirty) { if (b) b.remove(); return; }
+  if (b) return; // ужо паказаны — змест статычны
+  b = document.createElement('div'); b.id = 'draft-dirty-banner';
+  b.style.cssText = 'position:fixed;bottom:0;left:0;right:0;z-index:99990;background:var(--panel);border-top:2px solid var(--accent);color:var(--text);padding:8px 16px;display:flex;align-items:center;gap:12px;justify-content:center;font-size:0.85rem;flex-wrap:wrap';
+  b.innerHTML = `<span>📝 ${escHtml(t('draft_dirty_msg'))}</span>
+    <button class="btn-sm" onclick="_lookOpen()">👁 ${escHtml(t('look_open'))}</button>
+    <button class="btn-sm" onclick="_sitePublish(this)" style="background:var(--accent);color:#fff;font-weight:700;border-color:var(--accent)">🚀 ${escHtml(t('look_publish'))}</button>`;
+  document.body.appendChild(b);
 }
 function goToClientCard(clientId) { _navToNode('clients', clientId); }
 function goToOrder(orderId) { _navToNode('orders', orderId); }
@@ -10392,6 +10414,14 @@ function _companySettingsBlocks() {
   return (FORM_SCHEMAS.companyStructure.sections || []).flatMap(sec => (sec.blocks || []).filter(b => b.settingsKey));
 }
 // Стварэнне формы-секцыі (Банк/Філіял) адразу з дэфолтамі; філіял атрымлівае свае Папкі-0 Банкі/Філіялы (рэкурсія)
+// 🌑 «новае нараджаецца НеАктыЎНЫМ» (генерычны сцяг стэйта _newInactive): новы вузел ствараецца з active:false —
+// кліент спачатку дапілоўвае змест, потым уключае ● і вузел трапляе ў праекцыю/на сайт. Стэйт-абалонка
+// (РМ Каталог = sectionsState) рэзалвіцца да ўладальніка дадзеных праз _resolveEffectiveState.
+function _newNodeInactive(s, pid) {
+  const pNode = pid ? s?.data?.nodes?.find(n => n.id === pid) : null;
+  const eff = s?._resolveEffectiveState ? (s._resolveEffectiveState(pNode) || s) : s;
+  return !!(eff && eff._newInactive);
+}
 function _nodeCreateSectionForm(s, folderId, key, extraFields) { // extraFields — прэсэт ад пікера віду (_newFieldsPick)
   const pid = folderId || null;
   const siblings = s.data.nodes.filter(n => n.type === 'form' && n.parentId === pid);
@@ -10409,7 +10439,7 @@ function _nodeCreateSectionForm(s, folderId, key, extraFields) { // extraFields 
     : { companyName: {}, address: {}, hours: {}, map: {}, _history: [], _phones: [], _emails: [], _schedule: [] };
   if (extraFields) Object.assign(fields, extraFields); // прэсэт віду (напр. fulfil тавара/паслугі/падпіскі)
   const _now = new Date().toISOString();
-  const node = { id, type: 'form', formSchema: key, parentId: pid, order: siblings.length, name: '', fields, createdAt: _now, updatedAt: _now };
+  const node = { id, type: 'form', formSchema: key, parentId: pid, order: siblings.length, name: '', fields, createdAt: _now, updatedAt: _now, ...(_newNodeInactive(s, pid) ? { active: false } : {}) }; // 🌑 Каталог: новае — НеАктыўнае
   s.data.nodes.push(node);
   if (key === 'companyStructure') { // філіял = поўная структура кампаніі (рэкурсія Ф/П/ПФФ): Банкі + Філіялы + Рэсурсы
     s.data.nodes.push({ id: id + '-banks', type: 'folder', contentType: 'company-banks', _formSchema: 'bankStructure', sysKey: 'company_banks', parentId: id, order: 1, name: '', fields: {}, infoNodes: [], createdAt: _now, updatedAt: _now });
@@ -11619,6 +11649,7 @@ async function _sitePublish(btn) {
       const data = res.ok ? await res.json() : null;
       if (!res.ok || !data?.ok) { showAlert(t('err') + (data?.error ? ': ' + data.error : '')); return; }
       showAlert(data.published ? t('look_published') : t('look_publish_none'));
+      _draftBannerClear(); // 🔔 чарнавік апублікаваны — банер «неапублікаванае» гасне
     } catch (e) { showAlert(t('err') + ': ' + e.message); }
   }, { danger: false, label: t('look_publish') });
 }
@@ -11631,6 +11662,7 @@ async function _siteResetDraft() {
       const data = res.ok ? await res.json() : null;
       if (!res.ok || !data?.ok) { showAlert(t('err') + (data?.error ? ': ' + data.error : '')); return; }
       showAlert(t('look_reset_done') + ' ✓');
+      _draftBannerClear(); // 🔔 чарнавік скінуты — банер гасне
       if (typeof siteSectionsState !== 'undefined') { siteSectionsState.expanded?.clear(); loadNodeEditor(siteSectionsState); } // перачытаць старонку з published
     } catch (e) { showAlert(t('err') + ': ' + e.message); }
   }, { danger: true, label: t('look_reset') });
