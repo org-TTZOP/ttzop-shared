@@ -755,6 +755,8 @@ const FORM_SCHEMAS = {
           options: ['before','after'], labelMap: { before: 'pay_before', after: 'pay_after' } },
         { key: 'bufferAfter', type: 'number',   label: 'svc_buffer',         readOnly: () => true }, // буфер пасля ўсёй паслугі
         { key: 'bookLead',    type: 'number',   label: 'svc_lead',           readOnly: () => true, // ⏳ мінімальны запас перад бронню (хв); 0 = можна браць бліжэйшы слот. Ужывае ТОЛЬКІ публічны шлях (booking_slots/portal_book) — адмін бранюе без абмежаванняў
+          visible: form => (form.fields?.fulfil || 'cart') === 'booking' },
+        { key: 'bookCancelLead', type: 'number', label: 'svc_cancel_lead',   readOnly: () => true, // ⏳ запас перад ПАЧАТКАМ, раней за які кліент ужо не адменіць/не перанясе запіс сам (хв); 0 = хоць за хвіліну
           visible: form => (form.fields?.fulfil || 'cart') === 'booking' }
       ] },
     { type: 'table', title: 'client_history', dataKey: '_history', addable: false,

@@ -1190,7 +1190,7 @@ const SITE_VIEWS = {
       let btn = '';
       if (ff === 'booking') { // 📅 мадалка вольных слотаў; легасі-пазіцыя без id → чат (рашальнік не ведае, што браніраваць)
         btn = it.id
-          ? `<button onclick="event.stopPropagation();openSlotsModal('${_dsEsc(it.id)}',${nameArg})" style="${btnStyle}">📅 ${ui.cta_book}</button>`
+          ? `<button onclick="event.stopPropagation();bookItem('${_dsEsc(it.id)}',${nameArg})" style="${btnStyle}">📅 ${ui.cta_book}</button>`
           : `<button onclick="event.stopPropagation();chatAboutItem(${nameArg},'chat_book_pfx')" style="${btnStyle}">📅 ${ui.cta_book}</button>`;
       } else if (ff === 'inquiry') {
         btn = `<button onclick="event.stopPropagation();chatAboutItem(${nameArg},'chat_ask_pfx')" style="${btnStyle}">💬 ${ui.ask_btn}</button>`;
@@ -1721,103 +1721,29 @@ function chatAboutItem(name, pfxKey) {
   openCabinet('chat');
 }
 
-// ═══ 📅 МАДАЛКА ВОЛЬНЫХ СЛОТАЎ (№2б) ═══
-// Слоты лічыць СЕРВЕР (booking_slots) — кліент не бачыць ні чужых броняў, ні id рэсурсаў.
-// Бронь патрабуе сесіі кабінета: без яе кладзем намер (як ttzop_sub_intent) і адкрываем кабінет.
+// ═══ 📅 БРОНЬ З КАРТКІ — праз УНІВЕРСАЛЬНУЮ МАДАЛКУ (assets/js/slots-modal.js) ═══
+// Сайт дае толькі cfg: свой i18n, свой siteConfirm і хукі. Той жа кампанент выкарыстоўвае
+// кабінет (перанос запісу) — рэндэр слотаў жыве ў адным месцы.
 const _BK_DAYS = 14; // колькі дзён паказваем у пікеры
-let _bkState = { itemId: '', name: '', date: '', slots: [], busy: false };
-
-function _bkDayLabel(iso) { // «пн, 3 жн» — праз Intl на бягучай мове інтэрфейсу (без хардкоду назваў дзён)
-  try { return new Date(iso + 'T12:00:00Z').toLocaleDateString(currentUiLang || 'be', { weekday: 'short', day: 'numeric', month: 'short', timeZone: 'UTC' }); }
-  catch { return iso; }
-}
-function _bkDays() {
-  const out = [], t = new Date();
-  for (let i = 0; i < _BK_DAYS; i++) { const d = new Date(Date.UTC(t.getFullYear(), t.getMonth(), t.getDate() + i)); out.push(d.toISOString().slice(0, 10)); }
-  return out;
-}
-function openSlotsModal(itemId, name) {
-  _bkState = { itemId, name, date: _bkDays()[0], slots: [], busy: false };
-  document.getElementById('bk-modal')?.remove();
-  const ov = document.createElement('div');
-  ov.id = 'bk-modal';
-  ov.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.55);z-index:10002;display:flex;align-items:center;justify-content:center;padding:16px';
+const _bkLabels = () => { const ui = getUI(); return { title: ui.book_title, date: ui.book_date, time: ui.book_time, loading: ui.book_loading, none: ui.book_none, confirm: ui.book_confirm, done: ui.book_done, taken: ui.book_taken, err: ui.book_err }; };
+function bookItem(itemId, name, startDate) {
   const ui = getUI();
-  ov.innerHTML = `<div style="background:var(--surface,#181c27);border:1px solid var(--border,#2a2f45);border-radius:14px;max-width:440px;width:100%;max-height:86vh;overflow:auto;padding:18px;box-shadow:0 16px 48px rgba(0,0,0,0.5)">
-    <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;margin-bottom:14px">
-      <div style="font-weight:700;font-size:1.02rem;color:var(--text,#e8eaf0)">${_dsEsc((ui.book_title || '{name}').replace('{name}', name))}</div>
-      <button onclick="document.getElementById('bk-modal').remove()" style="background:none;border:none;color:var(--muted,#9aa1ad);cursor:pointer;font-size:1.1rem;line-height:1">✕</button>
-    </div>
-    <div style="font-size:0.8rem;color:var(--muted,#9aa1ad);margin-bottom:6px">${_dsEsc(ui.book_date || '')}</div>
-    <div id="bk-days" style="display:flex;gap:6px;overflow-x:auto;padding-bottom:8px;margin-bottom:12px"></div>
-    <div style="font-size:0.8rem;color:var(--muted,#9aa1ad);margin-bottom:6px">${_dsEsc(ui.book_time || '')}</div>
-    <div id="bk-slots" style="display:flex;flex-wrap:wrap;gap:6px;min-height:40px"></div>
-  </div>`;
-  ov.addEventListener('click', e => { if (e.target === ov) ov.remove(); });
-  document.body.appendChild(ov);
-  _bkRenderDays();
-  _bkLoadSlots();
+  openSlotsModal({ api: API_URL, repo: SITE_REPO, serviceId: itemId, name, lang: currentUiLang, days: _BK_DAYS, startDate,
+    token: () => localStorage.getItem('ttzop_portal_token'),
+    labels: _bkLabels(),
+    confirm: (msg, onOk) => siteConfirm(msg, onOk, false),
+    onNeedLogin: it => { // бронь патрабуе сесіі: намер перажывае ўваход (той жа патэрн, што ttzop_sub_intent)
+      try { localStorage.setItem('ttzop_book_intent', JSON.stringify({ id: it.serviceId, name: it.name, date: it.date })); } catch {}
+      siteConfirm(ui.book_login || '', () => openCabinet('chat'), false);
+    },
+    onDone: () => openCabinet('chat') });
 }
-function _bkRenderDays() {
-  const box = document.getElementById('bk-days'); if (!box) return;
-  box.innerHTML = _bkDays().map(d => {
-    const on = d === _bkState.date;
-    return `<button onclick="_bkPickDate('${d}')" style="flex:0 0 auto;padding:7px 10px;border-radius:8px;cursor:pointer;font-size:0.8rem;white-space:nowrap;border:1px solid ${on ? 'var(--accent,#f97316)' : 'var(--border,#2a2f45)'};background:${on ? 'var(--accent,#f97316)' : 'transparent'};color:${on ? '#fff' : 'var(--text,#e8eaf0)'}">${_dsEsc(_bkDayLabel(d))}</button>`;
-  }).join('');
-}
-function _bkPickDate(d) { _bkState.date = d; _bkRenderDays(); _bkLoadSlots(); }
-async function _bkLoadSlots() {
-  const box = document.getElementById('bk-slots'); if (!box) return;
-  const ui = getUI();
-  box.innerHTML = `<div style="color:var(--muted,#9aa1ad);font-size:0.85rem;padding:8px 0">${_dsEsc(ui.book_loading || '…')}</div>`;
-  let slots = [];
-  try {
-    const r = await fetch(API_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action: 'booking_slots', repo: SITE_REPO, serviceId: _bkState.itemId, date: _bkState.date, lang: currentUiLang }) });
-    if (r.ok) slots = (await r.json()).slots || [];
-  } catch {}
-  _bkState.slots = slots;
-  if (!document.getElementById('bk-modal')) return; // мадалку закрылі, пакуль чакалі адказ
-  box.innerHTML = slots.length
-    ? slots.map(t => `<button onclick="_bkPickTime('${_dsEsc(t)}')" style="padding:8px 12px;border-radius:8px;border:1px solid var(--border,#2a2f45);background:transparent;color:var(--text,#e8eaf0);cursor:pointer;font-size:0.86rem">${_dsEsc(t)}</button>`).join('')
-    : `<div style="color:var(--muted,#9aa1ad);font-size:0.85rem;padding:8px 0">${_dsEsc(ui.book_none || '')}</div>`;
-}
-function _bkPickTime(time) {
-  const ui = getUI(), d = _bkDayLabel(_bkState.date);
-  siteConfirm((ui.book_confirm || '{d} {t}?').replace('{d}', d).replace('{t}', time), () => _bkBook(time), false);
-}
-async function _bkBook(time) {
-  const ui = getUI();
-  const token = localStorage.getItem('ttzop_portal_token');
-  if (!token) { // не ўвайшоў — намер перажывае ўваход (той жа патэрн, што ttzop_sub_intent)
-    try { localStorage.setItem('ttzop_book_intent', JSON.stringify({ id: _bkState.itemId, name: _bkState.name, date: _bkState.date, time })); } catch {}
-    document.getElementById('bk-modal')?.remove();
-    siteConfirm(ui.book_login || '', () => openCabinet('chat'), false);
-    return;
-  }
-  if (_bkState.busy) return; _bkState.busy = true;
-  let res = {};
-  try {
-    const r = await fetch(API_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action: 'portal_book', repo: SITE_REPO, token, serviceId: _bkState.itemId, date: _bkState.date, time }) });
-    res = await r.json();
-  } catch { res = { error: 'net' }; }
-  _bkState.busy = false;
-  if (res.ok) {
-    document.getElementById('bk-modal')?.remove();
-    siteConfirm((ui.book_done || '').replace('{d}', _bkDayLabel(_bkState.date)).replace('{t}', time), () => openCabinet('chat'), false);
-    return;
-  }
-  if (res.error === 'slot_taken') { siteConfirm(ui.book_taken || '', () => {}, false); _bkLoadSlots(); return; } // хтосьці апярэдзіў — паказваем свежы спіс
-  siteConfirm(ui.book_err || '', () => {}, false);
-}
-// намер броні перажыў уваход у кабінет → дабраніраваць (клічацца пасля вяртання з кабінета)
+// намер броні перажыў уваход у кабінет → адкрываем той жа дзень (слоты маглі змяніцца — не бранюем моўчкі)
 function bookIntentApply() {
   let it = null;
   try { it = JSON.parse(localStorage.getItem('ttzop_book_intent') || 'null'); localStorage.removeItem('ttzop_book_intent'); } catch {}
   if (!it || !localStorage.getItem('ttzop_portal_token')) return;
-  openSlotsModal(it.id, it.name); // слоты маглі змяніцца, пакуль ён уваходзіў → не бранюем моўчкі, паказваем спіс
-  _bkState.date = it.date; _bkRenderDays(); _bkLoadSlots();
+  bookItem(it.id, it.name, it.date);
 }
 // 🔁 S1: «Падпісацца» на картцы → намер у localStorage (як chat_prefill) → кабінет; пасля ўваходу
 // portal.html сам пацвердзіць (portalSubIntentApply) і аформіць падпіску (portal_subscribe)
