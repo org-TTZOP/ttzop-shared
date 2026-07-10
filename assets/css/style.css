@@ -403,6 +403,13 @@ body.ds-edit #site-sections .ds-editbar button { pointer-events: auto !important
 .ds-mi .ds-dot { flex-shrink: 0; }
 /* ⋯ меню-папавер секцыі */
 .ds-menu { position: absolute; z-index: 10002; min-width: 180px; max-width: 240px; padding: 6px; border-radius: 12px; background: var(--card-bg,#1f2430); color: var(--text-main,#eee); border: 1px solid var(--accent,#f97316); box-shadow: 0 12px 40px rgba(0,0,0,.5); display: flex; flex-direction: column; gap: 3px; }
+/* 🟰 ЛЮСТЭРКА панэльнага ⋯-меню (.node-overflow-menu-grid): сетка кнопак-іконак 34×34 з тултыпамі,
+   групы праз тонкія падзяляльнікі — кліент бачыць АДЗІН дызайн меню ў Панелі і ў Чарнавіку */
+.ds-menu-grid { flex-direction: row; flex-wrap: wrap; gap: 2px; min-width: 128px; max-width: 216px; padding: 4px; border-radius: 8px; border-color: rgba(128,128,128,.45); box-shadow: 0 8px 24px rgba(0,0,0,.35); }
+.ds-menu-grid > .ds-mi { width: 34px; height: 34px; padding: 0; gap: 0; justify-content: center; font-size: .85rem; white-space: nowrap; overflow: hidden; }
+.ds-menu-grid .ds-msep { width: 100%; height: 1px; background: rgba(128,128,128,.3); margin: 2px 0; }
+.ds-menu-grid .ds-mi-sep { width: 100%; padding: 4px 6px 0; }
+.ds-menu-grid .ds-mparams { grid-template-columns: 1fr; width: 100%; }
 .ds-mi { display: flex; align-items: center; gap: 8px; padding: 8px 10px; border: none; border-radius: 8px; background: transparent; color: inherit; font-size: .9rem; cursor: pointer; text-align: left; }
 .ds-mi:hover { background: rgba(128,128,128,.18); }
 /* канонны danger «Выдаліць» — як панэльны .node-overflow-item.danger (чырвоны ✕) */
