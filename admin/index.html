@@ -7970,9 +7970,11 @@ const WIZARD_STEPS = [
 ];
 const _wizActive = () => typeof settings.wizardStep === 'number' && settings.wizardStep >= 0 && settings.wizardStep < WIZARD_STEPS.length;
 function _wizGo() { // перайсці на бягучы крок
-  if (!_wizActive()) { _navBannerRender(); return; }
+  if (!_wizActive()) { _navReturn = null; _navBannerRender(); return; }
   const st = WIZARD_STEPS[settings.wizardStep];
   _navToNode(st.page, st.node ? st.node() : null); // банер перамалюецца ўнутры
+  _navReturn = null; // крок майстра — не экскурсія: «← Вярнуцца» тут не мае сэнсу (і не мусіць перажыць «Гатова»)
+  _navBannerRender();
 }
 function _wizNext() { if (!_wizActive()) return; settings.wizardStep++; _settingsSaveKick(); _wizGo(); }
 function _wizSkip() { // «Пазней» — майстар больш не паказваецца (−1 = свядома завершаны)
