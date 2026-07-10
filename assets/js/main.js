@@ -1265,6 +1265,7 @@ function renderDynamicSections(data) {
   const mount = document.getElementById('site-sections');
   if (!mount) return;
   _sitePostReg = {}; // рэестр пастоў — толькі бягучы рэндэр (выдалены пост не жыве па старым ключы)
+  _siteAlbumReg = {}; _albSeq = 0; // 🖼 рэестр альбомаў лайтбокса — таксама толькі бягучы рэндэр
   // 🪆 К3d МАТРОШКА: сайт паўтарае дрэва РМ «Структура сайта» (kind='folder' = раздзел/папка, kind='file' = фота/файл, parentId = укладзенасць)
   const raw = [...(Array.isArray(data?.sections) ? data.sections : [])]; // копія — нармалізатар ніжэй дадае радкі (перарэндэр мовы не павінен дубляваць)
   // ⚰️ ЛЕГАСІ-нармалізатар старой галерэйнай мадэлі (content.images/albums → генерычныя радкі);
@@ -1336,16 +1337,21 @@ function renderDynamicSections(data) {
       : `<div id="sec-${_dsEsc(f.id)}"${eCls ? ` class="${eCls.trim()}"` : ''} style="margin:20px 0 0 ${Math.min(d - 1, 3) * 14}px">${ebar}${_foldWrap(f.collapsed, name ? _dsGroupHead(_sv(f.name), d - 1) : '', inner)}</div>`;
   };
   // 📎 генерычны ФайлБлок дрэва: фота — плітка з лайтбоксам (суседнія файлы зліваюцца ў адну сетку)
-  const _fileTile = (f, idx, total) => {
+  const _fileTile = (f, idx, total, albId) => {
     const url = _dsEsc(_sv(f.url)); const cap = _sv(f.caption);
     // ФайлБлок = вузел sections.json → той жа радок ● ▲▼ ⓘ ⋯ (node-механізм) + рэдагавальная назва/апісанне
     if (_dEdit) return `<div id="sec-${_dsEsc(f.id)}" class="tile-item ds-editable ds-file${f.enabled === false ? ' ds-hidden' : ''}">${_dSecBar(f.id, idx > 0, idx < total - 1, f.enabled !== false)}<img src="${url}" alt="" loading="lazy"><div class="tile-caption"${_edAttr(f.id, 'caption', 'text', _dL('Назва / апісанне', 'Name / caption'))}>${_dsEsc(cap)}</div></div>`;
-    return `<div class="tile-item tile-item-clickable" onclick="openLightbox('${url}')">${cap ? `<div class="tile-caption">${_dsEsc(cap)}</div>` : ''}<img src="${url}" alt="" loading="lazy"></div>`;
+    return `<div class="tile-item tile-item-clickable" onclick="openLightbox('${albId}',${idx})">${cap ? `<div class="tile-caption">${_dsEsc(cap)}</div>` : ''}<img src="${url}" alt="" loading="lazy"></div>`;
   };
   const renderKids = (pid, d) => {
     const kids = kidsOf(pid).filter(x => _dEdit || (x.kind === 'folder' ? _branchHasLeaf(x.id) : x.kind === 'file' ? true : _instHasContent(x))); // мегаправіла: пустая галіна/секцыя не публікуецца. ⚠️ EDIT-байпас: у прэв'ю-рэдактары пустыя ПАКАЗВАЕМ (каб напоўніць новую ➕ секцыю; як пустыя загалоўкі вышэй)
     const out = []; let files = [];
-    const flush = () => { if (files.length) { out.push(`<div class="tile-grid">${files.map((f, i) => _fileTile(f, i, files.length)).join('')}</div>`); files = []; } };
+    const flush = () => { if (files.length) {
+      // 🖼 суседнія файлы адной сеткі = АЛЬБОМ лайтбокса (◀▶/swipe гартаюць у яго межах)
+      const albId = 'alb' + (++_albSeq);
+      _siteAlbumReg[albId] = files.map(f => ({ url: _sv(f.url), caption: _sv(f.caption) }));
+      out.push(`<div class="tile-grid">${files.map((f, i) => _fileTile(f, i, files.length, albId)).join('')}</div>`); files = [];
+    } };
     kids.forEach((x, i) => { if (x.kind === 'file') files.push(x); else { flush(); out.push(x.kind === 'folder' ? folderHtml(x, d, i, kids.length) : instHtml(x, d, i, kids.length)); } }); // idx/len → ▲▼ на канцах недаступныя
     flush();
     return out.join('');
@@ -2403,12 +2409,57 @@ async function verifyOrderCode() {
   }
 }
 
-function openLightbox(src) {
+// 🖼 ЛАЙТБОКС-ГАЛЕРЭЯ (жывая заўвага 2026-07-10): мадалка фота з подпісам + лічыльнікам, ◀▶ па бягучым
+// АЛЬБОМЕ (суседнія ФайлБлокі адной сеткі — рэестр _siteAlbumReg, як _sitePostReg), swipe на сэнсарным,
+// ↗ арыгінал у новай укладцы, Esc/стрэлкі клавіятуры. Легасі-выклік openLightbox(url) працуе як раней.
+let _siteAlbumReg = {}, _albSeq = 0, _lbState = null;
+function openLightbox(albOrSrc, idx) {
+  const items = _siteAlbumReg[albOrSrc] || [{ url: albOrSrc, caption: '' }];
+  _lbState = { items, i: Math.min(Math.max(+idx || 0, 0), items.length - 1) };
+  const many = items.length > 1;
   const lb = document.createElement('div');
   lb.className = 'lightbox active'; // .active абавязковы — без яго .lightbox display:none (той жа баг, што лавілі ў постах)
-  lb.innerHTML = `<div class="lightbox-inner"><img src="${src}"><button onclick="this.closest('.lightbox').remove()">✕</button></div>`;
-  lb.addEventListener('click', e => { if (e.target === lb) lb.remove(); });
+  lb.id = 'site-lightbox';
+  lb.innerHTML = `<div class="lightbox-inner">
+    <img id="lb-img" src="" alt="">
+    <div class="lb-bar"><span id="lb-cap"></span><span id="lb-cnt"></span></div>
+    <div class="lb-btns">
+      <button onclick="window.open(document.getElementById('lb-img').src, '_blank')" aria-label="↗">↗</button>
+      <button onclick="closeLightbox()" aria-label="✕">✕</button>
+    </div>
+    ${many ? `<button class="lb-nav lb-prev" onclick="lightboxStep(-1)" aria-label="◀">‹</button><button class="lb-nav lb-next" onclick="lightboxStep(1)" aria-label="▶">›</button>` : ''}
+  </div>`;
+  lb.addEventListener('click', e => { if (e.target === lb) closeLightbox(); });
+  // жэст сэнсарнага экрана: гарызантальны свайп ≥40px = гартаць альбом
+  let tx = null;
+  lb.addEventListener('touchstart', e => { tx = e.touches[0].clientX; }, { passive: true });
+  lb.addEventListener('touchend', e => {
+    if (tx === null) return; const dx = e.changedTouches[0].clientX - tx; tx = null;
+    if (Math.abs(dx) >= 40) lightboxStep(dx < 0 ? 1 : -1);
+  }, { passive: true });
   document.body.appendChild(lb);
+  document.addEventListener('keydown', _lbKeys);
+  lightboxStep(0); // першы паказ
+}
+function lightboxStep(d) {
+  const st = _lbState; if (!st) return;
+  const n = st.items.length;
+  st.i = ((st.i + d) % n + n) % n; // цыкл па альбоме (за апошнім — першы)
+  const it = st.items[st.i], img = document.getElementById('lb-img');
+  if (!img) return;
+  img.src = it.url;
+  document.getElementById('lb-cap').textContent = it.caption || '';
+  document.getElementById('lb-cnt').textContent = n > 1 ? `${st.i + 1} / ${n}` : '';
+}
+function _lbKeys(e) {
+  if (e.key === 'Escape') closeLightbox();
+  else if (e.key === 'ArrowRight') lightboxStep(1);
+  else if (e.key === 'ArrowLeft') lightboxStep(-1);
+}
+function closeLightbox() {
+  document.getElementById('site-lightbox')?.remove();
+  document.removeEventListener('keydown', _lbKeys);
+  _lbState = null;
 }
 
 // 📰 рэестр постаў бягучага рэндэру (key `${instId}:${i}` → пост) + аверлэй поўнага артыкула

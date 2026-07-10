@@ -562,19 +562,34 @@ html[data-d-shadows="flat"] .service-card:hover { transform: none; box-shadow: n
   .tile-grid { grid-template-columns: repeat(2, 1fr) !important; gap: 10px; }
 }
 
-/* ---- LIGHTBOX (разметка з main.js: .lightbox > .lightbox-inner > img + ✕) ---- */
+/* ---- LIGHTBOX-ГАЛЕРЭЯ (разметка з main.js openLightbox: img + подпіс/лічыльнік + ↗/✕ + ◀▶ па альбоме) ---- */
 .lightbox {
   display: none; position: fixed; inset: 0;
   background: rgba(0,0,0,0.92); z-index: 999;
   align-items: center; justify-content: center;
 }
 .lightbox.active { display: flex; }
-.lightbox-inner { position: relative; }
-.lightbox img { max-width: 90vw; max-height: 90vh; border-radius: var(--radius-md); }
-.lightbox-inner button, .lightbox-close {
-  position: absolute; top: -40px; right: 0;
+.lightbox-inner { position: relative; display: flex; flex-direction: column; align-items: center; }
+.lightbox img { max-width: 90vw; max-height: 82vh; border-radius: var(--radius-md); }
+.lightbox .lb-btns { position: absolute; top: -44px; right: 0; display: flex; gap: 4px; }
+.lightbox .lb-btns button {
   background: none; border: none;
-  color: #fff; font-size: 2rem; cursor: pointer;
+  color: #fff; font-size: 1.7rem; cursor: pointer; padding: 2px 8px;
+}
+.lightbox .lb-bar { display: flex; gap: 14px; align-items: baseline; justify-content: center; color: #fff; padding: 10px 6px 0; max-width: 90vw; text-align: center; }
+.lightbox #lb-cap { font-size: 0.95rem; opacity: 0.9; }
+.lightbox #lb-cnt { font-size: 0.8rem; opacity: 0.6; white-space: nowrap; }
+.lightbox .lb-nav { /* стрэлкі альбома — вялікія круглыя мішэні, зручныя і пальцам */
+  position: absolute; top: 50%; transform: translateY(-50%);
+  background: rgba(255,255,255,0.14); border: none; color: #fff;
+  font-size: 2rem; line-height: 1; cursor: pointer; border-radius: 50%;
+  width: 46px; height: 46px; display: flex; align-items: center; justify-content: center;
+}
+.lightbox .lb-prev { left: -58px; }
+.lightbox .lb-next { right: -58px; }
+@media (max-width: 760px) { /* вузкі экран: стрэлкі паверх фота, не за краем */
+  .lightbox .lb-prev { left: 8px; }
+  .lightbox .lb-next { right: 8px; }
 }
 
 /* ---- ВОДГУКІ ---- */
