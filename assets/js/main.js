@@ -2702,16 +2702,19 @@ function _dSecMenu(id, btn) { // папавер: ● схаваць/паказа
     return `<label class="ds-mp">${_svcEsc(p.name)}${ctrl}</label>`;
   }).join('');
   const itemKey = sec && sec.kind !== 'folder' && sec.kind !== 'file' ? _dItemKey(sec.type) : ''; // ліставая секцыя → ➕ пазіцыю
-  const addRow = sec && sec.kind === 'folder' // раздзел → ➕ секцыю/раздзел унутр; ліставая → ➕ пазіцыю
-    ? `<div class="ds-mi-sep">➕ ${_svcEsc(_dL('Дадаць унутр', 'Add inside'))}</div>${_dAddOptionsHtml(id)}`
-    : (itemKey ? mi('➕', _dL('Дадаць пазіцыю', 'Add item'), `_dItemAdd('${_dsEsc(id)}','${_dsEsc(itemKey)}','${_dsEsc(sec.type)}')`) : '');
+  // ➕ «Дадаць унутр» — ААП-парытэт з панэллю (жывая заўвага 2026-07-10): УСЕ секцыі і раздзелы трымаюць
+  // +📁/+📷 (як кожная Папка панэлі мае +📂/+📎); раздзел дадаткова — тыпы секцый; ліставая — і пазіцыю.
+  const addRow = sec && sec.kind !== 'file'
+    ? `<div class="ds-mi-sep">➕ ${_svcEsc(_dL('Дадаць унутр', 'Add inside'))}</div>`
+      + (itemKey ? mi('➕', _dL('Пазіцыя', 'Item'), `_dItemAdd('${_dsEsc(id)}','${_dsEsc(itemKey)}','${_dsEsc(sec.type)}')`) : '')
+      + _dAddOptionsHtml(id, sec.kind !== 'folder') // секцыя = толькі 📁/📷 (Форму не кладуць у Форму); раздзел = поўны пікер
+    : '';
   const m = document.createElement('div'); m.id = 'ds-menu'; m.className = 'ds-menu';
-  // СТАНДАРТ меню (аднолькавы ўсюды): ✎ · ⧉ · ➕ · 🗑 (+ тыпавое). ● і ▲▼ жывуць у радку, не дублююцца ў меню.
+  // СТАНДАРТ меню (аднолькавы ўсюды): ✎ · ⧉ · ✕ · ➕-блок (+ тыпавое). ● і ▲▼ жывуць у радку, не дублююцца ў меню.
   m.innerHTML = mi('✎', _dL('Назва', 'Title'), `_dSecFocusTitle('${_dsEsc(id)}')`)
     + mi('⧉', _dL('Дубляваць', 'Duplicate'), `_dSecDup('${_dsEsc(id)}')`)
-    + (itemKey ? addRow : '') // ➕ пазіцыю — побач з ⧉ (для раздзела блок ідзе ніжэй)
     + `<button class="ds-mi ds-mi-del" onclick="_dSecDelete('${_dsEsc(id)}')"><span class="ds-x">✕</span> ${_svcEsc(_dL('Выдаліць', 'Delete'))}</button>` // канонны чырвоны ✕ (як панэль; 🗑 — толькі кантэйнер Сметніцы)
-    + (sec && sec.kind === 'folder' ? addRow : '') // ➕ унутр — асобны блок для раздзела
+    + addRow
     + (params ? `<div class="ds-mi-sep">🎨 ${_svcEsc(_dL('Параметры', 'Params'))}</div><div class="ds-mparams">${params}</div>` : '');
   document.body.appendChild(m);
   const r = btn.getBoundingClientRect(); // размясціць пад кнопкай, не за краем экрана
@@ -2848,11 +2851,13 @@ async function _dFModalSave(secId, key, idx, type) {
   _dFModalClose();
   try { await _draftPost({ action: 'draft_item', op: 'set', repo: SITE_REPO, id: secId, key, idx, patch }); await _dReload(); } catch (e) {}
 }
-// ➕ ДАДАЦЬ: агульны спіс опцый (тыпы секцый + Раздзел) для пікера — parentId=null (старонка) або id раздзела
-function _dAddOptionsHtml(parentId) {
+// ➕ ДАДАЦЬ: агульны спіс опцый (тыпы секцый + Раздзел + Фота) для пікера — parentId=null (старонка) або id раздзела.
+// nodesOnly=true (унутр СЕКЦЫІ): толькі 📁 Папка + 📷 Фота — канон «Форму не кладуць у Форму» (секцыя ў секцыі),
+// але Папкі-0 і Файлы секцыя трымае гэтак жа, як любая Папка панэлі (+📂/+📎 — ААП-парытэт з панэллю)
+function _dAddOptionsHtml(parentId, nodesOnly) {
   const mi = (icon, label, onclick) => `<button class="ds-mi" onclick="${onclick}">${icon} ${_svcEsc(label)}</button>`;
   const pid = parentId ? `'${_dsEsc(parentId)}'` : 'null';
-  return _D_ADD_TYPES.map(t => mi(t[1], _dL(t[2], t[3]), `_dAddNode('section','${t[0]}',${pid})`)).join('')
+  return (nodesOnly ? '' : _D_ADD_TYPES.map(t => mi(t[1], _dL(t[2], t[3]), `_dAddNode('section','${t[0]}',${pid})`)).join(''))
     + mi('📁', _dL('Раздзел', 'Folder'), `_dAddNode('folder','',${pid})`)
     + mi('📷', _dL('Фота', 'Photo'), `_dFileAdd(${pid})`);
 }
