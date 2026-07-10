@@ -235,7 +235,7 @@ export function bookableServices(nodes) {
     const duration = segLen || (+f.duration || 0);
     const resourceIds = segs.length ? [...new Set(segs.flatMap(sg => Array.isArray(sg.candidates) ? sg.candidates : []))] : (Array.isArray(f.resourceIds) ? f.resourceIds : []);
     const segments = segs.length ? segs : (duration > 0 ? [{ _id: 's0', type: 'person', candidates: resourceIds, offset: 0, duration }] : []);
-    return { id: n.id, name: f.name || n.name || '?', duration, bufferAfter: +f.bufferAfter || 0, resourceIds, _segments: segments, _groups: Array.isArray(f._groups) ? f._groups : [] };
+    return { id: n.id, name: f.name || n.name || '?', duration, bufferAfter: +f.bufferAfter || 0, leadMin: Math.max(0, +f.bookLead || 0), resourceIds, _segments: segments, _groups: Array.isArray(f._groups) ? f._groups : [] }; // leadMin — мінімальны запас перад бронню (хв); ужывае ТОЛЬКІ публічны шлях
   }).filter(x => x.duration > 0);
 }
 
