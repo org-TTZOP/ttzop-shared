@@ -1154,9 +1154,10 @@ function _cardHtml(o) {
 }
 
 // Узроўневы загаловак групы (матрошка): d=0 — акцэнт-рыса, глыбей — драбней+водступ. Спажыўцы: cards (папкі Каталога), gallery (🗂 альбомы)
-const _dsGroupHead = (txt, d) => d === 0
-  ? `<div class="services-folder-heading" style="grid-column:1/-1;margin-top:8px;font-size:1.05rem;font-weight:700;padding:8px 0 4px;border-bottom:2px solid var(--color-primary,#f97316);color:var(--color-primary,#111)">${_dsEsc(txt)}</div>`
-  : `<div class="services-folder-heading" style="grid-column:1/-1;margin-top:4px;font-size:${Math.max(0.8, 0.98 - d * 0.08)}rem;font-weight:600;padding:${Math.max(4, 10 - d * 2)}px 0 2px ${d * 14}px;opacity:0.85">▸ ${_dsEsc(txt)}</div>`;
+// attr (опц.) — _edAttr рэдагавання назвы на месцы: кладзецца на ЎНУТРАНЫ span, каб плейсхолдэр/фокус не чапалі «▸ »
+const _dsGroupHead = (txt, d, attr = '') => d === 0
+  ? `<div class="services-folder-heading" style="grid-column:1/-1;margin-top:8px;font-size:1.05rem;font-weight:700;padding:8px 0 4px;border-bottom:2px solid var(--color-primary,#f97316);color:var(--color-primary,#111)">${attr ? `<span${attr}>${_dsEsc(txt)}</span>` : _dsEsc(txt)}</div>`
+  : `<div class="services-folder-heading" style="grid-column:1/-1;margin-top:4px;font-size:${Math.max(0.8, 0.98 - d * 0.08)}rem;font-weight:600;padding:${Math.max(4, 10 - d * 2)}px 0 2px ${d * 14}px;opacity:0.85">▸ ${attr ? `<span${attr}>${_dsEsc(txt)}</span>` : _dsEsc(txt)}</div>`;
 // КАТАЛОГ ВЫГЛЯДАЎ (viewType → innerHTML секцыі). Класы супадаюць са style.css → кожны перавыкарыстоўваецца бясконца.
 const SITE_VIEWS = {
   // тэкст + фота (Пра нас, простыя навіны). body — гатовы HTML (richtext)
@@ -1332,9 +1333,15 @@ function renderDynamicSections(data) {
     const inner = renderKids(f.id, d + 1);
     const ebar = _dSecBar(f.id, idx > 0, idx < sibN - 1, f.enabled !== false); // ▲▼ ● ⋯ раздзела-Папкі
     const eCls = _dEdit ? ` ds-editable${f.enabled === false ? ' ds-hidden' : ''}` : '';
+    // 🖊️ назва Папкі рэдагуецца НА МЕСЦЫ (як загаловак секцыі, path='name'); у edit пустая — плейсхолдэр,
+    // інакш новая Папка (без імя і дзяцей) выглядала «нічога не дадалося» — жывая заўвага 2026-07-10
+    const nmAttr = _edAttr(f.id, 'name', 'ml', getUI().ed_title);
+    const head = (name || _dEdit)
+      ? (d === 0 ? `<h2 class="section-title"${nmAttr}>${name}</h2>` : _dsGroupHead(_sv(f.name), d - 1, nmAttr))
+      : '';
     return d === 0
-      ? `<section id="sec-${_dsEsc(f.id)}" class="section ${band++ % 2 ? 's-alt' : 's-light'}${eCls}"><div class="container">${ebar}${_foldWrap(f.collapsed, name ? `<h2 class="section-title">${name}</h2>` : '', inner)}</div></section>`
-      : `<div id="sec-${_dsEsc(f.id)}"${eCls ? ` class="${eCls.trim()}"` : ''} style="margin:20px 0 0 ${Math.min(d - 1, 3) * 14}px">${ebar}${_foldWrap(f.collapsed, name ? _dsGroupHead(_sv(f.name), d - 1) : '', inner)}</div>`;
+      ? `<section id="sec-${_dsEsc(f.id)}" class="section ${band++ % 2 ? 's-alt' : 's-light'}${eCls}"><div class="container">${ebar}${_foldWrap(f.collapsed, head, inner)}</div></section>`
+      : `<div id="sec-${_dsEsc(f.id)}"${eCls ? ` class="${eCls.trim()}"` : ''} style="margin:20px 0 0 ${Math.min(d - 1, 3) * 14}px">${ebar}${_foldWrap(f.collapsed, head, inner)}</div>`;
   };
   // 📎 генерычны ФайлБлок дрэва: фота — плітка з лайтбоксам (суседнія файлы зліваюцца ў адну сетку)
   const _fileTile = (f, idx, total, albId) => {
