@@ -10912,6 +10912,7 @@ function _monitorApplyFolderOrder(folders) {
 function loadMonitor() {
   if (monitorState.data) { // кэш ёсць — мгненны рэндэр без API-запытаў
     _monitorLoadHistory(); // 📈 гісторыя лімітаў (самагард _histLoaded — фэтч толькі калі яшчэ няма)
+    if (!monitorState._dashLoaded) _monitorLoadDashboard(); // 🏷️ зводка станаў на загалоўку «Агляду» — бачная АДРАЗУ, без разгортвання (жывая заўвага 2026-07-10)
     currentNodeState = monitorState;
     renderNodeEditor(monitorState);
     return;
@@ -10943,6 +10944,7 @@ function loadMonitor() {
   currentNodeState = monitorState;
   renderNodeEditor(monitorState);
   _monitorLoadHistory(); // 📈 гісторыя лімітаў — адразу пры ўваходзе ў РМ (агульная секцыя Формы-0)
+  _monitorLoadDashboard(); // 🏷️ зводка станаў сайтаў на загалоўку «Агляду» — адразу, без разгортвання
 }
 async function _monitorLoadDashboard() {
   if (monitorState._dashLoading) return; // запабігаем падвойнаму запыту
