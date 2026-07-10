@@ -147,7 +147,7 @@ const UI_T = {
     form_err_email: 'Увядзіце правільны email', form_err_subdomain: 'Увядзіце жаданы паддамен',
     form_err_subdomain_taken: 'Выберыце вольны паддамен', form_err_subdomain_test: 'Паддамен не можа ўтрымліваць "test"', form_err_connection: 'Памылка злучэння',
     verify_title: 'Пацверджанне email', verify_sent: 'Код адпраўлены на', verify_label: '6-значны код',
-    verify_btn: 'Пацвердзіць і адправіць заказ', verify_checking: 'Правяраем...', site_paused: 'Сайт часова прыпынены',
+    verify_btn: 'Пацвердзіць і адправіць заказ', verify_checking: 'Правяраем...', site_paused: 'Сайт часова прыпынены', site_paused_more: 'Дадатковая інфармацыя на {site}',
     verify_err: 'Увядзіце 6-значны код', verify_err_wrong: 'Няправільны код',
     done_title: 'Заказ прыняты!',
     // 📝 №3а: анкета «Свой сайт» (сайт нараджаецца напоўнены)
@@ -191,7 +191,7 @@ const UI_T = {
     form_err_email: 'Enter a valid email', form_err_subdomain: 'Enter desired subdomain',
     form_err_subdomain_taken: 'Choose an available subdomain', form_err_subdomain_test: 'Subdomain cannot contain "test"', form_err_connection: 'Connection error',
     verify_title: 'Email confirmation', verify_sent: 'Code sent to', verify_label: '6-digit code',
-    verify_btn: 'Confirm and place order', verify_checking: 'Checking...', site_paused: 'Site temporarily paused',
+    verify_btn: 'Confirm and place order', verify_checking: 'Checking...', site_paused: 'Site temporarily paused', site_paused_more: 'More information at {site}',
     verify_err: 'Enter the 6-digit code', verify_err_wrong: 'Incorrect code',
     done_title: 'Order accepted!',
     // 📝 №3а: анкета «Свой сайт» (сайт нараджаецца напоўнены)
@@ -235,7 +235,7 @@ const UI_T = {
     form_err_email: 'Введіть правильний email', form_err_subdomain: 'Введіть бажаний піддомен',
     form_err_subdomain_taken: 'Виберіть вільний піддомен', form_err_subdomain_test: 'Піддомен не може містити "test"', form_err_connection: 'Помилка з\'єднання',
     verify_title: 'Підтвердження email', verify_sent: 'Код відправлено на', verify_label: '6-значний код',
-    verify_btn: 'Підтвердити і відправити замовлення', verify_checking: 'Перевіряємо...', site_paused: 'Сайт тимчасово призупинено',
+    verify_btn: 'Підтвердити і відправити замовлення', verify_checking: 'Перевіряємо...', site_paused: 'Сайт тимчасово призупинено', site_paused_more: 'Додаткова інформація на {site}',
     verify_err: 'Введіть 6-значний код', verify_err_wrong: 'Невірний код',
     done_title: 'Замовлення прийнято!',
     // 📝 №3а: анкета «Свой сайт» (сайт нараджаецца напоўнены)
@@ -279,7 +279,7 @@ const UI_T = {
     form_err_email: 'Введите правильный email', form_err_subdomain: 'Введите желаемый поддомен',
     form_err_subdomain_taken: 'Выберите свободный поддомен', form_err_subdomain_test: 'Поддомен не может содержать "test"', form_err_connection: 'Ошибка подключения',
     verify_title: 'Подтверждение email', verify_sent: 'Код отправлен на', verify_label: '6-значный код',
-    verify_btn: 'Подтвердить и отправить заказ', verify_checking: 'Проверяем...', site_paused: 'Сайт временно приостановлен',
+    verify_btn: 'Подтвердить и отправить заказ', verify_checking: 'Проверяем...', site_paused: 'Сайт временно приостановлен', site_paused_more: 'Дополнительная информация на {site}',
     verify_err: 'Введите 6-значный код', verify_err_wrong: 'Неверный код',
     done_title: 'Заказ принят!',
     // 📝 №3а: анкета «Свой сайт» (сайт нараджаецца напоўнены)
@@ -323,7 +323,7 @@ const UI_T = {
     form_err_email: 'Podaj prawidłowy email', form_err_subdomain: 'Podaj żądaną subdomenę',
     form_err_subdomain_taken: 'Wybierz wolną subdomenę', form_err_subdomain_test: 'Subdomena nie może zawierać "test"', form_err_connection: 'Błąd połączenia',
     verify_title: 'Potwierdzenie email', verify_sent: 'Kod wysłany na', verify_label: '6-cyfrowy kod',
-    verify_btn: 'Potwierdź i złóż zamówienie', verify_checking: 'Sprawdzamy...', site_paused: 'Strona tymczasowo wstrzymana',
+    verify_btn: 'Potwierdź i złóż zamówienie', verify_checking: 'Sprawdzamy...', site_paused: 'Strona tymczasowo wstrzymana', site_paused_more: 'Więcej informacji na {site}',
     verify_err: 'Wprowadź 6-cyfrowy kod', verify_err_wrong: 'Nieprawidłowy kod',
     done_title: 'Zamówienie przyjęte!',
     // 📝 №3а: анкета «Свой сайт» (сайт нараджаецца напоўнены)
@@ -367,7 +367,7 @@ const UI_T = {
     form_err_email: 'Geben Sie eine gültige E-Mail-Adresse ein', form_err_subdomain: 'Geben Sie die gewünschte Subdomain ein',
     form_err_subdomain_taken: 'Wählen Sie eine verfügbare Subdomain', form_err_subdomain_test: 'Subdomain darf "test" nicht enthalten', form_err_connection: 'Verbindungsfehler',
     verify_title: 'E-Mail-Bestätigung', verify_sent: 'Code gesendet an', verify_label: '6-stelliger Code',
-    verify_btn: 'Bestätigen und bestellen', verify_checking: 'Überprüfen...', site_paused: 'Website vorübergehend pausiert',
+    verify_btn: 'Bestätigen und bestellen', verify_checking: 'Überprüfen...', site_paused: 'Website vorübergehend pausiert', site_paused_more: 'Weitere Informationen auf {site}',
     verify_err: 'Geben Sie den 6-stelligen Code ein', verify_err_wrong: 'Falscher Code',
     done_title: 'Bestellung aufgenommen!',
     // 📝 №3а: анкета «Свой сайт» (сайт нараджаецца напоўнены)
@@ -411,7 +411,7 @@ const UI_T = {
     form_err_email: 'Saisissez un email valide', form_err_subdomain: 'Saisissez le sous-domaine souhaité',
     form_err_subdomain_taken: 'Choisissez un sous-domaine disponible', form_err_subdomain_test: 'Le sous-domaine ne peut pas contenir "test"', form_err_connection: 'Erreur de connexion',
     verify_title: 'Confirmation email', verify_sent: 'Code envoyé à', verify_label: 'Code à 6 chiffres',
-    verify_btn: 'Confirmer et passer la commande', verify_checking: 'Vérification...', site_paused: 'Site temporairement suspendu',
+    verify_btn: 'Confirmer et passer la commande', verify_checking: 'Vérification...', site_paused: 'Site temporairement suspendu', site_paused_more: 'Plus d’informations sur {site}',
     verify_err: 'Saisissez le code à 6 chiffres', verify_err_wrong: 'Code incorrect',
     done_title: 'Commande acceptée !',
     // 📝 №3а: анкета «Свой сайт» (сайт нараджаецца напоўнены)
@@ -455,7 +455,7 @@ const UI_T = {
     form_err_email: 'Introduce un email válido', form_err_subdomain: 'Introduce el subdominio deseado',
     form_err_subdomain_taken: 'Elige un subdominio disponible', form_err_subdomain_test: 'El subdominio no puede contener "test"', form_err_connection: 'Error de conexión',
     verify_title: 'Confirmación de email', verify_sent: 'Código enviado a', verify_label: 'Código de 6 dígitos',
-    verify_btn: 'Confirmar y realizar pedido', verify_checking: 'Verificando...', site_paused: 'Sitio temporalmente pausado',
+    verify_btn: 'Confirmar y realizar pedido', verify_checking: 'Verificando...', site_paused: 'Sitio temporalmente pausado', site_paused_more: 'Más información en {site}',
     verify_err: 'Introduce el código de 6 dígitos', verify_err_wrong: 'Código incorrecto',
     done_title: '¡Pedido aceptado!',
     // 📝 №3а: анкета «Свой сайт» (сайт нараджаецца напоўнены)
@@ -499,7 +499,7 @@ const UI_T = {
     form_err_email: 'Inserisci un email valido', form_err_subdomain: 'Inserisci il sottodominio desiderato',
     form_err_subdomain_taken: 'Scegli un sottodominio disponibile', form_err_subdomain_test: 'Il sottodominio non può contenere "test"', form_err_connection: 'Errore di connessione',
     verify_title: 'Conferma email', verify_sent: 'Codice inviato a', verify_label: 'Codice a 6 cifre',
-    verify_btn: 'Conferma e invia ordine', verify_checking: 'Verifica...', site_paused: 'Sito temporaneamente sospeso',
+    verify_btn: 'Conferma e invia ordine', verify_checking: 'Verifica...', site_paused: 'Sito temporaneamente sospeso', site_paused_more: 'Maggiori informazioni su {site}',
     verify_err: 'Inserisci il codice a 6 cifre', verify_err_wrong: 'Codice errato',
     done_title: 'Ordine accettato!',
     // 📝 №3а: анкета «Свой сайт» (сайт нараджаецца напоўнены)
@@ -543,7 +543,7 @@ const UI_T = {
     form_err_email: 'Insira um email válido', form_err_subdomain: 'Insira o subdomínio desejado',
     form_err_subdomain_taken: 'Escolha um subdomínio disponível', form_err_subdomain_test: 'O subdomínio não pode conter "test"', form_err_connection: 'Erro de conexão',
     verify_title: 'Confirmação de email', verify_sent: 'Código enviado para', verify_label: 'Código de 6 dígitos',
-    verify_btn: 'Confirmar e fazer pedido', verify_checking: 'Verificando...', site_paused: 'Site temporariamente pausado',
+    verify_btn: 'Confirmar e fazer pedido', verify_checking: 'Verificando...', site_paused: 'Site temporariamente pausado', site_paused_more: 'Mais informações em {site}',
     verify_err: 'Insira o código de 6 dígitos', verify_err_wrong: 'Código incorreto',
     done_title: 'Pedido aceito!',
     // 📝 №3а: анкета «Свой сайт» (сайт нараджаецца напоўнены)
@@ -587,7 +587,7 @@ const UI_T = {
     form_err_email: '请输入有效的邮箱地址', form_err_subdomain: '请输入所需的子域名',
     form_err_subdomain_taken: '请选择可用的子域名', form_err_subdomain_test: '子域名不能包含"test"', form_err_connection: '连接错误',
     verify_title: '邮箱验证', verify_sent: '验证码已发送至', verify_label: '6位验证码',
-    verify_btn: '确认并提交订单', verify_checking: '验证中...', site_paused: '网站暂时暂停',
+    verify_btn: '确认并提交订单', verify_checking: '验证中...', site_paused: '网站暂时暂停', site_paused_more: '更多信息请访问 {site}',
     verify_err: '请输入6位验证码', verify_err_wrong: '验证码错误',
     done_title: '订单已受理！',
     // 📝 №3а: анкета «Свой сайт» (сайт нараджаецца напоўнены)
@@ -631,7 +631,7 @@ const UI_T = {
     form_err_email: 'أدخل بريداً إلكترونياً صحيحاً', form_err_subdomain: 'أدخل النطاق الفرعي المطلوب',
     form_err_subdomain_taken: 'اختر نطاقاً فرعياً متاحاً', form_err_subdomain_test: 'النطاق الفرعي لا يمكن أن يحتوي على "test"', form_err_connection: 'خطأ في الاتصال',
     verify_title: 'تأكيد البريد الإلكتروني', verify_sent: 'تم إرسال الرمز إلى', verify_label: 'رمز من 6 أرقام',
-    verify_btn: 'تأكيد وإرسال الطلب', verify_checking: 'جارٍ التحقق...', site_paused: 'الموقع متوقف مؤقتًا',
+    verify_btn: 'تأكيد وإرسال الطلب', verify_checking: 'جارٍ التحقق...', site_paused: 'الموقع متوقف مؤقتًا', site_paused_more: 'مزيد من المعلومات على {site}',
     verify_err: 'أدخل الرمز المكون من 6 أرقام', verify_err_wrong: 'رمز غير صحيح',
     done_title: 'تم قبول الطلب!',
     // 📝 №3а: анкета «Свой сайт» (сайт нараджаецца напоўнены)
@@ -675,7 +675,7 @@ const UI_T = {
     form_err_email: 'Adjon meg érvényes e-mail-t', form_err_subdomain: 'Adja meg a kívánt aldomaint',
     form_err_subdomain_taken: 'Válasszon szabad aldomaint', form_err_subdomain_test: 'Az aldomén nem tartalmazhatja a "test" szót', form_err_connection: 'Kapcsolódási hiba',
     verify_title: 'E-mail megerősítés', verify_sent: 'Kód elküldve ide:', verify_label: '6 jegyű kód',
-    verify_btn: 'Megerősítés és rendelés leadása', verify_checking: 'Ellenőrzés...', site_paused: 'A webhely átmenetileg szünetel',
+    verify_btn: 'Megerősítés és rendelés leadása', verify_checking: 'Ellenőrzés...', site_paused: 'A webhely átmenetileg szünetel', site_paused_more: 'További információ: {site}',
     verify_err: 'Adja meg a 6 jegyű kódot', verify_err_wrong: 'Hibás kód',
     done_title: 'Rendelés elfogadva!',
     // 📝 №3а: анкета «Свой сайт» (сайт нараджаецца напоўнены)
@@ -2461,10 +2461,12 @@ function _postDeepLinkOpen() { // старт па share-спасылцы #post={
 
 // ⏸ Белая старонка «прыпынена» (сцяг settings.paused) — поўны блок доступу, дадзеныя цэлыя. Мова наведвальніка.
 function _renderSitePaused(lang) {
-  const msg = (UI_T[lang] || UI_T.be).site_paused;
+  const ui = UI_T[lang] || UI_T.be, msg = ui.site_paused;
+  // спасылка на галоўны сайт платформы (жывая заўвага 2026-07-10): наведвальнік не ўпіраецца ў глухую сцяну
+  const more = (ui.site_paused_more || '').replace('{site}', '<a href="https://ttzop.com" style="color:#f97316;font-weight:600">ttzop.com</a>');
   document.documentElement.setAttribute('dir', lang === 'ar' ? 'rtl' : 'ltr');
   document.body.style.cssText = 'margin:0;min-height:100vh;display:flex;align-items:center;justify-content:center;background:#fff;color:#111;font-family:system-ui,sans-serif';
-  document.body.innerHTML = `<div style="text-align:center;padding:24px"><div style="font-size:64px;line-height:1;margin-bottom:18px">⏸</div><div style="font-size:1.5rem;font-weight:600">${msg}</div></div>`;
+  document.body.innerHTML = `<div style="text-align:center;padding:24px"><div style="font-size:64px;line-height:1;margin-bottom:18px">⏸</div><div style="font-size:1.5rem;font-weight:600">${msg}</div>${more ? `<div style="margin-top:14px;font-size:0.95rem;color:#555">${more}</div>` : ''}</div>`;
 }
 async function init() {
   siteData = await loadSiteData();

@@ -10868,9 +10868,29 @@ let monitorState = {
       const online = form.fields?.online;
       const pingCol = online === undefined ? 'var(--muted)' : online ? '#22c55e' : '#ef4444';
       const pingDot = `<span style="display:inline-block;width:7px;height:7px;border-radius:50%;background:${pingCol};margin-right:5px;flex-shrink:0;vertical-align:middle" title="${online === undefined ? '…' : online ? '✓ online' : '✗ offline'}"></span>`;
-      return `${pingDot}<span style="color:${col}">${escHtml(_nodeName(form)||'—')}</span>`;
+      // 🏷️ бэдж статусу на РАДКУ (жывая заўвага 2026-07-10): стан сайта бачны без разгортвання формы
+      const chipCol = col !== 'var(--fg)' ? col : 'var(--muted)';
+      const stLblRaw = t('order_' + status), stLbl = stLblRaw === 'order_' + status ? status : stLblRaw; // невядомы статус → як ёсць (t() вяртае ключ)
+      const stBadge = status ? `<span style="font-size:0.72rem;color:${chipCol};border:1px solid currentColor;border-radius:10px;padding:0 7px;margin-left:8px;white-space:nowrap;opacity:0.9">${escHtml(stLbl)}</span>` : '';
+      return `${pingDot}<span style="color:${col}">${escHtml(_nodeName(form)||'—')}</span>${stBadge}`;
     }
     return escHtml(_nodeName(form)||'—');
+  },
+  // 🏷️ зводка стану ўсіх сайтаў на загалоўку Папкі-0 «Агляд»: смайл статусу × колькасць (+ ✗offline пасля пінгу)
+  _folderNameHtml: (folder, c) => {
+    let extra = '';
+    if (folder.id === 'mf-overview') {
+      const kids = (monitorState.data?.nodes || []).filter(n => n.parentId === 'mf-overview' && n.formSchema === 'monitorClient');
+      const cnt = {};
+      kids.forEach(k => { const s = k.fields?.status || ''; if (s) cnt[s] = (cnt[s] || 0) + 1; });
+      const off = kids.filter(k => k.fields?.online === false).length;
+      const chips = Object.entries(cnt).map(([s, n]) => {
+        const raw = t('order_' + s), lbl = raw === 'order_' + s ? s : raw; // невядомы статус → як ёсць
+        return `<span title="${escHtml(lbl)}: ${n}" style="font-size:0.75rem">${escHtml(lbl.split(' ')[0])}${n}</span>`; // першы токен лэйбла = смайл статусу
+      }).join('') + (off ? `<span style="color:#ef4444;font-size:0.75rem" title="offline: ${off}">✗${off}</span>` : '');
+      if (chips) extra = `<span style="margin-left:8px;display:inline-flex;gap:7px;align-items:center">${chips}</span>`;
+    }
+    return `<span class="node-folder-name">${escHtml(_folderLabel(folder))}</span>${extra}<span style="font-size:0.78rem;color:var(--muted);margin-left:4px">(${c})</span>`;
   },
   _renderFn: () => { currentNodeState = monitorState; renderNodeEditor(monitorState); }
 };
