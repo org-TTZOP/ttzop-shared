@@ -16,25 +16,28 @@
 // })
 (function () {
   const ID = 'bk-modal';
-  const esc = v => String(v ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  const esc = v => String(v ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;'); // і ' — значэнні трапляюць у inline-onclick у адзінарных двукоссях
   const L = (c, k) => (c.labels && c.labels[k]) || '';
   const tok = c => (typeof c.token === 'function' ? c.token() : c.token) || '';
 
-  let S = null; // {cfg, date, busy}
+  let S = null; // {cfg, date, today, busy}
 
   function dayLabel(iso, lang) { // «пн, 3 жн» — праз Intl на мове каллера (без хардкоду назваў дзён)
     try { return new Date(iso + 'T12:00:00Z').toLocaleDateString(lang || 'be', { weekday: 'short', day: 'numeric', month: 'short', timeZone: 'UTC' }); }
     catch { return iso; }
   }
-  function days(cfg) {
-    const out = [], t = new Date(), n = cfg.days || 14;
-    for (let i = 0; i < n; i++) { const d = new Date(Date.UTC(t.getFullYear(), t.getMonth(), t.getDate() + i)); out.push(d.toISOString().slice(0, 10)); }
+  // «сёння» лакальнае — толькі стартавая здагадка; сапраўднае аддае сервер у поясе HQ (гл. loadSlots)
+  const localToday = () => { const t = new Date(); return new Date(Date.UTC(t.getFullYear(), t.getMonth(), t.getDate())).toISOString().slice(0, 10); };
+  function days(cfg) { // дні пікера ад «сёння» БІЗНЕСУ (S.today), не гледача: у ЛА яшчэ ўчора, калі ў Мінску ўжо заўтра
+    const out = [], n = cfg.days || 14, base = new Date((S?.today || localToday()) + 'T12:00:00Z');
+    for (let i = 0; i < n; i++) { const d = new Date(base); d.setUTCDate(d.getUTCDate() + i); out.push(d.toISOString().slice(0, 10)); }
     return out;
   }
   const close = () => document.getElementById(ID)?.remove();
 
   function openSlotsModal(cfg) {
-    S = { cfg, date: (cfg.startDate && days(cfg).includes(cfg.startDate)) ? cfg.startDate : days(cfg)[0], busy: false };
+    S = { cfg, today: localToday(), date: '', busy: false };
+    S.date = (cfg.startDate && days(cfg).includes(cfg.startDate)) ? cfg.startDate : days(cfg)[0];
     close();
     const ov = document.createElement('div');
     ov.id = ID;
@@ -70,14 +73,24 @@
     const box = document.getElementById('bk-slots'); if (!box || !S) return;
     const cfg = S.cfg;
     box.innerHTML = `<div style="color:var(--muted,#9aa1ad);font-size:0.85rem;padding:8px 0">${esc(L(cfg, 'loading') || '…')}</div>`;
-    let slots = [];
+    let slots = [], srvToday = '';
     try {
       const r = await fetch(cfg.api, { method: 'POST', headers: { 'Content-Type': 'application/json' },
         // moveFrom патрабуе токена (сервер правярае ўласнасць запісу) — інакш чужым id прасвяцілі б занятасць
         body: JSON.stringify({ action: 'booking_slots', repo: cfg.repo, serviceId: cfg.serviceId, date: S.date, lang: cfg.lang, moveFrom: cfg.moveFrom || '', token: cfg.moveFrom ? tok(cfg) : undefined }) });
-      if (r.ok) slots = (await r.json()).slots || [];
+      const j = await r.json().catch(() => ({})); // today прыходзіць і з памылкай bad_date — чытаем заўсёды
+      if (r.ok) slots = j.slots || [];
+      srvToday = j.today || '';
     } catch {}
     if (!document.getElementById(ID)) return; // мадалку закрылі, пакуль чакалі адказ
+    // 🌍 «сёння» гледача ≠ «сёння» бізнесу (кліент у ЛА, HQ у Мінску): прымаем серверную дату і
+    // перабудоўваем пікер ад яе — інакш першы дзень маўчаў бы «няма слотаў» (bad_date), хоць слоты ёсць.
+    // Другі раз не зойдзем: пасля прыняцця S.today === srvToday.
+    if (srvToday && srvToday !== S.today) {
+      S.today = srvToday;
+      if (S.date < srvToday || !days(cfg).includes(S.date)) S.date = srvToday;
+      renderDays(); loadSlots(); return;
+    }
     box.innerHTML = slots.length
       ? slots.map(t => `<button onclick="_slotsPickTime('${esc(t)}')" style="padding:8px 12px;border-radius:8px;border:1px solid var(--border,#2a2f45);background:transparent;color:var(--text,#e8eaf0);cursor:pointer;font-size:0.86rem">${esc(t)}</button>`).join('')
       : `<div style="color:var(--muted,#9aa1ad);font-size:0.85rem;padding:8px 0">${esc(L(cfg, 'none'))}</div>`;
