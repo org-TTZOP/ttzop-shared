@@ -38,7 +38,10 @@
     close();
     const ov = document.createElement('div');
     ov.id = ID;
-    ov.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.55);z-index:10002;display:flex;align-items:center;justify-content:center;padding:16px';
+    // ⚠️ z-index НІЖЭЙ за пацверджанні каллераў (siteConfirm 10002 / portalConfirm 10000): дыялог
+    // адкрываецца ПАВЕРХ мадалкі і мусіць лавіць клікі. Роўны z-index спрацоўваў толькі на сайце —
+    // выпадкова, па парадку ў DOM; у кабінеце мадалка перакрывала кнопку «Пацвердзіць» (злоўлена жыўцом).
+    ov.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.55);z-index:9990;display:flex;align-items:center;justify-content:center;padding:16px';
     ov.innerHTML = `<div style="background:var(--surface,#181c27);border:1px solid var(--border,#2a2f45);border-radius:14px;max-width:440px;width:100%;max-height:86vh;overflow:auto;padding:18px;box-shadow:0 16px 48px rgba(0,0,0,0.5)">
       <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;margin-bottom:14px">
         <div style="font-weight:700;font-size:1.02rem;color:var(--text,#e8eaf0)">${esc((L(cfg, 'title') || '{name}').replace('{name}', cfg.name || ''))}</div>
