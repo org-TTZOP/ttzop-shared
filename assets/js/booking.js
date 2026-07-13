@@ -55,6 +55,18 @@ export function apptIntervalsAbs(a) {
 
 // Ці перасякаюцца два паўадкрытыя інтэрвалы [s,e). Дотык канцамі (e1===s2) — НЕ перасячэнне.
 export const overlaps = (s1, e1, s2, e2) => s1 < e2 && s2 < e1;
+// 📦 пік адначасовасці: max колькасць інтэрвалаў [{start,end}], што накладаюцца ў адзін момант
+// у акне [st,end) — канфлікт ёмістасці, калі пік > cap (парнае перасячэнне пераацэньвала б:
+// a∩k і b∩k пры a∦b — гэта ўсё яшчэ 2 адначасова, не 3). Дастаткова праверыць моманты стартаў.
+export function concurrentPeak(intervals, st, end) {
+  let peak = 0;
+  for (const iv of intervals) {
+    const t = Math.max(iv.start, st); if (t >= end || t >= iv.end) continue;
+    const n = intervals.filter(o => o.start <= t && o.end > t).length;
+    if (n > peak) peak = n;
+  }
+  return peak;
+}
 
 // ═══════════════════════════════════════════════════════════════════════════
 // 🧩 РАШАЛЬНІК ВОЛЬНЫХ СЛОТАЎ (F1: харэаграфія — сегменты × рэсурсы × час)
@@ -133,6 +145,16 @@ export function branchScopePool(tree, ids, branchId) {
   const off = Object.fromEntries(resources(tree).map(r => [r.id, r.office]));
   return ids.filter(id => off[id] === branchId);
 }
+// 📦 ЁМІСТАСЦЬ (склад): колькі АДНАЧАСОВЫХ выкарыстанняў трымае рэсурс (10 крэслаў, зала на 8).
+// Адзіная крыніца-правіла: інвентарны спіс «Адзінкі» (_units) НЕпусты → лічым спраўныя
+// (state !== 'off' — няспраўная адзінка часова выпадае са складу); пусты → поле qty (дэфолт 1).
+// cap=0 (усе адзінкі няспраўныя) → рэсурс небранявальны ўвогуле.
+export function resourceCapacity(tree, resId) {
+  const f = (tree || []).find(n => n.id === resId)?.fields || {};
+  const units = Array.isArray(f._units) ? f._units : [];
+  if (units.length) return units.filter(u => u && u.state !== 'off').length;
+  return Math.max(1, parseInt(f.qty, 10) || 1);
+}
 
 // ── Этапы (сегменты) ──
 // рэжым выбару рэсурсу: any (любы свайго тыпу) / specific (толькі candidates) / none (этап без рэсурсу)
@@ -160,20 +182,27 @@ export function resourceBusyAbs(appointments, resId, date, excludeId) {
   }
   return out;
 }
+// колькі занятых інтэрвалаў рэсурсу перасякаюць акно [start,end] (хвіліны дня, вось абсалютная)
+export function busyCountInWindow(ctx, resId, date, start, end) {
+  const base = dayNum(date) * 1440;
+  return resourceBusyAbs(ctx.appointments, resId, date).filter(b => overlaps(base + start, base + end, b.start, b.end)).length;
+}
 // рэсурс вольны ў акне [start,end] (HQ-хвіліны дня): працуе паводле графіка (не зададзены → увесь дзень)
-// І не перасякаецца з занятым (на АБСАЛЮТНАЙ восі — крос-датавыя броні).
+// І адначасовых выкарыстанняў МЕНШ за ёмістасць (📦 склад: было «любое перасячэнне = заняты» = cap 1).
 export function resourceFreeInWindow(ctx, resId, date, start, end) {
-  const { tree, appointments } = ctx;
+  const { tree } = ctx;
+  const cap = resourceCapacity(tree, resId);
+  if (cap <= 0) return false; // усе адзінкі няспраўныя — небранявальны
   const dl = tzDeltaMin(tree, resId, date); // графік філіяла (лакальны насценны) → пояс HQ
   const dow = dowOf(date);
   const { rows, hours: sched } = resourceScheduleInfo(tree, resId, dow);
   if (rows.length && !sched.length) return false; // ВЫХОДНЫ — не вольны ўвесь дзень (раней трактаваўся як «графіка няма» → бралі броні)
   if (sched.length && !sched.some(iv => { const m = schedIvMin(iv); return m && start >= m.from + dl && end <= m.to + dl; })) return false;
-  const base = dayNum(date) * 1440;
-  return !resourceBusyAbs(appointments, resId, date).some(b => overlaps(base + start, base + end, b.start, b.end));
+  return busyCountInWindow(ctx, resId, date, start, end) < cap;
 }
 // прызначыць рэсурс кожнаму этапу на старт T (backtracking з улікам груп: strict=той самы,
-// prefer=прыярытэт таму самому, any=незалежна; адзін рэсурс не можа быць у акнах, што перасякаюцца)
+// prefer=прыярытэт таму самому, any=незалежна; адзін рэсурс у акнах, што перасякаюцца — да ЁМІСТАСЦІ:
+// заняткі звонку + уласныя этапы гэтага ж запісу разам не пераўзыходзяць cap)
 export function assignSegments(ctx, segs, groups, T, date, branchId) {
   const { tree } = ctx;
   const policyOf = gid => groups.find(g => g._id === gid)?.policy || 'any';
@@ -181,7 +210,12 @@ export function assignSegments(ctx, segs, groups, T, date, branchId) {
   const pools = segs.map((sg, i) => branchScopePool(tree, segmentPool(tree, sg), branchId).filter(rid => resourceFreeInWindow(ctx, rid, date, wins[i].start, wins[i].end)));
   if (pools.some(p => !p.length)) return null; // нейкі этап не мае вольнага рэсурсу
   const assign = new Array(segs.length).fill(null), groupChosen = {};
-  const overlapsUsed = (i, rid) => segs.some((_, j) => j !== i && assign[j] === rid && overlaps(wins[i].start, wins[i].end, wins[j].start, wins[j].end));
+  // 📦 перакрыцці таго ж рэсурсу дазволены пакуль знешнія заняткі + уласныя этапы + гэты < cap
+  const overlapsUsed = (i, rid) => {
+    const own = segs.reduce((n, _, j) => n + (j !== i && assign[j] === rid && overlaps(wins[i].start, wins[i].end, wins[j].start, wins[j].end) ? 1 : 0), 0);
+    if (!own) return false; // без уласных перакрыццяў дастаткова resourceFreeInWindow (пул ужо адфільтраваны)
+    return busyCountInWindow(ctx, rid, date, wins[i].start, wins[i].end) + own + 1 > resourceCapacity(tree, rid);
+  };
   const bt = i => {
     if (i >= segs.length) return true;
     const gid = segs[i].groupId, pol = gid ? policyOf(gid) : 'any';
@@ -245,5 +279,6 @@ export function bookableServices(nodes) {
 const _API = { APPT_DEAD, isDead, toMin, fromMin, dayNum, apptResourceUses, apptIntervalsAbs, overlaps,
   tzOffsetMin, resourceTz, hqTz, tzDeltaMin, schedRowDays, schedIvMin, resourceSchedule, resources, branchScopePool,
   segPick, segActive, segmentPool, resourceBusyAbs, resourceFreeInWindow, assignSegments, choreographyFreeSlots,
-  bookableServices, SLOT_STEP, resourceScheduleInfo, resourceDayOff, dowOf };
+  bookableServices, SLOT_STEP, resourceScheduleInfo, resourceDayOff, dowOf,
+  resourceCapacity, busyCountInWindow, concurrentPeak }; // 📦 склад/ёмістасць
 if (typeof globalThis !== 'undefined') globalThis.TTZOP_BOOKING = _API;

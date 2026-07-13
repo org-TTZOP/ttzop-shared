@@ -1303,7 +1303,21 @@ FORM_SCHEMAS.resourceStructure = Object.assign({
         { key: 'resourceName', type: 'text',   label: 'f_name',           readOnly: () => true, nameField: true },
         { key: 'shortName',    type: 'text',   label: 'company_short_name', readOnly: () => true, ml: true }, // кароткі подпіс рэсурсу для куба/раскладу
         { key: 'resourceType', type: 'select', label: 'svc_resource_type', readOnly: () => true,
-          options: ['person','place','equipment'], labelMap: { person: 'svc_rt_person', place: 'svc_rt_place', equipment: 'svc_rt_equipment' } }
+          options: ['person','place','equipment'], labelMap: { person: 'svc_rt_person', place: 'svc_rt_place', equipment: 'svc_rt_equipment' } },
+        { key: 'qty', type: 'text', label: 'res_qty', readOnly: () => true, hint: 'res_qty_hint' } // 📦 ёмістасць (дэфолт 1); НЕпусты спіс «Адзінкі» ніжэй ПЕРАКРЫВАЕ гэта поле
+      ] },
+    { // 📦 СКЛАД: інвентарны спіс адзінак (накапляльнік) — ёмістасць = спраўныя (state!=='off'); гл. resourceCapacity у booking.js
+      type: 'table', title: 'res_units', dataKey: '_units', addable: true, rowEditable: true, rowDeletable: true, keepOrder: true,
+      onAdd: (form, s) => _accRowAdd(form, s, '_units'),
+      rowSchema: [
+        { key: 'label', type: 'text',   label: 'res_unit_label' },
+        { key: 'note',  type: 'text',   label: 'f_note' },
+        { key: 'state', type: 'select', label: 'res_unit_state', options: ['ok','off'], labelMap: { ok: 'res_unit_ok', off: 'res_unit_off' } }
+      ],
+      columns: [
+        { key: 'label', label: 'res_unit_label', type: 'text' },
+        { key: 'note',  label: 'f_note',         type: 'text' },
+        { key: 'state', label: 'res_unit_state', type: 'select', labelMap: { ok: 'res_unit_ok', off: 'res_unit_off' } }
       ] },
     _SCHEDULE_SECTION // графік рэсурсу (перавызначае графік філіяла)
   ]
@@ -8157,6 +8171,7 @@ function _bkCtx() { return { tree: settings.companyTree || [], appointments: _ap
 function _resourceBusyAbs(resId, date, excludeId) { return TTZOP_BOOKING.resourceBusyAbs(_appointmentsToArray(), resId, date, excludeId); }
 // рэсурс вольны ў акне [start,end]: працуе паводле графіка (графік не зададзены → увесь дзень) І няма перасячэння з занятым
 function _resourceFreeInWindow(resId, date, start, end) { return TTZOP_BOOKING.resourceFreeInWindow(_bkCtx(), resId, date, start, end); }
+function _resourceCapacity(resId) { return TTZOP_BOOKING.resourceCapacity(settings.companyTree || [], resId); } // 📦 ёмістасць (склад) — адзінае правіла з booking.js
 // прызначыць рэсурс кожнаму сегменту на старт T (backtracking з улікам груп: strict=той самы, prefer=прыярытэт той самы, any=незалежна; адзін рэсурс не можа быць у акнах, што перасякаюцца)
 function _assignSegments(segs, groups, T, date, branchId) { return TTZOP_BOOKING.assignSegments(_bkCtx(), segs, groups, T, date, branchId); }
 // вольныя слоты паслугі-харэаграфіі на дату: [{time, assignments:[{segId,resourceId,from,to}]}]
@@ -9356,8 +9371,12 @@ function _cubeEquipStripHtml(m) {
     const items = [];
     m.day.forEach(a => { if (fStat && a.status !== fStat) return; usesOf(a, eq.id).forEach(u => items.push({ a, st: u.start, dur: Math.max(5, (u.end ?? u.start + 5) - u.start) })); });
     items.sort((p, q) => p.st - q.st);
+    // 📦 6c пашырана складам: канфлікт = пік АДНАЧАСОВАСЦІ звыш ёмістасці (было «любое перакрыцце»);
+    // пік праз агульны concurrentPeak (парнае перасячэнне пераацэньвала б)
+    const cap = _resourceCapacity(eq.id);
+    const ivs = items.map(o => ({ start: o.st, end: o.st + o.dur }));
     return items.map((it, k) => {
-      const conflict = items.some((o, j) => j !== k && it.st < o.st + o.dur && o.st < it.st + it.dur); // 6c: перакрыцце адной адзінкі
+      const conflict = TTZOP_BOOKING.concurrentPeak(ivs, it.st, it.st + it.dur) > cap;
       return { id: it.a.id, startMin: it.st, durMin: it.dur, color: _CUBE_STATUS_COLOR[it.a.status] || '#64748b', sel: it.a.id === selId, conflict,
         title: (_apptTimeText(it.a.time, _apptPrimaryResId(it.a), it.a.date) || '') + ' · ' + (it.a.serviceName || '') + ' · ' + (it.a.clientName || '') + (conflict ? ' · ⚠ ' + t('cube_conflict') : '') };
     });
@@ -9379,7 +9398,7 @@ function _cubeEquipStripHtml(m) {
     timelineFilters: () => [
       { key: 'resource', label: t('cube_unit'), options: m.equipment.map(eq => ({ value: eq.id, label: eq.label })) },
       { key: 'status', label: t('f_status'), options: Object.entries(statuses).map(([v, l]) => ({ value: v, label: l })) }],
-    timeline: () => ({ lo: m.lo, hi: m.hi, cols: eqList.map((eq, i) => ({ label: '🔧 ' + eq.label, _i: i })),
+    timeline: () => ({ lo: m.lo, hi: m.hi, cols: eqList.map((eq, i) => { const c = _resourceCapacity(eq.id); return { label: '🔧 ' + eq.label + (c !== 1 ? ' ×' + c : ''), _i: i }; }), // 📦 ×N = ёмістасць адзінкі
       blocksOf: col => colBlocks[col._i], onBlockClick: id => `_cubeSliceOpen('${id}')` }) };
   return _nodeTableSectionHtml({ id: 'cube-equip', fields: {} }, section, currentNodeState);
 }
@@ -9461,7 +9480,10 @@ function _apptSlotPick(i) {
 function _apptConflictRec(rec, excludeId) {
   const uses = _apptResourceUses(rec); if (!uses.length) return false;
   const others = _appointmentsToArray().filter(a => a.date === rec.date && !TTZOP_BOOKING.isDead(a.status) && a.id !== excludeId); // тая ж семантыка «занята», што ў рашальніку/D1
-  return uses.some(u => others.some(a => _apptResourceUses(a).some(o => o.resourceId === u.resourceId && u.start < o.end + (+a.bufferAfter || 0) && u.end > o.start))); // чытай абодва (legacy/assignments)
+  return uses.some(u => { // 📦 канфлікт = перакрыцці ЗВЫШ ёмістасці (было «любое = канфлікт» = cap 1); чытай абодва (legacy/assignments)
+    const n = others.reduce((k, a) => k + _apptResourceUses(a).filter(o => o.resourceId === u.resourceId && u.start < o.end + (+a.bufferAfter || 0) && u.end > o.start).length, 0);
+    return n + 1 > _resourceCapacity(u.resourceId);
+  });
 }
 function _adminCreateAppointment(fields) {
   const svc = _bookableServices().find(x => x.id === fields.serviceId);
