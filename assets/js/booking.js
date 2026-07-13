@@ -113,18 +113,36 @@ export function schedIvMin(iv) { if (!iv) return null; const f = toMin(iv.from),
 // ⚠️ ДВА РОЗНЫЯ «пуста», якія раней зліваліся ў адно (і рэсурс быў браніравальны ў свой выходны):
 //   • `rows` пустыя      → графік НЕ зададзены нідзе → абмежаванняў няма (вольны ўвесь дзень);
 //   • `rows` ёсць, а `hours` пустыя → ВЫХОДНЫ (радок дня з «--» часам) → не вольны ніколі.
+const _schedHoursOf = rows => rows.filter(s => s.from && s.to).map(s => ({ from: s.from, to: s.to })); // агульны для тыднёвага і выключэнняў
 export function resourceScheduleInfo(tree, resourceId, dow) {
   const res = (tree || []).find(n => n.id === resourceId);
   const dayRows = node => { const rows = node?.fields?._schedule || []; const spec = rows.filter(s => schedRowDays(s).includes(String(dow))); return spec.length ? spec : rows.filter(s => !schedRowDays(s).length); };
-  const hoursOf = rows => rows.filter(s => s.from && s.to).map(s => ({ from: s.from, to: s.to }));
   const own = dayRows(res);
-  if (own.length) return { rows: own, hours: hoursOf(own) }; // уласны радок дня — БЕЗ fallback на офіс
+  if (own.length) return { rows: own, hours: _schedHoursOf(own) }; // уласны радок дня — БЕЗ fallback на офіс
   const folder = (tree || []).find(n => n.id === res?.parentId), office = (tree || []).find(n => n.id === folder?.parentId);
   const off = dayRows(office);
-  return { rows: off, hours: hoursOf(off) };
+  return { rows: off, hours: _schedHoursOf(off) };
+}
+// 📆 D: ВЫКЛЮЧЭННІ ГРАФІКА (date-specific — адпачынак/святы/асаблівы дзень): fields._exceptions =
+// [{date, dateTo?, from?, to?}] на рэсурсе І на офісе/філіяле. Радок без часу = ЗАЧЫНЕНА (тая ж
+// семантыка, што тыднёвы «дзень без гадзін = выходны»); некалькі радкоў на дату = перапынак;
+// dateTo (уключна) — дыяпазон (адпачынак адным радком, не 14-ю).
+const _exceptionRows = (node, date) => (node?.fields?._exceptions || []).filter(r => r && r.date && r.date <= date && date <= (r.dateTo || r.date));
+// графік НА ДАТУ: выключэнні (уласныя → офіса, тая ж іерархія «сваё перакрывае») → тыднёвы (dow).
+// Усе разлікі занятасці ідуць праз ГЭТУЮ функцыю — тыднёвая resourceScheduleInfo застаецца для
+// выгляду «тыповы тыдзень» (табліца графіка ў панэлі).
+export function resourceScheduleInfoAt(tree, resourceId, date) {
+  const res = (tree || []).find(n => n.id === resourceId);
+  const own = _exceptionRows(res, date);
+  if (own.length) return { rows: own, hours: _schedHoursOf(own) };
+  const folder = (tree || []).find(n => n.id === res?.parentId), office = (tree || []).find(n => n.id === folder?.parentId);
+  const off = _exceptionRows(office, date);
+  if (off.length) return { rows: off, hours: _schedHoursOf(off) };
+  return resourceScheduleInfo(tree, resourceId, dowOf(date));
 }
 // гадзіны працы (сумяшчальны выгляд — спажыўцы UI чакаюць масіў інтэрвалаў)
 export const resourceSchedule = (tree, resourceId, dow) => resourceScheduleInfo(tree, resourceId, dow).hours;
+export const resourceScheduleAt = (tree, resourceId, date) => resourceScheduleInfoAt(tree, resourceId, date).hours; // 📆 date-aware (з выключэннямі)
 // выходны: радкі на гэты дзень ЁСЦЬ, але без часу
 export function resourceDayOff(tree, resourceId, dow) { const i = resourceScheduleInfo(tree, resourceId, dow); return i.rows.length > 0 && i.hours.length === 0; }
 
@@ -194,9 +212,8 @@ export function resourceFreeInWindow(ctx, resId, date, start, end) {
   const cap = resourceCapacity(tree, resId);
   if (cap <= 0) return false; // усе адзінкі няспраўныя — небранявальны
   const dl = tzDeltaMin(tree, resId, date); // графік філіяла (лакальны насценны) → пояс HQ
-  const dow = dowOf(date);
-  const { rows, hours: sched } = resourceScheduleInfo(tree, resId, dow);
-  if (rows.length && !sched.length) return false; // ВЫХОДНЫ — не вольны ўвесь дзень (раней трактаваўся як «графіка няма» → бралі броні)
+  const { rows, hours: sched } = resourceScheduleInfoAt(tree, resId, date); // 📆 з выключэннямі (адпачынак/святы)
+  if (rows.length && !sched.length) return false; // ВЫХОДНЫ/ЗАЧЫНЕНА — не вольны ўвесь дзень (раней трактаваўся як «графіка няма» → бралі броні)
   if (sched.length && !sched.some(iv => { const m = schedIvMin(iv); return m && start >= m.from + dl && end <= m.to + dl; })) return false;
   return busyCountInWindow(ctx, resId, date, start, end) < cap;
 }
@@ -244,12 +261,11 @@ export function choreographyFreeSlots(ctx, svc, date, branchId) {
   if (!segs.length || !date) return [];
   const groups = svc._groups || [];
   const total = segs.reduce((m, sg) => Math.max(m, (+sg.offset || 0) + (+sg.duration || 0)), 0);
-  const dow = dowOf(date);
-  // дыяпазон дня = аб'яднанне графікаў усіх кандыдатаў; нічога не зададзена → 08:00–20:00
+  // дыяпазон дня = аб'яднанне графікаў усіх кандыдатаў НА ДАТУ (📆 з выключэннямі); нічога не зададзена → 08:00–20:00
   let lo = 24 * 60, hi = 0;
   [...new Set(segs.flatMap(sg => branchScopePool(tree, segmentPool(tree, sg), branchId)))].forEach(rid => {
     const dl = tzDeltaMin(tree, rid, date);
-    resourceSchedule(tree, rid, dow).forEach(iv => { const m = schedIvMin(iv); if (m) { lo = Math.min(lo, m.from + dl); hi = Math.max(hi, m.to + dl); } });
+    resourceScheduleAt(tree, rid, date).forEach(iv => { const m = schedIvMin(iv); if (m) { lo = Math.min(lo, m.from + dl); hi = Math.max(hi, m.to + dl); } });
   });
   if (lo >= hi) { lo = 8 * 60; hi = 20 * 60; }
   const out = [];
@@ -280,5 +296,6 @@ const _API = { APPT_DEAD, isDead, toMin, fromMin, dayNum, apptResourceUses, appt
   tzOffsetMin, resourceTz, hqTz, tzDeltaMin, schedRowDays, schedIvMin, resourceSchedule, resources, branchScopePool,
   segPick, segActive, segmentPool, resourceBusyAbs, resourceFreeInWindow, assignSegments, choreographyFreeSlots,
   bookableServices, SLOT_STEP, resourceScheduleInfo, resourceDayOff, dowOf,
-  resourceCapacity, busyCountInWindow, concurrentPeak }; // 📦 склад/ёмістасць
+  resourceCapacity, busyCountInWindow, concurrentPeak, // 📦 склад/ёмістасць
+  resourceScheduleInfoAt, resourceScheduleAt }; // 📆 D: выключэнні графіка (date-aware)
 if (typeof globalThis !== 'undefined') globalThis.TTZOP_BOOKING = _API;

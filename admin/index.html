@@ -664,6 +664,24 @@ const LANGS = [
 ];
 
 // Агульная секцыя «Графік працы» (DRY) — філіял і рэсурс дзеляць; радок {дзень,з,да}, перапынак=2 радкі, дзень без радкоў=выходны
+// 📆 D: ВЫКЛЮЧЭННІ ГРАФІКА (date-specific: адпачынак/святы/асаблівы дзень) — агульная секцыя
+// офіса/філіяла І рэсурсу (як _SCHEDULE_SECTION). Радок без часу = ЗАЧЫНЕНА; дыяпазон дат праз
+// «Па (уключна)»; некалькі радкоў на дату = перапынак. Чытае booking.js resourceScheduleInfoAt.
+const _EXCEPTIONS_SECTION = { type: 'table', title: 'sched_exceptions', dataKey: '_exceptions', addable: true, rowEditable: true, rowDeletable: true, keepOrder: true,
+  rowSort: (a, b) => String(a.date || '').localeCompare(String(b.date || '')), // трымаць па даце
+  onAdd: (form, s) => _accRowAdd(form, s, '_exceptions'),
+  rowSchema: [
+    { key: 'date',   type: 'date', label: 'f_date' },
+    { key: 'dateTo', type: 'date', label: 'sched_exc_to', hint: 'sched_exc_to_hint' }, // пуста = адзін дзень
+    { key: 'from',   type: 'time', label: 'svc_from', allowEmpty: true }, // «--» = зачынена ўвесь дзень
+    { key: 'to',     type: 'time', label: 'svc_to',   allowEmpty: true }
+  ],
+  columns: [
+    { key: 'date',   label: 'f_date',        type: 'date' },
+    { key: 'dateTo', label: 'sched_exc_to',  type: 'date' },
+    { key: 'from',   label: 'svc_from',      type: 'time' },
+    { key: 'to',     label: 'svc_to',        type: 'time' }
+  ] };
 const _SCHEDULE_SECTION = { type: 'table', title: 'svc_schedule', dataKey: '_schedule', addable: true, rowEditable: true, keepOrder: true,
   rowSort: (a, b) => _schedRowSort(a, b), // трымаць графік сартаваным па дні+часе прама ў сховішчы (не журнал — парадак=сэнс)
   rowWarn: rows => _scheduleOverlapWarn(rows), // папярэджанне пры перакрыцці інтэрвалаў (#2b крок 4b)
@@ -1235,6 +1253,7 @@ FORM_SCHEMAS.companyStructure = Object.assign({
       rowSchema: [ { key: 'label', type: 'text', label: 'f_label' }, { key: 'address', type: 'text', label: 'f_email' }, { key: 'note', type: 'text', label: 'f_note' } ],
       columns: [ { key: 'label', label: 'f_label', type: 'text' }, { key: 'address', label: 'f_email', type: 'text' }, { key: 'note', label: 'f_note', type: 'text' } ] },
     _SCHEDULE_SECTION, // Графік працы філіяла (Фаза A2)
+    _EXCEPTIONS_SECTION, // 📆 D: выключэнні графіка філіяла (даты: святы/зачынена)
     // Секцыя «Інтэграцыі» — толькі галоўны офіс (visible). Ключ Web3Forms → settings.web3formsKey (settingsKey-блок)
     { type: 'flat', id: 'integrations', title: 'integrations', editable: true, visible: form => (form.parentId ?? null) === null,
       onEdit: (form, s) => _nodeFlatSectionEdit(form, s, 'integrations'),
@@ -1319,7 +1338,8 @@ FORM_SCHEMAS.resourceStructure = Object.assign({
         { key: 'note',  label: 'f_note',         type: 'text' },
         { key: 'state', label: 'res_unit_state', type: 'select', labelMap: { ok: 'res_unit_ok', off: 'res_unit_off' } }
       ] },
-    _SCHEDULE_SECTION // графік рэсурсу (перавызначае графік філіяла)
+    _SCHEDULE_SECTION, // графік рэсурсу (перавызначае графік філіяла)
+    _EXCEPTIONS_SECTION // 📆 D: выключэнні графіка рэсурсу (адпачынак; перакрываюць выключэнні офіса)
   ]
 }, { _noName: true });
 
@@ -8145,6 +8165,7 @@ function _formatScheduleText(rows, langCode) {
 }
 // графік рэсурсу на дзень тыдня (ISO 1=Пн..7=Нд): уласны _schedule, fallback на філіял (офіс)
 function _resourceSchedule(resourceId, dow) { return TTZOP_BOOKING.resourceSchedule(settings.companyTree || [], resourceId, dow); }
+function _resourceScheduleAt(resourceId, date) { return TTZOP_BOOKING.resourceScheduleAt(settings.companyTree || [], resourceId, date); } // 📆 на ДАТУ (з выключэннямі)
 // ── F1: MULTI-RESOURCE РАШАЛЬНІК (харэаграфія: сегменты × рэсурсы × час, з улікам груп/палітык) ──
 // рэжым выбару рэсурсу этапу: any(любы свайго тыпу) / specific(толькі candidates) / none(этап без рэсурсу). Інфер для легасі.
 function _segPick(seg) { return TTZOP_BOOKING.segPick(seg); }
@@ -8494,7 +8515,7 @@ function _cubeBuild() {
   (s._entrySlots || []).forEach(sl => sl.assignments.forEach(a => { const f = _toMin(a.from), tt = _toMin(a.to); if (f != null) { lo = Math.min(lo, f); hi = Math.max(hi, tt != null ? tt : f + 5); } }));
   // #2b: уцягнуць графік бачных рэсурсаў (у пояс HQ праз +delta; начная змена → hi>1440) — каб начная вось была бачная нават без броні
   { const d0 = new Date(s.date + 'T00:00:00'); let dow0 = d0.getDay(); dow0 = dow0 === 0 ? 7 : dow0;
-    [...persons, ...places, ...res.equipment].forEach(r => { const dl = _tzDeltaMin(r.id, s.date); _resourceSchedule(r.id, dow0).forEach(iv => { const mm = _schedIvMin(iv); if (mm) { lo = Math.min(lo, mm.from + dl); hi = Math.max(hi, mm.to + dl); } }); }); }
+    [...persons, ...places, ...res.equipment].forEach(r => { const dl = _tzDeltaMin(r.id, s.date); _resourceScheduleAt(r.id, s.date).forEach(iv => { const mm = _schedIvMin(iv); if (mm) { lo = Math.min(lo, mm.from + dl); hi = Math.max(hi, mm.to + dl); } }); }); } // 📆 дыяпазон дня — з выключэннямі
   lo = Math.floor(lo / 60) * 60; hi = Math.ceil(hi / 60) * 60; const slots = Math.max(1, (hi - lo) / 5);
   // «—» дарожка для невядомай восі (бягучая мадэль: запіс мае адзін рэсурс)
   const xAxis = persons.concat([{ id: '_', label: '—' }]); // Чалавек
@@ -9045,7 +9066,7 @@ function _apptDayScheduleCard(node) {
   // дадатковы радок «у вашым поясе» — ТОЛЬКІ калі пояс філіяла зададзены і адрозніваецца ад пояса гледача
   const viewerLine = (iv, btz) => (btz && vtz && btz !== vtz && iv.length)
     ? `<div style="font-size:0.76rem;color:var(--muted);margin-top:2px">${escHtml(t('tz_your_zone'))} ${escHtml(_tzIntervalText(iv, date, btz, vtz))}</div>` : '';
-  const cellHtml = o => { const iv = _resourceSchedule(o.id, dow); return `${dayTxt(iv)}${viewerLine(iv, tzOf(o.id))}`; };
+  const cellHtml = o => { const iv = _resourceScheduleAt(o.id, date); return `${dayTxt(iv)}${viewerLine(iv, tzOf(o.id))}`; }; // 📆 картка ДНЯ — з выключэннямі (свята/адпачынак бачныя тут)
   const sec = (list.length <= 1)
     ? { title: t('svc_schedule'), html: `<div style="font-size:0.84rem">${list.length ? cellHtml(list[0]) : t('svc_dayoff')}</div>` }
     : { title: t('svc_schedule'), rows: list.map(o => ({ k: o.label, v: cellHtml(o) })) }; // некалькі філіялаў → радок на кожны
