@@ -386,8 +386,8 @@ body.ds-edit #site-sections button,
 body.ds-edit #site-sections a[href],
 body.ds-edit #site-sections .tile-item-clickable,
 body.ds-edit #site-sections article[onclick] { pointer-events: none !important; cursor: default !important; }
-/* але панэлька рэдактара секцыі (▲▼/⋯) — жывая (яна ж кнопкі ў #site-sections) */
-body.ds-edit #site-sections .ds-editbar button { pointer-events: auto !important; cursor: pointer !important; }
+/* але панэлька рэдактара секцыі (▲▼/⋯) і дыскложур ▶/▼ перад назвай — жывыя (яны ж кнопкі ў #site-sections) */
+body.ds-edit #site-sections .ds-editbar button, body.ds-edit #site-sections .ds-fold-btn { pointer-events: auto !important; cursor: pointer !important; }
 /* 🖊️ панэлька рэдактара секцыі: ▲▼ парадак + ⋯ меню (толькі edit-рэжым) */
 .ds-editable { position: relative; }
 .ds-editable.ds-hidden { opacity: .5; outline: 1px dashed var(--accent,#f97316); outline-offset: -4px; }
@@ -768,7 +768,7 @@ html[data-d-shadows="flat"] .service-card:hover { transform: none; box-shadow: n
 .ds-fold[open] > summary::after { transform: rotate(90deg); }
 /* 🖊 edit: дыскложур ▶/▼ ПЕРАД назвай (канон Панелі) замяняе стрэлку-пасля назвы */
 body.ds-edit .ds-fold > summary::after { display: none; }
-.ds-fold-btn { pointer-events: auto; margin-inline-end: 10px; vertical-align: middle; }
+.ds-fold-btn { margin-inline-end: 10px; vertical-align: middle; } /* клікабельнасць — у выключэнні inert-правіла edit (побач з .ds-editbar button) */
 .ds-more-wrap { text-align: center; margin-top: 14px; display: flex; gap: 10px; justify-content: center; }
 .ds-more-btn { padding: 8px 18px; border: 1px solid var(--accent, #f97316); border-radius: 999px; background: transparent; color: var(--accent, #f97316); font-weight: 600; font-size: 0.88rem; cursor: pointer; }
 .ds-more-btn:hover { background: var(--accent, #f97316); color: #fff; }
