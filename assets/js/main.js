@@ -1188,22 +1188,22 @@ const SITE_VIEWS = {
       // К1 «Каталог»: асноўная кнопка па СПОСАБЕ АТРЫМАННЯ (cart/booking/inquiry; fallback на пераходны cta v4.547)
       const ff = _sv(it.fulfil) || (_sv(it.cta) === 'chat' ? 'inquiry' : 'cart');
       const nameArg = `'${_dsEsc(name).replace(/'/g,'&#39;')}'`;
-      let btn = '';
+      // 👥 групавая пазіцыя — пазнака ліміту (groupMax прыходзіць з праекцыі толькі ў bookable, у т.л. легасі без fulfil, што рэндэрыцца як cart)
+      let btn = +_sv(it.groupMax) > 0 ? `<p style="margin:8px 0 0;font-size:0.8rem;opacity:0.75">👥 ${_dsEsc((ui.grp_upto || '').replace('{n}', _sv(it.groupMax)))}</p>` : '';
       if (ff === 'booking') { // 📅 мадалка вольных слотаў; легасі-пазіцыя без id → чат (рашальнік не ведае, што браніраваць)
-        if (+_sv(it.groupMax) > 0) btn += `<p style="margin:8px 0 0;font-size:0.8rem;opacity:0.75">👥 ${_dsEsc((ui.grp_upto || '').replace('{n}', _sv(it.groupMax)))}</p>`; // 👥 групавая пазіцыя — пазнака ліміту
         btn = btn + (it.id
           ? `<button onclick="event.stopPropagation();bookItem('${_dsEsc(it.id)}',${nameArg})" style="${btnStyle}">📅 ${ui.cta_book}</button>`
           : `<button onclick="event.stopPropagation();chatAboutItem(${nameArg},'chat_book_pfx')" style="${btnStyle}">📅 ${ui.cta_book}</button>`);
       } else if (ff === 'inquiry') {
-        btn = `<button onclick="event.stopPropagation();chatAboutItem(${nameArg},'chat_ask_pfx')" style="${btnStyle}">💬 ${ui.ask_btn}</button>`;
+        btn += `<button onclick="event.stopPropagation();chatAboutItem(${nameArg},'chat_ask_pfx')" style="${btnStyle}">💬 ${ui.ask_btn}</button>`;
       } else if (ff === 'subscription') { // 🔁 S1/S2 дыспетчар: «Свой сайт» → order-flow стварэння сайта; іншыя → аўта-афармленне ў кабінеце
-        btn = !it.id
+        btn += !it.id
           ? `<button onclick="event.stopPropagation();chatAboutItem(${nameArg},'chat_sub_pfx')" style="${btnStyle}">🔁 ${ui.sub_btn}</button>` // легасі-пазіцыя без id → чат
           : _sv(it.itemType) === 'subdomain'
             ? `<button onclick="event.stopPropagation();siteSubscribeOrder('${_dsEsc(it.id)}',${nameArg},'${_dsEsc(price)}','${_dsEsc(cur)}')" style="${btnStyle}">🔁 ${ui.sub_btn}</button>`
             : `<button onclick="event.stopPropagation();subscribeItem('${_dsEsc(it.id)}',${nameArg})" style="${btnStyle}">🔁 ${ui.sub_btn}</button>`;
       } else if (it.id && price && pm === 'exact') {
-        btn = `<button id="cart-btn-${_dsEsc(it.id)}" onclick="addToCart('${_dsEsc(it.id)}',${nameArg},'${_dsEsc(it.itemType||'')}','${_dsEsc(price)}','${_dsEsc(cur)}')" style="${btnStyle}">${inCart ? ui.cart_added.replace('{n}', inCart.qty) : ui.add_to_cart}</button>`;
+        btn += `<button id="cart-btn-${_dsEsc(it.id)}" onclick="addToCart('${_dsEsc(it.id)}',${nameArg},'${_dsEsc(it.itemType||'')}','${_dsEsc(price)}','${_dsEsc(cur)}')" style="${btnStyle}">${inCart ? ui.cart_added.replace('{n}', inCart.qty) : ui.add_to_cart}</button>`;
       }
       // чат — ЗАЎСЁДЫ даступны (рашэнне К1): другасная ціхая кнопка пры cart (пры booking/inquiry асноўная ўжо вядзе ў чат)
       if (ff === 'cart') btn += `<button onclick="event.stopPropagation();chatAboutItem(${nameArg},'chat_ask_pfx')" style="margin-top:8px;width:100%;padding:7px;background:none;border:1px solid var(--border,#8883);border-radius:8px;color:inherit;opacity:0.7;cursor:pointer;font-size:0.82rem">💬 ${ui.ask_btn}</button>`;
