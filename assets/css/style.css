@@ -764,10 +764,11 @@ html[data-d-shadows="flat"] .service-card:hover { transform: none; box-shadow: n
 .ds-fold > summary { cursor: pointer; list-style: none; }
 .ds-fold > summary::-webkit-details-marker { display: none; }
 .ds-fold > summary > * { display: inline-block; }               /* загаловак і стрэлка ў адзін радок */
-.ds-fold > summary::after { content: '▸'; margin-inline-start: 10px; opacity: 0.55; font-size: 0.9em; transition: transform 0.15s; display: inline-block; }
-.ds-fold[open] > summary::after { transform: rotate(90deg); }
-/* 🖊 edit: дыскложур ▶/▼ ПЕРАД назвай (канон Панелі) замяняе стрэлку-пасля назвы */
-body.ds-edit .ds-fold > summary::after { display: none; }
+/* стрэлка фолда ЗЛЕВА перад назвай (канон Панелі: дыскложур у пачатку радка) — і публіцы, і ў edit */
+.ds-fold > summary::before { content: '▸'; margin-inline-end: 10px; opacity: 0.55; font-size: 0.9em; transition: transform 0.15s; display: inline-block; }
+.ds-fold[open] > summary::before { transform: rotate(90deg); }
+/* 🖊 edit: замест CSS-стрэлкі — жывая кнопка ▶/▼ (_dFoldBtn) на тым жа месцы */
+body.ds-edit .ds-fold > summary::before { display: none; }
 .ds-fold-btn { margin-inline-end: 10px; vertical-align: middle; } /* клікабельнасць — у выключэнні inert-правіла edit (побач з .ds-editbar button) */
 .ds-more-wrap { text-align: center; margin-top: 14px; display: flex; gap: 10px; justify-content: center; }
 .ds-more-btn { padding: 8px 18px; border: 1px solid var(--accent, #f97316); border-radius: 999px; background: transparent; color: var(--accent, #f97316); font-weight: 600; font-size: 0.88rem; cursor: pointer; }
