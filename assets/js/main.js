@@ -1301,7 +1301,7 @@ function renderDynamicSections(data) {
   const hTag = d => `h${Math.min(2 + d, 5)}`; // h2 → h3 → h4 → h5 (глыбей — h5)
   // 🎛 згорнутасць галіны: загаловак = <summary> (стрэлка праз CSS .ds-fold), змест раскрываецца па кліку;
   // без загалоўка згортваць няма за што — паказваем як ёсць
-  const _foldWrap = (collapsed, head, inner) => (collapsed && head) ? `<details class="ds-fold"><summary>${head}</summary>${inner}</details>` : head + inner;
+  const _foldWrap = (collapsed, head, inner) => head ? `<details class="ds-fold"${collapsed ? '' : ' open'}><summary>${head}</summary>${inner}</details>` : head + inner; // фолд УСЮДЫ (рашэнне 2026-07-14): «Згорнута» = толькі пачатковы стан; без загалоўка — няма за што згортваць
   // 🎛 уласцівасць секцыі (каталог SECTION_PROPS): рэзалв печаны панэллю ў inst.disp; лег. v4.593 — асобныя ключы
   const _dsProp = (inst, k) => (inst.disp || {})[k] ?? ({ previewN: inst.previewN, collapsed: inst.collapsed ? 'yes' : undefined, layoutView: inst.dispLayout }[k]);
   const instHtml = (inst, d, idx, sibN) => {
@@ -1310,7 +1310,7 @@ function renderDynamicSections(data) {
     const eCls = _dEdit ? ` ds-editable${inst.enabled === false ? ' ds-hidden' : ''}` : '';
     const alignL = _dsProp(inst, 'headAlign') === 'left'; // выраўноўванне загалоўка (верхні ўзровень; глыбей і так злева)
     // 🖊️ слайс A: у edit-рэжыме загаловак/падзагаловак — рэдагавальныя НА МЕСЦЫ; у edit паказваем нават пустыя (каб дадаць)
-    const title = (t0 || _dEdit) ? `<${hTag(d)} class="section-title"${_edAttr(inst.id, 'title', 'ml', getUI().ed_title)} style="${d ? `font-size:${Math.max(1, 1.5 - d * 0.2)}rem;text-align:left` : (alignL ? 'text-align:left' : '')}">${_dsEsc(t0)}</${hTag(d)}>` : '';
+    const title = (t0 || _dEdit) ? `<${hTag(d)} class="section-title"${_edAttr(inst.id, 'title', 'ml', getUI().ed_title + (_dEdit && typeof _dTypeTag === 'function' ? _dTypeTag(inst.type) : ''))} style="${d ? `font-size:${Math.max(1, 1.5 - d * 0.2)}rem;text-align:left` : (alignL ? 'text-align:left' : '')}">${_dsEsc(t0)}</${hTag(d)}>` : '';
     const sub = (s0 || _dEdit) ? `<p class="section-subtitle text-muted"${_edAttr(inst.id, 'subtitle', 'ml', getUI().ed_subtitle)}${(d || alignL) ? ' style="text-align:left"' : ''}>${_dsEsc(s0)}</p>` : '';
     const body = _foldWrap(_dsProp(inst, 'collapsed') === 'yes', title, sub + SITE_VIEWS[inst.type](inst) + renderKids(inst.id, d + 1)); // + генерычныя дзеці экзэмпляра (фота/папкі/укладзеныя секцыі)
     // CSS-класы каталога (спажывае style.css) + data-атрыбуты пасля-рэндэрных крокаў (_dsApplyDisplay)
@@ -2649,6 +2649,7 @@ let _dEditTok = ''; // 🔑 editToken са спасылкі 👁 (&ed=) — ад
 // каталог параметраў — люстэрка панэльнага SECTION_PROPS, але кароткі: тыпы паказаны іконка+код без перакладу)
 const _dL = (be, en) => (['be', 'ru', 'uk'].includes(currentUiLang) ? be : en);
 const _SEC_TICON = { text: '📄', cards: '🃏', list: '💰', accordion: '❓', gallery: '🖼️', testimonials: '💬', brands: '🚗', posts: '📰', hero: '🔝', footer: '🔚' }; // іконка тыпу для подпісу секцыі (сам Тып мяняецца ў панэлі, не ў прэв'ю)
+const _dTypeTag = t => { const r = _D_ADD_TYPES.find(x => x[0] === t); return r ? ` (${r[1]} ${_dL(r[2], r[3])})` : ''; }; // « (📄 Тэкст)» — тып у плейсхолдэры пустой секцыі (каб дублі не блыталі ў edit)
 // ➕ каталог тыпаў для «Дадаць секцыю» (люстэрка SITE_VIEWS; hero/footer выключаны — статычныя, па-за спісам)
 const _D_ADD_TYPES = [['text', '📄', 'Тэкст', 'Text'], ['cards', '🃏', 'Карткі', 'Cards'], ['list', '💰', 'Прайс', 'Prices'], ['accordion', '❓', 'FAQ', 'FAQ'], ['posts', '📰', 'Навіны', 'News'], ['testimonials', '💬', 'Водгукі', 'Reviews'], ['brands', '🚗', 'Брэнды', 'Brands'], ['gallery', '🖼️', 'Галерэя', 'Gallery']];
 // ключ масіва пазіцый у content па тыпе секцыі (пусты = тып без дадаваемых пазіцый: text/gallery)
