@@ -3559,6 +3559,7 @@ const _SITE_SOURCES = {
           badge: (f.badge && f.badge !== 'none') ? f.badge : '', badgeText: f.badgeText || '', // бэйдж карткі (прэсэт/custom)
           fulfil: f.fulfil || 'cart', // спосаб атрымання: cart (🛒 кошык) / booking (📅 запіс) / inquiry (💬 запыт) / subscription (🔁)
           ...(f.fulfil === 'subscription' && f.period ? { period: f.period } : {}),
+          ...(f.fulfil === 'booking' && +f.groupMax > 0 ? { groupMax: +f.groupMax } : {}), // 👥 групавая — бэйдж на картцы сайта
           ...(path.length ? { group: path[path.length - 1], path } : {}) }); // group = апошняя папка (зваротная сумяшчальнасць старога рэндэру)
       }
       if (n.type === 'folder' && n.active !== false) walk(n.id, n.name ? [...path, n.name] : path); // безназоўная папка не дае ўзроўню; ● выкл на Папцы хавае ЎСЁ паддрэва з сайта (🌑 _newInactive)
