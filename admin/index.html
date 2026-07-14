@@ -9681,7 +9681,7 @@ function _apptJournalAdd(form, s) {
 function _apptParticipantAppend(node, p) {
   if (!Array.isArray(node.fields.participants)) node.fields.participants = [];
   node.fields.participants.push({ _id: 'p' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
-    at: new Date().toISOString(), name: p.name || '', phone: p.phone || '', qty: Math.max(1, parseInt(p.qty, 10) || 1),
+    at: new Date().toISOString(), name: p.name || '', phone: p.phone || '', qty: TTZOP_BOOKING.seatQty(p.qty), // ААП: адзіная нармалізацыя месцаў
     ...(p.clientId ? { clientId: p.clientId } : {}), by: p.by || _myActorLabel() });
 }
 // ➕ удзельнік ад адміна (тэлефонны запіс у групу); перавышэнне ліміту — папярэджанне, НЕ блок (адмін мае права)
@@ -9698,7 +9698,7 @@ function _apptParticipantAdd(form, s) {
     const node = (appointmentsState.data?.nodes || []).find(n => n.id === form.id && n.formSchema === 'appointmentDetails'); if (!node) return;
     const doIt = () => { _apptParticipantAppend(node, fields); _appointmentsSave(); renderCubeTestEditor(); };
     const max = +node.fields.groupMax || 0;
-    const taken = TTZOP_BOOKING.groupSeatsTaken(node.fields) + Math.max(1, parseInt(fields.qty, 10) || 1);
+    const taken = TTZOP_BOOKING.groupSeatsTaken(node.fields) + TTZOP_BOOKING.seatQty(fields.qty);
     if (max && taken > max) showConfirm(t('grp_over_limit').replace('{n}', taken).replace('{max}', max), doIt, { label: t('btn_add'), danger: false });
     else doIt();
   };

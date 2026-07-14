@@ -292,9 +292,11 @@ export function bookableServices(nodes) {
       groupMax: Math.max(0, parseInt(f.groupMax, 10) || 0) }; // 👥 ліміт групы; 0 = звычайная адзіночная
   }).filter(x => x.duration > 0);
 }
-// 👥 ГРУПЫ: колькі месцаў занята ў групавым запісе (кожны ўдзельнік бярэ qty месцаў, дэфолт 1)
+// 👥 ГРУПЫ: адзіная нармалізацыя месцаў адной броні (дэфолт 1) — ААП: не паўтараць parseInt/max па кутках
+export const seatQty = q => Math.max(1, parseInt(q, 10) || 1);
+// колькі месцаў занята ў групавым запісе (кожны ўдзельнік бярэ qty месцаў)
 export function groupSeatsTaken(a) {
-  return (Array.isArray(a?.participants) ? a.participants : []).reduce((n, p) => n + Math.max(1, parseInt(p?.qty, 10) || 1), 0);
+  return (Array.isArray(a?.participants) ? a.participants : []).reduce((n, p) => n + seatQty(p?.qty), 0);
 }
 
 const _API = { APPT_DEAD, isDead, toMin, fromMin, dayNum, apptResourceUses, apptIntervalsAbs, overlaps,
@@ -303,5 +305,5 @@ const _API = { APPT_DEAD, isDead, toMin, fromMin, dayNum, apptResourceUses, appt
   bookableServices, SLOT_STEP, resourceScheduleInfo, resourceDayOff, dowOf,
   resourceCapacity, busyCountInWindow, concurrentPeak, // 📦 склад/ёмістасць
   resourceScheduleInfoAt, resourceScheduleAt, // 📆 D: выключэнні графіка (date-aware)
-  groupSeatsTaken }; // 👥 групавыя паслугі
+  groupSeatsTaken, seatQty }; // 👥 групавыя паслугі
 if (typeof globalThis !== 'undefined') globalThis.TTZOP_BOOKING = _API;
