@@ -8226,12 +8226,12 @@ function _choreographyFreeSlots(svc, date, branchId) { return TTZOP_BOOKING.chor
 let appointmentsState = {
   data: null, saving: false, selected: new Set(), expanded: new Set(), _movePanel: false, _relocateId: null,
   _section: 'appointments', _editorId: 'appointments-editor', _rootType: 'appt-root', _spaceOnly: true,
-  _formSchema: 'appointmentDetails', _rootParentId: 'appt-host', _viewMode: IS_PLATFORM ? 'cube' : 'tree', _autoRefreshEnabled: false, _lastRefresh: null, // на платформе/тэсце цела = секцыі Куб/Расклад/Зрэз (праз _formBodyHtml); кліентам куб пакуль схаваны (G4b гейт) — застаецца перамыкач 🌳/📊
-  // 2a-4: на платформе РМ Запісы = адзіная Форма-0 без перамыкача (усё адным целам праз _formBodyHtml); кліентам (не IS_PLATFORM) пакуль стары перамыкач 🌳Дрэва/📊Расклад да G4b
-  _views: () => IS_PLATFORM ? [] : [{ id: 'tree', ico: '🌳', title: t('appt_view_tree') }, { id: 'schedule', ico: '📊', title: t('appt_view_schedule') }],
+  _formSchema: 'appointmentDetails', _rootParentId: 'appt-host', _viewMode: 'cube', _autoRefreshEnabled: false, _lastRefresh: null, // 🧊 куб = цела РМ для ЎСІХ сайтаў (G4b ungate: i18n ×13 гатовы, флоу валідаваны)
+  // 2a-4 + G4b ungate: РМ Запісы = адзіная Форма-0 без перамыкача ўсюды (Афармленне/Куб/Стужка/Спіс адным целам); стары перамыкач 🌳/📊 прыбраны (_apptScheduleHtml застаецца як унутраны рэндэр)
+  _views: () => [],
   _onSetView: mode => { if (mode === 'schedule' && !appointmentsState._scheduleDate) appointmentsState._scheduleDate = _isoDay(); }, // ініц даты расклада (non-platform switcher)
   _viewBodyHtml: () => _apptScheduleHtml(), // цела Формы-0 для перамыкача 📊Расклад (толькі non-platform; платформа — праз _formBodyHtml)
-  _formBodyHtml: () => IS_PLATFORM ? _cubeBodyHtml() : '', // ААП канон: кастомнае цела-секцыі Формы-0 ВЫШЭЙ за Папкі-0 (Афармленне/Куб/Расклад/Зрэз адным скролам). Non-platform — пуста (звычайныя Папкі-0)
+  _formBodyHtml: () => _cubeBodyHtml(), // ААП канон: кастомнае цела-секцыі Формы-0 ВЫШЭЙ за Папкі-0 (Афармленне/Куб/Расклад/Зрэз адным скролам) — для ЎСІХ сайтаў (G4b ungate)
   _renderFn: () => { currentNodeState = appointmentsState; renderAppointmentsEditor(); },
   _saveFn: () => _appointmentsSave(),
   _normalizeFn: () => _appointmentsAddHost(),
@@ -8247,7 +8247,7 @@ let appointmentsState = {
   _drawerRelated: node => node?.formSchema === 'appointmentDetails' ? _apptCardHtml(node.fields) // ⓘ-drawer запісу = картка вокселя
     : node?.contentType === 'appt-date' ? _apptDayScheduleCard(node) : '', // ⓘ-drawer Папкі-дня = графік працы філіяла(-ў) на гэты дзень
   _onFocus: node => { // клік па Форме-Запісі → падсвяціць адпаведны кубік у Кубе (куб і спіс — адны даныя, два выгляды)
-    if (!IS_PLATFORM || node?.formSchema !== 'appointmentDetails') return;
+    if (node?.formSchema !== 'appointmentDetails') return; // (G4b ungate: куб ва ўсіх)
     const c = cubeTestState, d = node.fields?.date;
     if (d && d !== c.date) { c.date = d; c._scanT = null; _cubeSearchAbort(); if (c._entry?.serviceId) _cubeWishDefaults(); _cubeEntryRecompute(); } // куб скача на дату запісу (каб кубік існаваў), без скіду вылучэння
     const v = _cubeBuild().voxels.find(x => x.appt.id === node.id);
@@ -8331,7 +8331,7 @@ async function loadAppointmentsEditor() {
   currentNodeState = s;
   await _ensureServicesLoaded(); // патрэбна для select паслуг (і куб-рашальніка)
   if (!s.data) await _ensureAppointmentsLoaded();
-  if (IS_PLATFORM) { await _ensureClientsLoaded(); _cubeEnsureInit(); } // платформа: цела = куб-секцыі → каталог кліентаў (строгі выбар) + ініц дата/слоты
+  await _ensureClientsLoaded(); _cubeEnsureInit(); // цела = куб-секцыі → каталог кліентаў (строгі выбар) + ініц дата/слоты (G4b ungate: усе сайты)
   renderAppointmentsEditor();
 }
 function renderAppointmentsEditor() {
