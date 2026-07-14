@@ -775,6 +775,8 @@ const FORM_SCHEMAS = {
         { key: 'bookLead',    type: 'number',   label: 'svc_lead',           readOnly: () => true, // ⏳ мінімальны запас перад бронню (хв); 0 = можна браць бліжэйшы слот. Ужывае ТОЛЬКІ публічны шлях (booking_slots/portal_book) — адмін бранюе без абмежаванняў
           visible: form => (form.fields?.fulfil || 'cart') === 'booking' },
         { key: 'bookCancelLead', type: 'number', label: 'svc_cancel_lead',   readOnly: () => true, // ⏳ запас перад ПАЧАТКАМ, раней за які кліент ужо не адменіць/не перанясе запіс сам (хв); 0 = хоць за хвіліну
+          visible: form => (form.fields?.fulfil || 'cart') === 'booking' },
+        { key: 'groupMax',    type: 'number',   label: 'svc_group_max', hint: 'svc_group_max_hint', readOnly: () => true, // 👥 ГРУПАВАЯ паслуга (ёга/экскурсія): ліміт удзельнікаў адной групы; 0/пуста = звычайная адзіночная (1 слот = 1 кліент)
           visible: form => (form.fields?.fulfil || 'cart') === 'booking' }
       ] },
     { type: 'table', title: 'client_history', dataKey: '_history', addable: false,
@@ -1366,6 +1368,17 @@ FORM_SCHEMAS.appointmentDetails = Object.assign({
           classMap: APPOINTMENT_STATUS_CLASS_MAP },
         { key: 'note',      label: 'f_note',      type: 'text' },
         { key: 'by',        label: 'col_who',     type: 'text' } // аўдыт «Кім» — хто змяніў статус запісу
+      ] },
+    { // 👥 ГРУПАВАЯ паслуга: УДЗЕЛЬНІКІ (рэестр; кожны бярэ qty месцаў) — секцыя бачная толькі ў груп
+      type: 'table', title: 'grp_participants', dataKey: 'participants', addable: true, rowDeletable: true,
+      visible: form => (+form.fields?.groupMax || 0) > 0 || (form.fields?.participants || []).length > 0,
+      onAdd: (form, s) => _apptParticipantAdd(form, s),
+      columns: [
+        { key: 'at',    label: 'col_datetime',     type: 'datetime' },
+        { key: 'name',  label: 'appt_client_name', type: 'text' },
+        { key: 'phone', label: 'appt_client_phone',type: 'text' },
+        { key: 'qty',   label: 'grp_seats',        type: 'number' },
+        { key: 'by',    label: 'col_who',          type: 'text' }
       ] },
     { // 🛠 H: ЖУРНАЛ КАРЭКЦЫЙ ходу запісу (рэестр падзей, append-only): перапрызначэнні рэсурсаў — АЎТА
       // (куб/ⓘ-картка праз _apptJournalAppend), перанос кліентам — з воркера; астатняе (паўза/скарачэнне/
@@ -8279,7 +8292,7 @@ function _appointmentsBuildTree(arr) {
   _appointmentsAddHost();
 }
 // вузлы-запісы → плоскі масіў для захавання (WHITELIST палёў — каб выпадковы мусар не трапляў; id з вузла, не з fields)
-const _APPT_FIELDS = ['date', 'time', 'duration', 'bufferAfter', 'serviceId', 'serviceName', 'resourceId', 'resourceName', 'personId', 'placeId', 'equipmentIds', 'assignments', 'clientName', 'clientPhone', 'note', 'status', 'statusLog', 'journal', 'createdAt', 'orderId', 'clientId', 'cartRowId', '_locked']; // Блок 3: assignments[] (multi-resource сузор'е); statusLog — журнал змен статусу (бягучы=праекцыя); journal — 🛠 H журнал КАРЭКЦЫЙ ходу (reassign/reschedule/pause/…); legacy resourceId/personId/placeId/equipmentIds — сумяшчальнасць; + сувязь з заказам
+const _APPT_FIELDS = ['date', 'time', 'duration', 'bufferAfter', 'serviceId', 'serviceName', 'resourceId', 'resourceName', 'personId', 'placeId', 'equipmentIds', 'assignments', 'clientName', 'clientPhone', 'note', 'status', 'statusLog', 'journal', 'participants', 'groupMax', 'createdAt', 'orderId', 'clientId', 'cartRowId', '_locked']; // Блок 3: assignments[] (multi-resource сузор'е); statusLog — журнал змен статусу (бягучы=праекцыя); journal — 🛠 H журнал КАРЭКЦЫЙ ходу (reassign/reschedule/pause/…); legacy resourceId/personId/placeId/equipmentIds — сумяшчальнасць; + сувязь з заказам
 function _appointmentsToArray() {
   return (appointmentsState.data?.nodes || []).filter(n => n.type === 'form' && n.formSchema === 'appointmentDetails')
     .map(n => { const f = n.fields || {}; const out = { id: n.id }; _APPT_FIELDS.forEach(k => { if (f[k] !== undefined) out[k] = f[k]; }); return out; });
@@ -9661,6 +9674,32 @@ function _apptJournalAdd(form, s) {
     const node = (appointmentsState.data?.nodes || []).find(n => n.id === form.id && n.formSchema === 'appointmentDetails'); if (!node) return;
     _apptJournalAppend(node, fields.type, fields.note);
     _appointmentsSave(); renderCubeTestEditor(); // персіст + жывы ⓘ-драўэр/РМ
+  };
+}
+// 👥 ГРУПЫ: адзіны append удзельніка (форма радка агульная з воркерам portal_book) + гард ліміту
+function _apptParticipantAppend(node, p) {
+  if (!Array.isArray(node.fields.participants)) node.fields.participants = [];
+  node.fields.participants.push({ _id: 'p' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
+    at: new Date().toISOString(), name: p.name || '', phone: p.phone || '', qty: Math.max(1, parseInt(p.qty, 10) || 1),
+    ...(p.clientId ? { clientId: p.clientId } : {}), by: p.by || _myActorLabel() });
+}
+// ➕ удзельнік ад адміна (тэлефонны запіс у групу); перавышэнне ліміту — папярэджанне, НЕ блок (адмін мае права)
+function _apptParticipantAdd(form, s) {
+  _nfmApplySchema(Object.assign([
+    { key: 'name',  type: 'text',   label: 'appt_client_name' },
+    { key: 'phone', type: 'text',   label: 'appt_client_phone' },
+    { key: 'qty',   type: 'number', label: 'grp_seats' }
+  ], { _noName: true }));
+  const modal = document.getElementById('node-form-modal'); modal.dataset.mode = 'add';
+  modal.style.display = 'flex';
+  _nfmCustomSubmit = fields => {
+    if (!fields.name && !fields.phone) return;
+    const node = (appointmentsState.data?.nodes || []).find(n => n.id === form.id && n.formSchema === 'appointmentDetails'); if (!node) return;
+    const doIt = () => { _apptParticipantAppend(node, fields); _appointmentsSave(); renderCubeTestEditor(); };
+    const max = +node.fields.groupMax || 0;
+    const taken = TTZOP_BOOKING.groupSeatsTaken(node.fields) + Math.max(1, parseInt(fields.qty, 10) || 1);
+    if (max && taken > max) showConfirm(t('grp_over_limit').replace('{n}', taken).replace('{max}', max), doIt, { label: t('btn_add'), danger: false });
+    else doIt();
   };
 }
 // ✎ рэдагаваць запіс (палі; статус — толькі праз журнал ➕)

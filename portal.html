@@ -527,14 +527,15 @@ function renderCabinetAppts() {
   const rows = list.map(a => {
     const nm = escChat(a.serviceName).replace(/'/g, '&#39;');
     const btns = a.canManage
-      ? btn(PT.ap_move, `cabApptMove('${escChat(a.id)}','${escChat(a.serviceId)}','${nm}','${escChat(a.date)}')`)
-        + ' ' + btn(PT.ap_cancel, `cabApptCancel('${escChat(a.id)}','${nm}')`, true)
+      // 👥 групавы запіс: пераносу няма (толькі адмена свайго месца) — сервер вяртае group:true
+      ? (a.group ? '' : btn(PT.ap_move, `cabApptMove('${escChat(a.id)}','${escChat(a.serviceId)}','${nm}','${escChat(a.date)}')`) + ' ')
+        + btn(PT.ap_cancel, `cabApptCancel('${escChat(a.id)}','${nm}')`, true)
       : '';
     return `<div style="background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius);padding:10px 12px;margin-bottom:8px">
       <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
         <div style="flex:1;min-width:0">
           <div style="font-weight:600;font-size:0.9rem;color:var(--text)">${_cabDate(a.date)} <span style="color:var(--accent)">${escChat(a.time)}</span></div>
-          <div style="font-size:0.82rem;color:var(--muted);margin-top:2px">${escChat(a.serviceName)}</div>
+          <div style="font-size:0.82rem;color:var(--muted);margin-top:2px">${escChat(a.serviceName)}${a.group && a.seats ? ' · 👥×' + (+a.seats || 1) : ''}</div>
           <div style="font-size:0.78rem;color:${stColor[a.status] || 'var(--muted)'};margin-top:2px">● ${escChat(PT['ap_' + a.status] || a.status)}</div>
         </div>
         <div style="display:flex;gap:4px;flex-shrink:0">${btns}</div>

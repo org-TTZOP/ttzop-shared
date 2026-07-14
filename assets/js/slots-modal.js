@@ -52,6 +52,7 @@
       </div>
       <div style="font-size:0.8rem;color:var(--muted,#9aa1ad);margin-bottom:6px">${esc(L(cfg, 'date'))}</div>
       <div id="bk-days" style="display:flex;gap:6px;overflow-x:auto;padding-bottom:8px;margin-bottom:12px"></div>
+      <div id="bk-qty" style="display:none;align-items:center;gap:8px;margin-bottom:10px"></div>
       <div style="font-size:0.8rem;color:var(--muted,#9aa1ad);margin-bottom:6px">${esc(L(cfg, 'time'))}</div>
       <div id="bk-slots" style="display:flex;flex-wrap:wrap;gap:6px;min-height:40px"></div>
     </div>`;
@@ -81,6 +82,8 @@
       const j = await r.json().catch(() => ({})); // today прыходзіць і з памылкай bad_date — чытаем заўсёды
       if (r.ok) slots = j.slots || [];
       srvToday = j.today || '';
+      // 👥 групавая паслуга: сервер дадае рэшткі месцаў пер-слот (left) + агульны ліміт (groupMax)
+      S.group = !!j.group; S.left = j.left || {}; S.groupMax = +j.groupMax || 0;
     } catch {}
     if (!document.getElementById(ID)) return; // мадалку закрылі, пакуль чакалі адказ
     // 🌍 «сёння» гледача ≠ «сёння» бізнесу (кліент у ЛА, HQ у Мінску): прымаем серверную дату і
@@ -91,17 +94,29 @@
       if (S.date < srvToday || !days(cfg).includes(S.date)) S.date = srvToday;
       renderDays(); loadSlots(); return;
     }
+    // 👥 пікер «колькі месцаў» (сям'я/сябры) — толькі для групавой паслугі; выбар жыве ў S.qty
+    const qrow = document.getElementById('bk-qty');
+    if (qrow) {
+      if (S.group && slots.length) {
+        const maxSel = Math.min(9, S.groupMax || 9);
+        qrow.style.display = 'flex';
+        qrow.innerHTML = `<span style="font-size:0.8rem;color:var(--muted,#9aa1ad)">${esc(L(cfg, 'seats') || 'Seats:')}</span>
+          <select onchange="_slotsSetQty(this.value)" style="padding:6px 9px;border-radius:8px;border:1px solid var(--border,#2a2f45);background:var(--surface,#181c27);color:var(--text,#e8eaf0);font-size:0.86rem">${Array.from({ length: maxSel }, (_, i) => `<option value="${i + 1}"${(S.qty || 1) === i + 1 ? ' selected' : ''}>${i + 1}</option>`).join('')}</select>`;
+      } else { qrow.style.display = 'none'; qrow.innerHTML = ''; }
+    }
     box.innerHTML = slots.length
-      ? slots.map(t => `<button onclick="_slotsPickTime('${esc(t)}')" style="padding:8px 12px;border-radius:8px;border:1px solid var(--border,#2a2f45);background:transparent;color:var(--text,#e8eaf0);cursor:pointer;font-size:0.86rem">${esc(t)}</button>`).join('')
+      ? slots.map(t => `<button onclick="_slotsPickTime('${esc(t)}')" style="padding:8px 12px;border-radius:8px;border:1px solid var(--border,#2a2f45);background:transparent;color:var(--text,#e8eaf0);cursor:pointer;font-size:0.86rem">${esc(t)}${S.group ? ` <span style="color:var(--muted,#9aa1ad);font-size:0.74rem">(${+S.left[t] || 0})</span>` : ''}</button>`).join('')
       : `<div style="color:var(--muted,#9aa1ad);font-size:0.85rem;padding:8px 0">${esc(L(cfg, 'none'))}</div>`;
   }
+  function setQty(v) { if (S) S.qty = Math.max(1, parseInt(v, 10) || 1); }
 
   function pickDate(d) { if (!S) return; S.date = d; renderDays(); loadSlots(); }
 
   function pickTime(time) {
     if (!S) return;
     const cfg = S.cfg;
-    const msg = (L(cfg, 'confirm') || '{d} {t}?').replace('{d}', dayLabel(S.date, cfg.lang)).replace('{t}', time);
+    const q = S.group ? (S.qty || 1) : 1;
+    const msg = (L(cfg, 'confirm') || '{d} {t}?').replace('{d}', dayLabel(S.date, cfg.lang)).replace('{t}', time + (q > 1 ? ` ×${q}` : '')); // 👥 колькасць месцаў у пацверджанні
     cfg.confirm(msg, () => book(time));
   }
 
@@ -117,7 +132,7 @@
     let res = {};
     try {
       const r = await fetch(cfg.api, { method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'portal_book', repo: cfg.repo, token, serviceId: cfg.serviceId, date: S.date, time, moveFrom: cfg.moveFrom || '' }) });
+        body: JSON.stringify({ action: 'portal_book', repo: cfg.repo, token, serviceId: cfg.serviceId, date: S.date, time, moveFrom: cfg.moveFrom || '', ...(S.group ? { qty: S.qty || 1 } : {}) }) }); // 👥 месцаў у броні
       res = await r.json();
     } catch { res = { error: 'net' }; }
     S.busy = false;
@@ -129,6 +144,7 @@
     }
     // хтосьці апярэдзіў, пакуль кліент думаў → паказваем свежы спіс
     if (res.error === 'slot_taken') { cfg.confirm(L(cfg, 'taken'), () => {}); loadSlots(); return; }
+    if (res.error === 'group_full') { cfg.confirm(L(cfg, 'full') || L(cfg, 'taken'), () => {}); loadSlots(); return; } // 👥 месцаў не засталося
     cfg.confirm(L(cfg, 'err'), () => {});
   }
 
@@ -136,4 +152,5 @@
   globalThis.slotsModalClose = close;
   globalThis._slotsPickDate = pickDate;   // inline-onclick мадалкі (той жа стыль, што ў астатнім сайце)
   globalThis._slotsPickTime = pickTime;
+  globalThis._slotsSetQty = setQty;       // 👥 пікер месцаў групавой паслугі
 })();

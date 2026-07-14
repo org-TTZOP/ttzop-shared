@@ -288,8 +288,13 @@ export function bookableServices(nodes) {
     // leadMin — запас перад БРОННЮ; cancelLeadMin — запас перад ПАЧАТКАМ, раней за які кліент ужо не адменіць/не перанясе.
     // Дзве розныя семантыкі, не блытаць. Абодва ўжывае ТОЛЬКІ публічны шлях (адмін у панэлі не абмежаваны).
     return { id: n.id, name: f.name || n.name || '?', duration, bufferAfter: +f.bufferAfter || 0, leadMin: Math.max(0, +f.bookLead || 0),
-      cancelLeadMin: Math.max(0, +f.bookCancelLead || 0), resourceIds, _segments: segments, _groups: Array.isArray(f._groups) ? f._groups : [] };
+      cancelLeadMin: Math.max(0, +f.bookCancelLead || 0), resourceIds, _segments: segments, _groups: Array.isArray(f._groups) ? f._groups : [],
+      groupMax: Math.max(0, parseInt(f.groupMax, 10) || 0) }; // 👥 ліміт групы; 0 = звычайная адзіночная
   }).filter(x => x.duration > 0);
+}
+// 👥 ГРУПЫ: колькі месцаў занята ў групавым запісе (кожны ўдзельнік бярэ qty месцаў, дэфолт 1)
+export function groupSeatsTaken(a) {
+  return (Array.isArray(a?.participants) ? a.participants : []).reduce((n, p) => n + Math.max(1, parseInt(p?.qty, 10) || 1), 0);
 }
 
 const _API = { APPT_DEAD, isDead, toMin, fromMin, dayNum, apptResourceUses, apptIntervalsAbs, overlaps,
@@ -297,5 +302,6 @@ const _API = { APPT_DEAD, isDead, toMin, fromMin, dayNum, apptResourceUses, appt
   segPick, segActive, segmentPool, resourceBusyAbs, resourceFreeInWindow, assignSegments, choreographyFreeSlots,
   bookableServices, SLOT_STEP, resourceScheduleInfo, resourceDayOff, dowOf,
   resourceCapacity, busyCountInWindow, concurrentPeak, // 📦 склад/ёмістасць
-  resourceScheduleInfoAt, resourceScheduleAt }; // 📆 D: выключэнні графіка (date-aware)
+  resourceScheduleInfoAt, resourceScheduleAt, // 📆 D: выключэнні графіка (date-aware)
+  groupSeatsTaken }; // 👥 групавыя паслугі
 if (typeof globalThis !== 'undefined') globalThis.TTZOP_BOOKING = _API;
