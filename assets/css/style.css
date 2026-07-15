@@ -430,6 +430,9 @@ body.ds-edit #site-sections .ds-editbar button, body.ds-edit #site-sections .ds-
 /* 🃏 пер-пазіцыйны радок (карткі/навіны/FAQ/водгукі/брэнды/радкі) */
 .ds-item { position: relative; }
 .ds-item-bar { top: 4px; right: 4px; gap: 2px; padding: 2px; }
+/* бар у загалоўку групы-фолда (Каталог): у summary няма position:relative-якара — absolute ляцеў бы
+   ў кут секцыі і бары накладваліся б (нябачныя). Інлайн побач з назвай — парытэт радка панэлі */
+.ds-fold > summary .ds-editbar { position: static; display: inline-flex; vertical-align: middle; margin-inline-start: 10px; }
 .ds-item-bar .ds-eb-btn { min-width: 22px; height: 22px; font-size: .72rem; }
 .ds-item.ds-hidden, .card.ds-hidden, .prices-table tr.ds-hidden { opacity: .5; }
 /* радок у ячэйцы табліцы прайса — інлайн (не absolute) */
