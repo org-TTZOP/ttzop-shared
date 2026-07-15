@@ -2782,9 +2782,22 @@ function _dEditInit() {
 }
 function _dSecs() { const s = siteData?._sections; return (Array.isArray(s?.sections) ? s.sections : []).filter(x => x && x.kind !== 'folder' && x.kind !== 'file' && x.type && SITE_VIEWS[x.type]); }
 function _dSecTitle(s) { const tt = s.title; const nm = (tt && typeof tt === 'object') ? (tt[currentLang] || Object.values(tt).find(Boolean)) : tt; return nm || _sv(s.caption) || _sv(s.name) || s.type || s.id; } // файл → caption/name
-function _dEditRender() { // ніжняя панэль: падказка + ⓘ узроўню СТАРОНКІ (Сметніца верхніх секцый); параметры/парадак — у ⋯ самой секцыі
+function _dEditRender() { // ніжняя панэль: падказка + ⓘ узроўню СТАРОНКІ (Сметніца верхніх секцый) + 🚀; параметры/парадак — у ⋯ самой секцыі
   const w = document.getElementById('look-edit'); if (!w) return;
-  w.innerHTML = `<span class="look-lbl" style="opacity:.8">🖊 ${_svcEsc(_dL('Секцыі: ● ▲▼ ⓘ ⋯ на старонцы', 'Sections: ● ▲▼ ⓘ ⋯ on page'))}</span><button class="ds-eb-btn ds-add-btn" onclick="_dAddMenu(null,this)" title="${_svcEsc(_dL('Дадаць секцыю/раздзел', 'Add section/folder'))}" style="margin-left:8px">➕ ${_svcEsc(_dL('Дадаць', 'Add'))}</button><button class="ds-eb-btn" onclick="_dSecInfo(null,this)" title="${_svcEsc(_dL('Старонка: інфа і Сметніца', 'Page: info & Trash'))}">ⓘ</button>`;
+  w.innerHTML = `<span class="look-lbl" style="opacity:.8">🖊 ${_svcEsc(_dL('Секцыі: ● ▲▼ ⓘ ⋯ на старонцы', 'Sections: ● ▲▼ ⓘ ⋯ on page'))}</span><button class="ds-eb-btn ds-add-btn" onclick="_dAddMenu(null,this)" title="${_svcEsc(_dL('Дадаць секцыю/раздзел', 'Add section/folder'))}" style="margin-left:8px">➕ ${_svcEsc(_dL('Дадаць', 'Add'))}</button><button class="ds-eb-btn" onclick="_dSecInfo(null,this)" title="${_svcEsc(_dL('Старонка: інфа і Сметніца', 'Page: info & Trash'))}">ⓘ</button><button class="ds-eb-btn ds-add-btn" onclick="_dPublish()" title="${_svcEsc(_dL('Апублікаваць сайт — публіка ўбачыць усе змены чарнавіка', 'Publish site — visitors will see all draft changes'))}" style="margin-left:8px">🚀 ${_svcEsc(_dL('Апублікаваць', 'Publish'))}</button>`;
+}
+// 🚀 публікацыя З ЧАРНАВІКА (2026-07-15): editToken уладальніка → воркер draft_publish (агульны _publishAll
+// з панэльным 🚀). Пацверджанне — свой дыялог (сістэмныя забаронены), пасля — перачытаць старонку
+function _dPublish() {
+  siteConfirm(_dL('Апублікаваць сайт? Публіка ўбачыць УСЕ змены чарнавіка (старонка, Каталог, выгляд).', 'Publish the site? Visitors will see ALL draft changes (page, catalog, appearance).'), async () => {
+    try {
+      const r = await _draftPost({ action: 'draft_publish', repo: SITE_REPO });
+      const j = r && r.json ? await r.json().catch(() => null) : null;
+      await _dReload();
+      _edFlash && document.body && _edFlash(document.querySelector('#look-edit') || document.body); // зялёны водгук як пры захаванні
+      console.info('🚀 published:', j && j.published);
+    } catch (e) {}
+  }, false); // не-разбуральнае — звычайная кнопка, не чырвоная
 }
 function _dSecById(id) { const s = siteData?._sections; return (Array.isArray(s?.sections) ? s.sections : []).find(x => x && x.id === id) || null; }
 // зялёная кропка «Актыўна» — тое самае прадстаўленне, што ў панэлі (.node-active-dot): active → паказ на сайце (inst.enabled)
