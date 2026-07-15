@@ -1299,9 +1299,10 @@ const SITE_VIEWS = {
       const nm = _dsEsc(_sv(seg.name !== undefined ? seg.name : seg)) || (_dEdit ? '<span style="opacity:.5">📂 ' + _svcEsc(_dL('(без назвы)', '(untitled)')) + '</span>' : ''); // новая +📂 — плейсхолдэр, каб не «нічога не дадалося»
       const off = seg.active === false; // неактыўная папка трапляе сюды толькі ў edit (публіка яе не атрымлівае)
       const head = `<span class="services-folder-heading" style="font-size:${d === 0 ? '1.05rem' : Math.max(0.8, 0.98 - d * 0.08) + 'rem'};font-weight:${d === 0 ? 700 : 600};${d === 0 ? 'color:var(--color-primary,#111)' : 'opacity:0.85'}">${nm}</span>${isSrc && seg.id ? _dSrcBar(seg.id, !off) : ''}`;
-      const sumSt = d === 0
+      // flex-радок загалоўка: [▸][назва]……[● ▲▼ ⋯ справа] — канонны правы кластар кнопак (ААП-парытэт радка панэлі)
+      const sumSt = (d === 0
         ? 'border-bottom:2px solid var(--color-primary,#f97316);padding:8px 0 4px;margin-top:8px'
-        : `padding:${Math.max(4, 10 - d * 2)}px 0 2px ${d * 14}px;margin-top:4px`;
+        : `padding:${Math.max(4, 10 - d * 2)}px 0 2px ${d * 14}px;margin-top:4px`) + ';display:flex;align-items:center;gap:8px';
       return _dsFoldWrap(false, head, `<div class="grid grid-3" style="margin-top:10px">${renderKids(g.kids, d + 1)}</div>`,
         `style="grid-column:1/-1${off ? ';opacity:.5' : ''}"`, `style="${sumSt}"`);
     };
