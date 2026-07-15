@@ -393,6 +393,10 @@ body.ds-edit #site-sections .tile-item-clickable,
 body.ds-edit #site-sections article[onclick] { pointer-events: none !important; cursor: default !important; }
 /* але панэлька рэдактара секцыі (▲▼/⋯) і дыскложур ▶/▼ перад назвай — жывыя (яны ж кнопкі ў #site-sections) */
 body.ds-edit #site-sections .ds-editbar button, body.ds-edit #site-sections .ds-fold-btn, body.ds-edit #site-sections [data-cdate], body.ds-edit #site-sections .ds-more-btn, body.ds-edit #site-sections .ds-lay-btn, body.ds-edit #site-sections .ds-add-btn, body.ds-edit #site-sections .faq-question, body.ds-edit #site-sections .ds-view-btn { pointer-events: auto !important; cursor: pointer !important; } /* выключэнні = РЭДАКТАРСКІЯ і ПРАГЛЯДНЫЯ дзеянні (каляндар/+N яшчэ/Карткі-Спіс/+📂 стужка/FAQ-адказ/чытач навіны); пакупныя (кошык/бронь/чат/спасылкі) — інертныя */
+/* HERO і ФУТЭР — па-за #site-sections, але іх кнопкі/спасылкі ў edit таксама пакупныя/навігацыйныя →
+   інертныя (рашэнне 2026-07-15: выпадковы клік «Запісацца» пры праўцы hero-тэксту адкрываў бронь);
+   рэдагавальны тэкст [data-ed] (hero-загалоўкі/подпіс футэра) — не a/button, застаецца жывым */
+body.ds-edit .hero a, body.ds-edit .hero button, body.ds-edit .footer a, body.ds-edit .footer button { pointer-events: none !important; cursor: default !important; }
 /* 🖊️ панэлька рэдактара секцыі: ▲▼ парадак + ⋯ меню (толькі edit-рэжым) */
 .ds-editable { position: relative; }
 .ds-editable.ds-hidden { opacity: .5; outline: 1px dashed var(--accent,#f97316); outline-offset: -4px; }
