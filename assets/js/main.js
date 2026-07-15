@@ -1363,7 +1363,7 @@ const SITE_VIEWS = {
       const key = String(p.id || inst.id + ':' + i); // стабільны id паста (дып-лінк #post= перажывае перасартаванне)
       _sitePostReg[key] = p; // рэестр для чытача (цела=HTML, у onclick не ўставіш)
       const excerpt = _sv(p.body).replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 130); // тэкставы ўрывак без тэгаў
-      const winBtn = `<button onclick="event.stopPropagation();openPostReaderWindow('${_dsEsc(key)}')" style="margin-top:10px;padding:6px 12px;border:1px solid var(--accent,#f97316);border-radius:8px;background:transparent;color:var(--accent,#f97316);font-weight:600;font-size:0.85rem;cursor:pointer">↗ ${_dsEsc(ui.read_in_tab)}</button>`;
+      const winBtn = `<button class="ds-view-btn" onclick="event.stopPropagation();openPostReaderWindow('${_dsEsc(key)}')" style="margin-top:10px;padding:6px 12px;border:1px solid var(--accent,#f97316);border-radius:8px;background:transparent;color:var(--accent,#f97316);font-weight:600;font-size:0.85rem;cursor:pointer">↗ ${_dsEsc(ui.read_in_tab)}</button>`; // ds-view-btn — прагляднае дзеянне, жывое і ў edit
       return _cardHtml({ cls: 'post-card', cover: _sv(p.cover), meta: _sv(p.date) || (_dEdit ? '📅 …' : ''), title: _sv(p.title),
         edbar: _dItemBar(inst.id, 'posts', i, all.length, p.hidden !== true, 'posts'), dim: p.hidden === true, // 🃏 пер-пазіцыйны радок навіны
         text: _dEdit ? _sv(p.body) : (excerpt ? excerpt + (excerpt.length >= 130 ? '…' : '') : ''), textHtml: _dEdit, // 🖊️ edit: поўнае цела (HTML→мадалка); інакш урывак
