@@ -1156,7 +1156,7 @@ function _cardHtml(o) {
 // 🧷 ГЛАБАЛЬНЫ ФОЛД (адзін механізм на ЎСЕ згортвальныя загалоўкі старонкі: секцыі/Папкі ў renderDynamicSections
 // І групы Каталога ў SITE_VIEWS.cards): кнопка-стрэлка ▸ злева, паварот CSS ад details[open], хэндлер _dFoldBtn.
 // extraAttr — дадатковыя атрыбуты на <details> (напр. grid-column для групы ўнутры сеткі картак)
-const _dsFoldWrap = (collapsed, head, inner, extraAttr = '', sumAttr = '') => head ? `<details class="ds-fold"${collapsed ? '' : ' open'}${extraAttr ? ' ' + extraAttr : ''}><summary${sumAttr ? ' ' + sumAttr : ''}><button class="ds-fold-btn" contenteditable="false" onclick="_dFoldBtn(event)" title="${_svcEsc(_dL('Разгарнуць / Згарнуць', 'Expand / Collapse'))}">▸</button>${head}</summary>${inner}</details>` : head + inner;
+const _dsFoldWrap = (collapsed, head, inner, extraAttr = '', sumAttr = '') => head ? `<details class="ds-fold"${collapsed ? '' : ' open'}${extraAttr ? ' ' + extraAttr : ''}><summary${sumAttr ? ' ' + sumAttr : ''}><button class="ds-fold-btn" contenteditable="false" onclick="_dFoldBtn(event)" title="${_svcEsc(_dL('Разгарнуць / Згарнуць', 'Expand / Collapse'))}">▶</button>${head}</summary>${inner}</details>` : head + inner;
 // Узроўневы загаловак групы (матрошка): d=0 — акцэнт-рыса, глыбей — драбней+водступ. Спажыўцы: cards (папкі Каталога), gallery (🗂 альбомы)
 // attr (опц.) — _edAttr рэдагавання назвы на месцы: кладзецца на ЎНУТРАНЫ span, каб плейсхолдэр/фокус не чапалі «▸ »
 const _dsGroupHead = (txt, d, attr = '') => d === 0

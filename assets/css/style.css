@@ -769,7 +769,7 @@ html[data-d-shadows="flat"] .service-card:hover { transform: none; box-shadow: n
 .ds-fold > summary > * { display: inline-block; }               /* загаловак і стрэлка ў адзін радок */
 /* Стрэлка фолда — АДЗІН механізм на публіку і edit (2026-07-15): кнопка ▸ злева перад назвай (канон Панелі),
    паварот ▸→▼ ад details[open]; клікабельнасць у edit — у выключэнні inert-правіла (побач з .ds-editbar button) */
-.ds-fold-btn { background: none; border: none; padding: 2px 8px 2px 0; margin-inline-end: 6px; vertical-align: middle; cursor: pointer; color: inherit; opacity: 0.7; font-size: 1.5em; line-height: 1; display: inline-block; transition: transform 0.15s; } /* буйная стрэлка (заўвага 2026-07-15) + запас пад палец */
+.ds-fold-btn { background: none; border: none; padding: 2px 8px 2px 0; margin-inline-end: 6px; vertical-align: middle; cursor: pointer; color: inherit; opacity: 0.7; font-size: 2em; line-height: 1; display: inline-block; transition: transform 0.15s; } /* панэльны гліф ▶ + буйны памер (заўвага 2026-07-15 «у 3 разы, як у Панэлі») + запас пад палец */
 .ds-fold[open] > summary > .ds-fold-btn { transform: rotate(90deg); }
 .ds-more-wrap { text-align: center; margin-top: 14px; display: flex; gap: 10px; justify-content: center; }
 .ds-more-btn { padding: 8px 18px; border: 1px solid var(--accent, #f97316); border-radius: 999px; background: transparent; color: var(--accent, #f97316); font-weight: 600; font-size: 0.88rem; cursor: pointer; }
