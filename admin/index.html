@@ -3851,8 +3851,12 @@ function _folderNodeHtml(folder, s, fi, total, childrenAreSide, depth) {
       ${_nodeRowRightHtml(parts)}
     </div>${bodyHtml}</div>`;
 }
-function renderNodeTree(parentId, depth) {
-  const s = currentNodeState;
+// ═══ 🧮 КАНОН 3/15 НА ДЗЕЦЯХ БАЦЬКІ (этап 2, 2026-07-15) — той жа рытм, што Table-секцыі і _dsApplyDisplay ═══
+// s._treeShown Map(parentKey → лік бачных дзяцей); няма запісу = прэв'ю (_TBL_PREVIEW=3). Порцыі «+N яшчэ ▼»
+// (з прэв'ю адразу да 15) + «▲ згарнуць». Пры актыўным фільтры/фасетах ліміт НЕ ўжываецца (пошук паказвае ўсё).
+const _treeKey = pid => pid || '::root';
+// Адфільтраваныя+адсартаваныя дзеці бацькі (адзіная крыніца для renderNodeTree і фокус-рэвілу)
+function _treeKids(parentId, s) {
   const nodes = s.data.nodes;
   const filterText = (s._folderFilters?.[parentId] || '').toLowerCase();
   let _fWords = filterText ? filterText.split(/\s+/).filter(Boolean) : null;
@@ -3874,6 +3878,34 @@ function renderNodeTree(parentId, depth) {
       return !_fWords || _nodeDeepMatch(n, _fWords, nodes, s); // тэкставы фільтр: усе тыпы вузлоў, рэкурсіўна, + _nodeSearchText
     })
     .sort(_treeSortFn(parentId, s) || s._childrenSort || _nodeChildCmp); // ААП: тыпанезалежны парадак (Форма↔Папка раўнапраўныя)
+  const facetsOn = !!(s._treeFacets && s._facetValues && Object.values(s._facetValues).some(v => v));
+  return { children, filtered: !!_fWords || facetsOn };
+}
+// Адзіны рэндэр-парадак груп дзяцей (той, у якім яны бачныя на экране) — ліміт рэжа ХВОСТ гэтага парадку
+function _treeOrdered(children, s) {
+  const g = t => children.filter(n => n.type === t);
+  return s._formsFirst ? [...g('form'), ...g('folder'), ...g('item'), ...g('file')] : [...g('folder'), ...g('item'), ...g('form'), ...g('file')];
+}
+function _treeSetShown(pid, v) { // 'preview' = вярнуць да 3 (запіс прыбіраецца); лік = порцыя
+  const s = currentNodeState; if (!s) return;
+  const m = (s._treeShown = s._treeShown || new Map());
+  if (v === 'preview') m.delete(_treeKey(pid || null)); else m.set(_treeKey(pid || null), v);
+  s._renderFn?.();
+}
+// Футэр «+N яшчэ ▼ / ▲ згарнуць» пад дзецьмі бацькі (люстэрка футэра Table-секцыі)
+function _treeMoreRowHtml(parentId, shownEff, total, filtered) {
+  if (filtered || total <= _TBL_PREVIEW) return '';
+  const rest = total - shownEff;
+  const nextN = shownEff <= _TBL_PREVIEW ? _TBL_PORTION : shownEff + _TBL_PORTION;
+  const pid = escHtml(parentId ?? '');
+  const more = rest > 0 ? `<span style="cursor:pointer" onclick="event.stopPropagation();_treeSetShown('${pid}',${nextN})">+ ${Math.min(rest, nextN - shownEff)} ${t('tbl_more')} ▼</span>` : '';
+  const less = shownEff > _TBL_PREVIEW ? `<span style="cursor:pointer" onclick="event.stopPropagation();_treeSetShown('${pid}','preview')">▲ ${t('tbl_less')}</span>` : '';
+  return (more || less) ? `<div style="grid-column:1/-1;padding:4px 10px;text-align:center;color:var(--muted);font-size:0.78rem"><span style="display:inline-flex;gap:18px">${more}${less}</span></div>` : '';
+}
+function renderNodeTree(parentId, depth) {
+  const s = currentNodeState;
+  const nodes = s.data.nodes;
+  const { children, filtered } = _treeKids(parentId, s);
   const _filterHtml = _nodeFilterInputHtml(parentId, s) + _nodeSortBarHtml(parentId, s); // поле фільтра + радок-спіс сартыроўкі застаюцца бачнымі НАВАТ на пустым выніку
   if (!children.length && depth === 0) return _filterHtml + (typeof s._emptyHtml === 'function' ? s._emptyHtml() : (s._emptyHtml || ''));
   if (!children.length) {
@@ -3882,10 +3914,15 @@ function renderNodeTree(parentId, depth) {
       ? s._folderEmptyHtml(pFolder)
       : `<div style="padding:4px 0;font-size:0.8rem;color:var(--muted)">${t('folder_empty')}</div>`);
   }
-  const folders = children.filter(n => n.type === 'folder');
-  const items = children.filter(n => n.type === 'item');
-  const forms = children.filter(n => n.type === 'form');
-  const fileNodes = children.filter(n => n.type === 'file');
+  // 🧮 канон 3/15: бачны толькі пачатак адзінага рэндэр-парадку ([формы?] папкі → элементы → формы → файлы)
+  const _shownRaw = s._treeShown?.get(_treeKey(parentId));
+  const shownEff = filtered ? children.length : Math.min(typeof _shownRaw === 'number' ? _shownRaw : _TBL_PREVIEW, children.length);
+  const _allowed = new Set(_treeOrdered(children, s).slice(0, shownEff).map(n => n.id));
+  const _vis = arr => arr.filter(n => _allowed.has(n.id));
+  const folders = _vis(children.filter(n => n.type === 'folder'));
+  const items = _vis(children.filter(n => n.type === 'item'));
+  const forms = _vis(children.filter(n => n.type === 'form'));
+  const fileNodes = _vis(children.filter(n => n.type === 'file'));
   const parentNode = parentId === null ? null : nodes.find(n => n.id === parentId);
   const parentLayout = parentId === null ? (s.data.rootLayout || 'down') : (parentNode?.layout || 'down');
   const childrenAreSide = parentLayout === 'side';
@@ -3941,6 +3978,7 @@ function renderNodeTree(parentId, depth) {
     const cls = cardFn ? 'node-files-grid' : 'node-items-list';
     html += `<div class="${cls}">${fileNodes.map(f => _relAbove(f.id) + fn(f) + _formKids(f)).join('')}</div>`; // ааП: subtree як у Forms
   }
+  html += _treeMoreRowHtml(parentId, shownEff, children.length, filtered); // 🧮 канон 3/15: «+N яшчэ ▼ / ▲ згарнуць»
   return html;
 }
 
@@ -6810,6 +6848,15 @@ function _sectionAddItem(key, folderId) {
 
 // ПРОДАКФПФ: разгарнуць/згарнуць — для ўсіх трох тыпаў вузлоў
 // id=null → усё дрэва; bool=undefined → аўта-рэверс па _nodeAllExpanded
+// 🧮 канон 3/15: ▼▼/▶▶ і на «колькі дзяцей бачна» — expand → да порцыі 15 (далей клікамі «+N яшчэ»),
+// collapse → назад да прэв'ю 3 (запісы прыбіраюцца). Ахоплівае бацьку-мэту і ўсё паддрэва.
+function _treeShownExpandAll(s, targetId, expand) {
+  const m = (s._treeShown = s._treeShown || new Map());
+  const keys = [_treeKey(targetId)];
+  const walk = pid => (s.data?.nodes || []).filter(n => n.parentId === pid).forEach(n => { keys.push(n.id); walk(n.id); });
+  walk(targetId ?? null);
+  keys.forEach(k => { if (!expand) m.delete(k); else if (!(typeof m.get(k) === 'number' && m.get(k) >= _TBL_PORTION)) m.set(k, _TBL_PORTION); });
+}
 function _tblFullViewAll(s, expand) { // ▼▼/▲▲: трохстанавыя целы (cycleFull — Мапа) разам з дрэвам → full / collapsed
   (s.data?.nodes || []).filter(n => n.type === 'form').forEach(f => {
     const schema = FORM_SCHEMAS[f.formSchema || s._formSchema];
@@ -6823,6 +6870,7 @@ function nodeExpandAll(id, bool) {
   const targetId = (id !== undefined && id !== null) ? id : null;
   const expand = typeof bool === 'boolean' ? bool : !_nodeAllExpanded(s, targetId);
   _tblFullViewAll(s, expand); // Мапа і іншыя cycleFull-целы ідуць за дрэвам (адразу вялікія / згорнутыя)
+  _treeShownExpandAll(s, targetId, expand); // канон 3/15: ▼▼ адкрывае «паказана» бацькоў да порцыі 15, ▶▶ вяртае да 3
 
   if (targetId === null) {
     if (expand) {
@@ -7829,6 +7877,21 @@ let _pendingClientOpen = null;
 let _pendingOrderOpen = null;
 let _pendingCompanyOpen = null;
 // Генерычны фокус на вузел па id (фундамент крос-РМ навігацыі _navToNode): раскрывае ланцуг продкаў з ленавай дагрузкай, ставіць адзіны фокус і скролiць
+// 🧮 канон 3/15 + фокус: для кожнага вузла ланцуга лічым яго індэкс у РЭАЛЬНЫМ рэндэр-парадку
+// (_treeKids+_treeOrdered — тая ж крыніца, што ў renderNodeTree) і паднімаем «паказана» бацькі
+// да бліжэйшай порцыі, каб дып-лінк (goToOrder/#go=) не ўпёрся ў схаваны хвост
+function _treeRevealForFocus(s, chain) {
+  const m = (s._treeShown = s._treeShown || new Map());
+  chain.forEach(n => {
+    const pid = n.parentId ?? null;
+    const { children, filtered } = _treeKids(pid, s);
+    if (filtered || children.length <= _TBL_PREVIEW) return;
+    const idx = _treeOrdered(children, s).findIndex(c => c.id === n.id);
+    const key = _treeKey(pid);
+    const eff = typeof m.get(key) === 'number' ? m.get(key) : _TBL_PREVIEW;
+    if (idx >= eff) m.set(key, Math.max(_TBL_PORTION, Math.ceil((idx + 1) / _TBL_PORTION) * _TBL_PORTION));
+  });
+}
 function _focusNodeById(s, id) {
   const nodes = s.data?.nodes || [];
   let cur = nodes.find(n => n.id === id);
@@ -7836,6 +7899,7 @@ function _focusNodeById(s, id) {
   const chain = []; // ланцуг ад вузла да кораня
   while (cur) { chain.push(cur); cur = cur.parentId ? nodes.find(n => n.id === cur.parentId) : null; }
   chain.forEach(n => { s.expanded.add(n.id); if (s._onFolderExpand) s._onFolderExpand(n); }); // раскрыць + ленавая дагрузка (заказы/кліенты; гейты ўнутры самі прапускаюць чужыя вузлы)
+  _treeRevealForFocus(s, chain); // канон 3/15: мэта дып-лінка можа быць за парогам «паказана 3» — падняць порцыю бацькоў па ланцугу
   s.focusedId = id;
   nodeRender();
   setTimeout(() => (document.getElementById(`nf-${id}`) || document.getElementById(`nfrow-${id}`))?.scrollIntoView({ behavior: 'smooth', block: 'center' }), 100);
