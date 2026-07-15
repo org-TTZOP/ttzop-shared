@@ -2778,13 +2778,26 @@ function _secCat() { return [ // люстэрка SECTION_PROPS панэлі (у
 ]; }
 function _dEditInit() {
   _dEditRender();
+  _dStatusRefresh(); // 🔔 ці састарэў Сайт — вырашае, ці паказваць 🚀
   // стрэлка фолда круціцца чыстым CSS ад details[open] (.ds-fold-btn) — toggle-слухач больш не патрэбны
 }
 function _dSecs() { const s = siteData?._sections; return (Array.isArray(s?.sections) ? s.sections : []).filter(x => x && x.kind !== 'folder' && x.kind !== 'file' && x.type && SITE_VIEWS[x.type]); }
 function _dSecTitle(s) { const tt = s.title; const nm = (tt && typeof tt === 'object') ? (tt[currentLang] || Object.values(tt).find(Boolean)) : tt; return nm || _sv(s.caption) || _sv(s.name) || s.type || s.id; } // файл → caption/name
-function _dEditRender() { // ніжняя панэль: падказка + ⓘ узроўню СТАРОНКІ (Сметніца верхніх секцый) + 🚀; параметры/парадак — у ⋯ самой секцыі
+let _dDirty = null; // 🔔 ці састарэў Сайт (draft ≠ published): null=яшчэ не ведаем, true → паказваем 🚀, false → «✓ актуальны»
+async function _dStatusRefresh() { // адзіная праўда — воркер draft_status (тая ж логіка, што банер панэлі)
+  try {
+    const r = await _draftPost({ action: 'draft_status', repo: SITE_REPO });
+    const j = r && r.json ? await r.json().catch(() => null) : null;
+    if (j && j.ok) { _dDirty = !!j.dirty; _dEditRender(); }
+  } catch (e) {}
+}
+function _dEditRender() { // ніжняя панэль: падказка + ⓘ узроўню СТАРОНКІ (Сметніца верхніх секцый) + 🚀 (толькі пры dirty); параметры/парадак — у ⋯ самой секцыі
   const w = document.getElementById('look-edit'); if (!w) return;
-  w.innerHTML = `<span class="look-lbl" style="opacity:.8">🖊 ${_svcEsc(_dL('Секцыі: ● ▲▼ ⓘ ⋯ на старонцы', 'Sections: ● ▲▼ ⓘ ⋯ on page'))}</span><button class="ds-eb-btn ds-add-btn" onclick="_dAddMenu(null,this)" title="${_svcEsc(_dL('Дадаць секцыю/раздзел', 'Add section/folder'))}" style="margin-left:8px">➕ ${_svcEsc(_dL('Дадаць', 'Add'))}</button><button class="ds-eb-btn" onclick="_dSecInfo(null,this)" title="${_svcEsc(_dL('Старонка: інфа і Сметніца', 'Page: info & Trash'))}">ⓘ</button><button class="ds-eb-btn ds-add-btn" onclick="_dPublish()" title="${_svcEsc(_dL('Апублікаваць сайт — публіка ўбачыць усе змены чарнавіка', 'Publish site — visitors will see all draft changes'))}" style="margin-left:8px">🚀 ${_svcEsc(_dL('Апублікаваць', 'Publish'))}</button>`;
+  // 🚀 бачны ТОЛЬКІ калі Сайт сапраўды састарэў (рашэнне 2026-07-15); актуальны → ціхая пазнака ✓
+  const pubHtml = _dDirty === true
+    ? `<button class="ds-eb-btn ds-add-btn" onclick="_dPublish()" title="${_svcEsc(_dL('Апублікаваць сайт — публіка ўбачыць усе змены чарнавіка', 'Publish site — visitors will see all draft changes'))}" style="margin-left:8px;border-color:var(--accent,#f97316);color:var(--accent,#f97316)">🚀 ${_svcEsc(_dL('Апублікаваць', 'Publish'))}</button>`
+    : _dDirty === false ? `<span class="look-lbl" style="opacity:.6;margin-left:8px">✓ ${_svcEsc(_dL('Сайт актуальны', 'Site up to date'))}</span>` : '';
+  w.innerHTML = `<span class="look-lbl" style="opacity:.8">🖊 ${_svcEsc(_dL('Секцыі: ● ▲▼ ⓘ ⋯ на старонцы', 'Sections: ● ▲▼ ⓘ ⋯ on page'))}</span><button class="ds-eb-btn ds-add-btn" onclick="_dAddMenu(null,this)" title="${_svcEsc(_dL('Дадаць секцыю/раздзел', 'Add section/folder'))}" style="margin-left:8px">➕ ${_svcEsc(_dL('Дадаць', 'Add'))}</button><button class="ds-eb-btn" onclick="_dSecInfo(null,this)" title="${_svcEsc(_dL('Старонка: інфа і Сметніца', 'Page: info & Trash'))}">ⓘ</button>${pubHtml}`;
 }
 // 🚀 публікацыя З ЧАРНАВІКА (2026-07-15): editToken уладальніка → воркер draft_publish (агульны _publishAll
 // з панэльным 🚀). Пацверджанне — свой дыялог (сістэмныя забаронены), пасля — перачытаць старонку
@@ -2793,7 +2806,7 @@ function _dPublish() {
     try {
       const r = await _draftPost({ action: 'draft_publish', repo: SITE_REPO });
       const j = r && r.json ? await r.json().catch(() => null) : null;
-      await _dReload();
+      await _dReload(); // унутры перачытае і draft_status → 🚀 знікне, з'явіцца «✓ Сайт актуальны»
       _edFlash && document.body && _edFlash(document.querySelector('#look-edit') || document.body); // зялёны водгук як пры захаванні
       console.info('🚀 published:', j && j.published);
     } catch (e) {}
@@ -3189,6 +3202,7 @@ async function _dReload() { // перачытаць чарнавік і пера
     siteData._sections = data; renderDynamicSections(data);
     initReveal(); // 🎯 ФІКС (як пры змене мовы v4.601): перарэндэраныя секцыі — НОВЫЯ DOM-вузлы; без паўторнага reveal-назіральніка завісаюць схаванымі (.js-reveal без .in-view)
     _dEditRender();
+    _dStatusRefresh(); // 🔔 кожная праўка магла зрабіць Сайт састарэлым (ці наадварот — вярнуць да published)
   } catch (e) {}
 }
 // 🖊️ слайс A: праўка кантэнту НА МЕСЦЫ — focusout з [data-ed] → draft_set з укладзеным шляхам (дэлегавана, перажывае перарэндэры)
