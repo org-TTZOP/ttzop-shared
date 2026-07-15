@@ -3014,7 +3014,7 @@ function _dItemEdit(secId, key, idx, type) {
         : `<input data-fk="${_dsEsc(f.k)}" class="ds-ff" value="${_svcEsc(val(f))}">`;
   const rows = fields.map(f => `<label class="ds-fl"><span>${_svcEsc(f.label)}${f.ml ? ' <em style="opacity:.6">(' + _svcEsc(lang) + ')</em>' : ''}</span>${ctrl(f)}</label>`).join('');
   const m = document.createElement('div'); m.id = 'ds-fmodal'; m.className = 'ds-fmodal';
-  m.innerHTML = `<div class="ds-fmbox"><div class="ds-fmbody">${rows}</div><div class="ds-fmfoot"><button class="ed-cancel" onclick="_dFModalClose()">${_svcEsc(getUI().reader_close || 'Закрыць')}</button><button class="ed-save" onclick="_dFModalSave('${_dsEsc(secId)}','${_dsEsc(key)}',${idx},'${_dsEsc(type)}')">💾 ${_svcEsc(getUI().ed_save || 'Захаваць')}</button></div></div>`;
+  m.innerHTML = `<div class="ds-fmbox"><div class="ds-fmbody">${rows}</div><div class="ds-fmfoot"><button class="ed-cancel" onclick="_dFModalClose()">${_svcEsc(_dL('Адмяніць', 'Cancel'))}</button><button class="ed-save" onclick="_dFModalSave('${_dsEsc(secId)}','${_dsEsc(key)}',${idx},'${_dsEsc(type)}')">${_svcEsc(getUI().ed_save || 'Захаваць')}</button></div></div>`;
   document.body.appendChild(m);
   m.addEventListener('mousedown', e => { if (e.target === m) _dFModalClose(); });
 }
@@ -3131,7 +3131,7 @@ function _dSrcEdit(id) { // ✎ мадалка палёў вузла Катал�
       : `<input data-fk="${_dsEsc(fd.k)}" class="ds-ff" value="${_svcEsc(val(fd))}">`;
   const rows = fields.map(fd => `<label class="ds-fl"><span>${_svcEsc(fd.label)}${fd.ml ? ' <em style="opacity:.6">(' + _svcEsc(lang) + ')</em>' : ''}</span>${ctrl(fd)}</label>`).join('');
   const m = document.createElement('div'); m.id = 'ds-fmodal'; m.className = 'ds-fmodal';
-  m.innerHTML = `<div class="ds-fmbox"><div class="ds-fmbody">${rows}</div><div class="ds-fmfoot"><button class="ed-cancel" onclick="_dFModalClose()">${_svcEsc(getUI().reader_close || 'Закрыць')}</button><button class="ed-save" onclick="_dSrcModalSave('${_dsEsc(id)}')">💾 ${_svcEsc(getUI().ed_save || 'Захаваць')}</button></div></div>`;
+  m.innerHTML = `<div class="ds-fmbox"><div class="ds-fmbody">${rows}</div><div class="ds-fmfoot"><button class="ed-cancel" onclick="_dFModalClose()">${_svcEsc(_dL('Адмяніць', 'Cancel'))}</button><button class="ed-save" onclick="_dSrcModalSave('${_dsEsc(id)}')">${_svcEsc(getUI().ed_save || 'Захаваць')}</button></div></div>`;
   document.body.appendChild(m);
   m.addEventListener('mousedown', e => { if (e.target === m) _dFModalClose(); });
 }
@@ -3286,7 +3286,7 @@ function _edModalOpen(el) {
     _edModalEl = document.createElement('div'); _edModalEl.id = 'ed-modal';
     _edModalEl.innerHTML = `<div class="ed-modal-box">
       <div class="ed-modal-quill"></div>
-      <div class="ed-modal-foot"><button type="button" class="ed-cancel" onclick="_edModalClose()">${_svcEsc(ui.reader_close || 'Закрыць')}</button><button type="button" class="ed-save" onclick="_edModalSave()">💾 ${_svcEsc(ui.ed_save || 'Захаваць')}</button></div>
+      <div class="ed-modal-foot"><button type="button" class="ed-cancel" onclick="_edModalClose()">${_svcEsc(_dL('Адмяніць', 'Cancel'))}</button><button type="button" class="ed-save" onclick="_edModalSave()">${_svcEsc(ui.ed_save || 'Захаваць')}</button></div>
     </div>`;
     document.body.appendChild(_edModalEl);
     _edModalEl.addEventListener('mousedown', e => { if (e.target === _edModalEl) _edModalClose(); }); // клік па фоне закрывае

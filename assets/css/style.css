@@ -378,9 +378,14 @@ html[data-d-stamp="on"] #hero { position: relative; }
 #ed-modal .ql-picker-options { background: var(--card-bg,#fff); color: var(--text-main,#1a1a1a); }
 .ed-modal-quill { display: flex; flex-direction: column; flex: 1; min-height: 0; overflow: hidden; }
 .ed-modal-foot { display: flex; justify-content: flex-end; gap: 8px; padding: 10px 14px; border-top: 1px solid var(--border-color,#e5e5e5); }
-.ed-modal-foot button { padding: 8px 18px; border-radius: 9px; border: none; cursor: pointer; font-weight: 600; }
-.ed-cancel { background: rgba(128,128,128,.18); color: inherit; }
-.ed-save { background: #f97316; color: #fff; }
+/* Кнопкі дыялогаў Чарнавіка = дызайн панэльнага form-modal (Адмена — ghost, Захаваць — акцэнт-заліўка);
+   агульнае правіла на АБОДВА футэры (WYSIWYG .ed-modal-foot і мадалка палёў .ds-fmfoot) — раней
+   .ds-fmfoot заставаўся з натыўным браўзерным бэвэлам (заўвага карыстальніка 2026-07-15) */
+.ed-modal-foot button, .ds-fmfoot button { padding: 9px 20px; border-radius: 9px; border: 1px solid var(--border-color,#8884); cursor: pointer; font-weight: 600; font-size: .85rem; line-height: 1.2; }
+.ed-cancel { background: transparent; color: inherit; opacity: .8; }
+.ed-cancel:hover { background: rgba(128,128,128,.15); opacity: 1; }
+.ed-save { background: var(--accent,#f97316); color: #fff; border-color: var(--accent,#f97316); box-shadow: 0 6px 18px rgba(249,115,22,.3); }
+.ed-save:hover { opacity: .92; }
 /* edit-рэжым: кнопкі/спасылкі/лайтбокс/пост-карткі секцый ІНЕРТНЫЯ (рэдагуеш, а не купляеш; рэдагавальны тэкст [data-ed] застаецца клікабельным) */
 body.ds-edit #site-sections button,
 body.ds-edit #site-sections a[href],
