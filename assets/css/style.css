@@ -387,7 +387,7 @@ body.ds-edit #site-sections a[href],
 body.ds-edit #site-sections .tile-item-clickable,
 body.ds-edit #site-sections article[onclick] { pointer-events: none !important; cursor: default !important; }
 /* але панэлька рэдактара секцыі (▲▼/⋯) і дыскложур ▶/▼ перад назвай — жывыя (яны ж кнопкі ў #site-sections) */
-body.ds-edit #site-sections .ds-editbar button, body.ds-edit #site-sections .ds-fold-btn { pointer-events: auto !important; cursor: pointer !important; }
+body.ds-edit #site-sections .ds-editbar button, body.ds-edit #site-sections .ds-fold-btn, body.ds-edit #site-sections [data-cdate] { pointer-events: auto !important; cursor: pointer !important; } /* [data-cdate] — клік па даце адкрывае фірменны каляндар */
 /* 🖊️ панэлька рэдактара секцыі: ▲▼ парадак + ⋯ меню (толькі edit-рэжым) */
 .ds-editable { position: relative; }
 .ds-editable.ds-hidden { opacity: .5; outline: 1px dashed var(--accent,#f97316); outline-offset: -4px; }

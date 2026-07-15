@@ -1344,12 +1344,12 @@ const SITE_VIEWS = {
       _sitePostReg[key] = p; // рэестр для чытача (цела=HTML, у onclick не ўставіш)
       const excerpt = _sv(p.body).replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 130); // тэкставы ўрывак без тэгаў
       const winBtn = `<button onclick="event.stopPropagation();openPostReaderWindow('${_dsEsc(key)}')" style="margin-top:10px;padding:6px 12px;border:1px solid var(--accent,#f97316);border-radius:8px;background:transparent;color:var(--accent,#f97316);font-weight:600;font-size:0.85rem;cursor:pointer">↗ ${_dsEsc(ui.read_in_tab)}</button>`;
-      return _cardHtml({ cls: 'post-card', cover: _sv(p.cover), meta: _sv(p.date), title: _sv(p.title),
+      return _cardHtml({ cls: 'post-card', cover: _sv(p.cover), meta: _sv(p.date) || (_dEdit ? '📅 …' : ''), title: _sv(p.title),
         edbar: _dItemBar(inst.id, 'posts', i, all.length, p.hidden !== true, 'posts'), dim: p.hidden === true, // 🃏 пер-пазіцыйны радок навіны
         text: _dEdit ? _sv(p.body) : (excerpt ? excerpt + (excerpt.length >= 130 ? '…' : '') : ''), textHtml: _dEdit, // 🖊️ edit: поўнае цела (HTML→мадалка); інакш урывак
         footer: winBtn, onClick: _dEdit ? '' : `openPostReader('${_dsEsc(key)}')`, // edit: картку не адкрываем чытачом
         titleEd: _edAttr(inst.id, 'content.posts.' + i + '.title', 'ml', ui.ed_title),
-        metaEd: _edAttr(inst.id, 'content.posts.' + i + '.date', 'text', ui.ed_date),
+        metaEd: _dEdit ? ` data-cdate onclick="event.stopPropagation();_dPostDate('${_dsEsc(inst.id)}',${i},'${_dsEsc(_sv(p.date))}',this)" title="📅 ${_svcEsc(_dL('Выбраць дату', 'Pick date'))}"` : '', // 📅 фірменны каляндар замест голага тэксту
         textEd: _edAttr(inst.id, 'content.posts.' + i + '.body', 'rich', ui.ed_body) });
     }).join('')}</div>`;
   },
@@ -2758,6 +2758,13 @@ let _dEditTok = ''; // 🔑 editToken са спасылкі 👁 (&ed=) — ад
 // спрошчаны лэйбл: be для славянскіх моў інтэрфейсу, en для астатніх (оверлэй — інструмент уладальніка;
 // каталог параметраў — люстэрка панэльнага SECTION_PROPS, але кароткі: тыпы паказаны іконка+код без перакладу)
 const _dL = (be, en) => (['be', 'ru', 'uk'].includes(currentUiLang) ? be : en);
+// 📅 канфіг фірменнага каляндара (агульны cdate.js): мова/фармат наведвальніка; спажыўцы — Чарнавік (дата навіны і інш.)
+window.TTZOP_CDATE = {
+  locale: () => _cdateSafeLocale(currentLang || 'be'),
+  fmt: iso => { const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(iso || ''); if (!m) return iso || ''; try { return new Date(+m[1], +m[2] - 1, +m[3]).toLocaleDateString(_cdateSafeLocale(currentLang || 'be')); } catch { return iso; } },
+  placeholder: () => _dL('дата…', 'date…'),
+  labels: () => ({ today: _dL('Сёння', 'Today'), clear: _dL('Ачысціць', 'Clear') })
+};
 const _SEC_TICON = { text: '📄', cards: '🃏', list: '💰', accordion: '❓', gallery: '🖼️', testimonials: '💬', brands: '🚗', posts: '📰', hero: '🔝', footer: '🔚' }; // іконка тыпу для подпісу секцыі (сам Тып мяняецца ў панэлі, не ў прэв'ю)
 const _dTypeTag = t => { const r = _D_ADD_TYPES.find(x => x[0] === t); return r ? ` (${r[1]} ${_dL(r[2], r[3])})` : ''; }; // « (📄 Тэкст)» — тып у плейсхолдэры пустой секцыі (каб дублі не блыталі ў edit)
 // ➕ каталог тыпаў для «Дадаць секцыю» (люстэрка SITE_VIEWS; hero/footer выключаны — статычныя, па-за спісам)
@@ -2970,7 +2977,7 @@ function _dItemFields(type) {
   const L = _dL;
   if (type === 'cards') return [{ k: 'icon', label: L('Іконка', 'Icon') }, { k: 'title', label: L('Назва', 'Title'), ml: 1 }, { k: 'text', label: L('Апісанне', 'Description'), ml: 1, area: 1 }, { k: 'price', label: L('Цана', 'Price') }, { k: 'currency', label: L('Валюта', 'Currency') }, { k: 'priceMode', label: L('Рэжым цаны', 'Price mode'), opts: [['exact', L('Дакладна', 'Exact')], ['from', L('Ад', 'From')], ['quote', L('Па дамове', 'Quote')]] }, { k: 'badge', label: L('Бэйдж', 'Badge'), opts: [['', L('Няма', 'None')], ['hit', L('Хіт', 'Hit')], ['new', L('Новае', 'New')], ['custom', L('Свой', 'Custom')]] }, { k: 'badgeText', label: L('Тэкст бэйджа', 'Badge text') }, { k: 'fulfil', label: L('Спосаб', 'Fulfil'), opts: [['cart', '🛒 ' + L('Кошык', 'Cart')], ['booking', '📅 ' + L('Запіс', 'Booking')], ['inquiry', '💬 ' + L('Запыт', 'Inquiry')], ['subscription', '🔁 ' + L('Падпіска', 'Subscription')]] }, { k: 'period', label: L('Перыяд', 'Period'), opts: [['month', L('Месяц', 'Month')], ['year', L('Год', 'Year')]] }];
   if (type === 'list') return [{ k: 'name', label: L('Назва', 'Name'), ml: 1 }, { k: 'value', label: L('Сума', 'Amount') }, { k: 'currency', label: L('Валюта', 'Currency') }];
-  if (type === 'posts') return [{ k: 'title', label: L('Загаловак', 'Title'), ml: 1 }, { k: 'date', label: L('Дата', 'Date') }, { k: 'cover', label: L('Вокладка URL', 'Cover URL') }]; // цела — WYSIWYG інлайн
+  if (type === 'posts') return [{ k: 'title', label: L('Загаловак', 'Title'), ml: 1 }, { k: 'date', label: L('Дата', 'Date'), date: 1 }, { k: 'cover', label: L('Вокладка URL', 'Cover URL') }]; // цела — WYSIWYG інлайн; date:1 → фірменны каляндар
   if (type === 'testimonials') return [{ k: 'author', label: L('Аўтар', 'Author') }, { k: 'text', label: L('Тэкст', 'Text'), area: 1 }, { k: 'stars', label: L('Зоркі (1-5)', 'Stars (1-5)') }];
   if (type === 'brands') return [{ k: 'name', label: L('Назва', 'Name') }, { k: 'logo', label: L('Лагатып URL', 'Logo URL') }];
   if (type === 'accordion') return [{ k: 'q', label: L('Пытанне', 'Question'), ml: 1 }, { k: 'a', label: L('Адказ', 'Answer'), ml: 1, area: 1 }];
@@ -2999,15 +3006,26 @@ function _dItemEdit(secId, key, idx, type) {
   const sec = _dSecById(secId); const item = sec && sec.content && sec.content[key] && sec.content[key][idx]; if (!item) return;
   const fields = _dItemFields(type); const lang = currentLang;
   const val = f => { const v = item[f.k]; return f.ml ? _sv(v) : (v == null ? '' : String(v)); };
-  const ctrl = f => f.opts
-    ? `<select data-fk="${_dsEsc(f.k)}" class="ds-ff">${f.opts.map(o => `<option value="${_svcEsc(o[0])}"${o[0] === val(f) ? ' selected' : ''}>${_svcEsc(o[1])}</option>`).join('')}</select>`
-    : f.area ? `<textarea data-fk="${_dsEsc(f.k)}" class="ds-ff" rows="3">${_svcEsc(val(f))}</textarea>`
-      : `<input data-fk="${_dsEsc(f.k)}" class="ds-ff" value="${_svcEsc(val(f))}">`;
+  const ctrl = f => f.date // 📅 фірменны каляндар (cdate.js): дысплэй + схаваны ISO (data-fk чытае _dFModalSave)
+    ? `<span style="display:flex;gap:6px;align-items:center"><input type="text" id="dfm-${_dsEsc(f.k)}-disp" data-cdate readonly class="ds-ff" style="cursor:pointer;flex:1" placeholder="${_svcEsc(_dL('дата…', 'date…'))}" value="${_svcEsc(val(f) ? _cdateFmt(val(f)) : '')}" onclick="_cdateOpen('dfm-${_dsEsc(f.k)}')"><input type="hidden" id="dfm-${_dsEsc(f.k)}" data-fk="${_dsEsc(f.k)}" value="${_svcEsc(val(f))}" onchange="_cdateSync('dfm-${_dsEsc(f.k)}')"><button type="button" data-cdate class="ds-eb-btn" onclick="_cdateOpen('dfm-${_dsEsc(f.k)}')">📅</button></span>`
+    : f.opts
+      ? `<select data-fk="${_dsEsc(f.k)}" class="ds-ff">${f.opts.map(o => `<option value="${_svcEsc(o[0])}"${o[0] === val(f) ? ' selected' : ''}>${_svcEsc(o[1])}</option>`).join('')}</select>`
+      : f.area ? `<textarea data-fk="${_dsEsc(f.k)}" class="ds-ff" rows="3">${_svcEsc(val(f))}</textarea>`
+        : `<input data-fk="${_dsEsc(f.k)}" class="ds-ff" value="${_svcEsc(val(f))}">`;
   const rows = fields.map(f => `<label class="ds-fl"><span>${_svcEsc(f.label)}${f.ml ? ' <em style="opacity:.6">(' + _svcEsc(lang) + ')</em>' : ''}</span>${ctrl(f)}</label>`).join('');
   const m = document.createElement('div'); m.id = 'ds-fmodal'; m.className = 'ds-fmodal';
   m.innerHTML = `<div class="ds-fmbox"><div class="ds-fmbody">${rows}</div><div class="ds-fmfoot"><button class="ed-cancel" onclick="_dFModalClose()">${_svcEsc(getUI().reader_close || 'Закрыць')}</button><button class="ed-save" onclick="_dFModalSave('${_dsEsc(secId)}','${_dsEsc(key)}',${idx},'${_dsEsc(type)}')">💾 ${_svcEsc(getUI().ed_save || 'Захаваць')}</button></div></div>`;
   document.body.appendChild(m);
   m.addEventListener('mousedown', e => { if (e.target === m) _dFModalClose(); });
+}
+// 📅 інлайн-дата навіны ў Чарнавіку: клік па даце → фірменны каляндар (cdate.js) → draft_set
+// Схаваны input-проксі адзін на старонку; anchorEl пазіцыянуе папап каля самой даты
+function _dPostDate(instId, i, iso, el) {
+  let h = document.getElementById('ds-date-proxy');
+  if (!h) { h = document.createElement('input'); h.type = 'hidden'; h.id = 'ds-date-proxy'; document.body.appendChild(h); }
+  h.value = iso || '';
+  h.onchange = async () => { try { await _draftPost({ action: 'draft_set', repo: SITE_REPO, id: instId, path: 'content.posts.' + i + '.date', val: h.value }); await _dReload(); } catch (e) {} };
+  _cdateOpen('ds-date-proxy', el);
 }
 function _dFModalClose() { const m = document.getElementById('ds-fmodal'); if (m) m.remove(); }
 async function _dFModalSave(secId, key, idx, type) {
