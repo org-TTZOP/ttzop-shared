@@ -711,6 +711,26 @@ const UI_T = {
 ;(() => { const M = { be:'Адкрыйце панэль кіравання, каб рэдагаваць', en:'Open the admin panel to edit', uk:'Відкрийте панель керування, щоб редагувати', ru:'Откройте панель управления, чтобы редактировать', pl:'Otwórz panel, aby edytować', de:'Öffnen Sie das Panel zum Bearbeiten', fr:'Ouvrez le panneau pour modifier', es:'Abre el panel para editar', it:'Apri il pannello per modificare', pt:'Abra o painel para editar', zh:'打开管理面板进行编辑', ar:'افتح لوحة التحكم للتعديل', hu:'Nyissa meg a panelt a szerkesztéshez' }; Object.keys(M).forEach(l => { if (UI_T[l]) UI_T[l].look_edit_nopanel = M[l]; }); })();
 // 🖊️ слайс A: плейсхолдэры пустога загалоўка/падзагалоўка + падказка аўта-захавання ў edit-рэжыме
 ;(() => { const T = { be:['Загаловак','Падзагаловак','Тэкст…','Дата','Захаваць','Адмяніць'], en:['Heading','Subheading','Text…','Date','Save','Cancel'], uk:['Заголовок','Підзаголовок','Текст…','Дата','Зберегти','Скасувати'], ru:['Заголовок','Подзаголовок','Текст…','Дата','Сохранить','Отмена'], pl:['Nagłówek','Podtytuł','Tekst…','Data','Zapisz','Anuluj'], de:['Überschrift','Untertitel','Text…','Datum','Speichern','Abbrechen'], fr:['Titre','Sous-titre','Texte…','Date','Enregistrer','Annuler'], es:['Título','Subtítulo','Texto…','Fecha','Guardar','Cancelar'], it:['Titolo','Sottotitolo','Testo…','Data','Salva','Annulla'], pt:['Título','Subtítulo','Texto…','Data','Guardar','Cancelar'], zh:['标题','副标题','文本…','日期','保存','取消'], ar:['العنوان','العنوان الفرعي','نص…','التاريخ','حفظ','إلغاء'], hu:['Címsor','Alcím','Szöveg…','Dátum','Mentés','Mégse'] }; Object.keys(T).forEach(l => { if (UI_T[l]) { UI_T[l].ed_title = T[l][0]; UI_T[l].ed_subtitle = T[l][1]; UI_T[l].ed_body = T[l][2]; UI_T[l].ed_date = T[l][3]; UI_T[l].ed_save = T[l][4]; UI_T[l].ed_cancel = T[l][5]; } }); })();
+// 🖊️ подпісы ПАЛЁЎ дыялогаў Чарнавіка (✎-мадалкі пазіцый/Каталога) — мова старонкі ×13 (post-merge, як ed_*)
+;(() => {
+  const K = ['icon','name','descr','price','currency','pmode','pm_exact','pm_from','pm_quote','badge','b_none','b_hit','b_new','b_promo','b_custom','b_text','fulfil','f_cart','f_book','f_inq','f_sub','period','p_month','p_year','cover','author','text','stars','question','answer','amount','logo','grplim'];
+  const T = {
+    be:['Іконка','Назва','Апісанне','Цана','Валюта','Рэжым цаны','Дакладна','Ад','Па дамове','Бэйдж','Няма','Хіт','Новае','Акцыя','Свой тэкст','Тэкст бэйджа','Спосаб','Кошык','Запіс','Запыт','Падпіска','Перыяд','Месяц','Год','Вокладка URL','Аўтар','Тэкст','Зоркі (1–5)','Пытанне','Адказ','Сума','Лагатып URL','Ліміт групы'],
+    en:['Icon','Name','Description','Price','Currency','Price mode','Exact','From','On request','Badge','None','Hit','New','Sale','Custom text','Badge text','Fulfilment','Cart','Booking','Inquiry','Subscription','Period','Month','Year','Cover URL','Author','Text','Stars (1–5)','Question','Answer','Amount','Logo URL','Group limit'],
+    uk:['Іконка','Назва','Опис','Ціна','Валюта','Режим ціни','Точно','Від','За домовленістю','Бейдж','Немає','Хіт','Нове','Акція','Свій текст','Текст бейджа','Спосіб','Кошик','Запис','Запит','Підписка','Період','Місяць','Рік','Обкладинка URL','Автор','Текст','Зірки (1–5)','Питання','Відповідь','Сума','Логотип URL','Ліміт групи'],
+    ru:['Иконка','Название','Описание','Цена','Валюта','Режим цены','Точно','От','По договорённости','Бейдж','Нет','Хит','Новое','Акция','Свой текст','Текст бейджа','Способ','Корзина','Запись','Запрос','Подписка','Период','Месяц','Год','Обложка URL','Автор','Текст','Звёзды (1–5)','Вопрос','Ответ','Сумма','Логотип URL','Лимит группы'],
+    pl:['Ikona','Nazwa','Opis','Cena','Waluta','Tryb ceny','Dokładnie','Od','Do uzgodnienia','Odznaka','Brak','Hit','Nowość','Promocja','Własny tekst','Tekst odznaki','Sposób','Koszyk','Rezerwacja','Zapytanie','Subskrypcja','Okres','Miesiąc','Rok','Okładka URL','Autor','Tekst','Gwiazdki (1–5)','Pytanie','Odpowiedź','Kwota','Logo URL','Limit grupy'],
+    de:['Icon','Name','Beschreibung','Preis','Währung','Preismodus','Genau','Ab','Auf Anfrage','Badge','Keins','Hit','Neu','Aktion','Eigener Text','Badge-Text','Art','Warenkorb','Buchung','Anfrage','Abo','Zeitraum','Monat','Jahr','Cover-URL','Autor','Text','Sterne (1–5)','Frage','Antwort','Betrag','Logo-URL','Gruppenlimit'],
+    fr:['Icône','Nom','Description','Prix','Devise','Mode de prix','Exact','À partir de','Sur demande','Badge','Aucun','Hit','Nouveau','Promo','Texte personnalisé','Texte du badge','Mode','Panier','Réservation','Demande','Abonnement','Période','Mois','An','URL de couverture','Auteur','Texte','Étoiles (1–5)','Question','Réponse','Montant','URL du logo','Limite du groupe'],
+    es:['Icono','Nombre','Descripción','Precio','Moneda','Modo de precio','Exacto','Desde','A convenir','Insignia','Ninguna','Hit','Nuevo','Oferta','Texto propio','Texto de insignia','Modo','Carrito','Reserva','Consulta','Suscripción','Período','Mes','Año','URL de portada','Autor','Texto','Estrellas (1–5)','Pregunta','Respuesta','Importe','URL del logo','Límite del grupo'],
+    it:['Icona','Nome','Descrizione','Prezzo','Valuta','Modalità prezzo','Esatto','Da','Su richiesta','Badge','Nessuno','Hit','Novità','Promo','Testo personalizzato','Testo del badge','Modalità','Carrello','Prenotazione','Richiesta','Abbonamento','Periodo','Mese','Anno','URL copertina','Autore','Testo','Stelle (1–5)','Domanda','Risposta','Importo','URL del logo','Limite del gruppo'],
+    pt:['Ícone','Nome','Descrição','Preço','Moeda','Modo de preço','Exato','A partir de','Sob consulta','Distintivo','Nenhum','Hit','Novo','Promoção','Texto próprio','Texto do distintivo','Modo','Carrinho','Reserva','Pedido','Subscrição','Período','Mês','Ano','URL da capa','Autor','Texto','Estrelas (1–5)','Pergunta','Resposta','Montante','URL do logótipo','Limite do grupo'],
+    zh:['图标','名称','描述','价格','货币','价格模式','准确','起','面议','徽章','无','热门','新品','促销','自定义文本','徽章文本','方式','购物车','预约','咨询','订阅','周期','月','年','封面URL','作者','文本','星级 (1–5)','问题','回答','金额','标志URL','团体上限'],
+    ar:['أيقونة','الاسم','الوصف','السعر','العملة','وضع السعر','بدقة','من','حسب الاتفاق','شارة','بدون','الأكثر طلباً','جديد','عرض','نص مخصص','نص الشارة','الطريقة','السلة','حجز','استفسار','اشتراك','الفترة','شهر','سنة','رابط الغلاف','الكاتب','النص','نجوم (1–5)','سؤال','جواب','المبلغ','رابط الشعار','حد المجموعة'],
+    hu:['Ikon','Név','Leírás','Ár','Pénznem','Ármód','Pontos','-tól','Megegyezés szerint','Jelvény','Nincs','Sláger','Új','Akció','Egyéni szöveg','Jelvényszöveg','Mód','Kosár','Foglalás','Érdeklődés','Előfizetés','Időszak','Hónap','Év','Borító URL','Szerző','Szöveg','Csillagok (1–5)','Kérdés','Válasz','Összeg','Logó URL','Csoportlimit'],
+  };
+  Object.keys(T).forEach(l => { if (UI_T[l]) K.forEach((k, i) => { UI_T[l]['ed_f_' + k] = T[l][i]; }); });
+})();
 ;(() => { const M = { be:'Згарнуць / разгарнуць панэль', en:'Collapse / expand panel', uk:'Згорнути / розгорнути панель', ru:'Свернуть / развернуть панель', pl:'Zwiń / rozwiń panel', de:'Panel ein-/ausklappen', fr:'Réduire / agrandir le panneau', es:'Contraer / expandir panel', it:'Comprimi / espandi pannello', pt:'Recolher / expandir painel', zh:'折叠 / 展开面板', ar:'طيّ / توسيع اللوحة', hu:'Panel össze-/kinyitása' }; Object.keys(M).forEach(l => { if (UI_T[l]) UI_T[l].look_min = M[l]; }); })();
 ;(() => { const A = { be:'✎ Клікні на тэкст — праўкі захоўваюцца аўтаматычна', en:'✎ Click text — edits save automatically', uk:'✎ Клікни на текст — зміни зберігаються автоматично', ru:'✎ Кликни на текст — правки сохраняются автоматически', pl:'✎ Kliknij tekst — zmiany zapisują się automatycznie', de:'✎ Text anklicken — Änderungen speichern automatisch', fr:'✎ Cliquez sur le texte — enregistrement automatique', es:'✎ Haz clic en el texto — se guarda automáticamente', it:'✎ Clicca sul testo — salvataggio automatico', pt:'✎ Clica no texto — guarda automaticamente', zh:'✎ 点击文字 — 自动保存', ar:'✎ انقر على النص — يُحفظ تلقائيًا', hu:'✎ Kattints a szövegre — automatikusan mentődik' }; Object.keys(A).forEach(l => { if (UI_T[l]) UI_T[l].ed_autosave = A[l]; }); })();
 // #1: look_note цяпер праўдзівы — прэв'ю паказвае РЭАЛЬНЫ чарнавік (Фаза A/D), а не «канцэпт» (post-merge перакрывае стары інлайн)
@@ -2973,14 +2993,16 @@ function _dItemLabel(x) { return (_sv(x.title) || _sv(x.name) || _sv(x.q) || _sv
 // генерычны абгортнік пазіцыі (div-тыпы: FAQ/водгукі/брэнды) — position:relative + радок; па-за edit вяртае html як ёсць
 function _dItemWrap(secId, key, idx, total, active, html, type) { return _dEdit ? `<div class="ds-item${active ? '' : ' ds-hidden'}">${_dItemBar(secId, key, idx, total, active, type)}${html}</div>` : html; }
 // каталог палёў пазіцыі па тыпе секцыі (люстэрка схем панэлі; ml — мультымоўнае, opts — select). Новы тып = радок тут.
+// подпіс поля — мова СТАРОНКІ (ключы ed_f_* ×13; фолбэк — сам ключ, каб новае поле не знікала без перакладу)
+function _dF(k) { return getUI()['ed_f_' + k] || k; }
 function _dItemFields(type) {
-  const L = _dL;
-  if (type === 'cards') return [{ k: 'icon', label: L('Іконка', 'Icon') }, { k: 'title', label: L('Назва', 'Title'), ml: 1 }, { k: 'text', label: L('Апісанне', 'Description'), ml: 1, area: 1 }, { k: 'price', label: L('Цана', 'Price') }, { k: 'currency', label: L('Валюта', 'Currency') }, { k: 'priceMode', label: L('Рэжым цаны', 'Price mode'), opts: [['exact', L('Дакладна', 'Exact')], ['from', L('Ад', 'From')], ['quote', L('Па дамове', 'Quote')]] }, { k: 'badge', label: L('Бэйдж', 'Badge'), opts: [['', L('Няма', 'None')], ['hit', L('Хіт', 'Hit')], ['new', L('Новае', 'New')], ['custom', L('Свой', 'Custom')]] }, { k: 'badgeText', label: L('Тэкст бэйджа', 'Badge text') }, { k: 'fulfil', label: L('Спосаб', 'Fulfil'), opts: [['cart', '🛒 ' + L('Кошык', 'Cart')], ['booking', '📅 ' + L('Запіс', 'Booking')], ['inquiry', '💬 ' + L('Запыт', 'Inquiry')], ['subscription', '🔁 ' + L('Падпіска', 'Subscription')]] }, { k: 'period', label: L('Перыяд', 'Period'), opts: [['month', L('Месяц', 'Month')], ['year', L('Год', 'Year')]] }];
-  if (type === 'list') return [{ k: 'name', label: L('Назва', 'Name'), ml: 1 }, { k: 'value', label: L('Сума', 'Amount') }, { k: 'currency', label: L('Валюта', 'Currency') }];
-  if (type === 'posts') return [{ k: 'title', label: L('Загаловак', 'Title'), ml: 1 }, { k: 'date', label: L('Дата', 'Date'), date: 1 }, { k: 'cover', label: L('Вокладка URL', 'Cover URL') }]; // цела — WYSIWYG інлайн; date:1 → фірменны каляндар
-  if (type === 'testimonials') return [{ k: 'author', label: L('Аўтар', 'Author') }, { k: 'text', label: L('Тэкст', 'Text'), area: 1 }, { k: 'stars', label: L('Зоркі (1-5)', 'Stars (1-5)') }];
-  if (type === 'brands') return [{ k: 'name', label: L('Назва', 'Name') }, { k: 'logo', label: L('Лагатып URL', 'Logo URL') }];
-  if (type === 'accordion') return [{ k: 'q', label: L('Пытанне', 'Question'), ml: 1 }, { k: 'a', label: L('Адказ', 'Answer'), ml: 1, area: 1 }];
+  const F = _dF;
+  if (type === 'cards') return [{ k: 'icon', label: F('icon') }, { k: 'title', label: F('name'), ml: 1 }, { k: 'text', label: F('descr'), ml: 1, area: 1 }, { k: 'price', label: F('price') }, { k: 'currency', label: F('currency') }, { k: 'priceMode', label: F('pmode'), opts: [['exact', F('pm_exact')], ['from', F('pm_from')], ['quote', F('pm_quote')]] }, { k: 'badge', label: F('badge'), opts: [['', F('b_none')], ['hit', F('b_hit')], ['new', F('b_new')], ['custom', F('b_custom')]] }, { k: 'badgeText', label: F('b_text') }, { k: 'fulfil', label: F('fulfil'), opts: [['cart', '🛒 ' + F('f_cart')], ['booking', '📅 ' + F('f_book')], ['inquiry', '💬 ' + F('f_inq')], ['subscription', '🔁 ' + F('f_sub')]] }, { k: 'period', label: F('period'), opts: [['month', F('p_month')], ['year', F('p_year')]] }];
+  if (type === 'list') return [{ k: 'name', label: F('name'), ml: 1 }, { k: 'value', label: F('amount') }, { k: 'currency', label: F('currency') }];
+  if (type === 'posts') return [{ k: 'title', label: getUI().ed_title || F('name'), ml: 1 }, { k: 'date', label: getUI().ed_date || 'Date', date: 1 }, { k: 'cover', label: F('cover') }]; // цела — WYSIWYG інлайн; date:1 → фірменны каляндар
+  if (type === 'testimonials') return [{ k: 'author', label: F('author') }, { k: 'text', label: F('text'), area: 1 }, { k: 'stars', label: F('stars') }];
+  if (type === 'brands') return [{ k: 'name', label: F('name') }, { k: 'logo', label: F('logo') }];
+  if (type === 'accordion') return [{ k: 'q', label: F('question'), ml: 1 }, { k: 'a', label: F('answer'), ml: 1, area: 1 }];
   return [];
 }
 function _dItemMenu(secId, key, idx, type, btn) { // ⋯ пазіцыі — тая ж панэльная сетка іконак: ✎ · ⧉ · ✕(danger)
@@ -3108,16 +3130,16 @@ function _dSrcPurge(id) { siteConfirm(_dL('Выдаліць назаўжды?', 
 function _dSrcTrashLabel(x) { return (_sv(x.fields && x.fields.name) || _sv(x.name) || x.id).toString().slice(0, 40); }
 // Палі КАТАЛОГА (ключы крыніцы, не секцыі): Папка → толькі назва; пазіцыя → поўны набор (белы спіс draft_src)
 function _dSrcFields(n) {
-  const L = _dL;
-  if (n.type === 'folder') return [{ k: 'name', label: L('Назва', 'Name'), ml: 1 }];
-  return [{ k: 'icon', label: L('Іконка', 'Icon') }, { k: 'name', label: L('Назва', 'Name'), ml: 1 }, { k: 'description', label: L('Апісанне', 'Description'), ml: 1, area: 1 },
-    { k: 'price', label: L('Цана', 'Price') }, { k: 'currency', label: L('Валюта', 'Currency') },
-    { k: 'priceMode', label: L('Рэжым цаны', 'Price mode'), opts: [['exact', L('Дакладна', 'Exact')], ['from', L('Ад', 'From')], ['quote', L('Па дамове', 'Quote')]] },
-    { k: 'badge', label: L('Бэйдж', 'Badge'), opts: [['none', L('Няма', 'None')], ['hit', L('Хіт', 'Hit')], ['new', L('Новае', 'New')], ['promo', L('Акцыя', 'Promo')], ['custom', L('Свой', 'Custom')]] },
-    { k: 'badgeText', label: L('Тэкст бэйджа', 'Badge text') },
-    { k: 'fulfil', label: L('Спосаб', 'Fulfil'), opts: [['cart', '🛒 ' + L('Кошык', 'Cart')], ['booking', '📅 ' + L('Запіс', 'Booking')], ['inquiry', '💬 ' + L('Запыт', 'Inquiry')], ['subscription', '🔁 ' + L('Падпіска', 'Subscription')]] },
-    { k: 'period', label: L('Перыяд', 'Period'), opts: [['month', L('Месяц', 'Month')], ['year', L('Год', 'Year')]] },
-    { k: 'groupMax', label: '👥 ' + L('Ліміт групы', 'Group limit') }];
+  const F = _dF; // подпісы — мова старонкі (ed_f_* ×13)
+  if (n.type === 'folder') return [{ k: 'name', label: F('name'), ml: 1 }];
+  return [{ k: 'icon', label: F('icon') }, { k: 'name', label: F('name'), ml: 1 }, { k: 'description', label: F('descr'), ml: 1, area: 1 },
+    { k: 'price', label: F('price') }, { k: 'currency', label: F('currency') },
+    { k: 'priceMode', label: F('pmode'), opts: [['exact', F('pm_exact')], ['from', F('pm_from')], ['quote', F('pm_quote')]] },
+    { k: 'badge', label: F('badge'), opts: [['none', F('b_none')], ['hit', F('b_hit')], ['new', F('b_new')], ['promo', F('b_promo')], ['custom', F('b_custom')]] },
+    { k: 'badgeText', label: F('b_text') },
+    { k: 'fulfil', label: F('fulfil'), opts: [['cart', '🛒 ' + F('f_cart')], ['booking', '📅 ' + F('f_book')], ['inquiry', '💬 ' + F('f_inq')], ['subscription', '🔁 ' + F('f_sub')]] },
+    { k: 'period', label: F('period'), opts: [['month', F('p_month')], ['year', F('p_year')]] },
+    { k: 'groupMax', label: '👥 ' + F('grplim') }];
 }
 function _dSrcEdit(id) { // ✎ мадалка палёў вузла Каталога — той жа ds-fmodal, што ў пазіцый
   _dMenuClose();
