@@ -756,7 +756,7 @@ const FORM_SCHEMAS = {
         { key: 'price',       type: 'number',   label: 'f_price',            readOnly: () => true },
         { key: 'currency',    type: 'select',   label: 'f_currency',         readOnly: () => true,
           options: CURRENCIES.map(c => c.code), default: () => settings?.currency?.code || 'EUR' },
-        // «класная» секцыя Паслуг: рэжым цаны / бэйдж / паводзіны кнопкі на картцы сайта (праекцыя _SITE_SOURCES.services)
+        // «класная» секцыя Паслуг: рэжым цаны / бэйдж / паводзіны кнопкі на картцы сайта (праекцыя _svcItems у main.js — секцыя-спасылка)
         { key: 'priceMode',   type: 'select',   label: 'svc_price_mode',     readOnly: () => true, default: 'exact',
           options: ['exact','from','quote'], labelMap: { exact: 'price_exact', from: 'price_from_lbl', quote: 'price_quote_lbl' } },
         { key: 'badge',       type: 'select',   label: 'svc_badge',          readOnly: () => true, default: 'none',
@@ -2998,7 +2998,7 @@ function _initSection(st, key, file, statusId, itemIdPrefix, opts) {
   if (opts?.schema) st._formSchema = opts.schema;
 }
 _initSection(servicesState,    'services',     'content/services/services.json', 'services-save-status', 'svc');
-servicesState._afterSave = () => _siteSourceProject('services'); // праекцыя «сутнасць → секцыя сайта» (source-экзэмпляр у sections.json)
+// (_afterSave-праекцыі больш няма — секцыя-спасылка: сайт бярэ Каталог жыўцом, гл. _svcItems у main.js)
 _initSection(filesState,     'files',      'content/section-files.json',   'files-save-status',  'gal', { normalize: data => {
   if (!data.nodes && data.images) { data.nodes = data.images.map(img => ({ ...img, type: 'item', parentId: null })); delete data.images; } // легасі v1: images→nodes
   if (!data.design) data.design = { style: 'grid', columns: 3, lightbox: true, ratio: 'original' };
@@ -3158,7 +3158,7 @@ function renderSections() {
 // ════════════════════════════════════════════════════════════════════════════
 // Каталог тыпаў (люстэрка SITE_VIEWS у main.js): іконка + МАДЭЛЬ КАНТЭНТУ (Фаза 2b):
 //   flat  — {body, image} (Flat-секцыя «Змест»);  list — масіў радкоў (Table-накапляльнік; list=ключ у content, fk=унікальны fields-ключ, бо _accRowModal шукае секцыю па dataKey);
-//   posts — Папка-0 «Артыкулы» з форм-постаў (Quill + вокладка R2);  source — праекцыя з сутнасці (_SITE_SOURCES), рэдактара няма.
+//   posts — Папка-0 «Артыкулы» з форм-постаў (Quill + вокладка R2);  source — секцыя-спасылка на сутнасць (карткі будуе _svcItems у main.js), рэдактара няма.
 const SITE_VIEW_TYPES = {
   text:         { icon: '📄', flat: true },
   cards:        { icon: '🃏', list: 'items',  fk: '_cards' },
@@ -3473,11 +3473,9 @@ function _siteSectionsSave() { // дрэва → sections.sections (той жа 
     if (Array.isArray(f._layoutSaved) && f._layoutSaved.length) inst._layoutSaved = f._layoutSaved;
     // ─ кантэнт па мадэлі тыпу (Фаза 2b) ─
     const src = n._source || vt.source || '';
-    if (src) { // праекцыя з сутнасці: свежы збор з яе стэйту (калі загружаны), інакш — застылая копія
+    if (src) { // 🧷 секцыя-спасылка: БЕЗ копіі змесціва — сайт будуе карткі жыўцом з крыніцы (_svcItems у main.js)
       n._source = src;
-      const c = _SITE_SOURCES[src]?.();
-      if (c) n._content = c;
-      inst.content = n._content || {};
+      inst.content = {};
       if (!srcSeen.has(src)) { inst.source = src; srcSeen.add(src); } // source адназначны: дубль = звычайная копія
     } else if (vt.flat) {
       inst.content = { body: f.body || '', image: (f.image && (f.image.url || typeof f.image === 'string')) ? (f.image.url || f.image) : '' };
@@ -3546,37 +3544,9 @@ function loadSitePageEditor() {
 // 🧬 ПРАЕКЦЫІ «сутнасць → секцыя сайта» (source-экзэмпляры): крыніца праўды — свой РМ; сайт малюе
 // звычайны viewType (booking-/файл-палі на сайт не цякуць). Экзэмпляр выдалены карыстальнікам →
 // праекцыя маўчыць (свядомы выбар). Білдэр вяртае null, калі стэйт крыніцы яшчэ не загружаны.
-const _SITE_SOURCES = {
-  services: () => { // актыўныя пазіцыі Каталога → cards-items; path = ПОЎНЫ шлях папак (матрошка падзагалоўкаў на сайце)
-    const nodes = servicesState.data?.nodes; if (!nodes) return null;
-    const items = [];
-    const walk = (pid, path) => nodes.filter(n => (n.parentId ?? null) === pid).sort(_nodeChildCmp).forEach(n => {
-      if (n.type === 'form' && n.active !== false) {
-        const f = n.fields || {};
-        items.push({ id: n.id, icon: f.icon || '', title: f.name || _nodeName(n) || '', text: f.description || '',
-          price: f.price != null ? String(f.price) : '', currency: f.currency || '', itemType: f.type || 'general',
-          priceMode: f.priceMode || 'exact', // рэжым цаны: exact / from («ад») / quote («па дамове»)
-          badge: (f.badge && f.badge !== 'none') ? f.badge : '', badgeText: f.badgeText || '', // бэйдж карткі (прэсэт/custom)
-          fulfil: f.fulfil || 'cart', // спосаб атрымання: cart (🛒 кошык) / booking (📅 запіс) / inquiry (💬 запыт) / subscription (🔁)
-          ...(f.fulfil === 'subscription' && f.period ? { period: f.period } : {}),
-          ...((!f.fulfil || f.fulfil === 'booking') && +f.groupMax > 0 ? { groupMax: +f.groupMax } : {}), // 👥 групавая — пазнака на картцы (легасі без fulfil = bookable, як у bookableServices)
-          ...(path.length ? { group: path[path.length - 1], path } : {}) }); // group = апошняя папка (зваротная сумяшчальнасць старога рэндэру)
-      }
-      if (n.type === 'folder' && n.active !== false) walk(n.id, n.name ? [...path, n.name] : path); // безназоўная папка не дае ўзроўню; ● выкл на Папцы хавае ЎСЁ паддрэва з сайта (🌑 _newInactive)
-    });
-    walk(null, []);
-    return { items };
-  },
-};
-function _siteSourceProject(key) { // абнавіць source-экзэмпляр з крыніцы + запісаць sections.json
-  const inst = (Array.isArray(sections?.sections) ? sections.sections : []).find(x => x && x.source === key);
-  if (!inst) return;
-  const c = _SITE_SOURCES[key]?.(); if (!c) return;
-  inst.content = c;
-  const sn = siteSectionsState.data?.nodes?.find(n => n._source === key); // дрэва новага РМ пабудавана → сінхрон без F5
-  if (sn) sn._content = c;
-  _settingsSaveKick(); // debounce-запіс sections.json
-}
+// 🧷 СЕКЦЫЯ-СПАСЫЛКА (2026-07-15, «спасылка замест копіі»): source-экзэмпляр НЕ трымае адбітка картак —
+// сайт будуе іх ЖЫЎЦОМ з Каталога праз _svcItems (main.js, адзіны код праекцыі; публіка — published,
+// прэв'ю/Чарнавік — draft). Былыя панэльныя _SITE_SOURCES/_siteSourceProject і жывы мірор воркера ВЫДАЛЕНЫ.
 // Назва вузла: уласная name → інакш сістэмны ключ sysKey праз t() (аўтаматычна-моўная назва, без хардкоду).
 // Карыстальніцкае перайменаванне ставіць name і перакрывае sysKey.
 // ПРОДАКФПФ: назва вузла на бягучай мове (backward-compatible: радок або {[lang]:string})

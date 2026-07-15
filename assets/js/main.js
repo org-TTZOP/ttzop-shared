@@ -1153,11 +1153,64 @@ function _cardHtml(o) {
   return `<article class="card ${o.cls || ''}${o.dim ? ' ds-hidden' : ''}"${click}${style}>${o.edbar || ''}${badge}${media}${meta}<h3 class="service-title"${o.titleEd || ''}>${_dsEsc(o.title)}</h3>${text}${o.footer || ''}</article>`;
 }
 
+// 🧷 ГЛАБАЛЬНЫ ФОЛД (адзін механізм на ЎСЕ згортвальныя загалоўкі старонкі: секцыі/Папкі ў renderDynamicSections
+// І групы Каталога ў SITE_VIEWS.cards): кнопка-стрэлка ▸ злева, паварот CSS ад details[open], хэндлер _dFoldBtn.
+// extraAttr — дадатковыя атрыбуты на <details> (напр. grid-column для групы ўнутры сеткі картак)
+const _dsFoldWrap = (collapsed, head, inner, extraAttr = '', sumAttr = '') => head ? `<details class="ds-fold"${collapsed ? '' : ' open'}${extraAttr ? ' ' + extraAttr : ''}><summary${sumAttr ? ' ' + sumAttr : ''}><button class="ds-fold-btn" contenteditable="false" onclick="_dFoldBtn(event)" title="${_svcEsc(_dL('Разгарнуць / Згарнуць', 'Expand / Collapse'))}">▸</button>${head}</summary>${inner}</details>` : head + inner;
 // Узроўневы загаловак групы (матрошка): d=0 — акцэнт-рыса, глыбей — драбней+водступ. Спажыўцы: cards (папкі Каталога), gallery (🗂 альбомы)
 // attr (опц.) — _edAttr рэдагавання назвы на месцы: кладзецца на ЎНУТРАНЫ span, каб плейсхолдэр/фокус не чапалі «▸ »
 const _dsGroupHead = (txt, d, attr = '') => d === 0
   ? `<div class="services-folder-heading" style="grid-column:1/-1;margin-top:8px;font-size:1.05rem;font-weight:700;padding:8px 0 4px;border-bottom:2px solid var(--color-primary,#f97316);color:var(--color-primary,#111)">${attr ? `<span${attr}>${_dsEsc(txt)}</span>` : _dsEsc(txt)}</div>`
   : `<div class="services-folder-heading" style="grid-column:1/-1;margin-top:4px;font-size:${Math.max(0.8, 0.98 - d * 0.08)}rem;font-weight:600;padding:${Math.max(4, 10 - d * 2)}px 0 2px ${d * 14}px;opacity:0.85">▸ ${attr ? `<span${attr}>${_dsEsc(txt)}</span>` : _dsEsc(txt)}</div>`;
+// ═══ 🧷 СЕКЦЫЯ-СПАСЫЛКА НА КАТАЛОГ (рашэнне 2026-07-15: «спасылка замест копіі») ═══
+// source-экзэмпляр НЕ трымае адбітка картак — сайт будуе іх ЖЫЎЦОМ з Каталога ({site}:services):
+// публіка — з апублікаванага, прэв'ю/Чарнавік (?look) — з чарнавіка. Панэльная праекцыя-копія
+// (_SITE_SOURCES/_siteSourceProject) і жывы мірор воркера выдалены — крыніца праўды адна.
+let _svcTree = null; // вузлы Каталога (дрэва {nodes}) — загружаюцца, калі на старонцы ёсць source-секцыя
+async function _svcFetchTree() {
+  try {
+    const _look = new URLSearchParams(location.search).get('look');
+    const r = await fetch(API_URL + '/content/' + SITE_REPO + '/services' + (_look ? '?draft=' + encodeURIComponent(_look) + '&cb=' + Date.now() : ''));
+    const d = await r.json();
+    if (d && Array.isArray(d.nodes)) _svcTree = d.nodes;
+  } catch (e) { /* фетч не ўдаўся — застаецца папярэдняе дрэва / застылы content з sections (fallback) */ }
+}
+// Праекцыя Каталога → карткі (АДЗІНЫ код праекцыі; былая панэльная _SITE_SOURCES.services выдалена).
+// path = ПОЎНЫ шлях папак [{id,name,active}] — id патрэбны кіраванню з Чарнавіка; name можа быць ml-аб'ектам.
+// У edit-рэжыме НЕактыўныя вузлы ўключаюцца з пазнакай hidden (цьмяныя, ● вяртае) — як пазіцыі іншых секцый.
+function _svcItems(nodes) {
+  const items = [];
+  const walk = (pid, path, hidUp) => (nodes || [])
+    .filter(n => n && (n.parentId ?? null) === pid && !n._deleted)
+    .sort((a, b) => (a.order || 0) - (b.order || 0))
+    .forEach(n => {
+      const off = n.active === false;
+      if (n.type === 'form') {
+        if (off && !_dEdit) return;
+        const f = n.fields || {};
+        items.push({ id: n.id, icon: f.icon || '', title: f.name || n.name || '', text: f.description || '',
+          price: f.price != null ? String(f.price) : '', currency: f.currency || '', itemType: f.type || 'general',
+          priceMode: f.priceMode || 'exact',
+          badge: (f.badge && f.badge !== 'none') ? f.badge : '', badgeText: f.badgeText || '',
+          fulfil: f.fulfil || 'cart',
+          ...(f.fulfil === 'subscription' && f.period ? { period: f.period } : {}),
+          ...((!f.fulfil || f.fulfil === 'booking') && +f.groupMax > 0 ? { groupMax: +f.groupMax } : {}), // 👥 групавая пазнака (легасі без fulfil = bookable)
+          ...(off || hidUp ? { hidden: true } : {}),
+          ...(path.length ? { group: path[path.length - 1].name, path } : {}) });
+      }
+      if (n.type === 'folder') {
+        if (off && !_dEdit) return; // ● выкл на Папцы хавае ЎСЁ паддрэва з публікі (🌑 _newInactive)
+        walk(n.id, n.name ? [...path, { id: n.id, name: n.name, active: !off }] : path, hidUp || off); // безназоўная папка не дае ўзроўню
+      }
+    });
+  walk(null, [], false);
+  return items;
+}
+// Уліць жывую праекцыю ў source-экзэмпляры спіса секцый (in-memory, перад рэндэрам; без дрэва — застылы content як fallback)
+function _svcResolveSources(data) {
+  if (!_svcTree) return;
+  (Array.isArray(data?.sections) ? data.sections : []).forEach(x => { if (x && x.source === 'services') x.content = { items: _svcItems(_svcTree) }; });
+}
 // КАТАЛОГ ВЫГЛЯДАЎ (viewType → innerHTML секцыі). Класы супадаюць са style.css → кожны перавыкарыстоўваецца бясконца.
 const SITE_VIEWS = {
   // тэкст + фота (Пра нас, простыя навіны). body — гатовы HTML (richtext)
@@ -1170,16 +1223,9 @@ const SITE_VIEWS = {
   // сетка картак (Паслугі/Перавагі); item з id+price → кнопка кошыка; it.group → падзагаловак групы (папка ў дрэве Паслуг)
   cards: inst => {
     const items = inst.content?.items || [];
-    // МАТРОШКА падзагалоўкаў: it.path = поўны шлях папак Каталога → укладзеныя загалоўкі па ўзроўнях
-    // (узровень 0 — буйны з акцэнт-рысай; глыбей — драбнейшыя з водступам). Легасі без path → адзін узровень з group.
-    const _grpHead = _dsGroupHead; // агульны хэлпер узроўневых загалоўкаў (DRY з галерэяй)
-    let lastPath = [];
-    return `<div class="grid grid-3">${items.map((it, _i) => {
-      const path = Array.isArray(it.path) ? it.path.map(x => _sv(x)).filter(Boolean) : (_sv(it.group) ? [_sv(it.group)] : []);
-      let head = '';
-      let same = 0; while (same < path.length && same < lastPath.length && path[same] === lastPath[same]) same++;
-      for (let li = same; li < path.length; li++) head += _grpHead(path[li], li);
-      lastPath = path;
+    const isSrc = !!inst.source; // 🧷 секцыя-спасылка: змест жыве ў КАТАЛОГУ — індэксныя бары/inline-праўка
+    // секцыі не дастасоўныя (пісалі б у чарнавік старонкі міма крыніцы); кіраванне групамі/карткамі — draft_src
+    const cardHtml = (it, _i) => {
       const name = _sv(it.title), price = _sv(it.price), cur = _sv(it.currency);
       const ui = getUI();
       const pm = _sv(it.priceMode) || 'exact'; // рэжым цаны: exact / from («ад») / quote («па дамове»)
@@ -1212,11 +1258,40 @@ const SITE_VIEWS = {
         ? `<p class="service-price">${ui.price_quote}</p>`
         : price ? `<p class="service-price">${pm === 'from' ? _dsEsc(ui.price_from_pfx) + ' ' : ''}<span class="price-amount" data-price="${_dsEsc(price)}" data-currency="${_dsEsc(cur)}">${_dsEsc(price)} ${_dsEsc(cur)}</span>${ff === 'subscription' ? ' ' + _dsEsc(_sv(it.period) === 'year' ? ui.per_year : ui.per_month) : ''}</p>` : '';
       const badge = _sv(it.badge) === 'custom' ? _sv(it.badgeText) : (_sv(it.badge) ? ui['badge_' + _sv(it.badge)] || '' : '');
-      return head + _cardHtml({ cls: 'service-card', icon: _sv(it.icon) || '🔧', title: name, text: _sv(it.text), badge, footer: priceHtml + btn,
-        edbar: _dItemBar(inst.id, 'items', _i, items.length, it.hidden !== true, 'cards'), dim: it.hidden === true, // 🃏 пер-пазіцыйны радок ● ▲▼ ⋯
-        titleEd: _edAttr(inst.id, 'content.items.' + _i + '.title', 'text', getUI().ed_title), // 🖊️ слайс C: назва/апісанне карткі на месцы (цэны — не, канверсія)
-        textEd: _edAttr(inst.id, 'content.items.' + _i + '.text', 'text', getUI().ed_body) });
-    }).join('')}</div>`;
+      return _cardHtml({ cls: 'service-card', icon: _sv(it.icon) || '🔧', title: name, text: _sv(it.text), badge, footer: priceHtml + btn,
+        edbar: isSrc ? _dSrcBar(it.id, it.hidden !== true) : _dItemBar(inst.id, 'items', _i, items.length, it.hidden !== true, 'cards'), // 🃏 пер-пазіцыйны радок ● ▲▼ ⋯ (крыніца → draft_src)
+        dim: it.hidden === true,
+        titleEd: isSrc ? '' : _edAttr(inst.id, 'content.items.' + _i + '.title', 'text', getUI().ed_title), // 🖊️ слайс C — толькі ўласны кантэнт секцыі (крыніца правіцца праз ✎ бара)
+        textEd: isSrc ? '' : _edAttr(inst.id, 'content.items.' + _i + '.text', 'text', getUI().ed_body) });
+    };
+    // 🪆 ГРУПЫ = ПАПКІ КАТАЛОГА (path [{id,name,active}] або легасі радкі): матрошка фолдаў — той жа
+    // глабальны _dsFoldWrap, што секцыі/Папкі старонкі (адзін механізм згортвання ўсюды, рашэнне 2026-07-15).
+    // Паслядоўны праход захоўвае зыходны парадак Каталога (карткі і падгрупы ўперамешку).
+    const rootKids = [], _byKey = new Map();
+    items.forEach((it, _i) => {
+      const path = Array.isArray(it.path) ? it.path : (_sv(it.group) ? [it.group] : []);
+      let kids = rootKids, acc = '';
+      path.forEach(seg => {
+        acc += '/' + (seg && seg.id ? seg.id : _sv(seg));
+        let g = _byKey.get(acc);
+        if (!g) { g = { seg, kids: [] }; _byKey.set(acc, g); kids.push({ g }); }
+        kids = g.kids;
+      });
+      kids.push({ it, _i });
+    });
+    const renderKids = (kids, d) => kids.map(k => k.it !== undefined ? cardHtml(k.it, k._i) : grpHtml(k.g, d)).join('');
+    const grpHtml = (g, d) => {
+      const seg = g.seg || {};
+      const nm = _dsEsc(_sv(seg.name !== undefined ? seg.name : seg));
+      const off = seg.active === false; // неактыўная папка трапляе сюды толькі ў edit (публіка яе не атрымлівае)
+      const head = `<span class="services-folder-heading" style="font-size:${d === 0 ? '1.05rem' : Math.max(0.8, 0.98 - d * 0.08) + 'rem'};font-weight:${d === 0 ? 700 : 600};${d === 0 ? 'color:var(--color-primary,#111)' : 'opacity:0.85'}">${nm}</span>${isSrc && seg.id ? _dSrcBar(seg.id, !off) : ''}`;
+      const sumSt = d === 0
+        ? 'border-bottom:2px solid var(--color-primary,#f97316);padding:8px 0 4px;margin-top:8px'
+        : `padding:${Math.max(4, 10 - d * 2)}px 0 2px ${d * 14}px;margin-top:4px`;
+      return _dsFoldWrap(false, head, `<div class="grid grid-3" style="margin-top:10px">${renderKids(g.kids, d + 1)}</div>`,
+        `style="grid-column:1/-1${off ? ';opacity:.5' : ''}"`, `style="${sumSt}"`);
+    };
+    return `<div class="grid grid-3">${renderKids(rootKids, 0)}</div>`;
   },
   // табліца назва↔кошт (Цэны)
   list: inst => {
@@ -1302,9 +1377,8 @@ function renderDynamicSections(data) {
   // 🎛 згорнутасць галіны: загаловак = <summary> (стрэлка праз CSS .ds-fold), змест раскрываецца па кліку;
   // без загалоўка згортваць няма за што — паказваем як ёсць
   // фолд УСЮДЫ (рашэнне 2026-07-14): «Згорнута» = толькі пачатковы стан; без загалоўка — няма за што згортваць.
-  // АДЗІН механізм стрэлкі на публіку І edit (рашэнне 2026-07-15, [[feedback-draft-site-parity]]):
-  // кнопка ▸ ПЕРАД назвай заўсёды; паварот ▸→▼ — чыста CSS ад details[open] (без JS-падмены сімвала)
-  const _foldWrap = (collapsed, head, inner) => head ? `<details class="ds-fold"${collapsed ? '' : ' open'}><summary><button class="ds-fold-btn" contenteditable="false" onclick="_dFoldBtn(event)" title="${_svcEsc(_dL('Разгарнуць / Згарнуць', 'Expand / Collapse'))}">▸</button>${head}</summary>${inner}</details>` : head + inner;
+  // Адзін механізм стрэлкі на публіку І edit — глабальны _dsFoldWrap (ім жа групы Каталога ў cards)
+  const _foldWrap = _dsFoldWrap;
   // 🎛 уласцівасць секцыі (каталог SECTION_PROPS): рэзалв печаны панэллю ў inst.disp; лег. v4.593 — асобныя ключы
   const _dsProp = (inst, k) => (inst.disp || {})[k] ?? ({ previewN: inst.previewN, collapsed: inst.collapsed ? 'yes' : undefined, layoutView: inst.dispLayout }[k]);
   const instHtml = (inst, d, idx, sibN) => {
@@ -1400,9 +1474,9 @@ function _dsApplyDisplay(mount) {
     // апрацоўвае свае сеткі сама, інакш кнопкі «Паказаць яшчэ» дубляваліся б ад продка і нашчадка
     const grids = [...root.querySelectorAll('.grid, .tile-grid, .brands-grid, .faq-list')]
       .filter(g => (g.closest('[data-pvn],[data-lay],[data-ord]') || root) === root);
-    if (root.dataset.ord) grids.forEach(grid => { // 🎲 парадак пазіцый: random/newest (групы з загалоўкамі не тасуем — парадак групавы)
+    if (root.dataset.ord) grids.forEach(grid => { // 🎲 парадак пазіцый: random/newest (групы з загалоўкамі/фолдамі не тасуем — парадак групавы)
       const items = [...grid.children];
-      if (items.some(el => el.classList.contains('services-folder-heading'))) return;
+      if (items.some(el => el.classList.contains('services-folder-heading') || el.classList.contains('ds-fold'))) return;
       if (root.dataset.ord === 'random') items.sort(() => Math.random() - 0.5).forEach(el => grid.append(el));
       else if (root.dataset.ord === 'newest') items.reverse().forEach(el => grid.append(el));
     });
@@ -1417,8 +1491,8 @@ function _dsApplyDisplay(mount) {
     }
     const n = parseInt(root.dataset.pvn || '0', 10);
     if (!(n > 0) || root.classList.contains('ds-carousel')) return; // карусель = уся стужка, ліміт не дастасоўны
-    grids.forEach(grid => { // ліміт паказу — пер-сетка (галіна можа мець некалькі сетак)
-      const items = [...grid.children].filter(el => !el.classList.contains('services-folder-heading')); // загалоўкі груп не лічым і не хаваем
+    grids.forEach(grid => { // ліміт паказу — пер-сетка (галіна можа мець некалькі сетак; сетка кожнай групы-фолда лічыцца сама)
+      const items = [...grid.children].filter(el => !el.classList.contains('services-folder-heading') && !el.classList.contains('ds-fold')); // загалоўкі груп і самі групы не лічым і не хаваем
       if (items.length <= n) return;
       let shown = n;
       const wrap = document.createElement('div'); wrap.className = 'ds-more-wrap';
@@ -1462,6 +1536,8 @@ async function applySections() {
     const response = await fetch(API_URL + '/content/' + SITE_REPO + '/sections' + (_look ? '?draft=' + encodeURIComponent(_look) : ''));
     const data = await response.json();
     if (siteData) siteData._sections = data; // запомніць — каб перарэндэрыць пры змене мовы
+    if ((Array.isArray(data?.sections) ? data.sections : []).some(x => x && x.source)) await _svcFetchTree(); // 🧷 секцыя-спасылка → падцягнуць Каталог
+    _svcResolveSources(data);
     renderDynamicSections(data);
   } catch (e) {
     console.warn('sections не знойдзены', e);
@@ -2740,7 +2816,7 @@ function _dSecMenu(id, btn) {
       : `<select onchange="_dMenuChange('${p.key}',this.value)" style="${sst}">${p.opts.map(op => o(op[0], cur, op[1])).join('')}</select>`;
     return `<label class="ds-mp">${_svcEsc(p.name)}${ctrl}</label>`;
   }).join('');
-  const itemKey = !isFolder && !isFile ? _dItemKey(sec && sec.type) : ''; // ліставая секцыя → +🗒 = пазіцыя
+  const itemKey = !isFolder && !isFile && !(sec && sec.source) ? _dItemKey(sec && sec.type) : ''; // ліставая секцыя → +🗒 = пазіцыя; 🧷 source-секцыя — пазіцыі жывуць у КАТАЛОГУ (дадаваць там; draft_item пісаў бы міма крыніцы)
   // g1 — як у панэлі: ● актыў · +📂 Папка · +🗒 (раздзел → пікер тыпаў секцый, аналаг пікера віду ў
   // Каталогу; ліставая → пазіцыя; іншая секцыя — без 🗒: «Форму не кладуць у Форму») · +📎 Файл
   const g1 = mi(_dDot(!hidden), hidden ? _dL('Схавана — паказаць', 'Hidden — show') : _dL('Актыўна — схаваць', 'Active — hide'), `_dSecSetEnabled('${_dsEsc(id)}',${hidden})`)
@@ -2897,6 +2973,85 @@ async function _dFModalSave(secId, key, idx, type) {
   _dFModalClose();
   try { await _draftPost({ action: 'draft_item', op: 'set', repo: SITE_REPO, id: secId, key, idx, patch }); await _dReload(); } catch (e) {}
 }
+// ═══ 🧷 КІРАВАННЕ КАТАЛОГАМ З ЧАРНАВІКА (draft_src) — бары на групах-Папках і картках source-секцыі ═══
+// Той жа выгляд і меню, што ў пазіцый секцый (ААП-парытэт); адрозненне АДНО — адрасат запісу:
+// чарнавік КАТАЛОГА ({site}:services:draft), не чарнавік старонкі. Публіка ўбачыць пасля 🚀.
+function _dSrcNode(id) { return (_svcTree || []).find(n => n && n.id === id) || null; }
+async function _dSrcPost(payload) { try { await _draftPost({ action: 'draft_src', repo: SITE_REPO, ...payload }); await _dReload(); } catch (e) {} }
+function _dSrcBar(id, active) {
+  if (!_dEdit || !id) return '';
+  const a = _dsEsc(id);
+  // preventDefault — бар групы жыве ЎНУТРЫ <summary>: без яго кожны клік кнопкі яшчэ і згортваў бы фолд
+  const pd = 'event.preventDefault();event.stopPropagation();';
+  const mv = (dir, arr) => `<button class="ds-eb-btn" onclick="${pd}_dSrcPost({op:'move',id:'${a}',dir:'${dir}'})" title="${dir === 'up' ? _svcEsc(_dL('Уверх', 'Up')) : _svcEsc(_dL('Уніз', 'Down'))}">${arr}</button>`; // край = no-op на серверы
+  const dot = `<button class="ds-eb-btn ds-eb-dot" onclick="${pd}_dSrcPost({op:'active',id:'${a}',active:${!active}})" title="${active ? _svcEsc(_dL('Актыўна', 'Active')) : _svcEsc(_dL('Схавана', 'Hidden'))}">${_dDot(active)}</button>`;
+  const menu = `<button class="ds-eb-btn ds-eb-menu" onclick="${pd}_dSrcMenu('${a}',this)" title="${_svcEsc(_dL('Меню', 'Menu'))}">⋯</button>`;
+  return `<div class="ds-editbar ds-item-bar" contenteditable="false">${dot}${mv('up', '▲')}${mv('down', '▼')}${menu}</div>`;
+}
+function _dSrcMenu(id, btn) { // тая ж панэльная сетка іконак: ✎ · ⧉ · ✕(danger)
+  if (document.getElementById('ds-menu')) { _dMenuClose(); return; }
+  const n = _dSrcNode(id); if (!n) return;
+  const mi = (icon, title, onclick, cls) => `<button class="ds-mi${cls ? ' ' + cls : ''}" title="${_svcEsc(title)}" onclick="${onclick}">${icon}</button>`;
+  const sep = '<div class="ds-msep"></div>';
+  const m = document.createElement('div'); m.id = 'ds-menu'; m.className = 'ds-menu ds-menu-grid';
+  m.innerHTML = [
+    mi('✎', _dL('Рэдагаваць', 'Edit'), `_dSrcEdit('${_dsEsc(id)}')`),
+    mi('⧉', _dL('Дубляваць', 'Duplicate'), `_dMenuClose();_dSrcPost({op:'dup',id:'${_dsEsc(id)}'})`),
+    mi('✕', _dL('Выдаліць', 'Delete'), `_dSrcDelete('${_dsEsc(id)}')`, 'ds-mi-del')
+  ].join(sep);
+  document.body.appendChild(m);
+  const r = btn.getBoundingClientRect();
+  m.style.top = (r.bottom + 6 + scrollY) + 'px';
+  m.style.left = Math.max(8, Math.min(r.right - m.offsetWidth + scrollX, scrollX + innerWidth - m.offsetWidth - 8)) + 'px';
+  setTimeout(() => document.addEventListener('mousedown', _dMenuOutside, true), 0);
+}
+function _dSrcDelete(id) {
+  _dMenuClose();
+  siteConfirm(_dL('Выдаліць у Сметніцу Каталога?', 'Move to Catalog Trash?'), async () => { await _dSrcPost({ op: 'delete', id }); }, true); // ♻ аднавіць — пакуль праз панэль (Сметніца РМ Нашы прапановы)
+}
+// Палі КАТАЛОГА (ключы крыніцы, не секцыі): Папка → толькі назва; пазіцыя → поўны набор (белы спіс draft_src)
+function _dSrcFields(n) {
+  const L = _dL;
+  if (n.type === 'folder') return [{ k: 'name', label: L('Назва', 'Name'), ml: 1 }];
+  return [{ k: 'icon', label: L('Іконка', 'Icon') }, { k: 'name', label: L('Назва', 'Name'), ml: 1 }, { k: 'description', label: L('Апісанне', 'Description'), ml: 1, area: 1 },
+    { k: 'price', label: L('Цана', 'Price') }, { k: 'currency', label: L('Валюта', 'Currency') },
+    { k: 'priceMode', label: L('Рэжым цаны', 'Price mode'), opts: [['exact', L('Дакладна', 'Exact')], ['from', L('Ад', 'From')], ['quote', L('Па дамове', 'Quote')]] },
+    { k: 'badge', label: L('Бэйдж', 'Badge'), opts: [['none', L('Няма', 'None')], ['hit', L('Хіт', 'Hit')], ['new', L('Новае', 'New')], ['promo', L('Акцыя', 'Promo')], ['custom', L('Свой', 'Custom')]] },
+    { k: 'badgeText', label: L('Тэкст бэйджа', 'Badge text') },
+    { k: 'fulfil', label: L('Спосаб', 'Fulfil'), opts: [['cart', '🛒 ' + L('Кошык', 'Cart')], ['booking', '📅 ' + L('Запіс', 'Booking')], ['inquiry', '💬 ' + L('Запыт', 'Inquiry')], ['subscription', '🔁 ' + L('Падпіска', 'Subscription')]] },
+    { k: 'period', label: L('Перыяд', 'Period'), opts: [['month', L('Месяц', 'Month')], ['year', L('Год', 'Year')]] },
+    { k: 'groupMax', label: '👥 ' + L('Ліміт групы', 'Group limit') }];
+}
+function _dSrcEdit(id) { // ✎ мадалка палёў вузла Каталога — той жа ds-fmodal, што ў пазіцый
+  _dMenuClose();
+  const n = _dSrcNode(id); if (!n) return;
+  const f = n.fields || {}; const fields = _dSrcFields(n); const lang = currentLang;
+  const cur = k => k === 'name' && n.type === 'folder' ? n.name : f[k]; // назва Папкі жыве на вузле
+  const val = fd => { const v = cur(fd.k); return fd.ml ? _sv(v) : (v == null ? '' : String(v)); };
+  const ctrl = fd => fd.opts
+    ? `<select data-fk="${_dsEsc(fd.k)}" class="ds-ff">${fd.opts.map(o => `<option value="${_svcEsc(o[0])}"${o[0] === val(fd) ? ' selected' : ''}>${_svcEsc(o[1])}</option>`).join('')}</select>`
+    : fd.area ? `<textarea data-fk="${_dsEsc(fd.k)}" class="ds-ff" rows="3">${_svcEsc(val(fd))}</textarea>`
+      : `<input data-fk="${_dsEsc(fd.k)}" class="ds-ff" value="${_svcEsc(val(fd))}">`;
+  const rows = fields.map(fd => `<label class="ds-fl"><span>${_svcEsc(fd.label)}${fd.ml ? ' <em style="opacity:.6">(' + _svcEsc(lang) + ')</em>' : ''}</span>${ctrl(fd)}</label>`).join('');
+  const m = document.createElement('div'); m.id = 'ds-fmodal'; m.className = 'ds-fmodal';
+  m.innerHTML = `<div class="ds-fmbox"><div class="ds-fmbody">${rows}</div><div class="ds-fmfoot"><button class="ed-cancel" onclick="_dFModalClose()">${_svcEsc(getUI().reader_close || 'Закрыць')}</button><button class="ed-save" onclick="_dSrcModalSave('${_dsEsc(id)}')">💾 ${_svcEsc(getUI().ed_save || 'Захаваць')}</button></div></div>`;
+  document.body.appendChild(m);
+  m.addEventListener('mousedown', e => { if (e.target === m) _dFModalClose(); });
+}
+async function _dSrcModalSave(id) {
+  const m = document.getElementById('ds-fmodal'); if (!m) return;
+  const n = _dSrcNode(id); if (!n) { _dFModalClose(); return; }
+  const f = n.fields || {}; const lang = currentLang; const patch = {};
+  _dSrcFields(n).forEach(fd => {
+    const el = m.querySelector(`[data-fk="${fd.k}"]`); if (!el) return;
+    const v = el.value;
+    const curV = fd.k === 'name' && n.type === 'folder' ? n.name : f[fd.k];
+    if (fd.ml) patch[fd.k] = Object.assign({}, (curV && typeof curV === 'object') ? curV : {}, { [lang]: v }); // мержым бягучую мову, не сціраем іншыя
+    else patch[fd.k] = v;
+  });
+  _dFModalClose();
+  await _dSrcPost({ op: 'set', id, patch });
+}
 // ➕ ДАДАЦЬ: агульны спіс опцый (тыпы секцый + Раздзел + Фота) для пікера — parentId=null (старонка) або id раздзела.
 // nodesOnly=true (унутр СЕКЦЫІ): толькі 📁 Папка + 📷 Фота — канон «Форму не кладуць у Форму» (секцыя ў секцыі),
 // але Папкі-0 і Файлы секцыя трымае гэтак жа, як любая Папка панэлі (+📂/+📎 — ААП-парытэт з панэллю)
@@ -2963,6 +3118,8 @@ async function _dReload() { // перачытаць чарнавік і пера
     const tok = new URLSearchParams(location.search).get('look');
     const r = await fetch(API_URL + '/content/' + SITE_REPO + '/sections?draft=' + encodeURIComponent(tok) + '&cb=' + Date.now());
     const data = await r.json();
+    if ((Array.isArray(data?.sections) ? data.sections : []).some(x => x && x.source)) await _svcFetchTree(); // 🧷 Каталог-чарнавік мог змяніцца (draft_src)
+    _svcResolveSources(data);
     siteData._sections = data; renderDynamicSections(data);
     initReveal(); // 🎯 ФІКС (як пры змене мовы v4.601): перарэндэраныя секцыі — НОВЫЯ DOM-вузлы; без паўторнага reveal-назіральніка завісаюць схаванымі (.js-reveal без .in-view)
     _dEditRender();
