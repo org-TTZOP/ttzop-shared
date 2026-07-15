@@ -4950,6 +4950,7 @@ function _nodeMultiselectChange(formId, key, opt, checked) {
 }
 
 const _TBL_PREVIEW = 3; // колькі радкоў паказваем у стане 'preview' (накапляльнікі/спісы)
+const _TBL_PORTION = 15; // порцыя «+N яшчэ»: preview(3) → 15 → 30 → … БЕЗ унутранага скролу (канон 3/15, рашэнне 2026-07-15; той жа рытм — _dsApplyDisplay на сайце)
 // Дэфолтны выгляд табліцы па СЕМАНТЫЦЫ (адзіная кропка праўды для ўсіх Table-секцый):
 //  • ЖУРНАЛ зменаў (section.changeTypes) → 'collapsed' — не раскрываецца аўтаматычна, не займае экран (1 радок-загаловак)
 //  • накапляльнікі/спісы → 'preview' (навейшыя _TBL_PREVIEW радкоў)
@@ -4975,10 +4976,6 @@ function _nodeTableSectionHtml(form, section, s, mover = '') {
   // Кэшуем секцыю па viewKey — каб onclick-хандлеры маглі знайсці яе без s.data.nodes
   if (!window._tblSectionCache) window._tblSectionCache = new Map();
   window._tblSectionCache.set(viewKey, section);
-  // ... і ФОРМУ (віртуальныя формы Куб/mch-all не жывуць у s.data.nodes — без кэшу onclick-хандлеры
-  // (cycle-view) перадавалі б dataFn undefined-форму → TypeError і «мёртвы» левы дыскложур)
-  if (!window._tblFormCache) window._tblFormCache = new Map();
-  window._tblFormCache.set(viewKey, form);
   // thSt: sticky top + фон каб радкі не праглядалі пры скроле
   const thSt = 'padding:5px 10px;font-size:0.7rem;font-weight:700;color:var(--label);text-transform:uppercase;letter-spacing:0.05em;text-align:left;border-bottom:1px solid var(--border);white-space:nowrap;position:sticky;top:0;background:var(--surface);z-index:1';
   const tdSt = 'padding:5px 10px;font-size:0.82rem;border-bottom:1px solid var(--border);vertical-align:top';
@@ -5012,9 +5009,10 @@ function _nodeTableSectionHtml(form, section, s, mover = '') {
   const cntHtml = total ? `<span style="font-size:0.72rem;color:var(--muted);font-weight:400">(${total})</span>` : '';
   const headerExtra = section.headerExtra ? section.headerExtra(form, s) : ''; // дадатковыя кантролі ў загалоўку (напр. плоскасць 2D-зрэзу)
   const menuExtra = section.menuExtra ? section.menuExtra(form, s, menuId) : ''; // дадатковыя пункты ⋯-меню секцыі (ААП: любая секцыя — напр. ракурс куба)
-  // ▼▼/▶▶ справа (парытэт з вузламі hasExpandAll): адзін клік адразу full / згарнуць. Ёсць там, дзе станаў >2:
-  // cycleFull (Мапа) або табліца з радкамі па-за preview (+N яшчэ). Кароткім табліцам хапае левага дыскложура.
-  const fullBtn = (section.cycleFull || total > _TBL_PREVIEW) ? `<button class="node-btn-icon" title="${view === 'full' ? t('tree_collapse_all') : t('tree_expand_all')}" onclick="event.stopPropagation();_tblSetView('${escHtml(fid)}','${escHtml(dk)}','${view === 'full' ? 'collapsed' : 'full'}')">${view === 'full' ? '▶▶' : '▼▼'}</button>` : '';
+  // ▼▼/▶▶ справа (парытэт з вузламі hasExpandAll): ▼▼ = адкрыць адразу да порцыі (15, далей клікамі «+N яшчэ»),
+  // ▶▶ = згарнуць у нуль. cycleFull (Мапа) захоўвае прамы 'full'. Кароткім табліцам хапае левага дыскложура.
+  const _expanded = view !== 'collapsed' && view !== 'preview'; // порцыя (лік) або 'full'
+  const fullBtn = (section.cycleFull || total > _TBL_PREVIEW) ? `<button class="node-btn-icon" title="${_expanded ? t('tree_collapse_all') : t('tree_expand_all')}" onclick="event.stopPropagation();_tblSetView('${escHtml(fid)}','${escHtml(dk)}',${_expanded ? `'collapsed'` : (section.cycleFull ? `'full'` : _TBL_PORTION)})">${_expanded ? '▶▶' : '▼▼'}</button>` : '';
   // Парадак правага кластара — канон радка вузла: [іншае: headerExtra ↻] → ▼▼ → ▲▼(мувер) → ⋯
   const titleRow = _sectionHeaderHtml(section.title, menuId, addItem + filterItem + chartItem + menuExtra + _sectionMenuCommonHtml(form, section, s, menuId), cntHtml + _secLockIconHtml(form, section), headerExtra + refreshBtn + fullBtn + mover, leadToggle);
   const footer = section.footerHtml ? section.footerHtml(form, s) : '';
@@ -5073,7 +5071,9 @@ function _nodeTableSectionHtml(form, section, s, mover = '') {
     });
   }
   const visTotal = sortedRows.length;
-  const visible = view === 'full' ? sortedRows : sortedRows.slice(0, _TBL_PREVIEW);
+  // Колькі радкоў бачна: 'preview' = 3; лік = порцыі (15/30/…); 'full' — толькі яўны defaultView (Даведка) / легасі
+  const shownN = view === 'full' ? visTotal : Math.min(typeof view === 'number' ? view : _TBL_PREVIEW, visTotal);
+  const visible = sortedRows.slice(0, shownN);
   // row-✎/✕ хаваюцца на залочанай/сістэмнай секцыі (кансістэнтна з addItem: «✎ = можна рэдагаваць»)
   const hasActs = (section.rowEditable || section.rowDeletable) && !_secLocked(form, section) && !_nodeSysContent(form);
   const colCount = columns.length + (hasActs ? 1 : 0);
@@ -5126,9 +5126,14 @@ function _nodeTableSectionHtml(form, section, s, mover = '') {
   // Радок-фільтр у thead (пад загалоўкамі): шырыня ячэек = шырыня слупкоў (нативна); відаць калі ўключаны праз ⋯
   const filterRow = filterRowOpen ? _nodeColFilterRowHtml(fid, dk, columns, colFilters, hasActs, _colRight) : '';
   const thead = `<thead><tr>${columns.map(thCell).join('')}${hasActs?`<th style="${thSt}"></th>`:''}</tr>${filterRow}</thead>`;
+  // Порцыі (канон 3/15): «+N яшчэ ▼» дадае наступную порцыю (з preview — адразу да 15); «▲ згарнуць» вяртае да 3
+  const _rest = visTotal - shownN;
+  const _nextN = shownN <= _TBL_PREVIEW ? _TBL_PORTION : shownN + _TBL_PORTION;
+  const moreBtn = _rest > 0 ? `<span style="cursor:pointer" onclick="_tblSetView('${escHtml(fid)}','${escHtml(dk)}',${_nextN})">+ ${Math.min(_rest, _nextN - shownN)} ${t('tbl_more')} ▼</span>` : '';
+  const lessBtn = shownN > _TBL_PREVIEW ? `<span style="cursor:pointer" onclick="_tblSetView('${escHtml(fid)}','${escHtml(dk)}','preview')">▲ ${t('tbl_less')}</span>` : '';
   const tbody = `<tbody>${visible.map(row=>`<tr>${columns.map(c=>cell(c,row)).join('')}${actCell(row)}</tr>`).join('')}${
-    (view === 'preview' && visTotal > _TBL_PREVIEW)
-      ? `<tr><td colspan="${colCount}" style="padding:6px 10px;text-align:center;color:var(--muted);cursor:pointer;font-size:0.78rem" onclick="_nodeTableCycleView('${escHtml(fid)}','${escHtml(dk)}')">+ ${visTotal - _TBL_PREVIEW} ${t('tbl_more')} ▼</td></tr>`
+    (moreBtn || lessBtn)
+      ? `<tr><td colspan="${colCount}" style="padding:6px 10px;text-align:center;color:var(--muted);font-size:0.78rem"><span style="display:inline-flex;gap:18px">${moreBtn}${lessBtn}</span></td></tr>`
       : ''}</tbody>`;
   const maxH = section.maxHeight !== undefined ? section.maxHeight : 320;
   const wrapSt = (view === 'full' && visTotal > _TBL_PREVIEW && maxH)
@@ -5145,27 +5150,23 @@ function _nodeTableSectionHtml(form, section, s, mover = '') {
   return `<div class="form-section-table">${titleRow}${chartHtml}<div style="${wrapSt}"><table style="width:100%;border-collapse:collapse">${thead}${tbody}</table></div>${footer}</div>`;
 }
 
-// Цыкл выгляду табліцы: >3 радкоў — preview→full→collapsed→preview; ≤3 — паказаць↔схаваць
+// Дыскложур табліцы (канон 3/15, 2026-07-15): TOGGLE адкрыта (preview/порцыя/full) ↔ collapsed (нуль радкоў);
+// паўторнае адкрыццё — да дэфолту секцыі (skipPreview → адразу порцыя 15; defaultView:'full' → full).
+// Порцыі «+N яшчэ»/«▲ згарнуць» жывуць у футэры табліцы (_nodeTableSectionHtml), не тут.
+// cycleFull (Мапа): трохстанавы цыкл ПАМЕРАЎ цела collapsed → preview (240) → full (480) → collapsed.
 function _nodeTableCycleView(formId, dataKey) {
   const s = currentNodeState;
   if (!s._tableView) s._tableView = new Map();
   const key = formId + '::' + dataKey;
-  const form = s?.data?.nodes?.find(n => n.id === formId) || window._tblFormCache?.get(key); // fallback: віртуальная форма з кэшу рэндэру
   const sec = _tblFindSection(formId, dataKey); // праз кэш рэндэру: бачыць узбагачаную секцыю (map → cycleFull/defaultView)
-  // dataFn-секцыі: total з функцыі; інакш з form.fields
-  const total = sec.dataFn ? (sec.dataFn(form, s) || []).length : (form?.fields?.[dataKey] || []).length;
   const cur = s._tableView.get(key) || _tblDefaultView(sec);
   let next;
-  if (sec.cycleFull) { // трохстанавае цела без радкоў (Мапа): collapsed → preview (240) → full (480) → collapsed
+  if (sec.cycleFull) {
     next = cur === 'collapsed' ? 'preview' : cur === 'preview' ? 'full' : 'collapsed';
-  } else if (total <= _TBL_PREVIEW) {
-    next = (cur === 'collapsed') ? 'preview' : 'collapsed';
-  } else {
-    if (cur === 'collapsed') next = sec.skipPreview ? 'full' : 'preview'; // skipPreview: адразу 'full'
-    else if (cur === 'preview') next = 'full';
-    else if (cur === 'full') next = 'collapsed';
-    else next = sec.skipPreview ? 'full' : 'preview';
-  }
+  } else if (cur === 'collapsed') {
+    const dv = _tblDefaultView(sec);
+    next = sec.skipPreview ? _TBL_PORTION : (dv === 'collapsed' ? 'preview' : dv);
+  } else next = 'collapsed';
   s._tableView.set(key, next);
   if (next !== 'collapsed') sec.onExpand?.(); // хук пры разгортванні
   s._renderFn?.();
@@ -5186,7 +5187,7 @@ function _tblExpandIfCollapsed(s, key, sec) {
   if (!s._tableView) s._tableView = new Map();
   const cur = s._tableView.get(key);
   if (!cur || cur === 'collapsed') {
-    s._tableView.set(key, sec?.skipPreview ? 'full' : 'preview');
+    s._tableView.set(key, sec?.skipPreview ? _TBL_PORTION : 'preview'); // skipPreview: адразу порцыя (канон 3/15)
     sec?.onExpand?.(); // загрузіць дадзеныя калі яшчэ не загружаны
   }
 }

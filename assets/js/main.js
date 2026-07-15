@@ -1302,8 +1302,9 @@ function renderDynamicSections(data) {
   // 🎛 згорнутасць галіны: загаловак = <summary> (стрэлка праз CSS .ds-fold), змест раскрываецца па кліку;
   // без загалоўка згортваць няма за што — паказваем як ёсць
   // фолд УСЮДЫ (рашэнне 2026-07-14): «Згорнута» = толькі пачатковы стан; без загалоўка — няма за што згортваць.
-  // У edit — кнопка ▶/▼ ПЕРАД назвай (канон Панелі: левы дыскложур у пачатку радка); стрэлка-пасля (::after) у edit схавана CSS-ам
-  const _foldWrap = (collapsed, head, inner) => head ? `<details class="ds-fold"${collapsed ? '' : ' open'}><summary>${_dEdit ? `<button class="ds-eb-btn ds-fold-btn" contenteditable="false" onclick="_dFoldBtn(event)" title="${_svcEsc(_dL('Разгарнуць / Згарнуць', 'Expand / Collapse'))}">${collapsed ? '▶' : '▼'}</button>` : ''}${head}</summary>${inner}</details>` : head + inner;
+  // АДЗІН механізм стрэлкі на публіку І edit (рашэнне 2026-07-15, [[feedback-draft-site-parity]]):
+  // кнопка ▸ ПЕРАД назвай заўсёды; паварот ▸→▼ — чыста CSS ад details[open] (без JS-падмены сімвала)
+  const _foldWrap = (collapsed, head, inner) => head ? `<details class="ds-fold"${collapsed ? '' : ' open'}><summary><button class="ds-fold-btn" contenteditable="false" onclick="_dFoldBtn(event)" title="${_svcEsc(_dL('Разгарнуць / Згарнуць', 'Expand / Collapse'))}">▸</button>${head}</summary>${inner}</details>` : head + inner;
   // 🎛 уласцівасць секцыі (каталог SECTION_PROPS): рэзалв печаны панэллю ў inst.disp; лег. v4.593 — асобныя ключы
   const _dsProp = (inst, k) => (inst.disp || {})[k] ?? ({ previewN: inst.previewN, collapsed: inst.collapsed ? 'yes' : undefined, layoutView: inst.dispLayout }[k]);
   const instHtml = (inst, d, idx, sibN) => {
@@ -1323,8 +1324,12 @@ function renderDynamicSections(data) {
       pad === 'compact' ? 'ds-pad-compact' : pad === 'roomy' ? 'ds-pad-roomy' : '',
       _dsProp(inst, 'carousel') === 'yes' ? 'ds-carousel' : ''
     ].filter(Boolean).join(' ');
-    const pvn = +(_dsProp(inst, 'previewN') || 0), lay = _dsProp(inst, 'layoutView'), ord = _dsProp(inst, 'itemOrder');
-    const disp = `${pvn > 0 ? ` data-pvn="${pvn}"` : ''}${(lay && lay !== 'off') ? ` data-lay="${_dsEsc(lay)}"` : ''}${(ord && ord !== 'panel') ? ` data-ord="${_dsEsc(ord)}"` : ''}`;
+    // previewN: пуста = дэфолт 3 (канон 3/15, 2026-07-15); яўны 0 = паказаць усе. data-pvn пішам ЗАЎСЁДЫ
+    // (і "0") — атрыбут пазначае секцыю-ўладальніка сваіх сетак для closest-фільтра ў _dsApplyDisplay
+    const pvnRaw = _dsProp(inst, 'previewN');
+    const pvn = (pvnRaw === undefined || pvnRaw === null || pvnRaw === '') ? 3 : +pvnRaw;
+    const lay = _dsProp(inst, 'layoutView'), ord = _dsProp(inst, 'itemOrder');
+    const disp = ` data-pvn="${pvn}"${(lay && lay !== 'off') ? ` data-lay="${_dsEsc(lay)}"` : ''}${(ord && ord !== 'panel') ? ` data-ord="${_dsEsc(ord)}"` : ''}`;
     const bandProp = _dsProp(inst, 'band'); // фонавая паласа: auto = чаргаванне, light/accent = яўная (лічыльнік не спажываецца)
     const bandCls = bandProp === 'light' ? 's-light' : bandProp === 'accent' ? 's-accent' : (band++ % 2 ? 's-alt' : 's-light');
     return d === 0
@@ -1342,9 +1347,11 @@ function renderDynamicSections(data) {
     const head = (name || _dEdit)
       ? (d === 0 ? `<h2 class="section-title"${nmAttr}>${name}</h2>` : _dsGroupHead(_sv(f.name), d - 1, nmAttr))
       : '';
+    // data-pvn="3" — уласныя сеткі раздзела (файлы-фота наўпрост у Папцы) таксама пад канонам 3/15;
+    // сеткі ўкладзеных секцый не кранаюцца (closest-фільтр у _dsApplyDisplay — кожная секцыя апрацоўвае свае)
     return d === 0
-      ? `<section id="sec-${_dsEsc(f.id)}" class="section ${band++ % 2 ? 's-alt' : 's-light'}${eCls}"><div class="container">${ebar}${_foldWrap(f.collapsed, head, inner)}</div></section>`
-      : `<div id="sec-${_dsEsc(f.id)}"${eCls ? ` class="${eCls.trim()}"` : ''} style="margin:20px 0 0 ${Math.min(d - 1, 3) * 14}px">${ebar}${_foldWrap(f.collapsed, head, inner)}</div>`;
+      ? `<section id="sec-${_dsEsc(f.id)}" data-pvn="3" class="section ${band++ % 2 ? 's-alt' : 's-light'}${eCls}"><div class="container">${ebar}${_foldWrap(f.collapsed, head, inner)}</div></section>`
+      : `<div id="sec-${_dsEsc(f.id)}" data-pvn="3"${eCls ? ` class="${eCls.trim()}"` : ''} style="margin:20px 0 0 ${Math.min(d - 1, 3) * 14}px">${ebar}${_foldWrap(f.collapsed, head, inner)}</div>`;
   };
   // 📎 генерычны ФайлБлок дрэва: фота — плітка з лайтбоксам (суседнія файлы зліваюцца ў адну сетку)
   const _fileTile = (f, idx, total, albId) => {
@@ -1382,12 +1389,17 @@ function renderDynamicSections(data) {
 }
 
 // 🎛 ПРЭЗЕНТАЦЫЯ ГАЛІНЫ (генерычная, ПА-ЗА SITE_VIEWS — працуе з любой сеткай любога выгляду):
-// data-pvn = N бачных пазіцый («Паказаць яшчэ» порцыямі па N + «Скрыць»); data-lay = дэфолт
+// data-pvn = N бачных пазіцый (пуста ў панэлі = 3; 0 = усе); «Паказаць яшчэ» — порцыямі па _DS_PORTION=15
+// (канон 3/15, як Table-секцыі панэлі; без унутранага скролу) + «Скрыць» вяртае да N; data-lay = дэфолт
 // Карткі/Спіс з панэлі, выбар наведвальніка мацнейшы (localStorage пер-секцыя, не дадзеныя)
+const _DS_PORTION = 15;
 function _dsApplyDisplay(mount) {
   const ui = getUI();
   mount.querySelectorAll('[data-pvn],[data-lay],[data-ord]').forEach(root => {
-    const grids = [...root.querySelectorAll('.grid, .tile-grid, .brands-grid, .faq-list')];
+    // closest-фільтр: сетка належыць БЛІЖЭЙШАЙ секцыі-ўладальніку — укладзеная секцыя (матрошка)
+    // апрацоўвае свае сеткі сама, інакш кнопкі «Паказаць яшчэ» дубляваліся б ад продка і нашчадка
+    const grids = [...root.querySelectorAll('.grid, .tile-grid, .brands-grid, .faq-list')]
+      .filter(g => (g.closest('[data-pvn],[data-lay],[data-ord]') || root) === root);
     if (root.dataset.ord) grids.forEach(grid => { // 🎲 парадак пазіцый: random/newest (групы з загалоўкамі не тасуем — парадак групавы)
       const items = [...grid.children];
       if (items.some(el => el.classList.contains('services-folder-heading'))) return;
@@ -1413,14 +1425,16 @@ function _dsApplyDisplay(mount) {
       const more = document.createElement('button'); more.type = 'button'; more.className = 'ds-more-btn';
       const less = document.createElement('button'); less.type = 'button'; less.className = 'ds-more-btn';
       less.textContent = ui.show_less || '▲';
+      // Порцыі 3/15: з прэв'ю (N<15) першы клік адкрывае да 15, далей +15 за клік
+      const nextShown = () => Math.min(shown < _DS_PORTION ? _DS_PORTION : shown + _DS_PORTION, items.length);
       const apply = () => {
         items.forEach((el, i) => { el.style.display = i < shown ? '' : 'none'; });
         const rest = items.length - shown;
         more.style.display = rest > 0 ? '' : 'none';
-        more.textContent = `${ui.show_more || '…'} (+${Math.min(rest, n)})`;
+        more.textContent = `${ui.show_more || '…'} (+${nextShown() - shown})`;
         less.style.display = shown > n ? '' : 'none';
       };
-      more.onclick = () => { shown = Math.min(shown + n, items.length); apply(); };
+      more.onclick = () => { shown = nextShown(); apply(); };
       less.onclick = () => { shown = n; apply(); grid.scrollIntoView({ block: 'nearest' }); };
       wrap.append(more, less);
       grid.after(wrap);
@@ -2659,7 +2673,7 @@ function _dItemKey(t) { return t === 'list' ? 'rows' : t === 'posts' ? 'posts' :
 function _secCat() { return [ // люстэрка SECTION_PROPS панэлі (усе 10 параметраў); num:true → лічбавае поле
   { key: 'gridCols',   name: _dL('Калонкі', 'Columns'),   opts: [['auto', _dL('Аўта', 'Auto')], ['c1', '1'], ['c2', '2'], ['c3', '3'], ['c4', '4']] },
   { key: 'layoutView', name: _dL('Выгляд', 'View'),       opts: [['off', _dL('Аўта', 'Auto')], ['cards', _dL('Карткі', 'Cards')], ['list', _dL('Спіс', 'List')]] },
-  { key: 'previewN',   name: _dL('Паказваць', 'Show'),    num: true }, // колькі пазіцый адразу (0 = усе)
+  { key: 'previewN',   name: _dL('Паказваць', 'Show'),    num: true }, // колькі пазіцый адразу (пуста = 3, 0 = усе; далей порцыямі па 15)
   { key: 'itemOrder',  name: _dL('Парадак', 'Order'),     opts: [['panel', _dL('З панэлі', 'Panel')], ['random', _dL('Выпадкова', 'Random')], ['newest', _dL('Навейшыя', 'Newest')]] },
   { key: 'collapsed',  name: _dL('Згорнута', 'Collapsed'), opts: [['no', _dL('Не', 'No')], ['yes', _dL('Так', 'Yes')]] },
   { key: 'headAlign',  name: _dL('Загаловак', 'Heading'), opts: [['center', _dL('Цэнтр', 'Center')], ['left', _dL('Злева', 'Left')]] },
@@ -2670,14 +2684,7 @@ function _secCat() { return [ // люстэрка SECTION_PROPS панэлі (у
 ]; }
 function _dEditInit() {
   _dEditRender();
-  // ▶/▼ перад назвай сінхронны з фолдам НЕЗАЛЕЖНА ад шляху (кнопка ці клік па загалоўку):
-  // 'toggle' не бурбуліць — ловім capture-ам; кнопка жыве ў СВАІМ summary (дзеці — глыбей, не блытаюцца)
-  document.addEventListener('toggle', ev => {
-    const dt = ev.target;
-    if (!_dEdit || !dt || dt.tagName !== 'DETAILS' || !dt.classList.contains('ds-fold')) return;
-    const b = dt.querySelector(':scope > summary > .ds-fold-btn');
-    if (b) b.textContent = dt.open ? '▼' : '▶';
-  }, true);
+  // стрэлка фолда круціцца чыстым CSS ад details[open] (.ds-fold-btn) — toggle-слухач больш не патрэбны
 }
 function _dSecs() { const s = siteData?._sections; return (Array.isArray(s?.sections) ? s.sections : []).filter(x => x && x.kind !== 'folder' && x.kind !== 'file' && x.type && SITE_VIEWS[x.type]); }
 function _dSecTitle(s) { const tt = s.title; const nm = (tt && typeof tt === 'object') ? (tt[currentLang] || Object.values(tt).find(Boolean)) : tt; return nm || _sv(s.caption) || _sv(s.name) || s.type || s.id; } // файл → caption/name
@@ -2696,8 +2703,8 @@ function _dSecBar(id, canUp, canDown, active) {
   const info = `<button class="ds-eb-btn" onclick="event.stopPropagation();_dSecInfo('${_dsEsc(id)}',this)" title="${_svcEsc(_dL('Інфа і Сметніца', 'Info & Trash'))}">ⓘ</button>`;
   return `<div class="ds-editbar" contenteditable="false">${dot}${mv(canUp, 'up', '▲')}${mv(canDown, 'down', '▼')}${info}<button class="ds-eb-btn ds-eb-menu" onclick="event.stopPropagation();_dSecMenu('${_dsEsc(id)}',this)" title="${_svcEsc(_dL('Меню', 'Menu'))}">⋯</button></div>`;
 }
-// ▶/▼ ПЕРАД назвай (канон Панелі: левы дыскложур у пачатку радка) — жыве ў summary фолда;
-// стрэлку абнаўляе адзіны 'toggle'-слухач (агульны шлях з клікам па самім загалоўку)
+// ▸ ПЕРАД назвай (канон Панелі: левы дыскложур у пачатку радка) — жыве ў summary фолда, публіка+edit;
+// паварот стрэлкі — чыста CSS (.ds-fold[open] > summary > .ds-fold-btn), адзін хэндлер абодвум рэжымам
 function _dFoldBtn(ev) {
   ev.preventDefault(); ev.stopPropagation(); // не даць summary зрабіць другі (адваротны) toggle
   const d = ev.target.closest('details.ds-fold'); if (d) d.open = !d.open;
