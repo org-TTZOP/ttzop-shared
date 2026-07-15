@@ -3851,9 +3851,10 @@ function _folderNodeHtml(folder, s, fi, total, childrenAreSide, depth) {
       ${_nodeRowRightHtml(parts)}
     </div>${bodyHtml}</div>`;
 }
-// ═══ 🧮 КАНОН 3/15 НА ДЗЕЦЯХ БАЦЬКІ (этап 2, 2026-07-15) — той жа рытм, што Table-секцыі і _dsApplyDisplay ═══
-// s._treeShown Map(parentKey → лік бачных дзяцей); няма запісу = прэв'ю (_TBL_PREVIEW=3). Порцыі «+N яшчэ ▼»
-// (з прэв'ю адразу да 15) + «▲ згарнуць». Пры актыўным фільтры/фасетах ліміт НЕ ўжываецца (пошук паказвае ўсё).
+// ═══ 🧮 ПОРЦЫІ НА ДЗЕЦЯХ БАЦЬКІ (этап 2, 2026-07-15) — той жа рытм, што Table-секцыі і _dsApplyDisplay ═══
+// s._treeShown Map(parentKey → лік бачных дзяцей); няма запісу = прэв'ю (_TREE_PREVIEW=15 — змест Папак
+// шчадрэйшы за табліцы). Далей порцыі «+N яшчэ ▼» па _TBL_PORTION + «▲ згарнуць» (да 15).
+// Пры актыўным фільтры/фасетах ліміт НЕ ўжываецца (пошук паказвае ўсё).
 const _treeKey = pid => pid || '::root';
 // Адфільтраваныя+адсартаваныя дзеці бацькі (адзіная крыніца для renderNodeTree і фокус-рэвілу)
 function _treeKids(parentId, s) {
@@ -3894,12 +3895,12 @@ function _treeSetShown(pid, v) { // 'preview' = вярнуць да 3 (запі�
 }
 // Футэр «+N яшчэ ▼ / ▲ згарнуць» пад дзецьмі бацькі (люстэрка футэра Table-секцыі)
 function _treeMoreRowHtml(parentId, shownEff, total, filtered) {
-  if (filtered || total <= _TBL_PREVIEW) return '';
+  if (filtered || total <= _TREE_PREVIEW) return '';
   const rest = total - shownEff;
-  const nextN = shownEff <= _TBL_PREVIEW ? _TBL_PORTION : shownEff + _TBL_PORTION;
+  const nextN = shownEff + _TBL_PORTION;
   const pid = escHtml(parentId ?? '');
   const more = rest > 0 ? `<span style="cursor:pointer" onclick="event.stopPropagation();_treeSetShown('${pid}',${nextN})">+ ${Math.min(rest, nextN - shownEff)} ${t('tbl_more')} ▼</span>` : '';
-  const less = shownEff > _TBL_PREVIEW ? `<span style="cursor:pointer" onclick="event.stopPropagation();_treeSetShown('${pid}','preview')">▲ ${t('tbl_less')}</span>` : '';
+  const less = shownEff > _TREE_PREVIEW ? `<span style="cursor:pointer" onclick="event.stopPropagation();_treeSetShown('${pid}','preview')">▲ ${t('tbl_less')}</span>` : '';
   return (more || less) ? `<div style="grid-column:1/-1;padding:4px 10px;text-align:center;color:var(--muted);font-size:0.78rem"><span style="display:inline-flex;gap:18px">${more}${less}</span></div>` : '';
 }
 function renderNodeTree(parentId, depth) {
@@ -3914,9 +3915,9 @@ function renderNodeTree(parentId, depth) {
       ? s._folderEmptyHtml(pFolder)
       : `<div style="padding:4px 0;font-size:0.8rem;color:var(--muted)">${t('folder_empty')}</div>`);
   }
-  // 🧮 канон 3/15: бачны толькі пачатак адзінага рэндэр-парадку ([формы?] папкі → элементы → формы → файлы)
+  // 🧮 порцыі дрэва: бачны толькі пачатак адзінага рэндэр-парадку ([формы?] папкі → элементы → формы → файлы)
   const _shownRaw = s._treeShown?.get(_treeKey(parentId));
-  const shownEff = filtered ? children.length : Math.min(typeof _shownRaw === 'number' ? _shownRaw : _TBL_PREVIEW, children.length);
+  const shownEff = filtered ? children.length : Math.min(typeof _shownRaw === 'number' ? _shownRaw : _TREE_PREVIEW, children.length);
   const _allowed = new Set(_treeOrdered(children, s).slice(0, shownEff).map(n => n.id));
   const _vis = arr => arr.filter(n => _allowed.has(n.id));
   const folders = _vis(children.filter(n => n.type === 'folder'));
@@ -3978,7 +3979,7 @@ function renderNodeTree(parentId, depth) {
     const cls = cardFn ? 'node-files-grid' : 'node-items-list';
     html += `<div class="${cls}">${fileNodes.map(f => _relAbove(f.id) + fn(f) + _formKids(f)).join('')}</div>`; // ааП: subtree як у Forms
   }
-  html += _treeMoreRowHtml(parentId, shownEff, children.length, filtered); // 🧮 канон 3/15: «+N яшчэ ▼ / ▲ згарнуць»
+  html += _treeMoreRowHtml(parentId, shownEff, children.length, filtered); // 🧮 порцыі дрэва: «+N яшчэ ▼ / ▲ згарнуць»
   return html;
 }
 
@@ -4989,6 +4990,7 @@ function _nodeMultiselectChange(formId, key, opt, checked) {
 
 const _TBL_PREVIEW = 3; // колькі радкоў паказваем у стане 'preview' (накапляльнікі/спісы)
 const _TBL_PORTION = 15; // порцыя «+N яшчэ»: preview(3) → 15 → 30 → … БЕЗ унутранага скролу (канон 3/15, рашэнне 2026-07-15; той жа рытм — _dsApplyDisplay на сайце)
+const _TREE_PREVIEW = 15; // прэв'ю дзяцей Папкі ў ДРЭВЕ (рашэнне 2026-07-15: змест Папак — 15, не 3; табліцы застаюцца на _TBL_PREVIEW, сайт/Чарнавік — на сваіх 3)
 // Дэфолтны выгляд табліцы па СЕМАНТЫЦЫ (адзіная кропка праўды для ўсіх Table-секцый):
 //  • ЖУРНАЛ зменаў (section.changeTypes) → 'collapsed' — не раскрываецца аўтаматычна, не займае экран (1 радок-загаловак)
 //  • накапляльнікі/спісы → 'preview' (навейшыя _TBL_PREVIEW радкоў)
@@ -6848,14 +6850,14 @@ function _sectionAddItem(key, folderId) {
 
 // ПРОДАКФПФ: разгарнуць/згарнуць — для ўсіх трох тыпаў вузлоў
 // id=null → усё дрэва; bool=undefined → аўта-рэверс па _nodeAllExpanded
-// 🧮 канон 3/15: ▼▼/▶▶ і на «колькі дзяцей бачна» — expand → да порцыі 15 (далей клікамі «+N яшчэ»),
-// collapse → назад да прэв'ю 3 (запісы прыбіраюцца). Ахоплівае бацьку-мэту і ўсё паддрэва.
+// 🧮 порцыі дрэва + ▼▼/▶▶: згарнуць-усё вяртае «паказана» да прэв'ю (_TREE_PREVIEW=15, запісы прыбіраюцца);
+// разгарнуць-усё колькасці НЕ мяняе — дрэва ўжо на 15, далей толькі кнопкай «+N яшчэ». Ахоплівае мэту і паддрэва.
 function _treeShownExpandAll(s, targetId, expand) {
-  const m = (s._treeShown = s._treeShown || new Map());
+  if (expand || !s._treeShown) return;
   const keys = [_treeKey(targetId)];
   const walk = pid => (s.data?.nodes || []).filter(n => n.parentId === pid).forEach(n => { keys.push(n.id); walk(n.id); });
   walk(targetId ?? null);
-  keys.forEach(k => { if (!expand) m.delete(k); else if (!(typeof m.get(k) === 'number' && m.get(k) >= _TBL_PORTION)) m.set(k, _TBL_PORTION); });
+  keys.forEach(k => s._treeShown.delete(k));
 }
 function _tblFullViewAll(s, expand) { // ▼▼/▲▲: трохстанавыя целы (cycleFull — Мапа) разам з дрэвам → full / collapsed
   (s.data?.nodes || []).filter(n => n.type === 'form').forEach(f => {
@@ -6870,7 +6872,7 @@ function nodeExpandAll(id, bool) {
   const targetId = (id !== undefined && id !== null) ? id : null;
   const expand = typeof bool === 'boolean' ? bool : !_nodeAllExpanded(s, targetId);
   _tblFullViewAll(s, expand); // Мапа і іншыя cycleFull-целы ідуць за дрэвам (адразу вялікія / згорнутыя)
-  _treeShownExpandAll(s, targetId, expand); // канон 3/15: ▼▼ адкрывае «паказана» бацькоў да порцыі 15, ▶▶ вяртае да 3
+  _treeShownExpandAll(s, targetId, expand); // порцыі дрэва: ▶▶ вяртае «паказана» бацькоў да прэв'ю 15
 
   if (targetId === null) {
     if (expand) {
@@ -7885,11 +7887,11 @@ function _treeRevealForFocus(s, chain) {
   chain.forEach(n => {
     const pid = n.parentId ?? null;
     const { children, filtered } = _treeKids(pid, s);
-    if (filtered || children.length <= _TBL_PREVIEW) return;
+    if (filtered || children.length <= _TREE_PREVIEW) return;
     const idx = _treeOrdered(children, s).findIndex(c => c.id === n.id);
     const key = _treeKey(pid);
-    const eff = typeof m.get(key) === 'number' ? m.get(key) : _TBL_PREVIEW;
-    if (idx >= eff) m.set(key, Math.max(_TBL_PORTION, Math.ceil((idx + 1) / _TBL_PORTION) * _TBL_PORTION));
+    const eff = typeof m.get(key) === 'number' ? m.get(key) : _TREE_PREVIEW;
+    if (idx >= eff) m.set(key, Math.ceil((idx + 1) / _TBL_PORTION) * _TBL_PORTION);
   });
 }
 function _focusNodeById(s, id) {
