@@ -289,7 +289,8 @@ export function bookableServices(nodes) {
     // Дзве розныя семантыкі, не блытаць. Абодва ўжывае ТОЛЬКІ публічны шлях (адмін у панэлі не абмежаваны).
     return { id: n.id, name: f.name || n.name || '?', duration, bufferAfter: +f.bufferAfter || 0, leadMin: Math.max(0, +f.bookLead || 0),
       cancelLeadMin: Math.max(0, +f.bookCancelLead || 0), resourceIds, _segments: segments, _groups: Array.isArray(f._groups) ? f._groups : [],
-      groupMax: Math.max(0, parseInt(f.groupMax, 10) || 0) }; // 👥 ліміт групы; 0 = звычайная адзіночная
+      groupMax: Math.max(0, parseInt(f.groupMax, 10) || 0), // 👥 ліміт групы; 0 = звычайная адзіночная
+      fixed: f.bookFixed === 'yes' }; // 📅 толькі прызначаныя выезды (экскурсіі): публіка не стварае новых слотаў — далучаецца да існуючых груп
   }).filter(x => x.duration > 0);
 }
 // 👥 ГРУПЫ: адзіная нармалізацыя месцаў адной броні (дэфолт 1) — ААП: не паўтараць parseInt/max па кутках

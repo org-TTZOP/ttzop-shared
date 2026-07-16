@@ -778,7 +778,10 @@ const FORM_SCHEMAS = {
         { key: 'bookCancelLead', type: 'number', label: 'svc_cancel_lead',   readOnly: () => true, // ⏳ запас перад ПАЧАТКАМ, раней за які кліент ужо не адменіць/не перанясе запіс сам (хв); 0 = хоць за хвіліну
           visible: form => (form.fields?.fulfil || 'cart') === 'booking' },
         { key: 'groupMax',    type: 'number',   label: 'svc_group_max', hint: 'svc_group_max_hint', readOnly: () => true, // 👥 ГРУПАВАЯ паслуга (ёга/экскурсія): ліміт удзельнікаў адной групы; 0/пуста = звычайная адзіночная (1 слот = 1 кліент)
-          visible: form => (form.fields?.fulfil || 'cart') === 'booking' }
+          visible: form => (form.fields?.fulfil || 'cart') === 'booking' },
+        { key: 'bookFixed',   type: 'select',   label: 'svc_fixed', hint: 'svc_fixed_hint', readOnly: () => true, default: 'no', // 📅 фіксаваныя выезды: публіка не стварае слотаў — толькі далучаецца да выездаў, створаных адмінам (запіс + ⧉ серыя)
+          options: ['no','yes'], labelMap: { no: 'spv_no', yes: 'spv_yes' },
+          visible: form => (form.fields?.fulfil || 'cart') === 'booking' && +form.fields?.groupMax > 0 } // мае сэнс толькі ў групавой (далучэнне да існуючага выезду)
       ] },
     // 🗺 МАРШРУТ ЭКСКУРСІІ (booking): мапа ў points-рэжыме (клік = кропка) + накапляльнік кропак з ml-назвамі.
     // План для сайта (адносныя часы, агульная працягласць) фарміруецца з парадку і часоў аўтаматычна (_svcItems.route)
@@ -8241,7 +8244,9 @@ let appointmentsState = {
   _normalizeFn: () => _appointmentsAddHost(),
   _onFormCreate: (name, fields) => _adminCreateAppointment(fields),
   _nodeMenuExtra: (node, mid) => (node.id === 'appt-host' || node.contentType === 'appt-list' || node.contentType === 'appt-date') // +Запіс: на Форме-0/Папцы-0 спісу (без даты) і на Папцы-дні (з датай папкі)
-    ? `<div class="node-overflow-sep"></div><button class="node-overflow-item" title="${t('appt_new')}" onclick="nodeCloseOverflow('${mid}');_apptCreatePrompt('${node.contentType === 'appt-date' ? escHtml(node.name) : ''}')">+📅</button>` : '',
+    ? `<div class="node-overflow-sep"></div><button class="node-overflow-item" title="${t('appt_new')}" onclick="nodeCloseOverflow('${mid}');_apptCreatePrompt('${node.contentType === 'appt-date' ? escHtml(node.name) : ''}')">+📅</button>`
+    : node.formSchema === 'appointmentDetails' // ⧉📅 серыя выездаў: паўтарыць запіс па днях тыдня да даты (фіксаваныя выезды экскурсій)
+    ? `<div class="node-overflow-sep"></div><button class="node-overflow-item" title="${t('appt_series')}" onclick="nodeCloseOverflow('${mid}');_apptSeriesPrompt('${node.id}')">⧉📅</button>` : '',
   _treeFacets: () => [{ key: 'status', label: t('f_status'), options: Object.entries(getAppointmentStatusesMap()).map(([value, label]) => ({ value, label })) }],
   _nodeSearchText: n => { const f = n.fields || {}; return [f.clientName, f.clientPhone, f.serviceName, f.resourceName, getAppointmentStatusesMap()[f.status]].filter(Boolean).join(' '); },
   _treeSortExtra: (pid, kids) => kids.some(k => k.fields?.drawerType === 'appt_item') ? [{ key: '_time', label: t('appt_time'), get: n => n.fields?.time || '' }] : [],
@@ -8260,6 +8265,52 @@ let appointmentsState = {
   _trashEnabled: true, // канон: выдаленне запісу (🗑) → Сметніца (♻-аднаўляльна), асобна ад скасавання (статус). Персіст у D1 (deleted_at), сінк праз appt_sync
   _emptyHtml: () => `<div style="padding:8px 0;font-size:0.85rem;color:var(--muted)">${t('folder_empty')}</div>`
 };
+// ⧉📅 СЕРЫЯ ВЫЕЗДАЎ: паўтарыць запіс па абраных днях тыдня да даты ўключна (фіксаваныя выезды —
+// пазіцыя з bookFixed прадаецца толькі праз такія загадзя створаныя запісы-групы). Пусты выезд =
+// звычайны scheduled-запіс без кліента (participants=[]) — кліенты далучаюцца праз мадалку слотаў.
+function _apptSeriesPrompt(apptId) {
+  const s = appointmentsState, node = s.data?.nodes?.find(n => n.id === apptId); if (!node) return;
+  const f = node.fields || {};
+  _nfmApplySchema(Object.assign([
+    { key: 'days',  type: 'multiselect', label: 'svc_days', options: ['1','2','3','4','5','6','7'], optionLabels: () => _weekdayLabels() },
+    { key: 'until', type: 'date', label: 'ser_until' }
+  ], { _noName: true }));
+  _nfmTitle(t('appt_series') + (f.serviceName ? ' · ' + f.serviceName : ''));
+  const modal = document.getElementById('node-form-modal'); modal.dataset.mode = 'add';
+  _nfmSetMulti('nfm-f-days', [String(TTZOP_BOOKING.dowOf(f.date))]); // дэфолт: дзень тыдня арыгінала
+  modal.style.display = 'flex';
+  _nfmCustomSubmit = fields => _apptSeriesCreate(node, fields);
+}
+function _apptSeriesCreate(node, fields) {
+  const f = node.fields || {};
+  const days = (Array.isArray(fields.days) && fields.days.length ? fields.days : [String(TTZOP_BOOKING.dowOf(f.date))]).map(String);
+  const until = String(fields.until || '');
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(until) || until <= f.date) { showAlert(t('ser_until_bad')); return; }
+  const startMin = _toMin(f.time) || 0, endMin = startMin + (+f.duration || 60) + (+f.bufferAfter || 0);
+  const resIds = [...new Set((f.assignments || []).map(a => a.resourceId).filter(Boolean))];
+  const recs = []; let skipped = 0;
+  const d = new Date(f.date + 'T00:00:00Z');
+  for (;;) {
+    d.setUTCDate(d.getUTCDate() + 1);
+    const iso = d.toISOString().slice(0, 10);
+    if (iso > until) break;
+    if (!days.includes(String(TTZOP_BOOKING.dowOf(iso)))) continue;
+    // сумленнасць серыі: рэсурс заняты/зачынены (графік+выключэнні праз date-aware шлях) → дзень прапускаецца
+    if (resIds.some(rid => !_resourceFreeInWindow(rid, iso, startMin, endMin))) { skipped++; continue; }
+    const now = new Date().toISOString();
+    recs.push({ id: 'appt-' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6) + recs.length,
+      date: iso, time: f.time, duration: f.duration, bufferAfter: f.bufferAfter,
+      serviceId: f.serviceId, serviceName: f.serviceName, assignments: f.assignments,
+      status: 'scheduled', createdAt: now,
+      statusLog: [{ changedAt: now, status: 'scheduled', note: t('appt_series'), by: _myActorLabel() }],
+      ...(+f.groupMax > 0 ? { groupMax: +f.groupMax, participants: [] } : {}) }); // пусты выезд чакае першага ўдзельніка
+  }
+  if (!recs.length) { showAlert(t('ser_none').replace('{skip}', skipped)); return; }
+  _appointmentsBuildTree(_appointmentsToArray().concat(recs)); // дрэва з новымі выездамі; снапшот некрануты → дыф-сінк дашле толькі новае
+  _appointmentsSave();
+  appointmentsState._renderFn();
+  showAlert(t('ser_done').replace('{n}', recs.length) + (skipped ? ' ' + t('ser_skipped').replace('{n}', skipped) : ''));
+}
 function _apptChildrenSort(a, b) {
   if (a.type !== b.type) return a.type === 'folder' ? -1 : 1;
   if (a.fields?.drawerType === 'appt-date') return (b.name || '').localeCompare(a.name || ''); // навейшы дзень зверху
