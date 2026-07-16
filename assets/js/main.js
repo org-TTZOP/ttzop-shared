@@ -1216,7 +1216,8 @@ function _svcItems(nodes) {
           fulfil: f.fulfil || 'cart',
           ...(f.fulfil === 'subscription' && f.period ? { period: f.period } : {}),
           ...((!f.fulfil || f.fulfil === 'booking') && +f.groupMax > 0 ? { groupMax: +f.groupMax } : {}), // 👥 групавая пазнака (легасі без fulfil = bookable)
-          ...(Array.isArray(f._route) && f._route.length ? { route: f._route.map(p => ({ name: p.name, desc: p.desc, stay: +p.stayMin || 0, move: +p.moveMin || 0, lat: p.lat, lng: p.lng })) } : {}), // 🗺 маршрут экскурсіі → цізер + чытач плана
+          ...(Array.isArray(f._route) && f._route.length ? { route: f._route.map(p => ({ name: p.name, desc: p.desc, stay: +p.stayMin || 0, move: +p.moveMin || 0, lat: p.lat, lng: p.lng,
+            ...(p.photo && (p.photo.url || p.photo.thumbUrl) ? { photo: { url: p.photo.url || '', thumbUrl: p.photo.thumbUrl || '' } } : {}) })) } : {}), // 🗺 маршрут экскурсіі → цізер + чытач плана (фота кропкі — R2)
           ...(off || hidUp ? { hidden: true } : {}),
           ...(path.length ? { group: path[path.length - 1].name, path } : {}) });
       }
@@ -2672,7 +2673,7 @@ function _routeBodyHtml(it) {
     acc += stay + move;
     const last = i === route.length - 1;
     const transfer = (!last && move) ? `<div style="margin-top:10px;font-size:0.85rem;opacity:0.6">${_dsEsc((ui.route_transfer || '').replace('{t}', _fmtDurSite(move)))}</div>` : '';
-    return `<div style="display:flex;gap:14px"><div style="display:flex;flex-direction:column;align-items:center"><div style="width:30px;height:30px;flex:none;border-radius:50%;background:${acc0};color:#fff;font:700 14px/30px system-ui,sans-serif;text-align:center">${i + 1}</div>${last ? '' : '<div style="flex:1;width:2px;background:currentColor;opacity:0.18;margin:4px 0"></div>'}</div><div style="flex:1;padding-bottom:${last ? 0 : 20}px"><div style="display:flex;align-items:baseline;gap:8px;flex-wrap:wrap"><span style="font:600 0.8rem ui-monospace,monospace;opacity:0.55">${arr}</span><strong style="font-size:1.05rem">${_dsEsc(_sv(p.name)) || _dsEsc((ui.route_stop || '') + ' ' + (i + 1))}</strong>${stay ? `<span style="font-size:0.85rem;opacity:0.6">· ${_dsEsc(_fmtDurSite(stay))}</span>` : ''}</div>${_sv(p.desc) ? `<div style="margin-top:5px;font-size:0.93rem;opacity:0.85;line-height:1.55">${_dsEsc(_sv(p.desc))}</div>` : ''}${transfer}</div></div>`;
+    return `<div style="display:flex;gap:14px"><div style="display:flex;flex-direction:column;align-items:center"><div style="width:30px;height:30px;flex:none;border-radius:50%;background:${acc0};color:#fff;font:700 14px/30px system-ui,sans-serif;text-align:center">${i + 1}</div>${last ? '' : '<div style="flex:1;width:2px;background:currentColor;opacity:0.18;margin:4px 0"></div>'}</div><div style="flex:1;padding-bottom:${last ? 0 : 20}px"><div style="display:flex;align-items:baseline;gap:8px;flex-wrap:wrap"><span style="font:600 0.8rem ui-monospace,monospace;opacity:0.55">${arr}</span><strong style="font-size:1.05rem">${_dsEsc(_sv(p.name)) || _dsEsc((ui.route_stop || '') + ' ' + (i + 1))}</strong>${stay ? `<span style="font-size:0.85rem;opacity:0.6">· ${_dsEsc(_fmtDurSite(stay))}</span>` : ''}</div>${_sv(p.desc) ? `<div style="margin-top:5px;font-size:0.93rem;opacity:0.85;line-height:1.55">${_dsEsc(_sv(p.desc))}</div>` : ''}${p.photo && (p.photo.thumbUrl || p.photo.url) ? `<a href="${_dsEsc(p.photo.url || p.photo.thumbUrl)}" target="_blank" rel="noopener"><img src="${_dsEsc(p.photo.thumbUrl || p.photo.url)}" alt="" loading="lazy" style="display:block;margin-top:10px;max-width:300px;width:100%;border-radius:10px"></a>` : ''}${transfer}</div></div>`;
   }).join('');
   const gm = _routeGmapsUrl(route);
   const nameArg = `'${_dsEsc(_sv(it.title)).replace(/'/g, '&#39;')}'`;

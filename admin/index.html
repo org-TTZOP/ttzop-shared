@@ -794,10 +794,13 @@ const FORM_SCHEMAS = {
       rowSchema: [
         { key: 'name',    type: 'text',     label: 'f_name',        ml: true },
         { key: 'desc',    type: 'textarea', label: 'f_description', ml: true },
+        { key: 'photo',   type: 'image',    label: 'rt_photo' }, // 📷 фота кропкі (R2) — паказваецца ў чытачы маршруту на сайце
         { key: 'stayMin', type: 'number',   label: 'rt_stay' },
         { key: 'moveMin', type: 'number',   label: 'rt_move' }
       ],
       columnsFn: (form, s) => [
+        { key: 'photo',   label: 'rt_photo', type: 'html', sortable: false,
+          render: v => (v && (v.thumbUrl || v.url)) ? `<img src="${escHtml(v.thumbUrl || v.url)}" alt="" style="width:34px;height:34px;object-fit:cover;border-radius:6px;display:block">` : '—' },
         { key: 'name',    label: 'f_name',    type: 'text', ml: true },
         { key: '_arr',    label: 'rt_arrive', type: 'html', sortable: false, // адносны час прыбыцця: сума stay+move папярэдніх кропак
           render: (v, row) => { let acc = 0; for (const r of (form.fields?._route || [])) { if (r._id === row._id) break; acc += (+r.stayMin || 0) + (+r.moveMin || 0); } return `+${Math.floor(acc / 60)}:${String(acc % 60).padStart(2, '0')}`; } },
@@ -5686,10 +5689,32 @@ function _normTime(v) {
 }
 function _nfmReadVal(f, el) {
   if (f.type === 'multiselect' || el.dataset?.ms) return Array.from(el.querySelectorAll('input[type=checkbox]:checked')).map(c => c.value); // масіў абраных
+  if (f.type === 'image' || el.dataset?.img) { const v = el.querySelector('[data-val]')?.value || ''; try { return v ? JSON.parse(v) : ''; } catch { return ''; } } // 📷 {url,thumbUrl} са схаванага input
   return f.type === 'number' ? (el.value === '' ? '' : Math.max(0, parseFloat(el.value) || 0)) : f.type === 'time' ? _normTime(el.value) : el.value;
 }
 // перадзагрузка multiselect-кантэйнера ў мадале (адзначыць чэкбоксы па масіве значэнняў)
 function _nfmSetMulti(elId, vals) { const el = document.getElementById(elId); if (!el) return; const set = new Set((Array.isArray(vals) ? vals : []).map(String)); el.querySelectorAll('input[type=checkbox]').forEach(c => { c.checked = set.has(c.value); }); }
+// 📷 image-поле мадала: паказаць/скінуць значэнне ({url,thumbUrl} | '' → мініяцюра + JSON у схаваным input)
+function _nfmImageSet(key, val) {
+  const box = document.getElementById('nfm-f-' + key); if (!box) return;
+  const img = box.querySelector('[data-thumb]'), inp = box.querySelector('[data-val]'), clr = box.querySelector('[data-clear]');
+  const o = val && typeof val === 'object' ? val : (val ? { url: String(val) } : null);
+  if (inp) inp.value = o ? JSON.stringify(o) : '';
+  if (img) { img.src = o ? (o.thumbUrl || o.url || '') : ''; img.style.display = o ? '' : 'none'; }
+  if (clr) clr.style.display = o ? '' : 'none';
+}
+function _nfmImagePick(key) { // 📷 выбар файла → існуючы R2-загрузчык выяў → у поле мадала
+  let inp = document.getElementById('nfm-img-input');
+  if (!inp) { inp = document.createElement('input'); inp.type = 'file'; inp.accept = 'image/*'; inp.id = 'nfm-img-input'; inp.style.display = 'none'; document.body.appendChild(inp); }
+  inp.onchange = async () => {
+    const f = inp.files?.[0]; if (!f) return;
+    const btn = document.querySelector('#nfm-f-' + key + ' .btn-search'); if (btn) btn.textContent = '⏳';
+    try { _nfmImageSet(key, await _uploadImageToR2(f, currentNodeState?._section || 'file')); }
+    catch (e) { showAlert(String(e?.message || e)); }
+    if (btn) btn.textContent = '📷';
+  };
+  inp.value = ''; inp.click();
+}
 // цела multiselect-спіса (без <label> — гл. урок пра .form-group label): радок=<div>+чэкбокс+<span>назва, клік пераключае
 function _nfmMultiBody(f, opts, optLabels, checked) {
   if (!opts.length) return `<span style="font-size:0.82rem;color:var(--muted)">—</span>`;
@@ -5846,6 +5871,8 @@ function _nfmApplySchema(schema) {
       ? `<select id="nfm-f-${f.key}" class="field-input" style="margin:0;padding:9px 12px"${f.onChange ? ` onchange="_nfmFieldChange('${f.key}',this.value)"` : ''}><option value="">—</option>${opts.map(o=>`<option value="${o}">${f.labelMap?.[o]?t(f.labelMap[o]):(optLabels[o]??o)}</option>`).join('')}</select>`
       : f.type === 'multiselect' // ПРОДАКФПФ: мадал умее multiselect (як inline) — кантэйнер чэкбоксаў; чытанне праз _nfmReadVal, перадзагрузка праз _nfmSetMulti
       ? `<div id="nfm-f-${f.key}" data-ms="1" style="padding:4px 0;max-height:240px;overflow-y:auto">${_nfmMultiBody(f, opts, optLabels, null)}</div>`
+      : f.type === 'image' // 📷 генерычная выява ў мадале (R2): мініяцюра + загрузка + ✕; значэнне {url,thumbUrl} у схаваным input (JSON)
+      ? `<div id="nfm-f-${f.key}" data-img="1" style="display:flex;align-items:center;gap:10px"><img data-thumb alt="" style="width:56px;height:56px;object-fit:cover;border-radius:8px;border:1px solid var(--border);display:none"><input type="hidden" data-val><button type="button" class="btn-search" onclick="_nfmImagePick('${f.key}')">📷</button><button type="button" data-clear class="node-btn-icon" style="display:none;padding:0 8px" onclick="_nfmImageSet('${f.key}','')">✕</button></div>`
       : f.type === 'date'
       ? _dateFieldHtml('nfm-f-' + f.key, '', 'padding:9px 12px') // кастамнае поле даты (Варыянт B): рэгіянальны фармат
       : f.type === 'time'
@@ -10706,6 +10733,7 @@ function _accRowModal(form, s, dataKey, rowId) {
     const val = raw ?? (typeof c.default === 'function' ? c.default() : (c.default ?? ''));
     if (c.type === 'time') { _timeSet('nfm-f-' + c.key, val); return; } // час: сінхранізаваць абедзве круцёлкі + схаваны input
     if (c.type === 'multiselect') { _nfmSetMulti('nfm-f-' + c.key, row?.[c.key] || []); return; } // адзначыць чэкбоксы па масіве
+    if (c.type === 'image') { _nfmImageSet(c.key, row?.[c.key] || ''); return; } // 📷 мініяцюра + схаваны JSON
     const el = document.getElementById('nfm-f-' + c.key); if (el) el.value = val;
   });
   // залежныя multiselect: перафільтраваць пасля таго як выстаўлены астатнія палі (напр. кандыдаты па тыпе) — захоўваючы абранае
