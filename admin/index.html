@@ -2650,7 +2650,7 @@ const EDITABLE_SECTIONS = ['header', 'services', 'files', 'faq', 'advantages', '
 let currentNodeState = null;
 let filesState = { data: null, saving: false, selected: new Set(), expanded: new Set(), _movePanel: false, _relocateId: null, _section: 'files' };
 let servicesState = { data: null, saving: false, selected: new Set(), expanded: new Set(), _movePanel: false, _relocateId: null, _section: 'services', _formSchema: 'services', _itemsClass: 'services-edit-list', _itemHtml: null, _newInactive: true, /* 🌑 новыя Папкі/пазіцыі Каталога нараджаюцца НеАктыўнымі (● выкл): кліент дапілоўвае → уключае → трапляе на сайт (праекцыя жывая, рашэнне 2026-07-10) */ _renderFn: () => renderServicesEditor(), _saveFn: () => servicesSave(), _emptyHtml: () => `<div style="padding:8px 0;font-size:0.85rem;color:var(--muted)">${t('empty_services')}</div>`,
-  _formNameHtml: form => escHtml(form.fields?.name || _nodeName(form) || '—'), // sections-форма _noName → назва з fields.name
+  _formNameHtml: form => _rowNamePh(form.fields?.name || _nodeName(form), form), // sections-форма _noName → назва з fields.name; пуста+апісанне → без прочырка
   // міграцыя: старыя item-паслугі → form (палі item ляжалі проста на вузле); усе вузлы мусяць мець formSchema:'services' (як clientDetails)
   _normalizeFn: data => data.nodes.forEach(n => {
     if (n.type === 'item') {
@@ -3579,6 +3579,9 @@ function loadSitePageEditor() {
 // Карыстальніцкае перайменаванне ставіць name і перакрывае sysKey.
 // ПРОДАКФПФ: назва вузла на бягучай мове (backward-compatible: радок або {[lang]:string})
 function _nodeName(node, lang) { return _mlGet(node?.name, lang || _settingsLang()); }
+// назва радка з плейсхолдэрам (ПРОДАКФПФ): пустая назва → ШЭРЫ прочырк; а калі побач ёсць апісанне —
+// прочырк не патрэбны зусім (апісанне і ёсць бачны тэкст радка; яркі «—» перад ім блытаў — жывая заўвага)
+function _rowNamePh(nm, node) { return nm ? escHtml(nm) : ((node?.description || node?.caption) ? '' : '<span style="color:var(--muted)">—</span>'); }
 function _folderLabel(node) { return _nodeName(node) || (node?.sysKey ? t(node.sysKey) : '') || ''; }
 // ШАБЛОН: рэкурсіўны пошук дрэва — вузел бачны калі ЁН АБО любы нашчадак супадае (deep-search); multi-word = І (кожнае слова мусіць знайсціся ў паддрэве)
 // Пошукавы тэкст вузла = імя + опцыйны s._nodeSearchText(node) (напр. email/тэлефон кліента) — каб не дублікаваць deep-пошук у хуках
@@ -3800,8 +3803,8 @@ function _nodeRowBtns(node, s) {
   }
   // ПРОДАКФПФ: апісанне — адзін раз тут, усе тыпы бяруць адсюль (ааП)
   const _desc = node.description || node.caption; // caption — зваротная сумяшчальнасць з файламі
-  const descHtml = _ncap(node, s, 'hasDescription') && _desc
-    ? `<span style="font-size:0.72rem;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:240px" title="${escHtml(_desc)}">${escHtml(_desc)}</span>` : '';
+  const descHtml = _ncap(node, s, 'hasDescription') && _desc // чытэльнае другаснае (не бледны --muted — жывая заўвага)
+    ? `<span style="font-size:0.78rem;color:var(--text);opacity:0.72;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:280px" title="${escHtml(_desc)}">${escHtml(_desc)}</span>` : '';
   return { toggleHtml, iconHtml, checkBtn, layoutBtn, activeDot, currentDot, lockIcon, infoBtn, stackBtns, expandBtn, moveBtns, refreshHtml, viewsBtn, pickBtn, overflowHtml, descHtml };
 }
 
@@ -4196,7 +4199,7 @@ function nodeFormRowHtml(form, schema) {
     ${toggleHtml}
     ${iconHtml}${checkBtn}${layoutBtn}${activeDot}
     <div style="flex:1;display:flex;align-items:center;gap:4px;min-width:0">
-      <span style="font-size:0.85rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;cursor:pointer">${s._formNameHtml ? s._formNameHtml(form) : escHtml(_nodeName(form)||'—')}</span>
+      <span style="font-size:0.85rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;cursor:pointer">${s._formNameHtml ? s._formNameHtml(form) : _rowNamePh(_nodeName(form), form)}</span>
       ${currentDot}${lockIcon}${descHtml}
     </div>
     ${_nodeRowRightHtml(parts, { cells, dot })}
@@ -4217,7 +4220,7 @@ function nodeFormCardHtml(form, schema, s) {
         <span style="flex:1"></span>
         <span style="display:flex;gap:2px" onclick="event.stopPropagation()">${_nodeRowRightHtml(parts, { layoutBtn, stackBtns: '', refreshHtml: '', sideToggleBtn })}</span>
       </div>
-      <span class="node-folder-name" style="display:flex;align-items:center;gap:6px">${activeDot}${s._formNameHtml ? s._formNameHtml(form) : escHtml(_nodeName(form)||'—')}${currentDot}${lockIcon}${dot}${descHtml}</span>
+      <span class="node-folder-name" style="display:flex;align-items:center;gap:6px">${activeDot}${s._formNameHtml ? s._formNameHtml(form) : _rowNamePh(_nodeName(form), form)}${currentDot}${lockIcon}${dot}${descHtml}</span>
     </div>
     ${isOpen ? `<div class="node-folder-body">${nodeExpandedHtml(form, s, {card: true})}</div>` : ''}
   </div>`;
