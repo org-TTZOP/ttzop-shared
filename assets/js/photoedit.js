@@ -42,7 +42,7 @@
     const chip = (id, txt) => `<button type="button" data-ar="${id}" style="padding:5px 10px;border:1px solid rgba(128,128,128,0.5);border-radius:999px;background:transparent;color:inherit;cursor:pointer;font-size:0.78rem">${txt}</button>`;
     const btn = 'padding:9px 14px;border:1px solid rgba(128,128,128,0.5);border-radius:8px;background:transparent;color:inherit;cursor:pointer;font-size:0.85rem';
     box.innerHTML = `<div style="background:var(--surface, #181c27);color:var(--text, #e8eaf0);border-radius:14px;max-width:640px;width:100%;max-height:96vh;overflow:auto;padding:14px 16px;font-family:inherit">
-      <div style="font-weight:700;margin-bottom:10px">✂️ ${esc(L.title)}</div>
+      <div style="font-weight:700;margin-bottom:10px">🪄 ${esc(L.title)}</div>
       <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-bottom:10px">
         ${chip('0', esc(L.crop_free))}${chip('1.7778', '16:9')}${chip('1.3333', '4:3')}${chip('1', '1:1')}
         <button type="button" id="pe-rot" title="${esc(L.rotate)}" style="margin-left:auto;padding:5px 12px;border:1px solid rgba(128,128,128,0.5);border-radius:999px;background:transparent;color:inherit;cursor:pointer">⟳</button>
