@@ -1203,7 +1203,7 @@ function _cardSlidersInit() {
     img.addEventListener('click', e => {
       e.stopPropagation(); manual = true; stop();
       const aid = 'cs-' + (++_albSeq);
-      _siteAlbumReg[aid] = covs.map(c => ({ url: c.f || c.u, caption: c.c || '' }));
+      _siteAlbumReg[aid] = covs.map(c => ({ url: c.f || c.u, title: c.n || '', caption: c.c || '' }));
       openLightbox(aid, i);
     });
     const stop = () => { clearInterval(timer); timer = null; };
@@ -1252,7 +1252,7 @@ async function _svcFetchTree() {
 const _svcIsImg = x => (x.mimeType || '').startsWith('image/') || /\.(webp|jpe?g|png|gif|avif)$/i.test(x.url || '');
 const _svcFiles = (nodes, pid) => (nodes || []).filter(x => x && (x.parentId ?? null) === pid && !x._deleted && x.active !== false)
   .sort((a, b) => (a.order || 0) - (b.order || 0))
-  .flatMap(x => x.type === 'file' ? (_svcIsImg(x) ? [{ u: x.thumbUrl || x.url, f: x.url || x.thumbUrl, c: _sv(x.description) || '' }] : []) : x.type === 'folder' ? _svcFiles(nodes, x.id) : []); // {u:мініяцюра, f:арыгінал для лайтбокса, c:подпіс}
+  .flatMap(x => x.type === 'file' ? (_svcIsImg(x) ? [{ u: x.thumbUrl || x.url, f: x.url || x.thumbUrl, n: _sv(x.name) || '', c: _sv(x.description) || _sv(x.caption) || '' }] : []) : x.type === 'folder' ? _svcFiles(nodes, x.id) : []); // {u:мініяцюра, f:арыгінал, n:назва, c:апісанне} → лайтбокс
 function _svcItems(nodes) {
   const items = [];
   const walk = (pid, path, hidUp) => (nodes || [])
@@ -1544,7 +1544,7 @@ function renderDynamicSections(data) {
     const flush = () => { if (files.length) {
       // 🖼 суседнія файлы адной сеткі = АЛЬБОМ лайтбокса (◀▶/swipe гартаюць у яго межах)
       const albId = 'alb' + (++_albSeq);
-      _siteAlbumReg[albId] = files.map(f => ({ url: _sv(f.url), caption: _sv(f.caption) }));
+      _siteAlbumReg[albId] = files.map(f => ({ url: _sv(f.url), title: _sv(f.name) || '', caption: _sv(f.caption) })); // назва файла (калі ёсць) — тлустым над подпісам
       out.push(`<div class="tile-grid">${files.map((f, i) => _fileTile(f, i, files.length, albId)).join('')}</div>`); files = [];
     } };
     kids.forEach((x, i) => { if (x.kind === 'file') files.push(x); else { flush(); out.push(x.kind === 'folder' ? folderHtml(x, d, i, kids.length) : instHtml(x, d, i, kids.length)); } }); // idx/len → ▲▼ на канцах недаступныя
@@ -2653,7 +2653,8 @@ function lightboxStep(d) {
   const it = st.items[st.i], img = document.getElementById('lb-img');
   if (!img) return;
   img.src = it.url;
-  document.getElementById('lb-cap').textContent = it.caption || '';
+  // подпіс = НАЗВА ФайлБлока (тлустым) + апісанне — усе подпісы файла бачныя ў праглядзе (жывая заўвага)
+  document.getElementById('lb-cap').innerHTML = [it.title ? `<b>${_dsEsc(it.title)}</b>` : '', it.caption ? _dsEsc(it.caption) : ''].filter(Boolean).join('<br>');
   document.getElementById('lb-cnt').textContent = n > 1 ? `${st.i + 1} / ${n}` : '';
 }
 function _lbKeys(e) {
