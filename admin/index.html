@@ -782,7 +782,9 @@ const FORM_SCHEMAS = {
           visible: form => (form.fields?.fulfil || 'cart') === 'booking' },
         { key: 'bookFixed',   type: 'select',   label: 'svc_fixed', hint: 'svc_fixed_hint', readOnly: () => true, default: 'no', // 📅 фіксаваныя выезды: публіка не стварае слотаў — толькі далучаецца да выездаў, створаных адмінам (запіс + ⧉ серыя)
           options: ['no','yes'], labelMap: { no: 'spv_no', yes: 'spv_yes' },
-          visible: form => (form.fields?.fulfil || 'cart') === 'booking' && +form.fields?.groupMax > 0 } // мае сэнс толькі ў групавой (далучэнне да існуючага выезду)
+          visible: form => (form.fields?.fulfil || 'cart') === 'booking' && +form.fields?.groupMax > 0 }, // мае сэнс толькі ў групавой (далучэнне да існуючага выезду)
+        { key: 'trPack',      type: 'number',   label: 'svc_trpack', hint: 'svc_trpack_hint', readOnly: () => true, // 🌐 пазіцыя-ПАКЕТ AI-перакладаў (варыянт B, толькі платформа): >0 = колькі крэдытаў дае купля; paid → _trPackGrant налічвае сайту-мэце
+          visible: () => IS_PLATFORM }
       ] },
     // 📸 фота карткі жывуць НЕ секцыяй, а ФайлБлокамі ў Папках пазіцыі (аўта-Папка «Фота» праз _seedFolders
     // ніжэй; слайдэр _cardHtml бярэ актыўныя выявы паддрэва; стары накапляльнік _photos — legacy-fallback праекцыі)
@@ -7091,15 +7093,16 @@ async function _nodeTranslate(id) {
     texts[e.key] = String(srcTxt); targets[e.key] = missing;
   });
   if (!Object.keys(texts).length) { showAlert(t('tr_nothing')); return; }
-  let left = null, max = 5; // рэшта ліміту — танны запыт без тэкстаў (без выдаткаў API)
+  let left = null, max = 5, credits0 = 0; // рэшта ліміту + купленыя крэдыты — танны запыт без тэкстаў (без выдаткаў API)
   try { const r0 = await fetch(API, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'translate_fields', repo: REPO, password, texts: {} }) });
-    const j0 = await r0.json(); left = j0.left; max = j0.max || 5; _trLeftCache = left; } catch {}
-  if (left === 0) { showAlert(t('tr_limit').replace('{max}', max)); return; }
-  showConfirm(t('tr_confirm').replace('{from}', _langLabel(from)).replace('{langs}', langs.map(_langLabel).join(', ')).replace('{n}', left ?? '?').replace('{max}', max), async () => {
+    const j0 = await r0.json(); left = j0.left; max = j0.max || 5; credits0 = j0.credits || 0; _trLeftCache = (left ?? 0) + credits0; } catch {}
+  if (left === 0 && !credits0) { showAlert(t('tr_limit').replace('{max}', max) + ' ' + t('tr_buy')); return; }
+  const nShow = left == null ? '?' : `${left}${credits0 ? '+' + credits0 : ''}`; // «бясплатныя+крэдыты»
+  showConfirm(t('tr_confirm').replace('{from}', _langLabel(from)).replace('{langs}', langs.map(_langLabel).join(', ')).replace('{n}', nShow).replace('{max}', max), async () => {
     try {
       const r = await fetch(API, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'translate_fields', repo: REPO, password, texts, from, to: langs }) });
       const j = await r.json();
-      if (!r.ok || !j.ok) { showAlert(j?.error === 'tr_limit' ? t('tr_limit').replace('{max}', j.max || max) : t('tr_err')); return; }
+      if (!r.ok || !j.ok) { showAlert(j?.error === 'tr_limit' ? t('tr_limit').replace('{max}', j.max || max) + ' ' + t('tr_buy') : t('tr_err')); return; }
       let applied = 0;
       entries.forEach(e => {
         const tr = j.translations?.[e.key]; if (!tr) return;
@@ -7108,9 +7111,9 @@ async function _nodeTranslate(id) {
         (targets[e.key] || []).forEach(l => { if (tr[l] && !String(o[l] || '').trim()) { o[l] = tr[l]; applied++; } });
         e.set(o);
       });
-      _trLeftCache = j.left;
+      _trLeftCache = (j.left || 0) + (j.credits || 0);
       nodeRender(); nodeSave();
-      showAlert(t('tr_done').replace('{k}', applied).replace('{n}', j.left).replace('{max}', j.max || max));
+      showAlert(t('tr_done').replace('{k}', applied).replace('{n}', `${j.left || 0}${j.credits ? '+' + j.credits : ''}`).replace('{max}', j.max || max));
     } catch { showAlert(t('tr_err')); }
   }, { label: '🌐', danger: false });
 }
