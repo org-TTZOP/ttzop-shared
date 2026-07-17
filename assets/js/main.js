@@ -3671,9 +3671,9 @@ function _edModalSave() {
   let html = _edQuill.root.innerHTML.trim();
   if (html === '<p><br></p>') html = ''; // пусты Quill
   el.innerHTML = html; _edFlash(el); _edModalClose(); // адразу на старонцы + флэш
-  if (id.startsWith('src:')) { // 📝 дыспетчар: Каталог (цела пазіцыі) → draft_src set (тая ж серверная санітызацыя)
-    _draftPost({ action: 'draft_src', op: 'set', repo: SITE_REPO, id: id.slice(4), patch: { [path]: html } }).then(() => _svcFetchTree()); // чытач возьме свежае з дрэва
-  } else _draftPost({ action: 'draft_set', repo: SITE_REPO, id, path, val: html, html: true }); // праз чаргу; html→серверная санітызацыя
+  if (id.startsWith('src:')) { // 📝 дыспетчар: Каталог (цела пазіцыі) → draft_src set; lang → merge пер-мова (ml-цела)
+    _draftPost({ action: 'draft_src', op: 'set', repo: SITE_REPO, id: id.slice(4), lang: currentLang, patch: { [path]: html } }).then(() => _svcFetchTree()); // чытач возьме свежае з дрэва
+  } else _draftPost({ action: 'draft_set', repo: SITE_REPO, id, path: path + '.' + currentLang, val: html, html: true }); // rich-целы цяпер ml: пішам у бягучую мову гледача
 }
 function _lookPick(kind, id) { _lookSel[kind] = id; _lookRefresh(); }
 function _lookRefresh() {
