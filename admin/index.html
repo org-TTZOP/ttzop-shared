@@ -783,19 +783,8 @@ const FORM_SCHEMAS = {
           options: ['no','yes'], labelMap: { no: 'spv_no', yes: 'spv_yes' },
           visible: form => (form.fields?.fulfil || 'cart') === 'booking' && +form.fields?.groupMax > 0 } // мае сэнс толькі ў групавой (далучэнне да існуючага выезду)
       ] },
-    // 📸 ФОТА КАРТКІ (слайдэр): накапляльнік фота пазіцыі — 1 = статычная вокладка, 2+ = аўтагартанне
-    // з кропкамі/свайпам на сайце (генерычны механізм _cardHtml.covers — працуе на ЛЮБОЙ картцы праекта)
-    { type: 'table', title: 'svc_photos', dataKey: '_photos', addable: true, rowEditable: true, rowDeletable: true, keepOrder: true,
-      onAdd: (form, s) => _accRowAdd(form, s, '_photos'),
-      rowSchema: [
-        { key: 'photo', type: 'image', label: 'ss_files' },
-        { key: 'name',  type: 'text',  label: 'f_name', ml: true }
-      ],
-      columns: [
-        { key: 'photo', label: 'ss_files', type: 'html', sortable: false,
-          render: v => (v && (v.thumbUrl || v.url)) ? `<img src="${escHtml(v.thumbUrl || v.url)}" alt="" style="width:34px;height:34px;object-fit:cover;border-radius:6px;display:block">` : '—' },
-        { key: 'name',  label: 'f_name', type: 'text', ml: true }
-      ] },
+    // 📸 фота карткі жывуць НЕ секцыяй, а ФайлБлокамі ў Папках пазіцыі (аўта-Папка «Фота» праз _seedFolders
+    // ніжэй; слайдэр _cardHtml бярэ актыўныя выявы паддрэва; стары накапляльнік _photos — legacy-fallback праекцыі)
     // 🗺 МАРШРУТ ЭКСКУРСІІ (booking): мапа ў points-рэжыме (клік = кропка) + накапляльнік кропак з ml-назвамі.
     // План для сайта (адносныя часы, агульная працягласць) фарміруецца з парадку і часоў аўтаматычна (_svcItems.route)
     { type: 'map', title: 'svc_route_map', dataKey: '_routeView', points: '_route',
@@ -885,6 +874,7 @@ const FORM_SCHEMAS = {
         { key: 'duration',   label: 'svc_duration',      type: 'number' }
       ] }
   ], _noName: true,
+  _seedFolders: [{ key: 'photos', sysKey: 'folder_photos' }], // 🌱 аўта-Папка-0 «📸 Фота» (генерычны механізм _formSeedFolders)
   // пікер пры +🗒 у Каталогу: від = прэсэт спосабу атрымання (форма адна і тая ж)
   _newFieldsPick: () => [
     { id: 'goods',   label: 'item_goods',   fields: { fulfil: 'cart' } },
@@ -1918,6 +1908,7 @@ CONTENT_TYPES['file'] = { // ФайлБлок: ТОЛЬКІ адрозненні
 };
 CONTENT_TYPES['services'] = { // нашчадак CONTENT_TYPES['form'] → ПРОДАКФПФ; ТОЛЬКІ абмежаванні (ааП)
   // [А] — Паслуга: статус/дызайн/бягучая/назва не патрэбны
+  canAddFolder: true, canAddItem: true, // канон-выключэнне «Форма трымае Папкі-0»: фота/дакументы пазіцыі = ФайлБлокі ў Папках (аўта-Папка «📸 Фота» праз _seedFolders; слайдэр карткі бярэ актыўныя выявы паддрэва)
   showActiveDot: false, canActive: false,         // статус паслугі — не праз ● кнопку
   showCurrentDot: false, canMakeCurrent: false,   // паняцця «Бягучая паслуга» няма
   hasDesign: false,                               // дызайн паслугі не рэдагуецца тут
@@ -2682,6 +2673,7 @@ let servicesState = { data: null, saving: false, selected: new Set(), expanded: 
       f._segments.forEach(sg => { if (!sg.pick) sg.pick = (Array.isArray(sg.candidates) && sg.candidates.length) ? 'specific' : 'any'; }); // міграцыя: яўны рэжым выбару (candidates→specific, пуста→any)
       // К1 «Каталог»: спосаб атрымання (інфер легасі: актыўныя этапы → 📅 запіс; пераходны cta v4.547 'chat' → 💬 запыт; інакш 🛒 заказ)
       if (!f.fulfil) f.fulfil = f._segments.some(_segActive) ? 'booking' : (f.cta === 'chat' ? 'inquiry' : 'cart');
+      _formSeedFolders(data.nodes, n, 'services'); // 🌱 аўта-Папка «📸 Фота» (аднаразова; выдаленая не ўваскрасае)
     }
   }) };
 let faqState          = { data: null, saving: false, selected: new Set(), expanded: new Set(), _section: 'faq' };
@@ -7060,6 +7052,20 @@ async function nodeRelocate(id, targetParentId) {
 }
 
 // блок-«назва ў полі» формы (nameField:true у схеме, fallback key='name') — адзіная крыніца для rename/прэфіла
+// 🌱 АЎТА-ПАПКІ-0 ФОРМЫ (ПРОДАКФПФ, для ЛЮБОГА РМ): схема аб'яўляе `_seedFolders: [{key, sysKey}]` →
+// форма атрымлівае пустую Папку-0 (аўтамоўная назва праз sysKey, без хардкоду). Сід АДНАРАЗОВЫ
+// (сцяг fields._seeded_{key}) — выдаленая кліентам папка НЕ ўваскрасае. Новы РМ = адзін радок у схеме.
+function _formSeedFolders(nodes, form, schemaKey) {
+  const sch = FORM_SCHEMAS[schemaKey || form.formSchema];
+  const seeds = (!Array.isArray(sch) && sch?._seedFolders) || [];
+  seeds.forEach(sd => {
+    const f = form.fields || (form.fields = {});
+    const flag = '_seeded_' + sd.key;
+    if (f[flag]) return;
+    f[flag] = true;
+    nodes.push({ id: form.id + '-' + sd.key, type: 'folder', parentId: form.id, order: 0, name: '', sysKey: sd.sysKey, fields: {}, infoNodes: [], createdAt: new Date().toISOString() });
+  });
+}
 function _formNameBlock(node, s) {
   if (node?.type !== 'form') return null;
   const sch = FORM_SCHEMAS[node.formSchema] || FORM_SCHEMAS[_nodeCfg(s, node, '_formSchema')] || null;
@@ -10668,6 +10674,7 @@ function _nodeCreateSectionForm(s, folderId, key, extraFields) { // extraFields 
   const _now = new Date().toISOString();
   const node = { id, type: 'form', formSchema: key, parentId: pid, order: siblings.length, name: '', fields, createdAt: _now, updatedAt: _now, ...(_newNodeInactive(s, pid) ? { active: false } : {}) }; // 🌑 Каталог: новае — НеАктыўнае
   s.data.nodes.push(node);
+  _formSeedFolders(s.data.nodes, node, key); // 🌱 аўта-Папкі-0 схемы (генерычна, напр. «📸 Фота» пазіцыі)
   if (key === 'companyStructure') { // філіял = поўная структура кампаніі (рэкурсія Ф/П/ПФФ): Банкі + Філіялы + Рэсурсы
     s.data.nodes.push({ id: id + '-banks', type: 'folder', contentType: 'company-banks', _formSchema: 'bankStructure', sysKey: 'company_banks', parentId: id, order: 1, name: '', fields: {}, infoNodes: [], createdAt: _now, updatedAt: _now });
     s.data.nodes.push({ id: id + '-branches', type: 'folder', contentType: 'company-branches', _formSchema: 'companyStructure', sysKey: 'company_branches', parentId: id, order: 2, name: '', fields: {}, infoNodes: [], createdAt: _now, updatedAt: _now });
