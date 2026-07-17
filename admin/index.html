@@ -3591,6 +3591,8 @@ function loadSitePageEditor() {
 // Карыстальніцкае перайменаванне ставіць name і перакрывае sysKey.
 // ПРОДАКФПФ: назва вузла на бягучай мове (backward-compatible: радок або {[lang]:string})
 function _nodeName(node, lang) { return _mlGet(node?.name, lang || _settingsLang()); }
+// ПРОДАКФПФ: адзіная праверка «вузел = выява» (ААП-аўдыт 2026-07-18: было 4 копіі рэгекса па кутках)
+function _nodeIsImage(node) { return !!(node && (node.mimeType?.startsWith('image/') || /\.(webp|jpe?g|png|gif|avif)$/i.test(node.url || node.thumbUrl || ''))); }
 // назва радка з плейсхолдэрам (ПРОДАКФПФ): пустая назва → ШЭРЫ прочырк; а калі побач ёсць апісанне —
 // прочырк не патрэбны зусім (апісанне і ёсць бачны тэкст радка; яркі «—» перад ім блытаў — жывая заўвага)
 function _rowNamePh(nm, node) { return nm ? escHtml(nm) : ((node?.description || node?.caption) ? '' : '<span style="color:var(--muted)">—</span>'); }
@@ -3814,7 +3816,7 @@ function _nodeRowBtns(node, s) {
   } else if (node.type === 'form') {
     iconHtml = `<span style="display:flex;align-items:center;cursor:pointer" onclick="event.stopPropagation();${_expandClick}">${isOpen?_icoFormOpen():_icoForm()}</span>`;
   } else { // file/item — іконка таксама expand-click (ааП: аднолькава з папкай/формай)
-    const _isImg = node.mimeType?.startsWith('image/') || /\.(webp|jpe?g|png|gif|avif)$/i.test(node.url||'');
+    const _isImg = _nodeIsImage(node);
     const _thumb = _isImg
       ? `<img src="${escHtml(nodeItemThumbSrc(node))}" alt="" style="width:22px;height:22px;object-fit:cover;border-radius:3px;flex-shrink:0">`
       : `<span style="font-size:0.9rem;width:22px;text-align:center;flex-shrink:0">${_nodeFileIcon(node)}</span>`;
@@ -4028,7 +4030,7 @@ function _nodeFileCardHtml(node, s) {
   s = s || currentNodeState;
   const url = node.url || '';
   const thumbUrl = node.thumbUrl || url;
-  const isImg = thumbUrl && (node.mimeType?.startsWith('image/') || /\.(webp|jpe?g|png|gif|avif)$/i.test(thumbUrl));
+  const isImg = thumbUrl && _nodeIsImage(node);
   const name = escHtml(_nodeName(node) || node.caption || '');
   const sel = s.selected?.has(node.id);
   const isOpen = !!s.expanded?.has(node.id);
@@ -4071,7 +4073,7 @@ function nodeCardHtml(node, s, ctx) {
 function _nodeFileContentHtml(node) {
   const url = node.url;
   if (!url) return ''; // тэкставая нататка без url — змест вызначаецца назвай
-  const isImg = node.mimeType?.startsWith('image/') || /\.(webp|jpe?g|png|gif|avif)$/i.test(url);
+  const isImg = _nodeIsImage(node);
   const isPdf = node.mimeType === 'application/pdf' || /\.pdf$/i.test(url);
   if (isImg) return `<div><a href="${escHtml(url)}" target="_blank" onclick="event.stopPropagation()" style="cursor:pointer;display:block"><img src="${escHtml(url)}" alt="${escHtml(String(_nodeName(node)||''))}" style="max-width:100%;max-height:360px;object-fit:contain;border-radius:6px;display:block"></a></div>`;
   if (isPdf) return `<div style="border-radius:6px;overflow:hidden;border:1px solid var(--border)"><iframe src="${escHtml(url)}" style="width:100%;height:360px;border:0;display:block"></iframe></div>`;
@@ -4166,7 +4168,7 @@ function _nodeMenuItemsHtml(node, mid, s) {
     cap('canRename') ? `<button class="node-overflow-item" title="${t('node_rename')}" onclick="${renameClick};nodeCloseOverflow('${mid}')">✎</button>` : '', // секцыйныя формы больш НЕ выключаны глабальна: чыя назва = node.name (тэма) — пераназываюцца; чыя ў палях — canRename:false канфігам
     cap('hasDescription') ? `<button class="node-overflow-item" title="${t('node_description')}" onclick="nodeEditDescription('${node.id}');nodeCloseOverflow('${mid}')">📝</button>` : '',
     (node.type === 'form' && _formMlEntries(node, s).length) ? `<button class="node-overflow-item" title="${t('tr_btn')}" onclick="_nodeTranslate('${node.id}');nodeCloseOverflow('${mid}')">🌐${_trLeftCache != null ? `<sup style="font-size:0.6em;opacity:0.7">${_trLeftCache}</sup>` : ''}</button>` : '', // 🌐 AI-пераклад пустых моў (генерычна: форма з ml-палямі)
-    (node.type === 'file' && ((node.mimeType || '').startsWith('image/') || /\.(webp|jpe?g|png|gif|avif)$/i.test(node.url || ''))) ? `<button class="node-overflow-item" title="${t('pe_title')}" onclick="_nodeFileEditPhoto('${node.id}');nodeCloseOverflow('${mid}')">🪄</button>` : '', // ✂️ рэдагаваць ужо загружанае фота
+    (node.type === 'file' && _nodeIsImage(node)) ? `<button class="node-overflow-item" title="${t('pe_title')}" onclick="_nodeFileEditPhoto('${node.id}');nodeCloseOverflow('${mid}')">🪄</button>` : '', // ✂️ рэдагаваць ужо загружанае фота
     cap('hasLink') ? `<button class="node-overflow-item" title="${t('node_copy_link')}" onclick="_nodeCopyLink('${node.id}',this);nodeCloseOverflow('${mid}')">🔗</button>` : '',
     cap('hasLink') ? `<button class="node-overflow-item" title="${t('node_share')}" onclick="_nodeShareLink('${node.id}');nodeCloseOverflow('${mid}')">${_icoShare()}</button>` : '', // падзяліцца спасылкай у чаце (выбар карыстальнікаў)
     cap('canRelocate') ? `<button class="node-overflow-item" title="${t('folder_move_to')}" onclick="${relocClick};nodeCloseOverflow('${mid}')">${_icoFolder()}→</button>` : ''
