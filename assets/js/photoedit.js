@@ -5,7 +5,7 @@
 // API: openPhotoEditor(file, {labels, applyAllOption}) → Promise<{file} | {file, skipAll:true} | null (адмена)>
 (function (global) {
   const DEF = { title: 'Edit photo', crop_free: 'No crop', bright: 'Brightness', sat: 'Saturation',
-    rotate: 'Rotate', vig: 'Vignette', reset: 'Reset', skip: 'No edits', skip_all: 'No edits for all', done: 'Done', cancel: 'Cancel' };
+    rotate: 'Rotate', flip: 'Mirror', contrast: 'Contrast', warm: 'Warmth', sharp: 'Sharpness', blur: 'Blur', vig: 'Vignette', reset: 'Reset', skip: 'No edits', skip_all: 'No edits for all', done: 'Done', cancel: 'Cancel' };
   let box = null;
 
   function openPhotoEditor(file, opts) {
@@ -23,7 +23,7 @@
 
   function mount(img, file, L, opts, resolve) {
     // стан рэдагавання
-    const st = { rot: 0, br: 1, sa: 1, vg: 0, ar: 0, z: 1, cx: 0.5, cy: 0.5 }; // ar 0 = без абрэзкі; cx/cy — цэнтр кадра (0..1)
+    const st = { rot: 0, fx: false, br: 1, sa: 1, ct: 1, wm: 0, sh: 0, bl: 0, vg: 0, ar: 0, z: 1, cx: 0.5, cy: 0.5 }; // fx=люстэрка ct=кантраст wm=цеплыня sh=рэзкасць bl=размытасць // ar 0 = без абрэзкі; cx/cy — цэнтр кадра (0..1)
     let rotCv = document.createElement('canvas'); // крыніца пасля павароту (пераразлічваецца на ⟳)
     const makeRot = () => {
       const q = st.rot % 180 !== 0;
@@ -31,6 +31,7 @@
       rotCv.height = q ? img.naturalWidth : img.naturalHeight;
       const c = rotCv.getContext('2d');
       c.save(); c.translate(rotCv.width / 2, rotCv.height / 2); c.rotate(st.rot * Math.PI / 180);
+      if (st.fx) c.scale(-1, 1); // ⇋ люстэрка
       c.drawImage(img, -img.naturalWidth / 2, -img.naturalHeight / 2); c.restore();
     };
     makeRot();
@@ -45,7 +46,8 @@
       <div style="font-weight:700;margin-bottom:10px">🪄 ${esc(L.title)}</div>
       <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-bottom:10px">
         ${chip('0', esc(L.crop_free))}${chip('1.7778', '16:9')}${chip('1.3333', '4:3')}${chip('1', '1:1')}
-        <button type="button" id="pe-rot" title="${esc(L.rotate)}" style="margin-left:auto;padding:5px 12px;border:1px solid rgba(128,128,128,0.5);border-radius:999px;background:transparent;color:inherit;cursor:pointer">⟳</button>
+        <button type="button" id="pe-flip" title="${esc(L.flip)}" style="margin-left:auto;padding:5px 12px;border:1px solid rgba(128,128,128,0.5);border-radius:999px;background:transparent;color:inherit;cursor:pointer">⇋</button>
+        <button type="button" id="pe-rot" title="${esc(L.rotate)}" style="padding:5px 12px;border:1px solid rgba(128,128,128,0.5);border-radius:999px;background:transparent;color:inherit;cursor:pointer">⟳</button>
       </div>
       <div id="pe-stage" style="position:relative;background:#111;border-radius:10px;overflow:hidden;display:flex;align-items:center;justify-content:center;touch-action:none">
         <canvas id="pe-cv" style="max-width:100%;max-height:52vh;display:block;cursor:grab"></canvas>
@@ -53,6 +55,10 @@
       <div id="pe-zoom-row" style="display:none;align-items:center;gap:10px;margin-top:10px"><span style="font-size:0.8rem;opacity:0.7">🔍</span><input id="pe-zoom" type="range" min="100" max="400" value="100" style="flex:1"></div>
       <div style="display:flex;align-items:center;gap:10px;margin-top:8px"><span style="font-size:0.8rem;opacity:0.7;min-width:110px">☀️ ${esc(L.bright)}</span><input id="pe-br" type="range" min="40" max="180" value="100" style="flex:1"></div>
       <div style="display:flex;align-items:center;gap:10px;margin-top:8px"><span style="font-size:0.8rem;opacity:0.7;min-width:110px">🎨 ${esc(L.sat)}</span><input id="pe-sa" type="range" min="0" max="220" value="100" style="flex:1"></div>
+      <div style="display:flex;align-items:center;gap:10px;margin-top:8px"><span style="font-size:0.8rem;opacity:0.7;min-width:110px">◐ ${esc(L.contrast)}</span><input id="pe-ct" type="range" min="60" max="160" value="100" style="flex:1"></div>
+      <div style="display:flex;align-items:center;gap:10px;margin-top:8px"><span style="font-size:0.8rem;opacity:0.7;min-width:110px">🔥 ${esc(L.warm)}</span><input id="pe-wm" type="range" min="-100" max="100" value="0" style="flex:1"></div>
+      <div style="display:flex;align-items:center;gap:10px;margin-top:8px"><span style="font-size:0.8rem;opacity:0.7;min-width:110px">🔪 ${esc(L.sharp)}</span><input id="pe-sh" type="range" min="0" max="100" value="0" style="flex:1"></div>
+      <div style="display:flex;align-items:center;gap:10px;margin-top:8px"><span style="font-size:0.8rem;opacity:0.7;min-width:110px">💧 ${esc(L.blur)}</span><input id="pe-bl" type="range" min="0" max="100" value="0" style="flex:1"></div>
       <div style="display:flex;align-items:center;gap:10px;margin-top:8px"><span style="font-size:0.8rem;opacity:0.7;min-width:110px">🌒 ${esc(L.vig)}</span><input id="pe-vg" type="range" min="0" max="100" value="0" style="flex:1"></div>
       <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:14px">
         <button type="button" id="pe-reset" style="${btn}">↺ ${esc(L.reset)}</button>
@@ -85,19 +91,49 @@
       const d = c2.getImageData(0, 0, c2.canvas.width, c2.canvas.height), p = d.data;
       for (let i = 0; i < p.length; i += 4) {
         let r = p[i] * st.br, g = p[i + 1] * st.br, b = p[i + 2] * st.br;
+        r = (r - 128) * st.ct + 128; g = (g - 128) * st.ct + 128; b = (b - 128) * st.ct + 128; // кантраст
         const l = 0.299 * r + 0.587 * g + 0.114 * b;
         p[i] = Math.min(255, l + (r - l) * st.sa); p[i + 1] = Math.min(255, l + (g - l) * st.sa); p[i + 2] = Math.min(255, l + (b - l) * st.sa);
       }
       c2.putImageData(d, 0, 0);
     };
+    const sharpenPass = (c2, amt) => { // 🔪 unsharp lite: orig*(1+4a) − a*суседзі (адна згортка 3×3)
+      const w = c2.canvas.width, h = c2.canvas.height;
+      const src = c2.getImageData(0, 0, w, h), dst = c2.createImageData(w, h);
+      const s = src.data, d = dst.data, a = amt;
+      for (let i = 0, n = s.length; i < n; i += 4) {
+        for (let ch = 0; ch < 3; ch++) {
+          const c0 = s[i + ch];
+          const up = s[i - w * 4 + ch], dn = s[i + w * 4 + ch], lf = s[i - 4 + ch], rt = s[i + 4 + ch];
+          d[i + ch] = c0 * (1 + 4 * a) - a * ((up === undefined ? c0 : up) + (dn === undefined ? c0 : dn) + (lf === undefined ? c0 : lf) + (rt === undefined ? c0 : rt));
+        }
+        d[i + 3] = s[i + 3];
+      }
+      c2.putImageData(dst, 0, 0);
+    };
+    const blurPass = (c2, amt) => { // 💧 без ctx.filter: даунскейл→апскейл (танны ўніверсальны блюр)
+      const w = c2.canvas.width, h = c2.canvas.height;
+      const k = Math.max(2, Math.round(2 + amt * 14)); // 0..1 → каэф. 2..16
+      const tc = document.createElement('canvas'); tc.width = Math.max(1, Math.round(w / k)); tc.height = Math.max(1, Math.round(h / k));
+      const tcx = tc.getContext('2d'); tcx.drawImage(c2.canvas, 0, 0, tc.width, tc.height);
+      c2.imageSmoothingEnabled = true; c2.clearRect(0, 0, w, h); c2.drawImage(tc, 0, 0, tc.width, tc.height, 0, 0, w, h);
+    };
     const drawTo = (c2, outW, withFilter) => {
       const r = cropRect();
       const w = Math.round(outW), h = Math.round(outW * r.h / r.w);
       c2.canvas.width = w; c2.canvas.height = h;
-      if (withFilter && filterWorks) c2.filter = `brightness(${st.br}) saturate(${st.sa})`;
+      if (withFilter && filterWorks) c2.filter = `brightness(${st.br}) saturate(${st.sa}) contrast(${st.ct})`;
       c2.drawImage(rotCv, r.x, r.y, r.w, r.h, 0, 0, w, h);
       if (withFilter && filterWorks) c2.filter = 'none';
-      else if (withFilter && (st.br !== 1 || st.sa !== 1)) manualFilter(c2);
+      else if (withFilter && (st.br !== 1 || st.sa !== 1 || st.ct !== 1)) manualFilter(c2);
+      if (st.wm) { // 🔥 цеплыня: soft-light заліўка (аднолькава прэв'ю/экспарт)
+        c2.globalCompositeOperation = 'soft-light';
+        c2.fillStyle = st.wm > 0 ? `rgba(255,150,40,${Math.abs(st.wm) * 0.55})` : `rgba(40,120,255,${Math.abs(st.wm) * 0.55})`;
+        c2.fillRect(0, 0, w, h);
+        c2.globalCompositeOperation = 'source-over';
+      }
+      if (st.bl > 0) blurPass(c2, st.bl); // 💧 размытасць (фон/фактура)
+      if (st.sh > 0 && !skipSharp && !st.bl) sharpenPass(c2, st.sh * 0.8); // рэзкасць (не сумяшчаем з блюрам; прапускаем падчас drag)
       if (st.vg > 0) { // 🌒 він'етка: радыяльны градыент паверх (аднолькава ў прэв'ю і экспарце)
         const g = c2.createRadialGradient(w / 2, h / 2, Math.min(w, h) * 0.35, w / 2, h / 2, Math.hypot(w, h) / 2);
         g.addColorStop(0, 'rgba(0,0,0,0)'); g.addColorStop(1, `rgba(0,0,0,${0.85 * st.vg})`);
@@ -106,13 +142,14 @@
     };
     // прэв'ю: маляванне БЕЗ фільтра + CSS-фільтр на самім канвасе (імгненна і працуе ўсюды);
     // рэальны фільтр пікселяў — толькі на экспарце (drawTo(..., true))
-    const render = () => { drawTo(ctx, Math.min(900, cropRect().w), false); cv.style.filter = `brightness(${st.br}) saturate(${st.sa})`; $('pe-zoom-row').style.display = +st.ar ? 'flex' : 'none';
+    let skipSharp = false;
+    const render = () => { drawTo(ctx, Math.min(900, cropRect().w), false); cv.style.filter = `brightness(${st.br}) saturate(${st.sa}) contrast(${st.ct})`; $('pe-zoom-row').style.display = +st.ar ? 'flex' : 'none';
       box.querySelectorAll('[data-ar]').forEach(b => { const on = String(+b.dataset.ar) === String(+st.ar); b.style.background = on ? 'var(--accent, #f97316)' : 'transparent'; b.style.color = on ? '#fff' : 'inherit'; b.style.borderColor = on ? 'var(--accent, #f97316)' : 'rgba(128,128,128,0.5)'; }); };
     render();
 
     // пан кадра (мыш/тач адным шляхам — Pointer Events)
     let drag = null;
-    cv.addEventListener('pointerdown', e => { if (!+st.ar) return; drag = { x: e.clientX, y: e.clientY }; cv.setPointerCapture(e.pointerId); cv.style.cursor = 'grabbing'; });
+    cv.addEventListener('pointerdown', e => { if (!+st.ar) return; drag = { x: e.clientX, y: e.clientY }; skipSharp = true; cv.setPointerCapture(e.pointerId); cv.style.cursor = 'grabbing'; });
     cv.addEventListener('pointermove', e => {
       if (!drag) return;
       const r = cropRect(), k = r.w / cv.getBoundingClientRect().width; // канвас-px → крыніца-px
@@ -120,15 +157,20 @@
       st.cx = Math.min(Math.max(st.cx, 0), 1); st.cy = Math.min(Math.max(st.cy, 0), 1);
       drag = { x: e.clientX, y: e.clientY }; render();
     });
-    cv.addEventListener('pointerup', () => { drag = null; cv.style.cursor = 'grab'; });
+    cv.addEventListener('pointerup', () => { drag = null; skipSharp = false; cv.style.cursor = 'grab'; render(); });
 
     box.querySelectorAll('[data-ar]').forEach(b => b.addEventListener('click', () => { st.ar = +b.dataset.ar; st.z = 1; st.cx = st.cy = 0.5; $('pe-zoom').value = 100; render(); }));
     $('pe-rot').addEventListener('click', () => { st.rot = (st.rot + 90) % 360; makeRot(); st.cx = st.cy = 0.5; render(); });
+    $('pe-flip').addEventListener('click', () => { st.fx = !st.fx; makeRot(); render(); });
+    $('pe-ct').addEventListener('input', e => { st.ct = +e.target.value / 100; render(); });
+    $('pe-wm').addEventListener('input', e => { st.wm = +e.target.value / 100; render(); });
+    $('pe-sh').addEventListener('input', e => { st.sh = +e.target.value / 100; render(); });
+    $('pe-bl').addEventListener('input', e => { st.bl = +e.target.value / 100; render(); });
     $('pe-zoom').addEventListener('input', e => { st.z = +e.target.value / 100; render(); });
     $('pe-br').addEventListener('input', e => { st.br = +e.target.value / 100; render(); });
     $('pe-sa').addEventListener('input', e => { st.sa = +e.target.value / 100; render(); });
     $('pe-vg').addEventListener('input', e => { st.vg = +e.target.value / 100; render(); });
-    $('pe-reset').addEventListener('click', () => { st.rot = 0; st.br = 1; st.sa = 1; st.vg = 0; st.ar = 0; st.z = 1; st.cx = st.cy = 0.5; makeRot(); $('pe-br').value = 100; $('pe-sa').value = 100; $('pe-vg').value = 0; $('pe-zoom').value = 100; render(); });
+    $('pe-reset').addEventListener('click', () => { st.rot = 0; st.fx = false; st.br = 1; st.sa = 1; st.ct = 1; st.wm = 0; st.sh = 0; st.bl = 0; st.vg = 0; st.ar = 0; st.z = 1; st.cx = st.cy = 0.5; makeRot(); ['pe-br=100','pe-sa=100','pe-ct=100','pe-wm=0','pe-sh=0','pe-bl=0','pe-vg=0','pe-zoom=100'].forEach(x => { const [k, v] = x.split('='); $(k).value = v; }); render(); });
 
     const close = () => { box.remove(); box = null; document.removeEventListener('keydown', onKey); };
     const finish = v => { close(); resolve(v); };
@@ -140,7 +182,7 @@
     const skipAllBtn = $('pe-skipall'); if (skipAllBtn) skipAllBtn.addEventListener('click', () => finish({ file, skipAll: true }));
     $('pe-done').addEventListener('click', () => {
       // без правак увогуле → аддаём арыгінал (нуль перакадаванняў)
-      if (!+st.ar && st.rot === 0 && st.br === 1 && st.sa === 1 && st.vg === 0) return finish({ file });
+      if (!+st.ar && st.rot === 0 && !st.fx && st.br === 1 && st.sa === 1 && st.ct === 1 && st.wm === 0 && st.sh === 0 && st.bl === 0 && st.vg === 0) return finish({ file });
       const out = document.createElement('canvas').getContext('2d');
       drawTo(out, Math.min(2400, cropRect().w), true); // столь 2400px — далей канвеер сам сцісне да 1200
       const done = blob => finish({ file: blob ? new File([blob], (file.name || 'photo').replace(/\.[^.]+$/, '') + '.jpg', { type: 'image/jpeg' }) : file });

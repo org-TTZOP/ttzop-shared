@@ -6322,7 +6322,7 @@ function nodeFileUpload(folderId) {
   inp.value = ''; inp.click();
 }
 // ✂️ подпісы фота-рэдактара (адзін хелпер — мова панэлі; сам кампанент — агульны assets/js/photoedit.js)
-function _peLabels() { return { title: t('pe_title'), crop_free: t('pe_crop_free'), bright: t('pe_bright'), sat: t('pe_sat'), rotate: t('pe_rotate'), vig: t('pe_vig'), reset: t('pe_reset'), skip: t('pe_skip'), skip_all: t('pe_skip_all'), done: t('pe_done'), cancel: t('pe_cancel') }; }
+function _peLabels() { return { title: t('pe_title'), crop_free: t('pe_crop_free'), bright: t('pe_bright'), sat: t('pe_sat'), rotate: t('pe_rotate'), flip: t('pe_flip'), contrast: t('pe_contrast'), warm: t('pe_warm'), sharp: t('pe_sharp'), blur: t('pe_blur'), vig: t('pe_vig'), reset: t('pe_reset'), skip: t('pe_skip'), skip_all: t('pe_skip_all'), done: t('pe_done'), cancel: t('pe_cancel') }; }
 // ✂️ рэдагаваць УЖО загружанае фота ФайлБлока: R2 (CORS *) → рэдактар → новая загрузка → падмена url/thumbUrl.
 // Стары файл застаецца ў R2 (можа быць спасланы дзе яшчэ; прыбярэцца з teardown-прэфіксам сайта)
 async function _nodeFileEditPhoto(id) {
