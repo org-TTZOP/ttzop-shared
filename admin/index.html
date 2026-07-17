@@ -3018,7 +3018,9 @@ async function _adminCreateClient(f) {
 // meta для loadNodeEditor / renderNodeEditor
 const _secNorm = data => { if (!data.nodes) data.nodes = []; if (!data.trash) data.trash = []; };
 function _initSection(st, key, file, statusId, itemIdPrefix, opts) {
+  const preNorm = st._normalizeFn; // ⚠️ стэйт мог мець УЛАСНУЮ нармалізацыю (міграцыі/сіды, напр. servicesState) — Object.assign ніжэй маўкліва хаваў яе (мёртвы код); захоўваем і клічам першай
   const norm = data => {
+    preNorm?.(data);
     if (opts?.normalize) opts.normalize(data); // спецыфічная нармалізацыя секцыі (міграцыя выяў/дызайн) — ПЕРАД дэфолтамі _secNorm
     _secNorm(data);
     if (opts?.migrate) data.nodes.forEach(n => { if (n.type === 'item') opts.migrate(n); });
