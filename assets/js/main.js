@@ -1160,8 +1160,16 @@ function _dsEsc(s) { return String(s == null ? '' : s).replace(/&/g,'&amp;').rep
 // (Паслугі/Навіны/…). media = cover-выява (навіны) АБО icon-эмодзі (паслугі); footer = гатовы HTML
 // (цана+кошык / кнопка чытача); onClick = клік па ЎСЁЙ картцы (навіны→мадалка), footer-кнопкі robяць stopPropagation.
 function _cardHtml(o) {
-  const media = o.cover
-    ? `<img class="post-cover" src="${_dsEsc(o.cover)}" alt="" loading="lazy" style="width:100%;border-radius:8px;margin-bottom:12px;object-fit:cover;aspect-ratio:16/9">`
+  // 📸 ВОКЛАДКІ (ПРОДАКФПФ — для ЛЮБОЙ карткі праекта): o.covers = масіў URL → 2+ фота = СЛАЙДЭР
+  // (аўтагартанне + кропкі + свайп, рухавік _cardSlidersInit); 1 фота / o.cover — статычная вокладка як раней
+  const covs = (Array.isArray(o.covers) ? o.covers : (o.cover ? [o.cover] : [])).filter(Boolean);
+  const media = covs.length > 1
+    ? `<div class="card-slider" data-cs="${_dsEsc(JSON.stringify(covs))}" style="position:relative;margin-bottom:12px;border-radius:8px;overflow:hidden">
+        <img class="post-cover" src="${_dsEsc(covs[0])}" alt="" loading="lazy" style="width:100%;display:block;object-fit:cover;aspect-ratio:16/9;transition:opacity 0.25s;border-radius:8px">
+        <div class="cs-dots" style="position:absolute;left:0;right:0;bottom:8px;display:flex;gap:6px;justify-content:center">${covs.map((_, i) => `<span data-i="${i}" style="width:8px;height:8px;border-radius:50%;background:#fff;opacity:${i ? 0.45 : 0.95};box-shadow:0 0 3px rgba(0,0,0,0.6);cursor:pointer"></span>`).join('')}</div>
+      </div>`
+    : covs.length === 1
+    ? `<img class="post-cover" src="${_dsEsc(covs[0])}" alt="" loading="lazy" style="width:100%;border-radius:8px;margin-bottom:12px;object-fit:cover;aspect-ratio:16/9">`
     : (o.icon ? `<div class="service-icon">${_dsEsc(o.icon)}</div>` : '');
   const meta = (o.meta || o.metaEd) ? `<div class="post-date text-muted" style="font-size:0.82rem;margin-bottom:6px"${o.metaEd || ''}>${_dsEsc(o.meta)}</div>` : '';
   // 🖊️ o.titleEd/o.textEd/o.metaEd — edit-атрыбуты. o.textHtml=true → цела сырое (richtext, не эскейпім). Пустое ў edit — для плейсхолдэра
@@ -1171,6 +1179,37 @@ function _cardHtml(o) {
   const style = ` style="position:relative${o.onClick ? ';cursor:pointer' : ''}"`; // relative — якар для бэйджа/радка рэдактара
   const click = o.onClick ? ` onclick="${o.onClick}"` : '';
   return `<article class="card ${o.cls || ''}${o.dim ? ' ds-hidden' : ''}"${click}${style}>${o.edbar || ''}${badge}${media}${meta}<h3 class="service-title"${o.titleEd || ''}>${_dsEsc(o.title)}</h3>${text}${o.footer || ''}</article>`;
+}
+
+// 📸 РУХАВІК СЛАЙДЭРА КАРТАК (ПРОДАКФПФ, адзін на ўвесь сайт): пасля кожнага рэндэру ініцыялізуе
+// .card-slider (гард data-init). Аўтагартанне 4с; навядзенне мышы — паўза; клік па кропцы / свайп —
+// ручны рэжым (аўта спыняецца назаўжды для гэтай карткі). Таймер сам глушыцца на адлучаным вузле.
+function _cardSlidersInit() {
+  document.querySelectorAll('.card-slider:not([data-init])').forEach(el => {
+    el.dataset.init = '1';
+    let covs = []; try { covs = JSON.parse(el.dataset.cs || '[]'); } catch {}
+    if (covs.length < 2) return;
+    const img = el.querySelector('img'), dots = Array.from(el.querySelectorAll('.cs-dots span'));
+    let i = 0, timer = null, manual = false;
+    const show = n => {
+      i = (n + covs.length) % covs.length;
+      img.style.opacity = '0';
+      setTimeout(() => { img.src = covs[i]; img.style.opacity = '1'; }, 220);
+      dots.forEach((d, k) => { d.style.opacity = k === i ? '0.95' : '0.45'; });
+    };
+    const stop = () => { clearInterval(timer); timer = null; };
+    const start = () => { if (!manual && !timer) timer = setInterval(() => { if (!el.isConnected) { stop(); return; } show(i + 1); }, 4000); };
+    dots.forEach(d => d.addEventListener('click', e => { e.stopPropagation(); manual = true; stop(); show(+d.dataset.i); }));
+    el.addEventListener('mouseenter', stop);
+    el.addEventListener('mouseleave', start);
+    let tx = null;
+    el.addEventListener('touchstart', e => { tx = e.touches[0].clientX; stop(); }, { passive: true });
+    el.addEventListener('touchend', e => {
+      if (tx == null) return; const dx = e.changedTouches[0].clientX - tx; tx = null;
+      if (Math.abs(dx) > 40) { manual = true; show(i + (dx < 0 ? 1 : -1)); } else start();
+    }, { passive: true });
+    start();
+  });
 }
 
 // 🧷 ГЛАБАЛЬНЫ ФОЛД (адзін механізм на ЎСЕ згортвальныя загалоўкі старонкі: секцыі/Папкі ў renderDynamicSections
@@ -1216,6 +1255,7 @@ function _svcItems(nodes) {
           fulfil: f.fulfil || 'cart',
           ...(f.fulfil === 'subscription' && f.period ? { period: f.period } : {}),
           ...((!f.fulfil || f.fulfil === 'booking') && +f.groupMax > 0 ? { groupMax: +f.groupMax } : {}), // 👥 групавая пазнака (легасі без fulfil = bookable)
+          ...(Array.isArray(f._photos) && f._photos.length ? { photos: f._photos.map(p => (p.photo && (p.photo.thumbUrl || p.photo.url)) || '').filter(Boolean) } : {}), // 📸 фота карткі → слайдэр _cardHtml
           ...(Array.isArray(f._route) && f._route.length ? { route: f._route.map(p => ({ name: p.name, desc: p.desc, stay: +p.stayMin || 0, move: +p.moveMin || 0, lat: p.lat, lng: p.lng,
             ...(p.photo && (p.photo.url || p.photo.thumbUrl) ? { photo: { url: p.photo.url || '', thumbUrl: p.photo.thumbUrl || '' } } : {}) })) } : {}), // 🗺 маршрут экскурсіі → цізер + чытач плана (фота кропкі — R2)
           ...(off || hidUp ? { hidden: true } : {}),
@@ -1286,7 +1326,7 @@ const SITE_VIEWS = {
         ? `<p class="service-price">${ui.price_quote}</p>`
         : price ? `<p class="service-price">${pm === 'from' ? _dsEsc(ui.price_from_pfx) + ' ' : ''}<span class="price-amount" data-price="${_dsEsc(price)}" data-currency="${_dsEsc(cur)}">${_dsEsc(price)} ${_dsEsc(cur)}</span>${ff === 'subscription' ? ' ' + _dsEsc(_sv(it.period) === 'year' ? ui.per_year : ui.per_month) : ''}</p>` : '';
       const badge = _sv(it.badge) === 'custom' ? _sv(it.badgeText) : (_sv(it.badge) ? ui['badge_' + _sv(it.badge)] || '' : '');
-      return _cardHtml({ cls: 'service-card', icon: _sv(it.icon) || '🔧', title: name, text: _sv(it.text), badge, footer: priceHtml + btn,
+      return _cardHtml({ cls: 'service-card', icon: _sv(it.icon) || '🔧', covers: it.photos, title: name, text: _sv(it.text), badge, footer: priceHtml + btn, // 📸 фота → вокладка/слайдэр (icon = фолбэк)
         edbar: isSrc ? _dSrcBar(it.id, it.hidden !== true) : _dItemBar(inst.id, 'items', _i, items.length, it.hidden !== true, 'cards'), // 🃏 пер-пазіцыйны радок ● ▲▼ ⋯ (крыніца → draft_src)
         dim: it.hidden === true,
         titleEd: isSrc ? '' : _edAttr(inst.id, 'content.items.' + _i + '.title', 'text', getUI().ed_title), // 🖊️ слайс C — толькі ўласны кантэнт секцыі (крыніца правіцца праз ✎ бара)
@@ -1493,6 +1533,7 @@ function renderDynamicSections(data) {
   };
   mount.innerHTML = renderKids(null, 0);
   _dsApplyDisplay(mount); // 🎛 ліміт паказу + тумблер Карткі/Спіс (генерычна па data-атрыбутах)
+  _cardSlidersInit(); // 📸 слайдэры вокладак картак (генерычна: любая картка з covers 2+)
   buildSiteNav(list.filter(x => !x.kind)); // у nav — толькі секцыі-экзэмпляры (папкі/файлы не пункты меню)
   // К3b: hero/footer — секцыі ПА-ЗА спісам рэндэру (заўсёды зверху/знізу); ● кіруе паказам
   const allInst = Array.isArray(data?.sections) ? data.sections : [];

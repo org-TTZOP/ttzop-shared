@@ -783,6 +783,19 @@ const FORM_SCHEMAS = {
           options: ['no','yes'], labelMap: { no: 'spv_no', yes: 'spv_yes' },
           visible: form => (form.fields?.fulfil || 'cart') === 'booking' && +form.fields?.groupMax > 0 } // мае сэнс толькі ў групавой (далучэнне да існуючага выезду)
       ] },
+    // 📸 ФОТА КАРТКІ (слайдэр): накапляльнік фота пазіцыі — 1 = статычная вокладка, 2+ = аўтагартанне
+    // з кропкамі/свайпам на сайце (генерычны механізм _cardHtml.covers — працуе на ЛЮБОЙ картцы праекта)
+    { type: 'table', title: 'svc_photos', dataKey: '_photos', addable: true, rowEditable: true, rowDeletable: true, keepOrder: true,
+      onAdd: (form, s) => _accRowAdd(form, s, '_photos'),
+      rowSchema: [
+        { key: 'photo', type: 'image', label: 'ss_files' },
+        { key: 'name',  type: 'text',  label: 'f_name', ml: true }
+      ],
+      columns: [
+        { key: 'photo', label: 'ss_files', type: 'html', sortable: false,
+          render: v => (v && (v.thumbUrl || v.url)) ? `<img src="${escHtml(v.thumbUrl || v.url)}" alt="" style="width:34px;height:34px;object-fit:cover;border-radius:6px;display:block">` : '—' },
+        { key: 'name',  label: 'f_name', type: 'text', ml: true }
+      ] },
     // 🗺 МАРШРУТ ЭКСКУРСІІ (booking): мапа ў points-рэжыме (клік = кропка) + накапляльнік кропак з ml-назвамі.
     // План для сайта (адносныя часы, агульная працягласць) фарміруецца з парадку і часоў аўтаматычна (_svcItems.route)
     { type: 'map', title: 'svc_route_map', dataKey: '_routeView', points: '_route',
