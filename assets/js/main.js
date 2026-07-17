@@ -2733,8 +2733,11 @@ function _routeBodyHtml(it) {
   // ў абодвух рэжымах без дубля ініцыялізацыі (гард el.dataset.done). Кропкі — бяспечны JSON ('<'
   // экранаваны → тэг не ўставіш), подпіс маркера — праз textContent (не HTML).
   const ptsData = route.filter(p => p.lat && p.lng).map(p => ({ lat: +p.lat, lng: +p.lng, n: String(_sv(p.name) || '') }));
-  const mapBoot = ptsData.length ? `<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"><script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"><\/script><script>(function(){var P=${JSON.stringify(ptsData).replace(/</g, '\\u003c')},A=${JSON.stringify(acc0)};var n=0,t=setInterval(function(){var el=document.getElementById('rt-map');if(!el||el.dataset.done){clearInterval(t);return}if(!window.L){if(++n>100)clearInterval(t);return}clearInterval(t);el.dataset.done='1';el.style.display='';var m=L.map(el,{scrollWheelZoom:false});L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'© OpenStreetMap',maxZoom:19}).addTo(m);var ll=P.map(function(p){return[p.lat,p.lng]});ll.length>1?m.fitBounds(ll,{padding:[26,26]}):m.setView(ll[0],15);L.polyline(ll,{color:A,weight:3,opacity:0.85}).addTo(m);P.forEach(function(p,i){var d=document.createElement('div');d.textContent=p.n;L.marker([p.lat,p.lng],{icon:L.divIcon({className:'',html:'<div style="width:26px;height:26px;border-radius:50%;background:'+A+';color:#fff;font:700 13px/26px system-ui,sans-serif;text-align:center;border:2px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,0.4)">'+(i+1)+'</div>',iconSize:[26,26],iconAnchor:[13,13]})}).addTo(m).bindPopup(d)});setTimeout(function(){try{m.invalidateSize()}catch(e){}},80)},100)})();<\/script>` : '';
-  return `<div id="rt-map" style="height:280px;border-radius:12px;overflow:hidden;margin:0 0 22px;display:none"></div><div>${rows}</div>${gm ? `<p style="margin:16px 0 0"><a href="${gm}" target="_blank" rel="noopener" style="color:${acc0};font-size:0.9rem">${_dsEsc(ui.route_gmaps || '')} ↗</a></p>` : ''}${bookBtn}${mapBoot}`;
+  const mapBoot = ptsData.length ? `<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"><script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"><\/script><script>(function(){var P=${JSON.stringify(ptsData).replace(/</g, '\\u003c')},A=${JSON.stringify(acc0)},M=${JSON.stringify(String(ui.show_more || '')).replace(/</g, '\\u003c')};
+function wire(el,m){var b=el.parentNode.querySelector('#rt-map-more');if(!b)return;b.style.display='';var lbl=function(){b.textContent=el.style.height==='560px'?'▲':'+ '+M+' ▼'};b.onclick=function(){el.style.height=el.style.height==='560px'?'280px':'560px';lbl();setTimeout(function(){try{m.invalidateSize()}catch(e){}},60)};lbl()}
+var n=0,t=setInterval(function(){var el=document.getElementById('rt-map');if(!el||el.dataset.done){clearInterval(t);return}if(!window.L){if(++n>100)clearInterval(t);return}clearInterval(t);el.dataset.done='1';el.style.display='';var m=L.map(el,{scrollWheelZoom:false});L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'© OpenStreetMap',maxZoom:19}).addTo(m);var ll=P.map(function(p){return[p.lat,p.lng]});ll.length>1?m.fitBounds(ll,{padding:[26,26]}):m.setView(ll[0],15);L.polyline(ll,{color:A,weight:3,opacity:0.85}).addTo(m);P.forEach(function(p,i){var d=document.createElement('div');d.textContent=p.n;L.marker([p.lat,p.lng],{icon:L.divIcon({className:'',html:'<div style="width:26px;height:26px;border-radius:50%;background:'+A+';color:#fff;font:700 13px/26px system-ui,sans-serif;text-align:center;border:2px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,0.4)">'+(i+1)+'</div>',iconSize:[26,26],iconAnchor:[13,13]})}).addTo(m).bindPopup(d)});wire(el,m);setTimeout(function(){try{m.invalidateSize()}catch(e){}},80)},100)})();<\/script>` : '';
+  // канонны радок «+ яшчэ ▼» пад мапай (як у Map-секцыі панэлі): 280 ↔ 560px; уключаецца пасля мантажу мапы
+  return `<div id="rt-map" style="height:280px;border-radius:12px;overflow:hidden;margin:0 0 4px;display:none"></div><div id="rt-map-more" style="display:none;text-align:center;padding:2px 0 14px;opacity:0.55;cursor:pointer;font-size:0.82rem"></div><div>${rows}</div>${gm ? `<p style="margin:16px 0 0"><a href="${gm}" target="_blank" rel="noopener" style="color:${acc0};font-size:0.9rem">${_dsEsc(ui.route_gmaps || '')} ↗</a></p>` : ''}${bookBtn}${mapBoot}`;
 }
 function _routeReaderCfg(it) {
   const bg = _themeColor('--card-bg', '#fff'), acc = _themeColor('--color-accent', '#f97316');
@@ -2765,6 +2768,14 @@ function _routeReaderMap(it) {
   ll.length > 1 ? map.fitBounds(ll, { padding: [26, 26] }) : map.setView(ll[0], 15);
   L.polyline(ll, { color: acc, weight: 3, opacity: 0.85 }).addTo(map);
   pts.forEach((p, i) => L.marker([+p.lat, +p.lng], { icon: L.divIcon({ className: '', html: `<div style="width:26px;height:26px;border-radius:50%;background:${acc};color:#fff;font:700 13px/26px system-ui,sans-serif;text-align:center;border:2px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,0.4)">${i + 1}</div>`, iconSize: [26, 26], iconAnchor: [13, 13] }) }).addTo(map).bindPopup(_dsEsc(_sv(p.name) || '')));
+  // канонны «+ яшчэ ▼» пад мапай (як Map-секцыя панэлі): 280 ↔ 560px (у акне чытача тое ж робіць wire самазагрузнага скрыпта)
+  const more = document.querySelector('.rdr-ov #rt-map-more');
+  if (more) {
+    more.style.display = '';
+    const lbl = () => { more.textContent = el.style.height === '560px' ? '▲' : '+ ' + (getUI().show_more || '') + ' ▼'; };
+    more.onclick = () => { el.style.height = el.style.height === '560px' ? '280px' : '560px'; lbl(); setTimeout(() => { try { map.invalidateSize(); } catch (e) {} }, 60); };
+    lbl();
+  }
   setTimeout(() => { try { map.invalidateSize(); } catch (e) {} }, 60);
 }
 
