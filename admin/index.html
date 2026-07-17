@@ -754,6 +754,7 @@ const FORM_SCHEMAS = {
             v => v === 'subdomain' ? ['subscription','inquiry'] : ['cart','booking','inquiry','subscription'],
             v => v === 'subdomain' ? 'subscription' : '') },
         { key: 'description', type: 'textarea', label: 'f_description',       readOnly: () => true },
+        { key: 'body',        type: 'richtext', label: 'svc_body' }, // 📝 WYSIWYG падрабязнае апісанне (Quill, як пост) — сайт: клік па картцы = чытач пазіцыі
         { key: 'price',       type: 'number',   label: 'f_price',            readOnly: () => true },
         { key: 'currency',    type: 'select',   label: 'f_currency',         readOnly: () => true,
           options: CURRENCIES.map(c => c.code), default: () => settings?.currency?.code || 'EUR' },
