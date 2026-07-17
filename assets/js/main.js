@@ -2728,7 +2728,13 @@ function _routeBodyHtml(it) {
   // «Запісацца» жыве і ў мадалцы (bookItem у гэтым дакуменце), і ў акне чытача (праз opener → фокус назад на сайт)
   const bookBtn = ((_sv(it.fulfil) || 'cart') === 'booking' && it.id)
     ? `<p style="margin:26px 0 0"><button onclick="var w=window.bookItem?window:window.opener;try{w.bookItem('${_dsEsc(it.id)}',${nameArg});if(!window.bookItem){w.focus();window.close();}}catch(e){}" style="padding:12px 26px;background:${acc0};color:#fff;border:none;border-radius:10px;font:600 1rem system-ui,sans-serif;cursor:pointer">📅 ${_dsEsc(ui.cta_book || '')}</button></p>` : '';
-  return `<div id="rt-map" style="height:280px;border-radius:12px;overflow:hidden;margin:0 0 22px;display:none"></div><div>${rows}</div>${gm ? `<p style="margin:16px 0 0"><a href="${gm}" target="_blank" rel="noopener" style="color:${acc0};font-size:0.9rem">${_dsEsc(ui.route_gmaps || '')} ↗</a></p>` : ''}${bookBtn}`;
+  // 🗺 самазагрузная мапа для АКНА чытача: innerHTML-скрыпты ў МАДАЛЦЫ не выконваюцца (там мапу мантуе
+  // _routeReaderMap), а mountReaderDoc акна перастварае скрыпты з захаваннем src (Leaflet) → мапа працуе
+  // ў абодвух рэжымах без дубля ініцыялізацыі (гард el.dataset.done). Кропкі — бяспечны JSON ('<'
+  // экранаваны → тэг не ўставіш), подпіс маркера — праз textContent (не HTML).
+  const ptsData = route.filter(p => p.lat && p.lng).map(p => ({ lat: +p.lat, lng: +p.lng, n: String(_sv(p.name) || '') }));
+  const mapBoot = ptsData.length ? `<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"><script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"><\/script><script>(function(){var P=${JSON.stringify(ptsData).replace(/</g, '\\u003c')},A=${JSON.stringify(acc0)};var n=0,t=setInterval(function(){var el=document.getElementById('rt-map');if(!el||el.dataset.done){clearInterval(t);return}if(!window.L){if(++n>100)clearInterval(t);return}clearInterval(t);el.dataset.done='1';el.style.display='';var m=L.map(el,{scrollWheelZoom:false});L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'© OpenStreetMap',maxZoom:19}).addTo(m);var ll=P.map(function(p){return[p.lat,p.lng]});ll.length>1?m.fitBounds(ll,{padding:[26,26]}):m.setView(ll[0],15);L.polyline(ll,{color:A,weight:3,opacity:0.85}).addTo(m);P.forEach(function(p,i){var d=document.createElement('div');d.textContent=p.n;L.marker([p.lat,p.lng],{icon:L.divIcon({className:'',html:'<div style="width:26px;height:26px;border-radius:50%;background:'+A+';color:#fff;font:700 13px/26px system-ui,sans-serif;text-align:center;border:2px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,0.4)">'+(i+1)+'</div>',iconSize:[26,26],iconAnchor:[13,13]})}).addTo(m).bindPopup(d)});setTimeout(function(){try{m.invalidateSize()}catch(e){}},80)},100)})();<\/script>` : '';
+  return `<div id="rt-map" style="height:280px;border-radius:12px;overflow:hidden;margin:0 0 22px;display:none"></div><div>${rows}</div>${gm ? `<p style="margin:16px 0 0"><a href="${gm}" target="_blank" rel="noopener" style="color:${acc0};font-size:0.9rem">${_dsEsc(ui.route_gmaps || '')} ↗</a></p>` : ''}${bookBtn}${mapBoot}`;
 }
 function _routeReaderCfg(it) {
   const bg = _themeColor('--card-bg', '#fff'), acc = _themeColor('--color-accent', '#f97316');
@@ -2750,6 +2756,7 @@ function _routeReaderMap(it) {
   if (typeof L === 'undefined') return;
   const el = document.querySelector('.rdr-ov #rt-map'); if (!el) return;
   const pts = (it.route || []).filter(p => p.lat && p.lng); if (!pts.length) return;
+  el.dataset.done = '1'; // гард ад самазагрузнага скрыпта акна (у мадалцы ён і так інертны, але няхай інварыянт відавочны)
   el.style.display = '';
   const acc = _themeColor('--color-accent', '#f97316');
   const map = L.map(el, { scrollWheelZoom: false });

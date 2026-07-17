@@ -134,7 +134,9 @@
     doc.head.innerHTML = parsed.head.innerHTML;
     doc.body.innerHTML = parsed.body.innerHTML;
     doc.body.querySelectorAll('script').forEach(function (old) {
-      var s = doc.createElement('script'); s.textContent = old.textContent; old.replaceWith(s);
+      var s = doc.createElement('script');
+      if (old.src) s.src = old.src; else s.textContent = old.textContent; // знешні src ЗАХОЎВАЕЦЦА (напр. Leaflet для мапы маршруту ў акне; innerHTML-скрыпты інакш не выконваюцца)
+      old.replaceWith(s);
     });
   }
   function openReaderWindow(cfg) {
