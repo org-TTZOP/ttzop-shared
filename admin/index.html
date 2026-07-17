@@ -10759,7 +10759,10 @@ function _nodeFlatSectionEdit(form, s, secId = 'main') { // рэдагаванн
   const schema = FORM_SCHEMAS[form.formSchema || s._formSchema];
   const main = (!Array.isArray(schema) && schema?.sections || []).find(x => x.type === 'flat' && x.id === secId);
   if (!main) return;
-  const flds = (main.blocks || []).filter(b => b.key && b.type !== 'image'); // image (лагатып) — свой віджэт загрузкі, не ў тэкст-мадале
+  // мадал ПАВАЖАЕ visible-прэдыкаты блокаў (жывая заўвага 2026-07-17: у тавара вывальваліся палі экскурсій/
+  // букінга — «панаклікаць Пакет і Выезд у 11:00»); змена пераключальніка (напр. Спосаб) → новыя палі
+  // з'явяцца пры наступным адкрыцці мадала. image (лагатып) — свой віджэт загрузкі, не ў тэкст-мадале
+  const flds = (main.blocks || []).filter(b => b.key && b.type !== 'image' && (!b.visible || (() => { try { return b.visible(form); } catch { return true; } })()));
   const lang = _settingsLang();
   // ml-палі: у назве паля паказваем бягучую мову (каб юзер ведаў, што рэдагуе менавіта яе)
   _nfmApplySchema(Object.assign(flds.map(b => ({ key: b.key, type: ['textarea','select','multiselect','number'].includes(b.type) ? b.type : 'text',
