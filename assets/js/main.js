@@ -1168,6 +1168,8 @@ function _cardHtml(o) {
     ? `<div class="card-slider" data-cs="${_dsEsc(JSON.stringify(covs))}" style="position:relative;margin-bottom:12px;border-radius:8px;overflow:hidden">
         <img class="post-cover" src="${_dsEsc(covs[0].u)}" alt="" loading="lazy" style="width:100%;display:block;object-fit:cover;aspect-ratio:16/9;transition:opacity 0.25s;border-radius:8px;cursor:zoom-in">
         <div class="cs-dots" style="position:absolute;left:0;right:0;bottom:8px;display:flex;gap:6px;justify-content:center">${covs.map((_, i) => `<span data-i="${i}" style="width:8px;height:8px;border-radius:50%;background:#fff;opacity:${i ? 0.45 : 0.95};box-shadow:0 0 3px rgba(0,0,0,0.6);cursor:pointer"></span>`).join('')}</div>
+        <button type="button" class="cs-prev" style="position:absolute;left:6px;top:50%;transform:translateY(-50%);width:30px;height:30px;border:none;border-radius:50%;background:rgba(0,0,0,0.35);color:#fff;font-size:1.1rem;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center">‹</button>
+        <button type="button" class="cs-next" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);width:30px;height:30px;border:none;border-radius:50%;background:rgba(0,0,0,0.35);color:#fff;font-size:1.1rem;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center">›</button>
       </div>`
     : covs.length === 1
     ? `<img class="post-cover" src="${_dsEsc(covs[0].u)}" alt="" loading="lazy" style="width:100%;border-radius:8px;margin-bottom:12px;object-fit:cover;aspect-ratio:16/9">`
@@ -1235,6 +1237,9 @@ function _cardSlidersInit() {
     const stop = () => { clearInterval(timer); timer = null; };
     const start = () => { if (!manual && !timer) timer = setInterval(() => { if (!el.isConnected) { stop(); return; } show(i + 1); }, 4000); };
     dots.forEach(d => d.addEventListener('click', e => { e.stopPropagation(); manual = true; stop(); show(+d.dataset.i); }));
+    // ◀▶ стрэлкі (жывая заўвага): той жа ручны рэжым, што кропкі/свайп; stopPropagation — не будзіць клік карткі/лайтбокс
+    el.querySelector('.cs-prev')?.addEventListener('click', e => { e.stopPropagation(); manual = true; stop(); show(i - 1); });
+    el.querySelector('.cs-next')?.addEventListener('click', e => { e.stopPropagation(); manual = true; stop(); show(i + 1); });
     el.addEventListener('mouseenter', stop);
     el.addEventListener('mouseleave', start);
     let tx = null;
