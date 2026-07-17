@@ -5,7 +5,7 @@
 // API: openPhotoEditor(file, {labels, applyAllOption}) → Promise<{file} | {file, skipAll:true} | null (адмена)>
 (function (global) {
   const DEF = { title: 'Edit photo', crop_free: 'No crop', bright: 'Brightness', sat: 'Saturation',
-    rotate: 'Rotate', reset: 'Reset', skip: 'No edits', skip_all: 'No edits for all', done: 'Done', cancel: 'Cancel' };
+    rotate: 'Rotate', vig: 'Vignette', reset: 'Reset', skip: 'No edits', skip_all: 'No edits for all', done: 'Done', cancel: 'Cancel' };
   let box = null;
 
   function openPhotoEditor(file, opts) {
@@ -23,7 +23,7 @@
 
   function mount(img, file, L, opts, resolve) {
     // стан рэдагавання
-    const st = { rot: 0, br: 1, sa: 1, ar: 0, z: 1, cx: 0.5, cy: 0.5 }; // ar 0 = без абрэзкі; cx/cy — цэнтр кадра (0..1)
+    const st = { rot: 0, br: 1, sa: 1, vg: 0, ar: 0, z: 1, cx: 0.5, cy: 0.5 }; // ar 0 = без абрэзкі; cx/cy — цэнтр кадра (0..1)
     let rotCv = document.createElement('canvas'); // крыніца пасля павароту (пераразлічваецца на ⟳)
     const makeRot = () => {
       const q = st.rot % 180 !== 0;
@@ -53,6 +53,7 @@
       <div id="pe-zoom-row" style="display:none;align-items:center;gap:10px;margin-top:10px"><span style="font-size:0.8rem;opacity:0.7">🔍</span><input id="pe-zoom" type="range" min="100" max="400" value="100" style="flex:1"></div>
       <div style="display:flex;align-items:center;gap:10px;margin-top:8px"><span style="font-size:0.8rem;opacity:0.7;min-width:110px">☀️ ${esc(L.bright)}</span><input id="pe-br" type="range" min="40" max="180" value="100" style="flex:1"></div>
       <div style="display:flex;align-items:center;gap:10px;margin-top:8px"><span style="font-size:0.8rem;opacity:0.7;min-width:110px">🎨 ${esc(L.sat)}</span><input id="pe-sa" type="range" min="0" max="220" value="100" style="flex:1"></div>
+      <div style="display:flex;align-items:center;gap:10px;margin-top:8px"><span style="font-size:0.8rem;opacity:0.7;min-width:110px">🌒 ${esc(L.vig)}</span><input id="pe-vg" type="range" min="0" max="100" value="0" style="flex:1"></div>
       <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:14px">
         <button type="button" id="pe-reset" style="${btn}">↺ ${esc(L.reset)}</button>
         <span style="flex:1"></span>
@@ -97,6 +98,11 @@
       c2.drawImage(rotCv, r.x, r.y, r.w, r.h, 0, 0, w, h);
       if (withFilter && filterWorks) c2.filter = 'none';
       else if (withFilter && (st.br !== 1 || st.sa !== 1)) manualFilter(c2);
+      if (st.vg > 0) { // 🌒 він'етка: радыяльны градыент паверх (аднолькава ў прэв'ю і экспарце)
+        const g = c2.createRadialGradient(w / 2, h / 2, Math.min(w, h) * 0.35, w / 2, h / 2, Math.hypot(w, h) / 2);
+        g.addColorStop(0, 'rgba(0,0,0,0)'); g.addColorStop(1, `rgba(0,0,0,${0.85 * st.vg})`);
+        c2.fillStyle = g; c2.fillRect(0, 0, w, h);
+      }
     };
     // прэв'ю: маляванне БЕЗ фільтра + CSS-фільтр на самім канвасе (імгненна і працуе ўсюды);
     // рэальны фільтр пікселяў — толькі на экспарце (drawTo(..., true))
@@ -121,7 +127,8 @@
     $('pe-zoom').addEventListener('input', e => { st.z = +e.target.value / 100; render(); });
     $('pe-br').addEventListener('input', e => { st.br = +e.target.value / 100; render(); });
     $('pe-sa').addEventListener('input', e => { st.sa = +e.target.value / 100; render(); });
-    $('pe-reset').addEventListener('click', () => { st.rot = 0; st.br = 1; st.sa = 1; st.ar = 0; st.z = 1; st.cx = st.cy = 0.5; makeRot(); $('pe-br').value = 100; $('pe-sa').value = 100; $('pe-zoom').value = 100; render(); });
+    $('pe-vg').addEventListener('input', e => { st.vg = +e.target.value / 100; render(); });
+    $('pe-reset').addEventListener('click', () => { st.rot = 0; st.br = 1; st.sa = 1; st.vg = 0; st.ar = 0; st.z = 1; st.cx = st.cy = 0.5; makeRot(); $('pe-br').value = 100; $('pe-sa').value = 100; $('pe-vg').value = 0; $('pe-zoom').value = 100; render(); });
 
     const close = () => { box.remove(); box = null; document.removeEventListener('keydown', onKey); };
     const finish = v => { close(); resolve(v); };
@@ -133,7 +140,7 @@
     const skipAllBtn = $('pe-skipall'); if (skipAllBtn) skipAllBtn.addEventListener('click', () => finish({ file, skipAll: true }));
     $('pe-done').addEventListener('click', () => {
       // без правак увогуле → аддаём арыгінал (нуль перакадаванняў)
-      if (!+st.ar && st.rot === 0 && st.br === 1 && st.sa === 1) return finish({ file });
+      if (!+st.ar && st.rot === 0 && st.br === 1 && st.sa === 1 && st.vg === 0) return finish({ file });
       const out = document.createElement('canvas').getContext('2d');
       drawTo(out, Math.min(2400, cropRect().w), true); // столь 2400px — далей канвеер сам сцісне да 1200
       const done = blob => finish({ file: blob ? new File([blob], (file.name || 'photo').replace(/\.[^.]+$/, '') + '.jpg', { type: 'image/jpeg' }) : file });
