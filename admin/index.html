@@ -4166,6 +4166,7 @@ function _nodeMenuItemsHtml(node, mid, s) {
     cap('canRename') ? `<button class="node-overflow-item" title="${t('node_rename')}" onclick="${renameClick};nodeCloseOverflow('${mid}')">✎</button>` : '', // секцыйныя формы больш НЕ выключаны глабальна: чыя назва = node.name (тэма) — пераназываюцца; чыя ў палях — canRename:false канфігам
     cap('hasDescription') ? `<button class="node-overflow-item" title="${t('node_description')}" onclick="nodeEditDescription('${node.id}');nodeCloseOverflow('${mid}')">📝</button>` : '',
     (node.type === 'form' && _formMlEntries(node, s).length) ? `<button class="node-overflow-item" title="${t('tr_btn')}" onclick="_nodeTranslate('${node.id}');nodeCloseOverflow('${mid}')">🌐${_trLeftCache != null ? `<sup style="font-size:0.6em;opacity:0.7">${_trLeftCache}</sup>` : ''}</button>` : '', // 🌐 AI-пераклад пустых моў (генерычна: форма з ml-палямі)
+    (node.type === 'file' && ((node.mimeType || '').startsWith('image/') || /\.(webp|jpe?g|png|gif|avif)$/i.test(node.url || ''))) ? `<button class="node-overflow-item" title="${t('pe_title')}" onclick="_nodeFileEditPhoto('${node.id}');nodeCloseOverflow('${mid}')">✂️</button>` : '', // ✂️ рэдагаваць ужо загружанае фота
     cap('hasLink') ? `<button class="node-overflow-item" title="${t('node_copy_link')}" onclick="_nodeCopyLink('${node.id}',this);nodeCloseOverflow('${mid}')">🔗</button>` : '',
     cap('hasLink') ? `<button class="node-overflow-item" title="${t('node_share')}" onclick="_nodeShareLink('${node.id}');nodeCloseOverflow('${mid}')">${_icoShare()}</button>` : '', // падзяліцца спасылкай у чаце (выбар карыстальнікаў)
     cap('canRelocate') ? `<button class="node-overflow-item" title="${t('folder_move_to')}" onclick="${relocClick};nodeCloseOverflow('${mid}')">${_icoFolder()}→</button>` : ''
@@ -6322,6 +6323,23 @@ function nodeFileUpload(folderId) {
 }
 // ✂️ подпісы фота-рэдактара (адзін хелпер — мова панэлі; сам кампанент — агульны assets/js/photoedit.js)
 function _peLabels() { return { title: t('pe_title'), crop_free: t('pe_crop_free'), bright: t('pe_bright'), sat: t('pe_sat'), rotate: t('pe_rotate'), reset: t('pe_reset'), skip: t('pe_skip'), skip_all: t('pe_skip_all'), done: t('pe_done'), cancel: t('pe_cancel') }; }
+// ✂️ рэдагаваць УЖО загружанае фота ФайлБлока: R2 (CORS *) → рэдактар → новая загрузка → падмена url/thumbUrl.
+// Стары файл застаецца ў R2 (можа быць спасланы дзе яшчэ; прыбярэцца з teardown-прэфіксам сайта)
+async function _nodeFileEditPhoto(id) {
+  const s = currentNodeState, node = s?.data?.nodes?.find(n => n.id === id); if (!node) return;
+  if (_nodeLockGuard(node)) return; // 🔒
+  try {
+    const r = await fetch(node.url, { mode: 'cors' });
+    const blob = await r.blob();
+    const src = new File([blob], 'photo.img', { type: blob.type || 'image/jpeg' });
+    const ed = await openPhotoEditor(src, { labels: _peLabels() });
+    if (!ed) return;             // адмена
+    if (ed.file === src) return; // «Без правак» — нічога не мяняем
+    const up = await _uploadImageToR2(ed.file, s._section || 'file');
+    node.url = up.url; node.thumbUrl = up.thumbUrl || up.url;
+    nodeRender(); nodeSave();
+  } catch (e) { showAlert(t('err')); }
+}
 async function handleNodeFiles(files) {
   const tgt = _fileUploadTarget; if (!tgt?.s?.data || !files?.length) return;
   const s = tgt.s, pid = tgt.folderId, MAX = 10 * 1024 * 1024;

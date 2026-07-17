@@ -65,8 +65,9 @@
     document.body.appendChild(box);
     const $ = id => box.querySelector('#' + id);
     const cv = $('pe-cv'), ctx = cv.getContext('2d');
-    // падтрымка ctx.filter (стары Safari/слабыя прылады): без яе — ручны пасля-фільтр па пікселях
-    ctx.filter = 'brightness(0.9)'; const hasFilter = ctx.filter !== 'none' && ctx.filter !== '' && ctx.filter !== undefined; ctx.filter = 'none';
+    // ⚠️ ctx.filter правяраем РЭАЛЬНАЙ пробай піксела (чытанне ўласцівасці хлусіць: экспанда-прысвойванне
+    // «падтрымліваецца», а маляванне ігнаруе фільтр → «слайдэры нічога не мяняюць», злоўлена жыва)
+    const filterWorks = (() => { try { const tc = document.createElement('canvas'); tc.width = tc.height = 1; const c = tc.getContext('2d'); c.filter = 'brightness(0.4)'; c.fillStyle = '#fff'; c.fillRect(0, 0, 1, 1); return c.getImageData(0, 0, 1, 1).data[0] < 200; } catch { return false; } })();
 
     // кадр у КРЫНІЦЫ (rotCv-прасторы): найбольшы прамавугольнік прапорцыі ar, падзелены на zoom, з цэнтрам cx/cy
     const cropRect = () => {
@@ -88,15 +89,18 @@
       }
       c2.putImageData(d, 0, 0);
     };
-    const drawTo = (c2, outW) => {
+    const drawTo = (c2, outW, withFilter) => {
       const r = cropRect();
       const w = Math.round(outW), h = Math.round(outW * r.h / r.w);
       c2.canvas.width = w; c2.canvas.height = h;
-      if (hasFilter) c2.filter = `brightness(${st.br}) saturate(${st.sa})`;
+      if (withFilter && filterWorks) c2.filter = `brightness(${st.br}) saturate(${st.sa})`;
       c2.drawImage(rotCv, r.x, r.y, r.w, r.h, 0, 0, w, h);
-      if (hasFilter) c2.filter = 'none'; else if (st.br !== 1 || st.sa !== 1) manualFilter(c2);
+      if (withFilter && filterWorks) c2.filter = 'none';
+      else if (withFilter && (st.br !== 1 || st.sa !== 1)) manualFilter(c2);
     };
-    const render = () => { drawTo(ctx, Math.min(900, cropRect().w)); $('pe-zoom-row').style.display = +st.ar ? 'flex' : 'none';
+    // прэв'ю: маляванне БЕЗ фільтра + CSS-фільтр на самім канвасе (імгненна і працуе ўсюды);
+    // рэальны фільтр пікселяў — толькі на экспарце (drawTo(..., true))
+    const render = () => { drawTo(ctx, Math.min(900, cropRect().w), false); cv.style.filter = `brightness(${st.br}) saturate(${st.sa})`; $('pe-zoom-row').style.display = +st.ar ? 'flex' : 'none';
       box.querySelectorAll('[data-ar]').forEach(b => { const on = String(+b.dataset.ar) === String(+st.ar); b.style.background = on ? 'var(--accent, #f97316)' : 'transparent'; b.style.color = on ? '#fff' : 'inherit'; b.style.borderColor = on ? 'var(--accent, #f97316)' : 'rgba(128,128,128,0.5)'; }); };
     render();
 
@@ -131,7 +135,7 @@
       // без правак увогуле → аддаём арыгінал (нуль перакадаванняў)
       if (!+st.ar && st.rot === 0 && st.br === 1 && st.sa === 1) return finish({ file });
       const out = document.createElement('canvas').getContext('2d');
-      drawTo(out, Math.min(2400, cropRect().w)); // столь 2400px — далей канвеер сам сцісне да 1200
+      drawTo(out, Math.min(2400, cropRect().w), true); // столь 2400px — далей канвеер сам сцісне да 1200
       const done = blob => finish({ file: blob ? new File([blob], (file.name || 'photo').replace(/\.[^.]+$/, '') + '.jpg', { type: 'image/jpeg' }) : file });
       out.canvas.toBlob(done, 'image/jpeg', 0.92);
     });
