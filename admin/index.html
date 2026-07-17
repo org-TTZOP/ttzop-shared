@@ -4161,6 +4161,7 @@ function _nodeMenuItemsHtml(node, mid, s) {
     cap('canBeLocked') ? `<button class="node-overflow-item" title="${t(node.fields?._locked ? 'node_unlock' : 'node_lock')}" onclick="nodeToggleLock('${node.id}');nodeCloseOverflow('${mid}')" style="${node.fields?._locked ? 'color:var(--accent)' : 'opacity:0.6'}">${_icoLock(!!node.fields?._locked)}</button>` : '', // іконка = ДЗЕЯННЕ (замкнёны аб'ект → адкрыты замок «адамкнуць», акцэнт); СТАН паказвае іконка пры назве
     cap('canRename') ? `<button class="node-overflow-item" title="${t('node_rename')}" onclick="${renameClick};nodeCloseOverflow('${mid}')">✎</button>` : '', // секцыйныя формы больш НЕ выключаны глабальна: чыя назва = node.name (тэма) — пераназываюцца; чыя ў палях — canRename:false канфігам
     cap('hasDescription') ? `<button class="node-overflow-item" title="${t('node_description')}" onclick="nodeEditDescription('${node.id}');nodeCloseOverflow('${mid}')">📝</button>` : '',
+    (node.type === 'form' && _formMlEntries(node, s).length) ? `<button class="node-overflow-item" title="${t('tr_btn')}" onclick="_nodeTranslate('${node.id}');nodeCloseOverflow('${mid}')">🌐${_trLeftCache != null ? `<sup style="font-size:0.6em;opacity:0.7">${_trLeftCache}</sup>` : ''}</button>` : '', // 🌐 AI-пераклад пустых моў (генерычна: форма з ml-палямі)
     cap('hasLink') ? `<button class="node-overflow-item" title="${t('node_copy_link')}" onclick="_nodeCopyLink('${node.id}',this);nodeCloseOverflow('${mid}')">🔗</button>` : '',
     cap('hasLink') ? `<button class="node-overflow-item" title="${t('node_share')}" onclick="_nodeShareLink('${node.id}');nodeCloseOverflow('${mid}')">${_icoShare()}</button>` : '', // падзяліцца спасылкай у чаце (выбар карыстальнікаў)
     cap('canRelocate') ? `<button class="node-overflow-item" title="${t('folder_move_to')}" onclick="${relocClick};nodeCloseOverflow('${mid}')">${_icoFolder()}→</button>` : ''
@@ -7055,6 +7056,64 @@ async function nodeRelocate(id, targetParentId) {
 }
 
 // блок-«назва ў полі» формы (nameField:true у схеме, fallback key='name') — адзіная крыніца для rename/прэфіла
+// ═══ 🌐 AI-ПЕРАКЛАД (ПРОДАКФПФ, для ЛЮБОГА РМ): кнопка 🌐 у ⋯ формы з ml-палямі → воркер translate_fields
+// (Haiku) запаўняе ТОЛЬКІ ПУСТЫЯ мовы з асноўнай (ручныя праўкі не чапаюцца); ліміт 5/мес на сайт.
+// Крыніцы: flat-блокі з ml + ml-палі РАДКОЎ накапляльнікаў (напр. кропкі маршруту) — праз closures get/set.
+let _trLeftCache = null; // рэшта месячнага ліміту (бэдж на кнопцы; абнаўляецца кожным запытам)
+function _formMlEntries(form, s) {
+  const sch = FORM_SCHEMAS[form.formSchema || _nodeCfg(s, form, '_formSchema')];
+  if (!sch) return [];
+  const out = [], f = form.fields || (form.fields = {});
+  const flat = Array.isArray(sch) ? sch.filter(b => b.ml) : (sch.sections || []).flatMap(sec => (sec.blocks || []).filter(b => b.ml));
+  flat.forEach(b => out.push({ key: 'f:' + b.key, get: () => f[b.key], set: v => { f[b.key] = v; } }));
+  if (!Array.isArray(sch)) (sch.sections || []).forEach(sec => {
+    const mls = (sec.rowSchema || []).filter(c => c.ml);
+    if (!mls.length || !sec.dataKey) return;
+    (Array.isArray(f[sec.dataKey]) ? f[sec.dataKey] : []).forEach(row => mls.forEach(c =>
+      out.push({ key: 'r:' + sec.dataKey + ':' + (row._id || '') + ':' + c.key, get: () => row[c.key], set: v => { row[c.key] = v; } })));
+  });
+  return out;
+}
+async function _nodeTranslate(id) {
+  const s = currentNodeState, form = s?.data?.nodes?.find(n => n.id === id); if (!form) return;
+  if (_nodeLockGuard(form)) return; // 🔒
+  const from = _primaryCode();
+  const langs = (settings.languages || []).map(l => l.code).filter(c => c && c !== from);
+  if (!langs.length) { showAlert(t('tr_nothing')); return; }
+  const entries = _formMlEntries(form, s);
+  const texts = {}, targets = {};
+  entries.forEach(e => { // крыніца = тэкст асноўнай мовы; у працу — толькі палі, дзе ХОЦЬ адна мова пустая
+    const v = e.get();
+    const srcTxt = _mlGet(v, from);
+    if (!srcTxt || !String(srcTxt).trim()) return;
+    const missing = langs.filter(l => !(v && typeof v === 'object' && String(v[l] || '').trim()));
+    if (!missing.length) return;
+    texts[e.key] = String(srcTxt); targets[e.key] = missing;
+  });
+  if (!Object.keys(texts).length) { showAlert(t('tr_nothing')); return; }
+  let left = null, max = 5; // рэшта ліміту — танны запыт без тэкстаў (без выдаткаў API)
+  try { const r0 = await fetch(API, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'translate_fields', repo: REPO, password, texts: {} }) });
+    const j0 = await r0.json(); left = j0.left; max = j0.max || 5; _trLeftCache = left; } catch {}
+  if (left === 0) { showAlert(t('tr_limit').replace('{max}', max)); return; }
+  showConfirm(t('tr_confirm').replace('{from}', _langLabel(from)).replace('{langs}', langs.map(_langLabel).join(', ')).replace('{n}', left ?? '?').replace('{max}', max), async () => {
+    try {
+      const r = await fetch(API, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'translate_fields', repo: REPO, password, texts, from, to: langs }) });
+      const j = await r.json();
+      if (!r.ok || !j.ok) { showAlert(j?.error === 'tr_limit' ? t('tr_limit').replace('{max}', j.max || max) : t('tr_err')); return; }
+      let applied = 0;
+      entries.forEach(e => {
+        const tr = j.translations?.[e.key]; if (!tr) return;
+        const cur = e.get();
+        const o = (cur && typeof cur === 'object' && !Array.isArray(cur)) ? { ...cur } : (cur ? { [from]: cur } : {});
+        (targets[e.key] || []).forEach(l => { if (tr[l] && !String(o[l] || '').trim()) { o[l] = tr[l]; applied++; } });
+        e.set(o);
+      });
+      _trLeftCache = j.left;
+      nodeRender(); nodeSave();
+      showAlert(t('tr_done').replace('{k}', applied).replace('{n}', j.left).replace('{max}', j.max || max));
+    } catch { showAlert(t('tr_err')); }
+  }, { label: '🌐', danger: false });
+}
 // 🌱 АЎТА-ПАПКІ-0 ФОРМЫ (ПРОДАКФПФ, для ЛЮБОГА РМ): схема аб'яўляе `_seedFolders: [{key, sysKey}]` →
 // форма атрымлівае пустую Папку-0 (аўтамоўная назва праз sysKey, без хардкоду). Сід АДНАРАЗОВЫ
 // (сцяг fields._seeded_{key}) — выдаленая кліентам папка НЕ ўваскрасае. Новы РМ = адзін радок у схеме.
@@ -11175,7 +11234,12 @@ let monitorState = {
         const raw = t('order_' + s), lbl = raw === 'order_' + s ? s : raw; // невядомы статус → як ёсць
         return `<span title="${escHtml(lbl)}: ${n}" style="font-size:0.75rem">${escHtml(lbl.split(' ')[0])}${n}</span>`; // першы токен лэйбла = смайл статусу
       }).join('') + (off ? `<span style="color:#ef4444;font-size:0.75rem" title="offline: ${off}">✗${off}</span>` : '');
-      if (chips) extra = `<span style="margin-left:8px;display:inline-flex;gap:7px;align-items:center">${chips}</span>`;
+      // 🌐 расход AI-перакладаў за месяц (Haiku: $1/M уваход + $5/M выхад — тыя ж цэны, што ў разліку ліміту)
+      const sp = monitorState._trSpend;
+      const trUsd = sp ? (((sp.inTok || 0) * 1 + (sp.outTok || 0) * 5) / 1e6).toFixed(2) : '0';
+      const trChip = sp && sp.n ? `<span style="font-size:0.75rem" title="${escHtml(t('tr_month_stat').replace('{n}', sp.n).replace('{tok}', (sp.inTok || 0) + (sp.outTok || 0)).replace('{usd}', trUsd))}">🌐${sp.n}·$${trUsd}</span>` : '';
+      const allChips = chips + trChip;
+      if (allChips) extra = `<span style="margin-left:8px;display:inline-flex;gap:7px;align-items:center">${allChips}</span>`;
     }
     return `<span class="node-folder-name">${escHtml(_folderLabel(folder))}</span>${extra}<span style="font-size:0.78rem;color:var(--muted);margin-left:4px">(${c})</span>`;
   },
@@ -11254,6 +11318,7 @@ async function _monitorLoadDashboard() {
                  orderId:c.orderId||'', clientId:c.clientId||'' } });
     });
     monitorState.data.nodes = newNodes;
+    monitorState._trSpend = dash?.trSpend || null; // 🌐 месячны расход AI-перакладаў (чып на «Аглядзе»)
     monitorState._dashLoaded = true;
     if (currentNodeState === monitorState) renderNodeEditor(monitorState);
     if (monitorState.expanded.has('mf-overview')) pingMonitorSites();
