@@ -1160,16 +1160,17 @@ function _dsEsc(s) { return String(s == null ? '' : s).replace(/&/g,'&amp;').rep
 // (Паслугі/Навіны/…). media = cover-выява (навіны) АБО icon-эмодзі (паслугі); footer = гатовы HTML
 // (цана+кошык / кнопка чытача); onClick = клік па ЎСЁЙ картцы (навіны→мадалка), footer-кнопкі robяць stopPropagation.
 function _cardHtml(o) {
-  // 📸 ВОКЛАДКІ (ПРОДАКФПФ — для ЛЮБОЙ карткі праекта): o.covers = масіў URL → 2+ фота = СЛАЙДЭР
-  // (аўтагартанне + кропкі + свайп, рухавік _cardSlidersInit); 1 фота / o.cover — статычная вокладка як раней
-  const covs = (Array.isArray(o.covers) ? o.covers : (o.cover ? [o.cover] : [])).filter(Boolean);
+  // 📸 ВОКЛАДКІ (ПРОДАКФПФ — для ЛЮБОЙ карткі праекта): o.covers = масіў URL або {u:мініяцюра, f:арыгінал, c:подпіс}
+  // → 2+ фота = СЛАЙДЭР (аўтагартанне + кропкі + свайп + клік = ЛАЙТБОКС усяго альбома, рухавік _cardSlidersInit);
+  // 1 фота / o.cover — статычная вокладка як раней (без лайтбокса — клік карткі можа несці сваё дзеянне, напр. пост)
+  const covs = (Array.isArray(o.covers) ? o.covers : (o.cover ? [o.cover] : [])).filter(Boolean).map(c => typeof c === 'string' ? { u: c } : c);
   const media = covs.length > 1
     ? `<div class="card-slider" data-cs="${_dsEsc(JSON.stringify(covs))}" style="position:relative;margin-bottom:12px;border-radius:8px;overflow:hidden">
-        <img class="post-cover" src="${_dsEsc(covs[0])}" alt="" loading="lazy" style="width:100%;display:block;object-fit:cover;aspect-ratio:16/9;transition:opacity 0.25s;border-radius:8px">
+        <img class="post-cover" src="${_dsEsc(covs[0].u)}" alt="" loading="lazy" style="width:100%;display:block;object-fit:cover;aspect-ratio:16/9;transition:opacity 0.25s;border-radius:8px;cursor:zoom-in">
         <div class="cs-dots" style="position:absolute;left:0;right:0;bottom:8px;display:flex;gap:6px;justify-content:center">${covs.map((_, i) => `<span data-i="${i}" style="width:8px;height:8px;border-radius:50%;background:#fff;opacity:${i ? 0.45 : 0.95};box-shadow:0 0 3px rgba(0,0,0,0.6);cursor:pointer"></span>`).join('')}</div>
       </div>`
     : covs.length === 1
-    ? `<img class="post-cover" src="${_dsEsc(covs[0])}" alt="" loading="lazy" style="width:100%;border-radius:8px;margin-bottom:12px;object-fit:cover;aspect-ratio:16/9">`
+    ? `<img class="post-cover" src="${_dsEsc(covs[0].u)}" alt="" loading="lazy" style="width:100%;border-radius:8px;margin-bottom:12px;object-fit:cover;aspect-ratio:16/9">`
     : (o.icon ? `<div class="service-icon">${_dsEsc(o.icon)}</div>` : '');
   const meta = (o.meta || o.metaEd) ? `<div class="post-date text-muted" style="font-size:0.82rem;margin-bottom:6px"${o.metaEd || ''}>${_dsEsc(o.meta)}</div>` : '';
   // 🖊️ o.titleEd/o.textEd/o.metaEd — edit-атрыбуты. o.textHtml=true → цела сырое (richtext, не эскейпім). Пустое ў edit — для плейсхолдэра
@@ -1189,14 +1190,22 @@ function _cardSlidersInit() {
     el.dataset.init = '1';
     let covs = []; try { covs = JSON.parse(el.dataset.cs || '[]'); } catch {}
     if (covs.length < 2) return;
+    covs = covs.map(c => typeof c === 'string' ? { u: c } : c); // сумяшчальнасць: радкі і аб'екты {u,f,c}
     const img = el.querySelector('img'), dots = Array.from(el.querySelectorAll('.cs-dots span'));
     let i = 0, timer = null, manual = false;
     const show = n => {
       i = (n + covs.length) % covs.length;
       img.style.opacity = '0';
-      setTimeout(() => { img.src = covs[i]; img.style.opacity = '1'; }, 220);
+      setTimeout(() => { img.src = covs[i].u; img.style.opacity = '1'; }, 220);
       dots.forEach((d, k) => { d.style.opacity = k === i ? '0.95' : '0.45'; });
     };
+    // 🔍 клік па фота = ЛАЙТБОКС усяго альбома карткі (◀▶/свайп/лічыльнік/подпісы — існуючы openLightbox)
+    img.addEventListener('click', e => {
+      e.stopPropagation(); manual = true; stop();
+      const aid = 'cs-' + (++_albSeq);
+      _siteAlbumReg[aid] = covs.map(c => ({ url: c.f || c.u, caption: c.c || '' }));
+      openLightbox(aid, i);
+    });
     const stop = () => { clearInterval(timer); timer = null; };
     const start = () => { if (!manual && !timer) timer = setInterval(() => { if (!el.isConnected) { stop(); return; } show(i + 1); }, 4000); };
     dots.forEach(d => d.addEventListener('click', e => { e.stopPropagation(); manual = true; stop(); show(+d.dataset.i); }));
@@ -1243,7 +1252,7 @@ async function _svcFetchTree() {
 const _svcIsImg = x => (x.mimeType || '').startsWith('image/') || /\.(webp|jpe?g|png|gif|avif)$/i.test(x.url || '');
 const _svcFiles = (nodes, pid) => (nodes || []).filter(x => x && (x.parentId ?? null) === pid && !x._deleted && x.active !== false)
   .sort((a, b) => (a.order || 0) - (b.order || 0))
-  .flatMap(x => x.type === 'file' ? (_svcIsImg(x) ? [x.thumbUrl || x.url] : []) : x.type === 'folder' ? _svcFiles(nodes, x.id) : []);
+  .flatMap(x => x.type === 'file' ? (_svcIsImg(x) ? [{ u: x.thumbUrl || x.url, f: x.url || x.thumbUrl, c: _sv(x.description) || '' }] : []) : x.type === 'folder' ? _svcFiles(nodes, x.id) : []); // {u:мініяцюра, f:арыгінал для лайтбокса, c:подпіс}
 function _svcItems(nodes) {
   const items = [];
   const walk = (pid, path, hidUp) => (nodes || [])
@@ -1263,7 +1272,7 @@ function _svcItems(nodes) {
           ...((!f.fulfil || f.fulfil === 'booking') && +f.groupMax > 0 ? { groupMax: +f.groupMax } : {}), // 👥 групавая пазнака (легасі без fulfil = bookable)
           ...(() => { // 📸 фота карткі → слайдэр _cardHtml: ФайлБлокі паддрэва (канон); legacy-накапляльнік _photos — ціхі fallback
             const ph = _svcFiles(nodes, n.id);
-            const legacy = Array.isArray(f._photos) ? f._photos.map(p => (p.photo && (p.photo.thumbUrl || p.photo.url)) || '').filter(Boolean) : [];
+            const legacy = Array.isArray(f._photos) ? f._photos.filter(p => p.photo && (p.photo.thumbUrl || p.photo.url)).map(p => ({ u: p.photo.thumbUrl || p.photo.url, f: p.photo.url || p.photo.thumbUrl, c: '' })) : [];
             const photos = ph.length ? ph : legacy;
             return photos.length ? { photos } : {};
           })(),
