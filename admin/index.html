@@ -388,6 +388,7 @@
   <script type="module" src="../assets/js/booking.js"></script><!-- 📅 агульны модуль занятасці (той жа файл імпартуе воркер) -->
   <script src="../assets/js/reader.js"></script><!-- 📄 універсальны чытач дакумента (справаздачы і інш.) -->
   <script src="../assets/js/cdate.js"></script><!-- 📅 фірменны каляндар-папап (адзін кампанент: панэль + Чарнавік/сайт) -->
+  <script src="../assets/js/photoedit.js"></script><!-- ✂️ універсальны фота-рэдактар (адзін кампанент: панэль + Чарнавік) -->
 </head>
 <body>
 
@@ -5729,7 +5730,9 @@ function _nfmImagePick(key) { // 📷 выбар файла → існуючы R
   let inp = document.getElementById('nfm-img-input');
   if (!inp) { inp = document.createElement('input'); inp.type = 'file'; inp.accept = 'image/*'; inp.id = 'nfm-img-input'; inp.style.display = 'none'; document.body.appendChild(inp); }
   inp.onchange = async () => {
-    const f = inp.files?.[0]; if (!f) return;
+    let f = inp.files?.[0]; if (!f) return;
+    const ed = await openPhotoEditor(f, { labels: _peLabels() }); // ✂️ заўсёды, з «Без правак»
+    if (ed === null) return; f = ed.file;
     const btn = document.querySelector('#nfm-f-' + key + ' .btn-search'); if (btn) btn.textContent = '⏳';
     try { _nfmImageSet(key, await _uploadImageToR2(f, currentNodeState?._section || 'file')); }
     catch (e) { showAlert(String(e?.message || e)); }
@@ -6317,13 +6320,24 @@ function nodeFileUpload(folderId) {
   if (!inp) { inp = document.createElement('input'); inp.type = 'file'; inp.id = 'node-file-input'; inp.multiple = true; inp.style.display = 'none'; inp.onchange = () => handleNodeFiles(inp.files); document.body.appendChild(inp); }
   inp.value = ''; inp.click();
 }
+// ✂️ подпісы фота-рэдактара (адзін хелпер — мова панэлі; сам кампанент — агульны assets/js/photoedit.js)
+function _peLabels() { return { title: t('pe_title'), crop_free: t('pe_crop_free'), bright: t('pe_bright'), sat: t('pe_sat'), rotate: t('pe_rotate'), reset: t('pe_reset'), skip: t('pe_skip'), skip_all: t('pe_skip_all'), done: t('pe_done'), cancel: t('pe_cancel') }; }
 async function handleNodeFiles(files) {
   const tgt = _fileUploadTarget; if (!tgt?.s?.data || !files?.length) return;
   const s = tgt.s, pid = tgt.folderId, MAX = 10 * 1024 * 1024;
   const _folder = pid ? s.data.nodes.find(n => n.id === pid) : null;
   const forceR2 = !!_nodeCfg(s, _folder, '_forceR2'); // папка можа патрабаваць R2 нават у _localOnly-РМ (напр. лагатыпы ў Структуры кампаніі)
   const createdIds = []; // новыя file-вузлы → для upload-промпту
-  for (const file of Array.from(files)) {
+  // ✂️ фота-рэдактар перад загрузкай (заўсёды, «Без правак» — хуткі пропуск; «для ўсіх» пры некалькіх выявах)
+  let _peSkipAll = false;
+  const _peImgs = Array.from(files).filter(f => (f.type || '').startsWith('image/')).length;
+  for (let file of Array.from(files)) {
+    if ((file.type || '').startsWith('image/') && !_peSkipAll && typeof openPhotoEditor === 'function') {
+      const ed = await openPhotoEditor(file, { labels: _peLabels(), applyAllOption: _peImgs > 1 });
+      if (ed === null) continue; // Адмяніць = прапусціць гэты файл
+      if (ed.skipAll) _peSkipAll = true;
+      file = ed.file;
+    }
     if (file.size > MAX) { showAlert(`${file.name}: ${t('file_too_big') || 'макс 10MB'}`); continue; }
     try {
       let mimeType, fileName, url, thumbUrl = null;
