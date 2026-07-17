@@ -1294,7 +1294,8 @@ FORM_SCHEMAS.companyStructure = Object.assign({
     // Секцыя «Інтэграцыі» — толькі галоўны офіс (visible). Ключ Web3Forms → settings.web3formsKey (settingsKey-блок)
     { type: 'flat', id: 'integrations', title: 'integrations', editable: true, visible: form => (form.parentId ?? null) === null,
       onEdit: (form, s) => _nodeFlatSectionEdit(form, s, 'integrations'),
-      blocks: [ { key: 'web3formsKey', type: 'text', label: 'web3forms_key', readOnly: () => true, settingsKey: 'web3formsKey' } ] },
+      blocks: [ { key: 'web3formsKey', type: 'text', label: 'web3forms_key', readOnly: () => true, settingsKey: 'web3formsKey' },
+        { key: 'anthropicKey', type: 'text', label: 'set_anthropic_key', hint: 'set_anthropic_key_hint', readOnly: () => true, settingsKey: 'anthropicKey' } ] }, // 🌐 BYOK: свой ключ → пераклады без лімітаў (у _SECRET_SETTINGS — публіцы не выцякае)
     // Секцыя «Аплата» (C3-1) — толькі галоўны офіс: вольныя ml-інструкцыі аплаты (US/Азія фарматы, PayPal…) → settings.paymentInstructions (email/кабінет)
     // + «Дзён на аплату» (C3-1b) → settings.payDays: дэфолт дэдлайна пры пераводзе заказа ў «Чакае аплаты» (пратэрмінаваны → аўта-ануляванне cron'ам)
     { type: 'flat', id: 'payment', title: 'payment_section', editable: true, visible: form => (form.parentId ?? null) === null,
@@ -7142,10 +7143,10 @@ async function _nodeTranslateTree(folderId) {
   const keys = Object.keys(texts);
   if (!keys.length) { showAlert(t('tr_nothing')); return; }
   const chunksN = Math.ceil(keys.length / 60);
-  let left = null, max = 5, credits0 = 0;
-  try { const r0 = await _trFetch({}, from, langs); left = r0.j.left; max = r0.j.max || 5; credits0 = r0.j.credits || 0; _trLeftCache = (left ?? 0) + credits0; } catch {}
-  if ((left ?? 0) + credits0 < chunksN) { showAlert(t('tr_limit').replace('{max}', max) + ' ' + t('tr_buy')); return; }
-  const nShow = `${left}${credits0 ? '+' + credits0 : ''}`;
+  let left = null, max = 5, credits0 = 0, byok = false;
+  try { const r0 = await _trFetch({}, from, langs); left = r0.j.left; max = r0.j.max || 5; credits0 = r0.j.credits || 0; byok = !!r0.j.byok; _trLeftCache = byok ? '∞' : (left ?? 0) + credits0; } catch {}
+  if (!byok && (left ?? 0) + credits0 < chunksN) { showAlert(t('tr_limit').replace('{max}', max) + ' ' + t('tr_buy')); return; }
+  const nShow = byok ? '∞' : `${left}${credits0 ? '+' + credits0 : ''}`;
   showConfirm(t('tr_tree_confirm').replace('{f}', forms.length).replace('{k}', keys.length).replace('{q}', chunksN).replace('{from}', _langLabel(from)).replace('{n}', nShow), async () => {
     let applied = 0, lastJ = null;
     for (let i = 0; i < keys.length; i += 60) {
@@ -7161,7 +7162,7 @@ async function _nodeTranslateTree(folderId) {
         e.set(o);
       });
     }
-    if (lastJ) _trLeftCache = (lastJ.left || 0) + (lastJ.credits || 0);
+    if (lastJ) _trLeftCache = lastJ.byok ? '∞' : (lastJ.left || 0) + (lastJ.credits || 0);
     nodeRender(); nodeSave();
     showAlert(t('tr_done').replace('{k}', applied).replace('{n}', lastJ ? `${lastJ.left || 0}${lastJ.credits ? '+' + lastJ.credits : ''}` : '?').replace('{max}', max));
   }, { label: '🌐', danger: false });
@@ -7183,10 +7184,10 @@ async function _nodeTranslate(id) {
     texts[e.key] = String(srcTxt); targets[e.key] = missing;
   });
   if (!Object.keys(texts).length) { showAlert(t('tr_nothing')); return; }
-  let left = null, max = 5, credits0 = 0; // рэшта ліміту + купленыя крэдыты — танны запыт без тэкстаў (без выдаткаў API)
-  try { const r0 = await _trFetch({}, from, langs); left = r0.j.left; max = r0.j.max || 5; credits0 = r0.j.credits || 0; _trLeftCache = (left ?? 0) + credits0; } catch {}
-  if (left === 0 && !credits0) { showAlert(t('tr_limit').replace('{max}', max) + ' ' + t('tr_buy')); return; }
-  const nShow = left == null ? '?' : `${left}${credits0 ? '+' + credits0 : ''}`; // «бясплатныя+крэдыты»
+  let left = null, max = 5, credits0 = 0, byok = false; // рэшта ліміту + крэдыты (танны запыт); byok = свой ключ → ∞
+  try { const r0 = await _trFetch({}, from, langs); left = r0.j.left; max = r0.j.max || 5; credits0 = r0.j.credits || 0; byok = !!r0.j.byok; _trLeftCache = byok ? '∞' : (left ?? 0) + credits0; } catch {}
+  if (!byok && left === 0 && !credits0) { showAlert(t('tr_limit').replace('{max}', max) + ' ' + t('tr_buy')); return; }
+  const nShow = byok ? '∞' : left == null ? '?' : `${left}${credits0 ? '+' + credits0 : ''}`; // «бясплатныя+крэдыты» / ∞ пры сваім ключы
   showConfirm(t('tr_confirm').replace('{from}', _langLabel(from)).replace('{langs}', langs.map(_langLabel).join(', ')).replace('{n}', nShow).replace('{max}', max), async () => {
     try {
       const { ok: trOk, j } = await _trFetch(texts, from, langs);
@@ -7199,9 +7200,9 @@ async function _nodeTranslate(id) {
         (targets[e.key] || []).forEach(l => { if (tr[l] && !String(o[l] || '').trim()) { o[l] = tr[l]; applied++; } });
         e.set(o);
       });
-      _trLeftCache = (j.left || 0) + (j.credits || 0);
+      _trLeftCache = j.byok ? '∞' : (j.left || 0) + (j.credits || 0);
       nodeRender(); nodeSave();
-      showAlert(t('tr_done').replace('{k}', applied).replace('{n}', `${j.left || 0}${j.credits ? '+' + j.credits : ''}`).replace('{max}', j.max || max));
+      showAlert(t('tr_done').replace('{k}', applied).replace('{n}', j.byok ? '∞' : `${j.left || 0}${j.credits ? '+' + j.credits : ''}`).replace('{max}', j.max || max));
     } catch { showAlert(t('tr_err')); }
   }, { label: '🌐', danger: false });
 }

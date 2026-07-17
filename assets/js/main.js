@@ -3100,14 +3100,14 @@ async function _dTranslate() {
   let info = null;
   try { const r0 = await _draftPost({ action: 'draft_translate', repo: SITE_REPO, info: true }); info = await r0.json(); } catch {}
   if (!info) { _dToast(ui.tr_err || 'Error'); return; }
-  if (info.left === 0 && !info.credits) { _dToast((ui.tr_limit || '').replace('{max}', info.max || 5)); return; }
-  const nShow = `${info.left ?? '?'}${info.credits ? '+' + info.credits : ''}`;
+  if (!info.byok && info.left === 0 && !info.credits) { _dToast((ui.tr_limit || '').replace('{max}', info.max || 5)); return; }
+  const nShow = info.byok ? '∞' : `${info.left ?? '?'}${info.credits ? '+' + info.credits : ''}`;
   siteConfirm((ui.ed_tr_confirm || '').replace('{from}', String(info.from || '').toUpperCase()).replace('{n}', nShow).replace('{max}', info.max || 5), async () => {
     const r = await _draftPost({ action: 'draft_translate', repo: SITE_REPO });
     let j = null; try { j = await r.json(); } catch {}
     if (j?.nothing) { _dToast(ui.tr_nothing || ''); return; }
     if (!j?.ok) { _dToast(j?.error === 'tr_limit' ? (ui.tr_limit || '').replace('{max}', j.max || 5) : (ui.tr_err || 'Error')); return; }
-    _dToast((ui.ed_tr_done || '').replace('{k}', j.applied).replace('{n}', `${j.left || 0}${j.credits ? '+' + j.credits : ''}`));
+    _dToast((ui.ed_tr_done || '').replace('{k}', j.applied).replace('{n}', j.byok ? '∞' : `${j.left || 0}${j.credits ? '+' + j.credits : ''}`));
     _dReload(); // ml-палі абнавіліся ў чарнавіку — перачытаць старонку
   }, false);
 }
