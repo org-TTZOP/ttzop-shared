@@ -3582,6 +3582,13 @@ function _nodeName(node, lang) { return _mlGet(node?.name, lang || _settingsLang
 // назва радка з плейсхолдэрам (ПРОДАКФПФ): пустая назва → ШЭРЫ прочырк; а калі побач ёсць апісанне —
 // прочырк не патрэбны зусім (апісанне і ёсць бачны тэкст радка; яркі «—» перад ім блытаў — жывая заўвага)
 function _rowNamePh(nm, node) { return nm ? escHtml(nm) : ((node?.description || node?.caption) ? '' : '<span style="color:var(--muted)">—</span>'); }
+// поўная назва формы: node.name АБО поле-назва схемы (nameField/name) — генерычна для ЛЮБОГА РМ
+// (напр. РМ без _formNameHtml рэндэрыць пазіцыю Каталога, дзе назва жыве ў fields.name — быў «—»)
+function _formNameAny(form, s) {
+  const nm = _nodeName(form); if (nm) return nm;
+  const nb = _formNameBlock(form, s);
+  return nb ? _mlGet(form.fields?.[nb.key], _settingsLang()) : '';
+}
 function _folderLabel(node) { return _nodeName(node) || (node?.sysKey ? t(node.sysKey) : '') || ''; }
 // ШАБЛОН: рэкурсіўны пошук дрэва — вузел бачны калі ЁН АБО любы нашчадак супадае (deep-search); multi-word = І (кожнае слова мусіць знайсціся ў паддрэве)
 // Пошукавы тэкст вузла = імя + опцыйны s._nodeSearchText(node) (напр. email/тэлефон кліента) — каб не дублікаваць deep-пошук у хуках
@@ -4199,7 +4206,7 @@ function nodeFormRowHtml(form, schema) {
     ${toggleHtml}
     ${iconHtml}${checkBtn}${layoutBtn}${activeDot}
     <div style="flex:1;display:flex;align-items:center;gap:4px;min-width:0">
-      <span style="font-size:0.85rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;cursor:pointer">${s._formNameHtml ? s._formNameHtml(form) : _rowNamePh(_nodeName(form), form)}</span>
+      <span style="font-size:0.85rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;cursor:pointer">${s._formNameHtml ? s._formNameHtml(form) : _rowNamePh(_formNameAny(form, s), form)}</span>
       ${currentDot}${lockIcon}${descHtml}
     </div>
     ${_nodeRowRightHtml(parts, { cells, dot })}
@@ -4220,7 +4227,7 @@ function nodeFormCardHtml(form, schema, s) {
         <span style="flex:1"></span>
         <span style="display:flex;gap:2px" onclick="event.stopPropagation()">${_nodeRowRightHtml(parts, { layoutBtn, stackBtns: '', refreshHtml: '', sideToggleBtn })}</span>
       </div>
-      <span class="node-folder-name" style="display:flex;align-items:center;gap:6px">${activeDot}${s._formNameHtml ? s._formNameHtml(form) : _rowNamePh(_nodeName(form), form)}${currentDot}${lockIcon}${dot}${descHtml}</span>
+      <span class="node-folder-name" style="display:flex;align-items:center;gap:6px">${activeDot}${s._formNameHtml ? s._formNameHtml(form) : _rowNamePh(_formNameAny(form, s), form)}${currentDot}${lockIcon}${dot}${descHtml}</span>
     </div>
     ${isOpen ? `<div class="node-folder-body">${nodeExpandedHtml(form, s, {card: true})}</div>` : ''}
   </div>`;
