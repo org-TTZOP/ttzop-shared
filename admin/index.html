@@ -4168,6 +4168,7 @@ function _nodeMenuItemsHtml(node, mid, s) {
     cap('canRename') ? `<button class="node-overflow-item" title="${t('node_rename')}" onclick="${renameClick};nodeCloseOverflow('${mid}')">✎</button>` : '', // секцыйныя формы больш НЕ выключаны глабальна: чыя назва = node.name (тэма) — пераназываюцца; чыя ў палях — canRename:false канфігам
     cap('hasDescription') ? `<button class="node-overflow-item" title="${t('node_description')}" onclick="nodeEditDescription('${node.id}');nodeCloseOverflow('${mid}')">📝</button>` : '',
     (node.type === 'form' && _formMlEntries(node, s).length) ? `<button class="node-overflow-item" title="${t('tr_btn')}" onclick="_nodeTranslate('${node.id}');nodeCloseOverflow('${mid}')">🌐${_trLeftCache != null ? `<sup style="font-size:0.6em;opacity:0.7">${_trLeftCache}</sup>` : ''}</button>` : '', // 🌐 AI-пераклад пустых моў (генерычна: форма з ml-палямі)
+    (node.type === 'folder' && (s?.data?.nodes || []).some(n => n.type === 'form' && n.parentId === node.id && _formMlEntries(n, s).length)) ? `<button class="node-overflow-item" title="${t('tr_tree_btn')}" onclick="_nodeTranslateTree('${node.id}');nodeCloseOverflow('${mid}')">🌐</button>` : '', // 🌐 перакласці ЎСЕ формы паддрэва
     (node.type === 'file' && _nodeIsImage(node)) ? `<button class="node-overflow-item" title="${t('pe_title')}" onclick="_nodeFileEditPhoto('${node.id}');nodeCloseOverflow('${mid}')">🪄</button>` : '', // ✂️ рэдагаваць ужо загружанае фота
     cap('hasLink') ? `<button class="node-overflow-item" title="${t('node_copy_link')}" onclick="_nodeCopyLink('${node.id}',this);nodeCloseOverflow('${mid}')">🔗</button>` : '',
     cap('hasLink') ? `<button class="node-overflow-item" title="${t('node_share')}" onclick="_nodeShareLink('${node.id}');nodeCloseOverflow('${mid}')">${_icoShare()}</button>` : '', // падзяліцца спасылкай у чаце (выбар карыстальнікаў)
@@ -7111,6 +7112,60 @@ function _formMlEntries(form, s) {
   });
   return out;
 }
+// адзіны запыт перакладу з панэлі (ААП: форма і паддрэва Папкі не разыходзяцца)
+async function _trFetch(texts, from, to) {
+  const r = await fetch(API, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'translate_fields', repo: REPO, password, texts, from, to }) });
+  let j = null; try { j = await r.json(); } catch {}
+  return { ok: r.ok && j?.ok, j: j || {} };
+}
+// 🌐 ПАДДРЭВА ПАПКІ: сабраць ml-палі ЎСІХ форм унутры (рэкурсіўна) і перакласці чанкамі па 60
+// (кожны чанк = 1 адзінка ліміту; уся катэгорыя звычайна ўлазіць у 1-2)
+async function _nodeTranslateTree(folderId) {
+  const s = currentNodeState, folder = s?.data?.nodes?.find(n => n.id === folderId); if (!folder) return;
+  if (_nodeLockGuard(folder)) return; // 🔒
+  const from = _primaryCode();
+  const langs = (settings.languages || []).map(l => l.code).filter(c => c && c !== from);
+  if (!langs.length) { showAlert(t('tr_nothing')); return; }
+  const forms = []; // усе form-нашчадкі паддрэва
+  const walk = pid => (s.data.nodes || []).forEach(n => { if ((n.parentId ?? null) === pid) { if (n.type === 'form') forms.push(n); walk(n.id); } });
+  walk(folderId);
+  const texts = {}, targets = {}, setters = {};
+  forms.forEach(f => _formMlEntries(f, s).forEach(e => {
+    const v = e.get();
+    const srcTxt = _mlGet(v, from);
+    if (!srcTxt || !String(srcTxt).trim()) return;
+    const missing = langs.filter(l => !(v && typeof v === 'object' && String(v[l] || '').trim()));
+    if (!missing.length) return;
+    const k = f.id + '|' + e.key;
+    texts[k] = String(srcTxt); targets[k] = missing; setters[k] = e;
+  }));
+  const keys = Object.keys(texts);
+  if (!keys.length) { showAlert(t('tr_nothing')); return; }
+  const chunksN = Math.ceil(keys.length / 60);
+  let left = null, max = 5, credits0 = 0;
+  try { const r0 = await _trFetch({}, from, langs); left = r0.j.left; max = r0.j.max || 5; credits0 = r0.j.credits || 0; _trLeftCache = (left ?? 0) + credits0; } catch {}
+  if ((left ?? 0) + credits0 < chunksN) { showAlert(t('tr_limit').replace('{max}', max) + ' ' + t('tr_buy')); return; }
+  const nShow = `${left}${credits0 ? '+' + credits0 : ''}`;
+  showConfirm(t('tr_tree_confirm').replace('{f}', forms.length).replace('{k}', keys.length).replace('{q}', chunksN).replace('{from}', _langLabel(from)).replace('{n}', nShow), async () => {
+    let applied = 0, lastJ = null;
+    for (let i = 0; i < keys.length; i += 60) {
+      const part = {}; keys.slice(i, i + 60).forEach(k => { part[k] = texts[k]; });
+      const { ok, j } = await _trFetch(part, from, langs);
+      if (!ok) { showAlert(j?.error === 'tr_limit' ? t('tr_limit').replace('{max}', j.max || max) + ' ' + t('tr_buy') : t('tr_err')); break; }
+      lastJ = j;
+      Object.keys(part).forEach(k => {
+        const tr = j.translations?.[k]; if (!tr) return;
+        const e = setters[k], cur = e.get();
+        const o = (cur && typeof cur === 'object' && !Array.isArray(cur)) ? { ...cur } : (cur ? { [from]: cur } : {});
+        (targets[k] || []).forEach(l => { if (tr[l] && !String(o[l] || '').trim()) { o[l] = tr[l]; applied++; } });
+        e.set(o);
+      });
+    }
+    if (lastJ) _trLeftCache = (lastJ.left || 0) + (lastJ.credits || 0);
+    nodeRender(); nodeSave();
+    showAlert(t('tr_done').replace('{k}', applied).replace('{n}', lastJ ? `${lastJ.left || 0}${lastJ.credits ? '+' + lastJ.credits : ''}` : '?').replace('{max}', max));
+  }, { label: '🌐', danger: false });
+}
 async function _nodeTranslate(id) {
   const s = currentNodeState, form = s?.data?.nodes?.find(n => n.id === id); if (!form) return;
   if (_nodeLockGuard(form)) return; // 🔒
@@ -7129,15 +7184,13 @@ async function _nodeTranslate(id) {
   });
   if (!Object.keys(texts).length) { showAlert(t('tr_nothing')); return; }
   let left = null, max = 5, credits0 = 0; // рэшта ліміту + купленыя крэдыты — танны запыт без тэкстаў (без выдаткаў API)
-  try { const r0 = await fetch(API, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'translate_fields', repo: REPO, password, texts: {} }) });
-    const j0 = await r0.json(); left = j0.left; max = j0.max || 5; credits0 = j0.credits || 0; _trLeftCache = (left ?? 0) + credits0; } catch {}
+  try { const r0 = await _trFetch({}, from, langs); left = r0.j.left; max = r0.j.max || 5; credits0 = r0.j.credits || 0; _trLeftCache = (left ?? 0) + credits0; } catch {}
   if (left === 0 && !credits0) { showAlert(t('tr_limit').replace('{max}', max) + ' ' + t('tr_buy')); return; }
   const nShow = left == null ? '?' : `${left}${credits0 ? '+' + credits0 : ''}`; // «бясплатныя+крэдыты»
   showConfirm(t('tr_confirm').replace('{from}', _langLabel(from)).replace('{langs}', langs.map(_langLabel).join(', ')).replace('{n}', nShow).replace('{max}', max), async () => {
     try {
-      const r = await fetch(API, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'translate_fields', repo: REPO, password, texts, from, to: langs }) });
-      const j = await r.json();
-      if (!r.ok || !j.ok) { showAlert(j?.error === 'tr_limit' ? t('tr_limit').replace('{max}', j.max || max) + ' ' + t('tr_buy') : t('tr_err')); return; }
+      const { ok: trOk, j } = await _trFetch(texts, from, langs);
+      if (!trOk) { showAlert(j?.error === 'tr_limit' ? t('tr_limit').replace('{max}', j.max || max) + ' ' + t('tr_buy') : t('tr_err')); return; }
       let applied = 0;
       entries.forEach(e => {
         const tr = j.translations?.[e.key]; if (!tr) return;
