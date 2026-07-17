@@ -180,7 +180,8 @@
     var panel = ov.querySelector('.rdr-panel');
     var applyFs = function () { panel.style.setProperty('--fs', getFs()); };
     applyFs();
-    var close = function () { ov.remove(); document.removeEventListener('keydown', onKey); if (typeof cfg.onClose === 'function') cfg.onClose(); }; // генерычны хук закрыцця (напр. прыбраць дып-лінк-хэш)
+    var close = function () { ov.remove(); document.removeEventListener('keydown', onKey); if (global._rdrModalClose === close) global._rdrModalClose = null; if (typeof cfg.onClose === 'function') cfg.onClose(); }; // генерычны хук закрыцця (напр. прыбраць дып-лінк-хэш)
+    global._rdrModalClose = close; // знешні закрывальнік адкрытай мадалкі (напр. «Запісацца» з маршруту: мадалка слотаў ніжэй па z — чытач мусіць сысці з дарогі)
     function onKey(e) { if (e.key === 'Escape') close(); }
     ov.addEventListener('click', function (e) { if (e.target === ov) close(); });
     ov.querySelector('[data-close]').addEventListener('click', close);

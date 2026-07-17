@@ -2727,7 +2727,7 @@ function _routeBodyHtml(it) {
   const nameArg = `'${_dsEsc(_sv(it.title)).replace(/'/g, '&#39;')}'`;
   // «Запісацца» жыве і ў мадалцы (bookItem у гэтым дакуменце), і ў акне чытача (праз opener → фокус назад на сайт)
   const bookBtn = ((_sv(it.fulfil) || 'cart') === 'booking' && it.id)
-    ? `<p style="margin:26px 0 0"><button onclick="var w=window.bookItem?window:window.opener;try{w.bookItem('${_dsEsc(it.id)}',${nameArg});if(!window.bookItem){w.focus();window.close();}}catch(e){}" style="padding:12px 26px;background:${acc0};color:#fff;border:none;border-radius:10px;font:600 1rem system-ui,sans-serif;cursor:pointer">📅 ${_dsEsc(ui.cta_book || '')}</button></p>` : '';
+    ? `<p style="margin:26px 0 0"><button onclick="var w=window.bookItem?window:window.opener;try{w._rdrModalClose&&w._rdrModalClose();w.bookItem('${_dsEsc(it.id)}',${nameArg});if(!window.bookItem){w.focus();window.close();}}catch(e){}" style="padding:12px 26px;background:${acc0};color:#fff;border:none;border-radius:10px;font:600 1rem system-ui,sans-serif;cursor:pointer">📅 ${_dsEsc(ui.cta_book || '')}</button></p>` : ''; // чытач закрываецца перад мадалкай слотаў (яна ніжэй па z — інакш «нічога не адбываецца»)
   // 🗺 самазагрузная мапа для АКНА чытача: innerHTML-скрыпты ў МАДАЛЦЫ не выконваюцца (там мапу мантуе
   // _routeReaderMap), а mountReaderDoc акна перастварае скрыпты з захаваннем src (Leaflet) → мапа працуе
   // ў абодвух рэжымах без дубля ініцыялізацыі (гард el.dataset.done). Кропкі — бяспечны JSON ('<'
