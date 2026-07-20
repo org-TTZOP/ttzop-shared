@@ -958,19 +958,30 @@ const FORM_SCHEMAS = {
       </div>`;
     }}
   ], { _noName: true }),
-  monitorClient: [ // форма сайта ў маніторынгу: субдамен злева (назва), email справа (inRow)
-    { key: 'email',     type: 'text',   label: 'f_email',         readOnly: () => true, inRow: true },
-    { key: 'status',    type: 'select', label: 'f_status',        readOnly: () => true,
-      options: () => ['new','reviewing','confirmed','in_progress','awaiting_payment','paid','completed','cancelled','paused'],
-      labelMap: { new:'order_new', reviewing:'order_reviewing', confirmed:'order_confirmed', in_progress:'order_in_progress', awaiting_payment:'order_awaiting_payment', paid:'order_paid', completed:'order_completed', cancelled:'order_cancelled', paused:'order_paused' },
-      classMap: { new:'nfb-new', reviewing:'nfb-new', confirmed:'nfb-active', in_progress:'nfb-active', awaiting_payment:'nfb-new', paid:'nfb-done', completed:'nfb-done', cancelled:'nfb-cancelled', error:'nfb-cancelled', paused:'nfb-new' }
-    },
-    { key: 'subdomain', type: 'text',   label: 'dash_subdomains', readOnly: () => true },
-    { key: 'until',     type: 'date',   label: 'f_date',          readOnly: () => true },
-    { key: 'daysLeft',  type: 'text',   label: 'dash_days_left',  readOnly: () => true },
-    { key: 'orderId',   type: 'text',   label: 'dash_order',      readOnly: () => true },
-    { key: '_trledger', type: 'custom', render: form => _trLedgerHtml(form) }, // 🌐 выпіс перакладаў паддамена (прыход/расход + астатак)
-  ],
+  // форма сайта ў маніторынгу: sections-фармат (Flat дадзеныя + канонная Table «Пераклады» з сарт/фільтр/⋯)
+  monitorClient: Object.assign({ sections: [
+    { type: 'flat', title: 'mon_site_info', blocks: [
+      { key: 'email',     type: 'text',   label: 'f_email',         readOnly: () => true },
+      { key: 'status',    type: 'select', label: 'f_status',        readOnly: () => true,
+        options: () => ['new','reviewing','confirmed','in_progress','awaiting_payment','paid','completed','cancelled','paused'],
+        labelMap: { new:'order_new', reviewing:'order_reviewing', confirmed:'order_confirmed', in_progress:'order_in_progress', awaiting_payment:'order_awaiting_payment', paid:'order_paid', completed:'order_completed', cancelled:'order_cancelled', paused:'order_paused' },
+        classMap: { new:'nfb-new', reviewing:'nfb-new', confirmed:'nfb-active', in_progress:'nfb-active', awaiting_payment:'nfb-new', paid:'nfb-done', completed:'nfb-done', cancelled:'nfb-cancelled', error:'nfb-cancelled', paused:'nfb-new' } },
+      { key: 'subdomain', type: 'text',   label: 'dash_subdomains', readOnly: () => true },
+      { key: 'until',     type: 'date',   label: 'f_date',          readOnly: () => true },
+      { key: 'daysLeft',  type: 'text',   label: 'dash_days_left',  readOnly: () => true },
+      { key: 'orderId',   type: 'text',   label: 'dash_order',      readOnly: () => true },
+    ] },
+    // 🌐 канонная Table-секцыя выпіса перакладаў (загаловак калонак заўсёды, сартыроўка+фільтр+⋯ з ПРОДАКФПФ);
+    // дадзеныя ленава ў form.fields._trLedger праз dataFn; read-only (прыход/расход генеруюцца сістэмай)
+    { type: 'table', title: 'tr_ledger_title', dataKey: '_trLedger', dataFn: (form, s) => _trLedgerData(form),
+      headerExtra: (form, s) => _trLedgerSummaryHtml(form),
+      columns: [
+        { key: 'at',   label: 'col_datetime',  type: 'datetime' },
+        { key: 'kind', label: 'tr_col_type',   type: 'select', labelMap: { grant: 'tr_ledger_grant', spend: 'tr_ledger_spend' }, classMap: { grant: 'nfb-active', spend: 'nfb-new' } },
+        { key: 'd',    label: 'tr_col_delta',  type: 'number' },
+        { key: 'ref',  label: 'tr_col_source', type: 'text' },
+      ] },
+  ] }, { _noName: true }),
   security: Object.assign([ // змена пароля праз код на акаўнт-email (мадал #pwd-modal)
     { key: '_note', type: 'custom', render: () => `<div style="font-size:0.85rem;color:var(--muted);line-height:1.5">${escHtml(t('pwd_change_note'))}</div>` },
     { key: '_btn',  type: 'savebtn', label: 'pwd_change_btn' },
@@ -11220,33 +11231,31 @@ function _apiTopupAdd() {
   }, { danger:false });
 }
 // 🌐 Выпіс перакладаў паддамена (ленавы, у форме monitorClient): рэестр прыход/расход + бягучы астатак
-const _trLedgerCache = {}, _trLedgerInflight = new Set();
-function _trLedgerHtml(form) {
+// 🌐 Дадзеныя каноннай Table-секцыі выпіса: ленавы фетч у form.fields._trLedger, вяртае бягучыя радкі
+// (пуста → канонны Table-продак усё роўна малюе загаловак калонак). Радкі: {at,kind,d,ref}.
+const _trLedgerInflight = new Set();
+function _trLedgerData(form) {
   const sub = String(form.fields?.subdomain || '').replace(/\.ttzop\.com$/, '');
-  if (!sub) return '';
-  const id = 'trled-' + sub.replace(/[^a-z0-9]/gi, '-');
-  const c = _trLedgerCache[sub];
-  if (!c && !_trLedgerInflight.has(sub)) { _trLedgerInflight.add(sub); setTimeout(() => _trLedgerLoad(sub, id), 0); }
-  return `<div style="margin-top:8px"><div class="prof-sec-title" style="font-size:0.82rem">🌐 ${escHtml(t('tr_ledger_title'))}</div><div id="${id}">${c ? _trLedgerRows(c) : '<span style="color:var(--muted);font-size:0.8rem">···</span>'}</div></div>`;
+  if (sub && form.fields._trLedger === undefined && !_trLedgerInflight.has(sub)) {
+    _trLedgerInflight.add(sub); _trLedgerLoad(sub, form);
+  }
+  return Array.isArray(form.fields._trLedger) ? form.fields._trLedger : [];
 }
-async function _trLedgerLoad(sub, id) {
+async function _trLedgerLoad(sub, form) {
   try {
     const res = await fetch(API, { method:'POST', headers:{'Content-Type':'application/json'},
       body: JSON.stringify({ action:'tr_ledger', repo:REPO, password, sub }) });
-    if (res.ok) { const d = await res.json(); _trLedgerCache[sub] = d;
-      const el = document.getElementById(id); if (el) el.innerHTML = _trLedgerRows(d); }
-  } catch {} finally { _trLedgerInflight.delete(sub); }
+    const d = res.ok ? await res.json() : null;
+    form.fields._trLedger = (Array.isArray(d?.ledger) ? d.ledger : [])
+      .map(r => ({ at: r.at, kind: (+r.d > 0 ? 'grant' : 'spend'), d: r.d, ref: r.ref || r.src || '' }));
+    if (d) { form.fields.trFree = d.free ?? form.fields.trFree; form.fields.trMax = d.max ?? form.fields.trMax; form.fields.trCredits = d.credits ?? form.fields.trCredits; } // абнавіць зводку+бэйдж
+    if (currentNodeState === monitorState) renderNodeEditor(monitorState);
+  } catch { form.fields._trLedger = []; } finally { _trLedgerInflight.delete(sub); }
 }
-function _trLedgerRows(d) {
-  const free = Math.max(0, (+d.max || 5) - (+d.free || 0));
-  const head = `<div style="font-size:0.8rem;color:var(--muted);margin-bottom:4px">${escHtml(t('tr_ledger_summary').replace('{free}', free).replace('{max}', d.max || 5).replace('{credits}', d.credits || 0))}</div>`;
-  const rows = Array.isArray(d.ledger) ? d.ledger : [];
-  if (!rows.length) return head + `<div style="color:var(--muted);font-size:0.8rem">${escHtml(t('tr_ledger_empty'))}</div>`;
-  return head + rows.map(r => {
-    const inc = (+r.d || 0) > 0, label = inc ? t('tr_ledger_grant') : t('tr_ledger_spend');
-    const extra = r.ref ? ' · ' + r.ref : (r.src ? ' · ' + r.src : '');
-    return `<div style="display:flex;gap:8px;font-size:0.8rem;padding:2px 0;border-top:1px solid var(--border)"><span style="color:var(--muted);flex:0 0 132px">${escHtml(fmtDateTime(r.at))}</span><span style="flex:1">${escHtml(label + extra)}</span><span style="color:${inc ? '#22c55e' : 'var(--muted)'};flex:0 0 44px;text-align:right">${escHtml((inc ? '+' : '') + (r.d || 0))}</span></div>`;
-  }).join('');
+// Зводка астатку ў загалоўку Table-секцыі (headerExtra): «Бясплатных N/5 · крэдытаў X»
+function _trLedgerSummaryHtml(form) {
+  const f = form.fields || {}, free = Math.max(0, (+f.trMax || 5) - (+f.trFree || 0));
+  return `<span style="font-size:0.75rem;color:var(--muted);font-weight:400">${escHtml(t('tr_ledger_summary').replace('{free}', free).replace('{max}', f.trMax || 5).replace('{credits}', f.trCredits || 0))}</span>`;
 }
 
 let emailRoutingState = {
