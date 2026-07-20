@@ -36,7 +36,7 @@
   const close = () => document.getElementById(ID)?.remove();
 
   function openSlotsModal(cfg) {
-    S = { cfg, today: localToday(), date: '', busy: false };
+    S = { cfg, today: localToday(), date: '', busy: false, qty: Math.max(1, parseInt(cfg.qty, 10) || 1) }; // 👥 пачатковыя месцы (перанос групы → бягучая колькасць кліента)
     S.date = (cfg.startDate && days(cfg).includes(cfg.startDate)) ? cfg.startDate : days(cfg)[0];
     close();
     const ov = document.createElement('div');

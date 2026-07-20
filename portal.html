@@ -530,8 +530,9 @@ function renderCabinetAppts() {
     const tk = ['scheduled', 'confirmed'].includes(a.status)
       ? btn(PT.ap_ticket, `window.open('/?ticket=${escChat(a.id)}${a.pid ? '&p=' + escChat(a.pid) : ''}','_blank')`) + ' ' : '';
     const btns = tk + (a.canManage
-      // 👥 групавы запіс: пераносу няма (толькі адмена свайго месца) — сервер вяртае group:true
-      ? (a.group ? '' : btn(PT.ap_move, `cabApptMove('${escChat(a.id)}','${escChat(a.serviceId)}','${nm}','${escChat(a.date)}')`) + ' ')
+      // 👥 групавы запіс: перанос ПЕРАНОСІЦЬ толькі СВАЁ месца (сервер: сыход з групы + бронь на новы час);
+      // seats → пачатковая колькасць у пікеры мадалкі (кліент можа змяніць)
+      ? btn(PT.ap_move, `cabApptMove('${escChat(a.id)}','${escChat(a.serviceId)}','${nm}','${escChat(a.date)}',${a.group ? (+a.seats || 1) : 0})`) + ' '
         + btn(PT.ap_cancel, `cabApptCancel('${escChat(a.id)}','${nm}')`, true)
       : '');
     return `<div style="background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius);padding:10px 12px;margin-bottom:8px">
@@ -553,10 +554,10 @@ function _apptsMsg(txt, ok) {
   if (m) { m.style.color = ok ? 'var(--success)' : 'var(--error)'; m.textContent = txt; if (ok) setTimeout(() => { if (m.textContent === txt) m.textContent = ''; }, 6000); }
 }
 // 🔄 Перанос — гэта БРОНЬ новага слота (portal_book з moveFrom), не праўка даты: тая ж мадалка, што на сайце
-function cabApptMove(apptId, serviceId, name, date) {
+function cabApptMove(apptId, serviceId, name, date, seats) {
   const nm = document.createElement('textarea'); nm.innerHTML = name || ''; // onclick-атрыбут нясе HTML-энтыці
   openSlotsModal({ api: API, repo: REPO, serviceId, name: nm.value, lang: detectPortalLang(), startDate: date,
-    token: () => portalToken, moveFrom: apptId,
+    token: () => portalToken, moveFrom: apptId, ...(seats ? { qty: seats } : {}), // 👥 групавы: пачатковыя месцы ў пікеры
     labels: { title: PT.bk_move_title, date: PT.bk_date, time: PT.bk_time, loading: PT.bk_loading, none: PT.bk_none,
       confirm: PT.bk_move_confirm, done: PT.bk_move_done, taken: PT.bk_taken, err: PT.err_conn },
     confirm: (msg, onOk) => portalConfirm(msg, onOk),
