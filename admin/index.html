@@ -973,7 +973,7 @@ const FORM_SCHEMAS = {
     ] },
     // 🌐 канонная Table-секцыя выпіса перакладаў (загаловак калонак заўсёды, сартыроўка+фільтр+⋯ з ПРОДАКФПФ);
     // дадзеныя ленава ў form.fields._trLedger праз dataFn; read-only (прыход/расход генеруюцца сістэмай)
-    { type: 'table', title: 'tr_ledger_title', dataKey: '_trLedger', dataFn: (form, s) => _trLedgerData(form),
+    { type: 'table', title: 'tr_ledger_title', dataKey: '_trLedger', dataFn: (form, s) => _trLedgerData(form), emptyHeader: true, // загаловак калонак відаць нават пры 0 запісаў
       headerExtra: (form, s) => _trLedgerSummaryHtml(form),
       columns: [
         { key: 'at',   label: 'col_datetime',  type: 'datetime' },
@@ -5113,7 +5113,7 @@ function _nodeTableSectionHtml(form, section, s, mover = '') {
   }
   if (!total && !section.dataFn) return `<div class="form-section-table">${titleRow}${footer}</div>`;
   if (view === 'collapsed') return `<div class="form-section-table">${titleRow}${footer}</div>`;
-  if (!total) return `<div class="form-section-table">${titleRow}${footer}</div>`; // dataFn-секцыя загружаецца
+  if (!total && !section.emptyHeader) return `<div class="form-section-table">${titleRow}${footer}</div>`; // dataFn-секцыя без радкоў = «загружаецца» → толькі назва; emptyHeader:true → усё роўна паказаць каркас з загалоўкам калонак
   // columnsFn: дынамічныя калонкі (напр. Даведка — колькасць залежыць ад CONTENT_TYPES)
   const columns = section.columnsFn ? section.columnsFn(form, s) : (section.columns || []);
   // 🔢 Excel-правіла: слупок з чыста лічбавымі значэннямі → выраўноўваем справа (th+td).
