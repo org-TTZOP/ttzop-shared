@@ -11302,14 +11302,6 @@ let monitorState = {
   _rootName: () => t('nav_monitor'),
   _autoRefreshEnabled: false, _lastRefresh: null, _autoRefreshMs: 300000, // 5 хвілін
   _formSchema: 'monitorStat', // caps праз CONTENT_TYPES['monitorStat/Client']
-  // 🌐 бэйдж «5+N» у загалоўку формы паддамена: засталося бясплатных за месяц + купленых крэдытаў (чырвоны пры 0)
-  _formNameHtml: form => {
-    const f = form.fields || {};
-    const name = escHtml(f.subdomain || f.email || _folderLabel(form) || '—');
-    const free = Math.max(0, (+f.trMax || 5) - (+f.trFree || 0)), cred = +f.trCredits || 0;
-    const low = free <= 0 && cred <= 0;
-    return `${name}<span style="font-size:0.72rem;color:${low ? '#ef4444' : 'var(--muted)'};margin-left:6px" title="${escHtml(t('tr_client_badge_title'))}">🌐${free}+${cred}</span>`;
-  },
   _formBodyHtml: () => _monitorTopChartHtml(), // 📈 агульная «Дынаміка лімітаў» у целе Формы-0 (вышэй за Папкі-0)
   _loadFn: async () => loadMonitor(),
   _onFolderExpand: folder => {
@@ -11373,7 +11365,10 @@ let monitorState = {
       const chipCol = col !== 'var(--fg)' ? col : 'var(--muted)';
       const stLblRaw = t('order_' + status), stLbl = stLblRaw === 'order_' + status ? status : stLblRaw; // невядомы статус → як ёсць (t() вяртае ключ)
       const stBadge = status ? `<span style="font-size:0.72rem;color:${chipCol};border:1px solid currentColor;border-radius:10px;padding:0 7px;margin-left:8px;white-space:nowrap;opacity:0.9">${escHtml(stLbl)}</span>` : '';
-      return `${pingDot}<span style="color:${col}">${escHtml(_nodeName(form)||'—')}</span>${stBadge}`;
+      // 🌐 бэйдж расходу перакладаў: засталося бясплатных за месяц + купленых крэдытаў (чырвоны пры 0)
+      const ff = form.fields || {}, trFree = Math.max(0, (+ff.trMax || 5) - (+ff.trFree || 0)), trCred = +ff.trCredits || 0;
+      const trBadge = `<span style="font-size:0.72rem;color:${trFree <= 0 && trCred <= 0 ? '#ef4444' : 'var(--muted)'};margin-left:6px;white-space:nowrap" title="${escHtml(t('tr_client_badge_title'))}">🌐${trFree}+${trCred}</span>`;
+      return `${pingDot}<span style="color:${col}">${escHtml(_nodeName(form)||'—')}</span>${stBadge}${trBadge}`;
     }
     return escHtml(_nodeName(form)||'—');
   },
