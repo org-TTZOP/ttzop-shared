@@ -969,6 +969,7 @@ const FORM_SCHEMAS = {
     { key: 'until',     type: 'date',   label: 'f_date',          readOnly: () => true },
     { key: 'daysLeft',  type: 'text',   label: 'dash_days_left',  readOnly: () => true },
     { key: 'orderId',   type: 'text',   label: 'dash_order',      readOnly: () => true },
+    { key: '_trledger', type: 'custom', render: form => _trLedgerHtml(form) }, // 🌐 выпіс перакладаў паддамена (прыход/расход + астатак)
   ],
   security: Object.assign([ // змена пароля праз код на акаўнт-email (мадал #pwd-modal)
     { key: '_note', type: 'custom', render: () => `<div style="font-size:0.85rem;color:var(--muted);line-height:1.5">${escHtml(t('pwd_change_note'))}</div>` },
@@ -11204,6 +11205,56 @@ function _rebuildEmailRouteSchema() {
 FORM_SCHEMAS.emailRoute = []; // ініцыялізацыя; пераствараецца ў _rebuildEmailRouteSchema
 FORM_SCHEMAS.emailRoute._noName = true; // назва = label у асноўнай мове
 FORM_SCHEMAS.monitorClient._noName = true; // email = загаловак радка, пале НАЗВА ўнутры не трэба
+// 🌐 бэйдж «5+N» у загалоўку формы паддамена: засталося бясплатных за месяц + купленых крэдытаў (чырвоны пры 0)
+monitorState._formNameHtml = form => {
+  const f = form.fields || {};
+  const name = escHtml(f.subdomain || f.email || _folderLabel(form) || '—');
+  const free = Math.max(0, (+f.trMax || 5) - (+f.trFree || 0)), cred = +f.trCredits || 0;
+  const low = free <= 0 && cred <= 0;
+  return `${name}<span style="font-size:0.72rem;color:${low ? '#ef4444' : 'var(--muted)'};margin-left:6px" title="${escHtml(t('tr_client_badge_title'))}">🌐${free}+${cred}</span>`;
+};
+// 💰 Дадаць папаўненне балансу API (owner): сума ў $ → add_api_topup → абнавіць чып Агляду
+function _apiTopupAdd() {
+  showPrompt(t('api_topup_prompt'), '', async v => {
+    const usd = parseFloat(String(v).replace(',', '.'));
+    if (!(usd > 0)) return;
+    try {
+      const res = await fetch(API, { method:'POST', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({ action:'add_api_topup', repo:REPO, password, usd }) });
+      if (res.ok) { const d = await res.json(); monitorState._apiBalance = d.apiBalance;
+        if (currentNodeState === monitorState) renderNodeEditor(monitorState); }
+    } catch {}
+  }, { danger:false });
+}
+// 🌐 Выпіс перакладаў паддамена (ленавы, у форме monitorClient): рэестр прыход/расход + бягучы астатак
+const _trLedgerCache = {}, _trLedgerInflight = new Set();
+function _trLedgerHtml(form) {
+  const sub = String(form.fields?.subdomain || '').replace(/\.ttzop\.com$/, '');
+  if (!sub) return '';
+  const id = 'trled-' + sub.replace(/[^a-z0-9]/gi, '-');
+  const c = _trLedgerCache[sub];
+  if (!c && !_trLedgerInflight.has(sub)) { _trLedgerInflight.add(sub); setTimeout(() => _trLedgerLoad(sub, id), 0); }
+  return `<div style="margin-top:8px"><div class="prof-sec-title" style="font-size:0.82rem">🌐 ${escHtml(t('tr_ledger_title'))}</div><div id="${id}">${c ? _trLedgerRows(c) : '<span style="color:var(--muted);font-size:0.8rem">···</span>'}</div></div>`;
+}
+async function _trLedgerLoad(sub, id) {
+  try {
+    const res = await fetch(API, { method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ action:'tr_ledger', repo:REPO, password, sub }) });
+    if (res.ok) { const d = await res.json(); _trLedgerCache[sub] = d;
+      const el = document.getElementById(id); if (el) el.innerHTML = _trLedgerRows(d); }
+  } catch {} finally { _trLedgerInflight.delete(sub); }
+}
+function _trLedgerRows(d) {
+  const free = Math.max(0, (+d.max || 5) - (+d.free || 0));
+  const head = `<div style="font-size:0.8rem;color:var(--muted);margin-bottom:4px">${escHtml(t('tr_ledger_summary').replace('{free}', free).replace('{max}', d.max || 5).replace('{credits}', d.credits || 0))}</div>`;
+  const rows = Array.isArray(d.ledger) ? d.ledger : [];
+  if (!rows.length) return head + `<div style="color:var(--muted);font-size:0.8rem">${escHtml(t('tr_ledger_empty'))}</div>`;
+  return head + rows.map(r => {
+    const inc = (+r.d || 0) > 0, label = inc ? t('tr_ledger_grant') : t('tr_ledger_spend');
+    const extra = r.ref ? ' · ' + r.ref : (r.src ? ' · ' + r.src : '');
+    return `<div style="display:flex;gap:8px;font-size:0.8rem;padding:2px 0;border-top:1px solid var(--border)"><span style="color:var(--muted);flex:0 0 132px">${escHtml(fmtDateTime(r.at))}</span><span style="flex:1">${escHtml(label + extra)}</span><span style="color:${inc ? '#22c55e' : 'var(--muted)'};flex:0 0 44px;text-align:right">${escHtml((inc ? '+' : '') + (r.d || 0))}</span></div>`;
+  }).join('');
+}
 
 let emailRoutingState = {
   data: null, saving: false, selected: new Set(), expanded: new Set(),
@@ -11341,7 +11392,10 @@ let monitorState = {
       const sp = monitorState._trSpend;
       const trUsd = sp ? (((sp.inTok || 0) * 1 + (sp.outTok || 0) * 5) / 1e6).toFixed(2) : '0';
       const trChip = sp && sp.n ? `<span style="font-size:0.75rem" title="${escHtml(t('tr_month_stat').replace('{n}', sp.n).replace('{tok}', (sp.inTok || 0) + (sp.outTok || 0)).replace('{usd}', trUsd))}">🌐${sp.n}·$${trUsd}</span>` : '';
-      const allChips = chips + trChip;
+      // 💰 баланс нашага праплачанага API (заўсёды бачны; клік = дадаць папаўненне). Чырвоны пры нізкім.
+      const bal = monitorState._apiBalance;
+      const balChip = bal ? `<span onclick="event.stopPropagation();_apiTopupAdd()" style="font-size:0.75rem;cursor:pointer;color:${bal.left < 1 ? '#ef4444' : bal.left < 3 ? '#f59e0b' : 'inherit'}" title="${escHtml(t('api_bal_title').replace('{topup}', bal.topup.toFixed(2)).replace('{spent}', bal.spent.toFixed(2)))}">💰$${bal.left.toFixed(2)}</span>` : '';
+      const allChips = chips + trChip + balChip;
       if (allChips) extra = `<span style="margin-left:8px;display:inline-flex;gap:7px;align-items:center">${allChips}</span>`;
     }
     return `<span class="node-folder-name">${escHtml(_folderLabel(folder))}</span>${extra}<span style="font-size:0.78rem;color:var(--muted);margin-left:4px">(${c})</span>`;
@@ -11418,10 +11472,13 @@ async function _monitorLoadDashboard() {
         name: fullDomain || c.email || '—',
         fields:{ email:c.email||'', subdomain:fullDomain, status:c.status||'',
                  until: d ? `${d}.${m}.${y}` : c.until||'', daysLeft:c.daysLeft??null,
-                 orderId:c.orderId||'', clientId:c.clientId||'' } });
+                 orderId:c.orderId||'', clientId:c.clientId||'',
+                 // 🌐 расход перакладаў гэтага паддамена (для бэйджа + выпіса)
+                 trFree:c.trFree??0, trMax:c.trMax??5, trCredits:c.trCredits??0 } });
     });
     monitorState.data.nodes = newNodes;
     monitorState._trSpend = dash?.trSpend || null; // 🌐 месячны расход AI-перакладаў (чып на «Аглядзе»)
+    monitorState._apiBalance = dash?.apiBalance || null; // 💰 баланс нашага праплачанага API (чып + папаўненне)
     monitorState._dashLoaded = true;
     if (currentNodeState === monitorState) renderNodeEditor(monitorState);
     if (monitorState.expanded.has('mf-overview')) pingMonitorSites();
