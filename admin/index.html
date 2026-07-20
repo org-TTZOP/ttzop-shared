@@ -5706,13 +5706,19 @@ function _nodeSectionToggleView(formId, sectionId) {
 
 function _nodeTableAddRow(formId, dataKey) {
   const s = currentNodeState;
-  const form = s?.data?.nodes?.find(n => n.id === formId);
-  if (!form) return;
-  if (_nodeLockGuard(form)) return; // 🔒
-  const schema = FORM_SCHEMAS[form.formSchema || s._formSchema];
-  const sec = schema?.sections?.find(x => x.dataKey === dataKey);
+  let form = s?.data?.nodes?.find(n => n.id === formId), sec;
+  if (form) {
+    if (_nodeLockGuard(form)) return; // 🔒
+    const schema = FORM_SCHEMAS[form.formSchema || s._formSchema];
+    sec = schema?.sections?.find(x => x.dataKey === dataKey);
+    if (sec && _secLocked(form, sec)) { showAlert(t('node_locked_msg')); return; } // 🔒 секцыя
+  } else {
+    // Віртуальная форма (не ў data.nodes: Table-секцыя ў целе Формы-0 праз _formBodyHtml, напр. «Папаўненні API»)
+    // — секцыя з кэша _tblSectionCache (той жа viewKey, што пры рэндэры); сінтэтычная форма для onAdd (замка няма)
+    sec = window._tblSectionCache?.get(formId + '::' + dataKey);
+    form = { id: formId, fields: {} };
+  }
   if (!sec) return;
-  if (_secLocked(form, sec)) { showAlert(t('node_locked_msg')); return; } // 🔒 секцыя
   // Уніфікаваная «Гісторыя зменаў»: ➕ прапануе выбар «Што змяніць» (Профіль/Статус/…)
   if (Array.isArray(sec.changeTypes) && sec.changeTypes.length) {
     if (sec.changeTypes.length === 1) { sec.changeTypes[0].onPick(form, s); return; }
