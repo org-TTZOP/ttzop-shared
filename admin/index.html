@@ -11205,14 +11205,7 @@ function _rebuildEmailRouteSchema() {
 FORM_SCHEMAS.emailRoute = []; // ініцыялізацыя; пераствараецца ў _rebuildEmailRouteSchema
 FORM_SCHEMAS.emailRoute._noName = true; // назва = label у асноўнай мове
 FORM_SCHEMAS.monitorClient._noName = true; // email = загаловак радка, пале НАЗВА ўнутры не трэба
-// 🌐 бэйдж «5+N» у загалоўку формы паддамена: засталося бясплатных за месяц + купленых крэдытаў (чырвоны пры 0)
-monitorState._formNameHtml = form => {
-  const f = form.fields || {};
-  const name = escHtml(f.subdomain || f.email || _folderLabel(form) || '—');
-  const free = Math.max(0, (+f.trMax || 5) - (+f.trFree || 0)), cred = +f.trCredits || 0;
-  const low = free <= 0 && cred <= 0;
-  return `${name}<span style="font-size:0.72rem;color:${low ? '#ef4444' : 'var(--muted)'};margin-left:6px" title="${escHtml(t('tr_client_badge_title'))}">🌐${free}+${cred}</span>`;
-};
+// 🌐 бэйдж «5+N» формы паддамена — праз property monitorState._formNameHtml (унутры аб'екта, каб не TDZ)
 // 💰 Дадаць папаўненне балансу API (owner): сума ў $ → add_api_topup → абнавіць чып Агляду
 function _apiTopupAdd() {
   showPrompt(t('api_topup_prompt'), '', async v => {
@@ -11309,6 +11302,14 @@ let monitorState = {
   _rootName: () => t('nav_monitor'),
   _autoRefreshEnabled: false, _lastRefresh: null, _autoRefreshMs: 300000, // 5 хвілін
   _formSchema: 'monitorStat', // caps праз CONTENT_TYPES['monitorStat/Client']
+  // 🌐 бэйдж «5+N» у загалоўку формы паддамена: засталося бясплатных за месяц + купленых крэдытаў (чырвоны пры 0)
+  _formNameHtml: form => {
+    const f = form.fields || {};
+    const name = escHtml(f.subdomain || f.email || _folderLabel(form) || '—');
+    const free = Math.max(0, (+f.trMax || 5) - (+f.trFree || 0)), cred = +f.trCredits || 0;
+    const low = free <= 0 && cred <= 0;
+    return `${name}<span style="font-size:0.72rem;color:${low ? '#ef4444' : 'var(--muted)'};margin-left:6px" title="${escHtml(t('tr_client_badge_title'))}">🌐${free}+${cred}</span>`;
+  },
   _formBodyHtml: () => _monitorTopChartHtml(), // 📈 агульная «Дынаміка лімітаў» у целе Формы-0 (вышэй за Папкі-0)
   _loadFn: async () => loadMonitor(),
   _onFolderExpand: folder => {
