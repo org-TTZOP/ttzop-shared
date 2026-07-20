@@ -11352,6 +11352,7 @@ let monitorState = {
   _onDeleteItem: id => {
     const node = (monitorState.data?.nodes || []).find(n => n.id === id);
     if (!node || node.formSchema !== 'monitorClient') return;
+    if (node.fields?._self) { showAlert(t('mon_self_no_delete')); return; } // ⭐ платформу выдаліць нельга (воркер таксама гардзіць зарэзерваваныя імёны)
     const sub = String(node.fields?.subdomain || '').replace(/\.ttzop\.com$/, '');
     if (sub) monitorDeleteSite(sub, node.fields?.clientId || '', node.fields?.orderId || '', id);
   },
@@ -11377,7 +11378,8 @@ let monitorState = {
       // 🌐 бэйдж расходу перакладаў: засталося бясплатных за месяц + купленых крэдытаў (чырвоны пры 0)
       const ff = form.fields || {}, trFree = Math.max(0, (+ff.trMax || 5) - (+ff.trFree || 0)), trCred = +ff.trCredits || 0;
       const trBadge = `<span style="font-size:0.72rem;color:${trFree <= 0 && trCred <= 0 ? '#ef4444' : 'var(--muted)'};margin-left:6px;white-space:nowrap" title="${escHtml(t('tr_client_badge_title'))}">🌐${trFree}+${trCred}</span>`;
-      return `${pingDot}<span style="color:${col}">${escHtml(_nodeName(form)||'—')}</span>${stBadge}${trBadge}`;
+      const star = form.fields?._self ? `<span title="${escHtml(t('mon_self_site'))}">⭐ </span>` : ''; // ⭐ уласны сайт платформы
+      return `${star}${pingDot}<span style="color:${col}">${escHtml(_nodeName(form)||'—')}</span>${stBadge}${trBadge}`;
     }
     return escHtml(_nodeName(form)||'—');
   },
@@ -11477,7 +11479,7 @@ async function _monitorLoadDashboard() {
         name: fullDomain || c.email || '—',
         fields:{ email:c.email||'', subdomain:fullDomain, status:c.status||'',
                  until: d ? `${d}.${m}.${y}` : c.until||'', daysLeft:c.daysLeft??null,
-                 orderId:c.orderId||'', clientId:c.clientId||'',
+                 orderId:c.orderId||'', clientId:c.clientId||'', _self: c.self ? true : undefined, // ⭐ уласны сайт платформы
                  // 🌐 расход перакладаў гэтага паддамена (для бэйджа + выпіса)
                  trFree:c.trFree??0, trMax:c.trMax??5, trCredits:c.trCredits??0 } });
     });
