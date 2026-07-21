@@ -1215,12 +1215,12 @@ const SITE_HELP = {
       "Az előfizetést (szüneteltetés, folytatás, lemondás) a fiókjában kezeli.",
       "Nyomja meg az OK-t — megnyílik a fiókja, ahol megerősíti az előfizetést." ] } },
 };
-// згортвальны блок падказкі; key — тэма з SITE_HELP; пуста для мовы/тэмы → нічога не малюем
+// згортвальны блок падказкі; key — тэма з SITE_HELP; пуста для мовы/тэмы → нічога не малюем.
+// Рэндэр — універсальны TTZOP_HELP.block (help-widget.js), колеры кутка праз CSS-зменныя сайта
 function _siteHelpHtml(key) {
   const d = SITE_HELP[currentUiLang] || SITE_HELP.en || SITE_HELP.be;
   const tp = d && d[key]; if (!tp) return '';
-  return `<details class="site-help"><summary><span class="sh-arr">▸</span>❓ ${_dsEsc(d._title || 'Help')} · ${_dsEsc(tp.t)}</summary>`
-    + `<div class="sh-body">${(tp.b || []).map(p => `<p>${_dsEsc(p)}</p>`).join('')}</div></details>`;
+  return TTZOP_HELP.block({ label: d._title || 'Help', title: tp.t, body: tp.b, accent: 'var(--color-primary)', border: 'var(--border-color)', esc: _dsEsc });
 }
 
 function getI18n(data, lang) {

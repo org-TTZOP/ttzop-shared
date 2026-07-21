@@ -37,15 +37,7 @@
     .prof-row { font-size: 0.9rem; color: var(--muted); margin-top: 6px; display: flex; align-items: center; gap: 8px; }
     .prof-row b { color: var(--text); font-weight: 600; }
     .prof-sec-title { font-family: 'Unbounded', sans-serif; font-size: 0.95rem; font-weight: 600; margin: 18px 0 8px; }
-    /* 📖 Даведка кліенту ў кабінеце — той жа згортвальны блок, што ў мадалках сайта (.site-help) */
-    .cab-help { border: 1px solid var(--border); border-radius: 10px; margin: 0 0 12px; background: color-mix(in srgb, var(--accent) 6%, transparent); }
-    .cab-help > summary { cursor: pointer; list-style: none; display: flex; align-items: center; gap: 6px; padding: 9px 11px; font-size: 0.82rem; font-weight: 700; color: var(--accent); }
-    .cab-help > summary::-webkit-details-marker { display: none; }
-    .cab-help .ch-arr { display: inline-block; transition: transform 0.15s; opacity: 0.7; }
-    .cab-help[open] > summary .ch-arr { transform: rotate(90deg); }
-    .cab-help .ch-body { padding: 0 11px 11px; font-size: 0.82rem; line-height: 1.55; opacity: 0.9; }
-    .cab-help .ch-body p { margin: 0 0 6px; }
-    .cab-help .ch-body p:last-child { margin-bottom: 0; }
+    /* 📖 Даведка кліенту — рэндэр і стылі ў assets/js/help-widget.js (TTZOP_HELP.block, клас .twh) */
     body.cab-body { padding: 0; } /* прыбіраем цёмны фон iframe па краях акна кабінета */
     .login-box.cab .login-logo { margin-top: 26px; } /* дамен ніжэй — каб не перасякаўся з крыжыкам ✕ у верхнім левым куце */
     .login-logo { font-family: 'Unbounded', sans-serif; font-size: 1.4rem; font-weight: 700; color: var(--accent); margin-bottom: 8px; }
@@ -134,6 +126,7 @@
 </div>
 
 <script src="assets/js/reader.js"></script><!-- 📄 універсальны чытач дакумента (фактура — paper) -->
+<script src="assets/js/help-widget.js"></script><!-- 📖 універсальны рэндэр падказкі -->
 <script src="assets/js/slots-modal.js"></script><!-- 📅 тая ж мадалка слотаў, што на сайце (тут — перанос запісу) -->
 <script>
 const PORTAL_T = {
@@ -650,8 +643,8 @@ const PORTAL_HELP = {
 function _cabHelpHtml(key) {
   const d = PORTAL_HELP[detectPortalLang()] || PORTAL_HELP.en || PORTAL_HELP.be;
   const tp = d && d[key]; if (!tp) return '';
-  return `<details class="cab-help"><summary><span class="ch-arr">▸</span>❓ ${escChat(d._title || 'Help')} · ${escChat(tp.t)}</summary>`
-    + `<div class="ch-body">${(tp.b || []).map(p => `<p>${escChat(p)}</p>`).join('')}</div></details>`;
+  // рэндэр — універсальны TTZOP_HELP.block (help-widget.js), колеры кабінета праз CSS-зменныя
+  return TTZOP_HELP.block({ label: d._title || 'Help', title: tp.t, body: tp.b, accent: 'var(--accent)', border: 'var(--border)', esc: escChat });
 }
 function renderCabinetAppts() {
   const el = document.getElementById('cab-appts');

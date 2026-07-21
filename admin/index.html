@@ -238,11 +238,7 @@
     .node-overflow-item.danger:hover { color: #ef4444; background: rgba(239,68,68,0.06); }
     .node-overflow-item.active { color: var(--accent); }
     .node-overflow-sep { height: 1px; background: var(--border); margin: 4px 4px; }
-    /* 📖 Даведка ў ⓘ-панэлі: згортванне дыскложурам ▸/▾ (канон — стрэлка злева перад назвай, паварот ад details[open]) */
-    .help-sec > summary { cursor: pointer; font-size: 0.75rem; font-weight: 700; color: var(--label); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 8px; list-style: none; display: flex; align-items: center; gap: 5px; }
-    .help-sec > summary::-webkit-details-marker { display: none; } /* Safari малюе свой трохкутнік — глушым, стрэлка ў разметцы */
-    .help-arr { display: inline-block; transition: transform 0.15s; color: var(--muted); }
-    .help-sec[open] > summary .help-arr { transform: rotate(90deg); }
+    /* 📖 Даведка ў ⓘ-панэлі — рэндэр і стылі ў assets/js/help-widget.js (TTZOP_HELP.block, клас .twh) */
     .node-overflow-menu-grid { display: none; position: absolute; right: 0; top: calc(100% + 4px); background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 4px; min-width: 120px; box-shadow: 0 8px 24px rgba(0,0,0,0.18); z-index: 1100; flex-wrap: wrap; gap: 2px; } /* 1100 > Leaflet-панэлі (400–1000): меню секцыі Мапа адкрывалася ПАД мапай і выглядала пустым */
     .node-overflow-menu-grid.open { display: flex; }
     .node-overflow-menu-grid .node-overflow-item { width: 34px; height: 34px; padding: 0; gap: 0; font-size: 0.85rem; justify-content: center; white-space: nowrap; overflow: hidden; }
@@ -392,6 +388,7 @@
   <script src="ui-i18n.js"></script>
   <script type="module" src="../assets/js/booking.js"></script><!-- 📅 агульны модуль занятасці (той жа файл імпартуе воркер) -->
   <script src="../assets/js/reader.js"></script><!-- 📄 універсальны чытач дакумента (справаздачы і інш.) -->
+  <script src="../assets/js/help-widget.js"></script><!-- 📖 універсальны рэндэр падказкі (адзін кампанент: панэль + сайт + кабінет) -->
   <script src="../assets/js/cdate.js"></script><!-- 📅 фірменны каляндар-папап (адзін кампанент: панэль + Чарнавік/сайт) -->
   <script src="../assets/js/photoedit.js"></script><!-- ✂️ універсальны фота-рэдактар (адзін кампанент: панэль + Чарнавік) -->
 </head>
@@ -6608,13 +6605,8 @@ function _helpSectionHtml(node, s) {
   if (!_helpEnsure(() => renderInfoDrawerTree())) return ''; // грузіцца — перарэндэр сам дамалюе
   const tp = _helpTopic(node, s); if (!tp) return '';         // няма тэмы — няма секцыі (нуль шуму)
   const dict = HELP_T[adminLang] || HELP_T.en || HELP_T.be;
-  const open = _helpOpen ? ' open' : '';
-  return `<details class="help-sec"${open} ontoggle="_helpOpen=this.open">
-    <summary><span class="help-arr">▸</span>❓ ${escHtml(dict._title || 'Help')} · ${escHtml(tp.t)}</summary>
-    <div style="font-size:0.85rem;line-height:1.5;color:var(--fg);margin-bottom:12px">
-      ${(tp.b || []).map(p => `<p style="margin:0 0 8px">${escHtml(p)}</p>`).join('')}
-    </div>
-  </details>`;
+  // рэндэр — універсальны TTZOP_HELP.block (help-widget.js); стан разгорнутасці памятаецца ў _helpOpen
+  return TTZOP_HELP.block({ label: dict._title || 'Help', title: tp.t, body: tp.b, open: _helpOpen, onToggle: '_helpOpen=this.open', accent: 'var(--accent)', border: 'var(--border)', esc: escHtml });
 }
 
 function _drawerLegendHtml(node, parentState) {
