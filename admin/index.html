@@ -10930,7 +10930,8 @@ function _repDownload(name, mime, content) {
   a.download = name; a.click();
   setTimeout(() => URL.revokeObjectURL(a.href), 5000);
 }
-function _expCSV(pl) { // BOM + «;» — інакш Excel псуе кірыліцу і не дзеліць слупкі ў еўра-лакалях
+// CSV: адзін білдэр радка → спампоўка (_expCSV) АБО байты (чат-шэрынг). BOM+«;» — Excel-кірыліца/еўра-лакаль
+function _csvString(pl) {
   const m = _expDisp(pl);
   const esc = v => { const s3 = String(v ?? ''); return /[;"\n]/.test(s3) ? '"' + s3.replace(/"/g, '""') + '"' : s3; };
   const lines = [[m.title], ...(m.period ? [[m.period]] : []), [`${t('rep_generated')}: ${m.at}`, `${t('col_who')}: ${m.by}`], []];
@@ -10938,8 +10939,9 @@ function _expCSV(pl) { // BOM + «;» — інакш Excel псуе кірылі
   (pl.tables || []).forEach(tb => { const cols = _expCols(tb);
     lines.push([], [_expTblTitle(tb)], cols.map(_expColLabel));
     (tb.rows || []).forEach(r => lines.push(cols.map(c => _repColText(c, r[c.key])))); });
-  _repDownload(m.fname + '.csv', 'text/csv;charset=utf-8', '\ufeff' + lines.map(l => l.map(esc).join(';')).join('\r\n'));
+  return '﻿' + lines.map(l => l.map(esc).join(';')).join('\r\n');
 }
+function _expCSV(pl) { _repDownload(_expDisp(pl).fname + '.csv', 'text/csv;charset=utf-8', _csvString(pl)); }
 // XLSX — ляніва SheetJS з CDN (прэцэдэнт lazy-CDN: qrcode на старонцы білета); вынікі = ЖЫВЫЯ ФОРМУЛЫ
 // SUBTOTAL(9): ігнаруюць адфільтраванае і пералічваюцца пасля выдалення радкоў (бухгалтарскі сцэнар №1)
 let _xlsxLibP = null;
@@ -10956,8 +10958,8 @@ function _xlsxAutoWidth(ws, aoa) {
   aoa.forEach(row => row.forEach((v, ci) => { const L = String(v ?? '').length; if (!w[ci] || L > w[ci]) w[ci] = L; }));
   ws['!cols'] = w.map(x => ({ wch: Math.min(48, Math.max(8, (x || 0) + 2)) }));
 }
-async function _expXLSX(pl, onErr) {
-  if (!await _xlsxLibLoad()) { onErr?.(); return; }
+// workbook (агульны для спампоўкі і байтаў чата) — патрабуе загружанага XLSX
+function _xlsxWorkbook(pl) {
   const m = _expDisp(pl);
   const wb = XLSX.utils.book_new();
   // Аркуш «Зводка» — чалавечы; дадзеныя — асобнымі ПЛОСКІМІ аркушамі (бух-канон: без аб'яднаных ячэек)
@@ -10979,10 +10981,14 @@ async function _expXLSX(pl, onErr) {
     _xlsxAutoWidth(ws, aoa);
     let nm = (_expTblTitle(tb) || ('T' + ti)).replace(/[\\/?*\[\]:]/g, ' ').slice(0, 31); while (used.has(nm)) nm = (nm + '2').slice(0, 31); used.add(nm);
     XLSX.utils.book_append_sheet(wb, ws, nm); });
-  XLSX.writeFile(wb, m.fname + '.xlsx');
+  return wb;
 }
-function _expPDF(pl) { // фіксацыя дакумента: reader.js style:'paper' (як фактура) + window.print
-  const m = _expDisp(pl);
+async function _expXLSX(pl, onErr) {
+  if (!await _xlsxLibLoad()) { onErr?.(); return; }
+  XLSX.writeFile(_xlsxWorkbook(pl), _expDisp(pl).fname + '.xlsx');
+}
+// paper-body HTML (агульны: PDF-друк праз reader + PDF-байты праз html2canvas)
+function _repPaperBody(pl) {
   const td = 'padding:5px 8px;border:1px solid #ccc;font-size:12px';
   const sumHtml = (pl.summary || []).map(e => `<div>${escHtml(_repSumLabel(e.k))}: <b>${escHtml(String(e.v))}</b></div>`).join('');
   const tablesHtml = (pl.tables || []).map(tb => { const cols = _expCols(tb);
@@ -10991,10 +10997,59 @@ function _expPDF(pl) { // фіксацыя дакумента: reader.js style:'
     <table style="border-collapse:collapse;width:100%"><thead><tr>${cols.map(c => `<th style="${td};background:#f2f2f2;text-align:left">${escHtml(_expColLabel(c))}</th>`).join('')}</tr></thead>
     <tbody>${(tb.rows || []).map(r => `<tr>${cols.map(c => `<td style="${td}${c.type === 'number' ? ';text-align:right' : ''}">${escHtml(_repColText(c, r[c.key]))}</td>`).join('')}</tr>`).join('')}</tbody>
     ${tot.some(x => x !== '') ? `<tfoot><tr>${tot.map(x => `<td style="${td};font-weight:700;text-align:right">${escHtml(String(x))}</td>`).join('')}</tr></tfoot>` : ''}</table>`; }).join('');
+  return { sumHtml, tablesHtml };
+}
+function _expPDF(pl) { // фіксацыя дакумента: reader.js style:'paper' (як фактура) + window.print
+  const m = _expDisp(pl); const { sumHtml, tablesHtml } = _repPaperBody(pl);
   openReaderWindow({ style: 'paper', title: m.title, lang: adminLang,
     meta: `${m.period ? m.period + ' · ' : ''}${t('rep_generated')}: ${m.at} · ${t('col_who')}: ${m.by}`, // 🕐👤 — і ў дакуменце
     bodyHtml: `<div style="font-size:13px;line-height:1.5">${sumHtml}${tablesHtml}</div>`,
     siteName: REPO, labels: { pdfprint: '🖨 PDF', close: '✕', share: '↗' } });
+}
+// ── БАЙТЫ ФАЙЛА (для чат-шэрынгу): base64 па фармаце. Uint8Array→base64 чанкамі (вялікі spread падае) ──
+function _bytesToB64(u8) { let bin = ''; for (let i = 0; i < u8.length; i += 8192) bin += String.fromCharCode.apply(null, u8.subarray(i, i + 8192)); return btoa(bin); }
+function _strToB64(str) { return _bytesToB64(new TextEncoder().encode(str)); }
+// jsPDF + html2canvas ляніва (PDF праз РЭНДЭР DOM у выяву → усе мовы карэктна: be/ru/uk/ar/zh, без праблем шрыфтоў jsPDF)
+let _pdfLibP = null;
+function _pdfLibLoad() {
+  if (window.jspdf && window.html2canvas) return Promise.resolve(true);
+  if (!_pdfLibP) _pdfLibP = new Promise(res => {
+    const load = (src) => new Promise(r => { const sc = document.createElement('script'); sc.src = src; sc.onload = () => r(true); sc.onerror = () => r(false); document.head.appendChild(sc); });
+    Promise.all([
+      window.jspdf ? true : load('https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js'),
+      window.html2canvas ? true : load('https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js'),
+    ]).then(rs => res(rs.every(Boolean) && !!window.jspdf && !!window.html2canvas));
+  });
+  return _pdfLibP;
+}
+async function _pdfB64(pl) {
+  if (!await _pdfLibLoad()) return null;
+  const m = _expDisp(pl); const { sumHtml, tablesHtml } = _repPaperBody(pl);
+  const wrap = document.createElement('div');
+  wrap.style.cssText = "position:fixed;left:-99999px;top:0;width:760px;background:#fff;color:#111;padding:28px;font-family:Arial,'Helvetica Neue',sans-serif;font-size:13px;line-height:1.5";
+  wrap.setAttribute('dir', document.documentElement.getAttribute('dir') || 'ltr'); // RTL (ar) захоўваецца ў выяве
+  wrap.innerHTML = `<h2 style="margin:0 0 4px;font-size:18px">${escHtml(m.title)}</h2>
+    <div style="font-size:11px;color:#666;margin-bottom:14px">${escHtml((m.period ? m.period + ' · ' : '') + t('rep_generated') + ': ' + m.at + ' · ' + t('col_who') + ': ' + m.by)}</div>${sumHtml}${tablesHtml}`;
+  document.body.appendChild(wrap);
+  try {
+    const canvas = await html2canvas(wrap, { scale: 2, backgroundColor: '#fff', logging: false });
+    const { jsPDF } = window.jspdf;
+    const pdf = new jsPDF('p', 'pt', 'a4');
+    const pw = pdf.internal.pageSize.getWidth(), ph = pdf.internal.pageSize.getHeight();
+    const imgH = canvas.height * pw / canvas.width;
+    const img = canvas.toDataURL('image/jpeg', 0.9);
+    let pos = 0, left = imgH; // паджынацыя: адна доўгая выява, зрух па -ph на старонку
+    pdf.addImage(img, 'JPEG', 0, pos, pw, imgH); left -= ph;
+    while (left > 0) { pos -= ph; pdf.addPage(); pdf.addImage(img, 'JPEG', 0, pos, pw, imgH); left -= ph; }
+    return _bytesToB64(new Uint8Array(pdf.output('arraybuffer')));
+  } catch (e) { console.warn('[pdf gen fail]', e?.message); return null; } finally { document.body.removeChild(wrap); }
+}
+// адзіны генератар байтаў файла па фармаце → {b64,name,mime} (для чат-шэрынгу)
+async function _repFileBytes(pl, fmt) {
+  const m = _expDisp(pl);
+  if (fmt === 'csv') return { b64: _strToB64(_csvString(pl)), name: m.fname + '.csv', mime: 'text/csv' };
+  if (fmt === 'xlsx') { if (!await _xlsxLibLoad()) return null; return { b64: XLSX.write(_xlsxWorkbook(pl), { type: 'base64' }), name: m.fname + '.xlsx', mime: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }; }
+  const b64 = await _pdfB64(pl); return b64 ? { b64, name: m.fname + '.pdf', mime: 'application/pdf' } : null;
 }
 // тонкія абгорткі РМ Справаздач (кнопкі трымаюць formId; ядро — payload-функцыі вышэй)
 function _repExportCSV(formId) { const f = reportsState.data?.nodes?.find(n => n.id === formId)?.fields; if (f?._payload) _expCSV(f._payload); }
@@ -11105,6 +11160,7 @@ function _printDialog(buildFn) {
     <button onclick="document.getElementById('print-fmt-modal').remove()" title="${escHtml(t('btn_cancel'))}" style="position:absolute;top:8px;right:10px;background:none;border:none;color:var(--error);font-size:1.25rem;cursor:pointer;line-height:1;padding:2px 6px">✕</button>
     <div style="font-size:0.9rem;font-weight:700;margin:2px 0 14px;padding-right:26px">🖨 ${escHtml(t('node_print'))}</div>
     <div style="display:flex;gap:12px">${fmts.map(btn).join('')}</div>
+    <button onclick="_printToChat()" style="display:flex;align-items:center;justify-content:center;gap:6px;width:100%;margin-top:12px;padding:10px;background:none;border:1px solid var(--border);border-radius:10px;cursor:pointer;color:var(--accent);font-size:0.85rem;font-weight:600" onmouseover="this.style.borderColor='var(--accent)'" onmouseout="this.style.borderColor='var(--border)'">💬 ${escHtml(t('share_to_chat'))}</button>
   </div>`;
   ov.addEventListener('click', e => { if (e.target === ov) ov.remove(); }); // клік па фоне — закрыць
   document.body.appendChild(ov);
@@ -11114,6 +11170,60 @@ function _printRun(fmt) { // клік па іконцы фармату → рэ�
   const pl = _printBuildFn?.(); _printBuildFn = null;
   if (!pl || !(pl.tables || []).length) { showAlert(t('print_empty')); return; } // «няма даных для друку» (НЕ rep_no_data пра перыяд)
   if (fmt === 'csv') _expCSV(pl); else if (fmt === 'xlsx') _expXLSX(pl, () => showAlert(t('err'))); else _expPDF(pl);
+}
+// ── 💬 ПАДЗЯЛІЦЦА АТЧОТАМ У ЧАТ: файл (PDF/Excel/CSV) → R2 (file_upload prefix chat) → chat_send.
+// Толькі СУПРАЦОЎНІКІ (kind==='user') — бізнес-атчот кліенту слаць нельга (уцечка). payload = «як бачыш»
+// на момант націску (той жа _printBuildFn, што і друк). Патэрн выбару адрасатаў — як _nodeShareLink.
+let _sharePl = null, _shareFmt = 'pdf';
+async function _printToChat() {
+  const buildFn = _printBuildFn;
+  document.getElementById('print-fmt-modal')?.remove();
+  const pl = buildFn?.();
+  if (!pl || !(pl.tables || []).length) { showAlert(t('print_empty')); return; }
+  _sharePl = pl; _shareFmt = 'pdf';
+  let peers = [];
+  try { const r = await fetch(API, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'chat_peers', repo: REPO, password }) }); if (r.ok) peers = (await r.json()).peers || []; } catch {}
+  peers = peers.filter(p => p.kind === 'user'); // толькі супрацоўнікі
+  if (!peers.length) { showAlert(t('share_no_users')); return; }
+  _printChatModal(peers);
+}
+function _printChatModal(peers) {
+  document.getElementById('print-chat-modal')?.remove();
+  const ov = document.createElement('div');
+  ov.id = 'print-chat-modal';
+  ov.style.cssText = 'position:fixed;inset:0;z-index:1100;background:rgba(0,0,0,0.6);display:flex;align-items:center;justify-content:center;padding:16px';
+  const fmts = [{ id: 'pdf', ico: '📕', label: 'PDF' }, { id: 'xlsx', ico: '📗', label: 'Excel' }, { id: 'csv', ico: '📘', label: 'CSV' }];
+  const fbtn = f => `<button onclick="_shareSetFmt('${f.id}')" data-sfmt="${f.id}" style="display:flex;flex-direction:column;align-items:center;gap:5px;padding:11px 14px;background:var(--surface2);border:1px solid var(--border);border-radius:10px;cursor:pointer;flex:1"><span style="font-size:1.7rem;line-height:1">${f.ico}</span><span style="font-size:0.78rem;color:var(--text);font-weight:600">${f.label}</span></button>`;
+  ov.innerHTML = `<div style="background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:18px 20px 20px;box-shadow:0 16px 48px rgba(0,0,0,0.45);position:relative;width:min(380px,90vw)">
+    <button onclick="document.getElementById('print-chat-modal').remove()" title="${escHtml(t('btn_cancel'))}" style="position:absolute;top:8px;right:10px;background:none;border:none;color:var(--error);font-size:1.25rem;cursor:pointer;line-height:1;padding:2px 6px">✕</button>
+    <div style="font-size:0.9rem;font-weight:700;margin:2px 0 12px;padding-right:26px">💬 ${escHtml(t('share_to_chat'))}</div>
+    <div style="display:flex;gap:8px;margin-bottom:12px">${fmts.map(fbtn).join('')}</div>
+    <div style="font-size:0.72rem;font-weight:700;color:var(--label);text-transform:uppercase;letter-spacing:0.05em;margin-bottom:6px">${escHtml(t('share_pick_users'))}</div>
+    <div style="max-height:220px;overflow:auto;margin:0 -4px">${peers.map(p => `<label style="display:flex;align-items:center;gap:8px;padding:8px 4px;border-bottom:1px solid var(--border);cursor:pointer;font-size:0.88rem"><input type="checkbox" data-share-peer="${escHtml(p.id)}" style="cursor:pointer"> ${escHtml(p.label)}</label>`).join('')}</div>
+    <button id="share-send-btn" class="btn-primary" style="width:100%;margin-top:14px" onclick="_shareSend()">${escHtml(t('share_send'))}</button>
+  </div>`;
+  ov.addEventListener('click', e => { if (e.target === ov) ov.remove(); });
+  document.body.appendChild(ov);
+  _shareSetFmt(_shareFmt);
+}
+function _shareSetFmt(f) { _shareFmt = f; document.querySelectorAll('[data-sfmt]').forEach(b => b.style.borderColor = b.dataset.sfmt === f ? 'var(--accent)' : 'var(--border)'); }
+async function _shareSend() {
+  const to = [...document.querySelectorAll('#print-chat-modal [data-share-peer]:checked')].map(cb => cb.dataset.sharePeer);
+  if (!to.length) { showAlert(t('share_pick_users')); return; }
+  const btn = document.getElementById('share-send-btn');
+  if (btn) { btn.disabled = true; btn.textContent = '⏳'; } // генерацыя PDF (html2canvas) можа заняць секунду
+  try {
+    const file = await _repFileBytes(_sharePl, _shareFmt);
+    if (!file) { showAlert(t('err')); return; }
+    let url = null;
+    try { const r = await fetch(API, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'file_upload', repo: REPO, password, prefix: 'chat', data: file.b64, contentType: file.mime, fileName: file.name }) }); if (r.ok) url = (await r.json()).url; } catch {}
+    if (!url) { showAlert(t('err')); return; }
+    const att = [{ url, name: file.name, mimeType: file.mime }];
+    const text = '📊 ' + _expDisp(_sharePl).title; // подпіс паведамлення = назва атчота
+    const rs = await Promise.all(to.map(uid => fetch(API, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'chat_send', repo: REPO, password, toUserId: uid, text, attachments: att }) }).catch(() => null)));
+    document.getElementById('print-chat-modal')?.remove();
+    showAlert(rs.every(r => r?.ok) ? t('share_sent') : t('err'));
+  } finally { if (btn) { btn.disabled = false; btn.textContent = t('share_send'); } }
 }
 function _nodePrint(id) { // 🖨 у ⋯ вузла: паддрэва (дзеці, без бацькоў)
   const s = currentNodeState; const node = s?.data?.nodes?.find(n => n.id === id); if (!node) return;
