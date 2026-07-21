@@ -481,6 +481,7 @@
         <div class="nav-item" data-page="delivery"><span class="icon">🚚</span> <span data-i18n="nav_delivery">Дастаўка</span></div>
         <div class="nav-item" data-page="sitepage"><span class="icon">🧱</span> <span data-i18n="nav_sitepage">Структура сайта</span></div><!-- Фаза 2a дынамічных секцый: спіс экзэмпляраў sections.json -->
         <div class="nav-item" data-page="sections"><span class="icon">📦</span> <span data-i18n="nav_sections">Нашы прапановы</span></div>
+        <div class="nav-item" data-page="reports"><span class="icon">📈</span> <span data-i18n="nav_reports">Справаздачы</span></div><!-- 📊 payload-ААП: тыпы з REPORT_CATALOG; правы гейтуе сервер пер-тып -->
         <div class="nav-item" data-page="languages"><span class="icon">🌐</span> <span data-i18n="nav_languages">Рэгіянальныя налады</span></div>
         <div class="nav-item" data-page="theme"><span class="icon">🎨</span> <span data-i18n="nav_theme">Тэма і колер</span></div>
         <div class="nav-item" data-page="users" id="nav-users" style="display:none"><span class="icon">👤</span> <span data-i18n="nav_users">Карыстальнікі</span></div><!-- бачны толькі owner/canManageUsers (3-4) -->
@@ -552,6 +553,10 @@
       <div class="page" id="page-appointments">
         <div class="page-title" data-i18n="nav_appointments">Запісы</div>
         <div id="appointments-editor"></div>
+      </div>
+      <div class="page" id="page-reports">
+        <div class="page-title" data-i18n="nav_reports">Справаздачы</div>
+        <div id="reports-editor"></div>
       </div>
 
       <!-- ══ СТАРОНКА САЙТА (Фаза 2a дынамічных секцый) ══ -->
@@ -5299,6 +5304,23 @@ function _nodeTableSectionHtml(form, section, s, mover = '') {
     (moreBtn || lessBtn)
       ? `<tr><td colspan="${colCount}" style="padding:6px 10px;text-align:center;color:var(--muted);font-size:0.78rem"><span style="display:inline-flex;gap:18px">${moreBtn}${lessBtn}</span></td></tr>`
       : ''}</tbody>`;
+  // 🧮 РАДОК ВЫНІКАЎ (ПРОДАКФПФ, для слупкоў з totals:['sum'|'count'|'avg']): лічыцца па ЎСІХ
+  // АДФІЛЬТРАВАНЫХ радках (filteredRows), не толькі бачнай порцыі — «дадаткова адфільтраваў → вынік
+  // пералічыўся» (бухгалтарскі сцэнар справаздач); фільтр мяняецца → секцыя перарэндэрваецца → пералік сам
+  const _totCols = columns.filter(c => Array.isArray(c.totals) && c.totals.length);
+  let tfoot = '';
+  if (_totCols.length && filteredRows.length) {
+    const agg = (c) => { const vals = filteredRows.map(r => +r[c.key] || 0);
+      const parts = c.totals.map(tt => tt === 'count' ? filteredRows.length
+        : tt === 'avg' ? (Math.round(vals.reduce((a, b) => a + b, 0) / (vals.length || 1) * 100) / 100)
+        : Math.round(vals.reduce((a, b) => a + b, 0) * 100) / 100);
+      return parts.join(' / '); };
+    let labelPut = false;
+    const cells = columns.map(c => { const has = _totCols.includes(c);
+      const txt = has ? agg(c) : (!labelPut ? (labelPut = true, `Σ ${t('rep_totals')} (${filteredRows.length})`) : '');
+      return `<td style="${tdSt};font-weight:700;border-top:2px solid var(--border)${has ? ';text-align:right' : ''}">${escHtml(String(txt))}</td>`; });
+    tfoot = `<tfoot><tr>${cells.join('')}${hasActs ? `<td style="${tdSt};border-top:2px solid var(--border)"></td>` : ''}</tr></tfoot>`;
+  }
   const maxH = section.maxHeight !== undefined ? section.maxHeight : 320;
   const wrapSt = (view === 'full' && visTotal > _TBL_PREVIEW && maxH)
     ? `overflow:auto;max-height:${maxH}${typeof maxH === 'number' ? 'px' : ''}`
@@ -5311,7 +5333,7 @@ function _nodeTableSectionHtml(form, section, s, mover = '') {
     const el = document.getElementById(_tblPendingFocusId);
     if (el) { el.focus(); el.setSelectionRange?.(el.value.length, el.value.length); _tblPendingFocusId = null; }
   });
-  return `<div class="form-section-table">${titleRow}${chartHtml}<div style="${wrapSt}"><table style="width:100%;border-collapse:collapse">${thead}${tbody}</table></div>${footer}</div>`;
+  return `<div class="form-section-table">${titleRow}${chartHtml}<div style="${wrapSt}"><table style="width:100%;border-collapse:collapse">${thead}${tbody}${tfoot}</table></div>${footer}</div>`;
 }
 
 // Дыскложур табліцы (канон 3/15, 2026-07-15): TOGGLE адкрыта (preview/порцыя/full) ↔ collapsed (нуль радкоў);
@@ -10610,6 +10632,301 @@ function loadDeliveryEditor() {
 }
 
 // ════════════════════════════════════════
+// 📊 СПРАВАЗДАЧЫ — ААП на ЎНІФІКАВАНЫМ PAYLOAD (зацверджана 2026-07-21, гл. памяць reports-architecture)
+// Справаздача НЕ малюе і НЕ экспартуе: сервер (_repBuild) аддае payload {meta{generatedAt,by}, summary,
+// tables[{columns{type,totals,enrich},rows}]} — а ЎСЕ спажыўцы (экран/XLSX/PDF/CSV/архіў/параўнанне)
+// агульныя. Новы тып справаздачы = радок REPORT_CATALOG (панэль) + REPORT_TYPES_W (воркер). Меткі ў
+// payload — i18n-КЛЮЧЫ: архіўны здымак рэндэрыцца пазней на любой мове тымі ж рэндэрамі.
+// ════════════════════════════════════════
+const REPORT_CATALOG = [
+  { id: 'sales', icon: '💰', label: 'rep_t_sales' },
+  { id: 'appts', icon: '📅', label: 'rep_t_appts' },
+  { id: 'subs',  icon: '🔁', label: 'rep_t_subs'  },
+];
+// Узбагачэнне слупкоў ПАНЭЛЬНЫМ бокам (payload лёгкі: нясе толькі enrich-id) — статус/перыяд як бэджы.
+// Адно месца на ўсе рэндэры і экспарты; архіўны payload аўтаматычна атрымлівае той жа выгляд.
+const _REP_ENRICH = {
+  orderStatus: { type: 'select', labelMap: { new:'order_new', reviewing:'order_reviewing', confirmed:'order_confirmed', in_progress:'order_in_progress', awaiting_payment:'order_awaiting_payment', paid:'order_paid', completed:'order_completed', cancelled:'order_cancelled', paused:'order_paused' },
+    classMap: ORDER_STATUS_CLASS_MAP },
+  apptStatus: { type: 'select', labelMap: { scheduled:'appt_scheduled', confirmed:'appt_confirmed', completed:'appt_completed', cancelled:'appt_cancelled', no_show:'appt_no_show' } },
+  subStatus:  { type: 'select', labelMap: { active:'sub_active', paused:'sub_paused', cancelled:'sub_cancelled' } },
+  subPeriod:  { type: 'select', labelMap: { month:'rep_per_month', year:'rep_per_year' } },
+};
+let reportsState = {
+  data: null, saving: false, selected: new Set(), expanded: new Set(),
+  _section: 'reports', _editorId: 'reports-editor',
+  _localOnly: true, _rootType: 'root', _rootName: () => t('nav_reports'),
+  _spaceOnly: true, _formSchema: 'reportHost',
+  _formNameHtml: form => { const c = REPORT_CATALOG.find(x => 'rep-' + x.id === form.id);
+    return c ? `${c.icon} ${escHtml(t(c.label))}` : escHtml(form.name || ''); },
+  _saveFn: () => {}, // транзіентны РМ: параметры/payload жывуць толькі ў сесіі, персістыць няма чаго
+  _emptyHtml: () => '',
+  _renderFn: () => { currentNodeState = reportsState; renderNodeEditor(reportsState); }
+};
+function _buildReportsNodes() { // Форма-0 на кожны тып з каталога (канон: РМ → толькі Формы-0)
+  if (reportsState.data) return; // не зносім уведзеныя параметры/загружаны payload пры пераключэнні старонак
+  const mFrom = new Date(); mFrom.setDate(1); // дэфолтны перыяд — бягучы месяц
+  const iso = d => d.toISOString().slice(0, 10);
+  reportsState.data = { nodes: REPORT_CATALOG.map((c, i) => ({
+    id: 'rep-' + c.id, type: 'form', formSchema: 'reportHost', parentId: null, order: i, name: '',
+    fields: { repType: c.id, from: iso(mFrom), to: iso(new Date()) }
+  })) };
+}
+reportsState._buildFn = _buildReportsNodes;
+function loadReportsEditor() {
+  _buildReportsNodes();
+  currentNodeState = reportsState;
+  renderNodeEditor(reportsState);
+}
+CONTENT_TYPES['reportHost'] = { // форма-справаздача: код-каталог, не персістуецца → структурныя дзеянні бессэнсоўныя
+  canRename: false,    // назва — з REPORT_CATALOG (i18n), перайменаванне не захавалася б
+  canDelete: false,    // тып справаздачы жыве ў кодзе — выдаленне не персістуецца
+  canDuplicate: false, // дубль-форма без уласнага тыпу ў каталогу нічога б не лічыла
+  canRelocate: false,  // РМ трымае толькі Формы-0 — пераносіць няма куды
+  canMoveOrder: false, // парадак = парадак каталога
+  canBeLocked: false,  // транзіентны стан — замок не персістуецца
+};
+FORM_SCHEMAS.reportHost = Object.assign({ sections: [
+  // Параметры + кнопкі дзеянняў (bodyFn Table-продка — канон адвольнага цела, як дыялог чата)
+  { type: 'table', id: 'rep-params', title: 'rep_params', defaultView: 'full', pinned: true,
+    bodyFn: (form, s) => _repParamsBodyHtml(form) },
+  // Вынік: усе табліцы payload рэндэрацца ВІРТУАЛЬНЫМІ канонными Table-секцыямі (сарт/фільтр/вынікі з каробкі)
+  { type: 'table', id: 'rep-result', title: 'rep_result', defaultView: 'full', pinned: true,
+    bodyFn: (form, s) => _repResultBodyHtml(form, s) },
+  // 📦 Архіў: нязменныя здымкі (толькі спіс + адкрыць/параўнаць; выдалення НЯМА па пабудове)
+  { type: 'table', title: 'rep_archives', dataKey: '_archives', emptyHeader: true, keepOrder: true,
+    dataFn: (form, s) => _repArchData(form),
+    columns: [
+      { key: 'period', label: 'rep_params' },
+      { key: 'version', label: 'rep_ver', type: 'number' },
+      { key: 'at', label: 'col_datetime', type: 'datetime' },
+      { key: 'by', label: 'col_who' },
+      { key: '_act', title: '', type: 'html', sortable: false, render: (v, row) =>
+        `<button class="node-btn-round" title="${escHtml(t('rep_open_arch'))}" onclick="_repArchOpen('${escHtml(String(row._fid))}','${escHtml(String(row.period))}',${+row.version})">👁</button>
+         <button class="node-btn-round" title="${escHtml(t('rep_compare'))}" onclick="_repArchCompare('${escHtml(String(row._fid))}','${escHtml(String(row.period))}',${+row.version})">⚖</button>` },
+    ] },
+] }, { _noName: true });
+
+// ── Параметры + кнопкі (▶ Сфарміраваць · экспарты · 📌 У архіў) ──
+function _repParamsBodyHtml(form) {
+  const f = form.fields, has = !!f._payload;
+  const b = (icon, label, fn, dis, primary) => `<button onclick="${fn}" ${dis ? 'disabled' : ''} style="padding:7px 12px;border-radius:8px;cursor:${dis ? 'default' : 'pointer'};font-size:0.82rem;border:1px solid var(--border);${primary ? 'background:var(--accent);color:#fff;border-color:var(--accent)' : 'background:none;color:var(--text)'};${dis ? 'opacity:0.4' : ''}">${icon} ${escHtml(label)}</button>`;
+  return `<div style="display:flex;flex-wrap:wrap;gap:10px;align-items:center;padding:10px 12px">
+    <span style="font-size:0.82rem;color:var(--muted)">${escHtml(t('rep_from'))}</span>
+    <span style="width:160px">${_dateFieldHtml('rep-from-' + form.id, f.from || '', '', `_repParamSet('${form.id}','from')`)}</span>
+    <span style="font-size:0.82rem;color:var(--muted)">${escHtml(t('rep_to'))}</span>
+    <span style="width:160px">${_dateFieldHtml('rep-to-' + form.id, f.to || '', '', `_repParamSet('${form.id}','to')`)}</span>
+    ${b('▶', t('rep_build'), `_repBuildRun('${form.id}')`, false, true)}
+    <span style="flex-basis:100%;height:0"></span>
+    ${b('⬇', 'XLSX', `_repExportXLSX('${form.id}')`, !has)}
+    ${b('⬇', 'CSV', `_repExportCSV('${form.id}')`, !has)}
+    ${b('🖨', 'PDF', `_repExportPDF('${form.id}')`, !has)}
+    ${b('📌', t('rep_archive_btn'), `_repArchive('${form.id}')`, !has || !!f._archInfo)}
+    <span id="rep-status-${form.id}" style="font-size:0.8rem;color:var(--muted)"></span>
+  </div>`;
+}
+function _repParamSet(formId, key) { // хук _dateFieldHtml: схаваны input#id ужо нясе ISO
+  const form = reportsState.data?.nodes?.find(n => n.id === formId); if (!form) return;
+  const el = document.getElementById(`rep-${key}-${formId}`);
+  if (el) form.fields[key] = el.value || '';
+}
+function _repStatus(formId, txt, err) {
+  const el = document.getElementById('rep-status-' + formId);
+  if (el) { el.style.color = err ? 'var(--error)' : 'var(--success)'; el.textContent = txt; }
+}
+async function _repPost(bodyObj) { // адзіны транспарт РМ (узор _trLedgerLoad)
+  const res = await fetch(API, { method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ repo: REPO, password, ...bodyObj }) });
+  const d = await res.json().catch(() => null);
+  return res.ok ? d : { error: d?.error || res.status };
+}
+async function _repBuildRun(formId) {
+  const form = reportsState.data?.nodes?.find(n => n.id === formId); if (!form) return;
+  const f = form.fields;
+  _repStatus(formId, '…');
+  const d = await _repPost({ action: 'report_data', type: f.repType, from: f.from, to: f.to });
+  if (!d?.payload) { _repStatus(formId, t('err') + ': ' + (d?.error || ''), true); return; }
+  f._payload = d.payload; f._archInfo = null; f._compare = null;
+  reportsState._renderFn();
+}
+// ── Вынік: meta (🕐 калі + 👤 кім — патрабаванне карыстальніка) + зводка + віртуальныя Table-секцыі ──
+function _repSumLabel(k) { // 'enrich:apptStatus:scheduled' → лакальны бэдж-лэйбл; інакш звычайны t(key)
+  const m = String(k).match(/^enrich:(\w+):(.+)$/);
+  if (m) { const lm = _REP_ENRICH[m[1]]?.labelMap?.[m[2]]; return lm ? t(lm) : m[2]; }
+  return t(k);
+}
+function _repTableSection(tb) { // payload-табліца → канонная Table-секцыя (сарт/фільтр/вынікі — з ПРОДАКФПФ)
+  return { type: 'table', title: tb.title, dataKey: '_rt_' + tb.id, keepOrder: true, emptyHeader: true, sortable: true,
+    columns: (tb.columns || []).map(c => ({ ...c, ...(c.enrich ? _REP_ENRICH[c.enrich] || {} : {}) })) };
+}
+function _repResultBodyHtml(form, s) {
+  const pl = form.fields._payload;
+  if (!pl) return `<div style="padding:10px 12px;color:var(--muted);font-size:0.85rem">${escHtml(t('rep_no_data'))}</div>`;
+  const m = pl.meta || {};
+  const arch = form.fields._archInfo;
+  const metaLine = `<div style="padding:8px 12px;font-size:0.8rem;color:var(--muted);display:flex;flex-wrap:wrap;gap:14px;align-items:center">
+    ${arch ? `<span class="node-form-badge nfb-new">📦 ${escHtml(t('rep_arch'))} v${+arch.version}</span>` : ''}
+    <span>📅 ${escHtml(fmtDate(m.from))} — ${escHtml(fmtDate(m.to))}</span>
+    <span>🕐 ${escHtml(t('rep_generated'))}: ${escHtml(fmtDateTime(m.generatedAt))}</span>
+    <span>👤 ${escHtml(t('col_who'))}: ${escHtml(m.by || '')}</span>
+  </div>`;
+  const sumHtml = (pl.summary || []).length ? `<div style="padding:0 12px 8px;display:flex;flex-wrap:wrap;gap:8px">${
+    pl.summary.map(e => `<span style="border:1px solid var(--border);border-radius:8px;padding:4px 10px;font-size:0.8rem">${escHtml(_repSumLabel(e.k))}: <b>${escHtml(String(e.v))}</b></span>`).join('')}</div>` : '';
+  const tablesHtml = (pl.tables || []).map(tb => { const sec = _repTableSection(tb);
+    form.fields[sec.dataKey] = tb.rows || []; // радкі ў fields — фільтр/сарт/парцыі працуюць штатна
+    return _nodeTableSectionHtml(form, sec, s); }).join('');
+  return metaLine + sumHtml + tablesHtml + _repCompareHtml(form);
+}
+// ── 📦 Архіў (ленавы спіс, узор _trLedgerLoad) ──
+const _repArchInflight = new Set();
+function _repArchData(form) {
+  const f = form.fields;
+  if (!f._archives && !_repArchInflight.has(form.id)) {
+    _repArchInflight.add(form.id);
+    _repPost({ action: 'report_archives', type: f.repType }).then(d => {
+      f._archives = (d?.archives || []).map(a => ({ ...a, _fid: form.id }));
+      if (currentNodeState === reportsState) reportsState._renderFn();
+    }).finally(() => _repArchInflight.delete(form.id));
+  }
+  return Array.isArray(f._archives) ? f._archives : [];
+}
+async function _repArchive(formId) {
+  const form = reportsState.data?.nodes?.find(n => n.id === formId); if (!form) return;
+  const f = form.fields;
+  const d = await _repPost({ action: 'report_archive', type: f.repType, from: f.from, to: f.to });
+  if (!d?.ok) { _repStatus(formId, t('err') + ': ' + (d?.error || ''), true); return; }
+  f._archives = null; // перачытаць спіс (з новай версіяй)
+  _repStatus(formId, `${t('rep_arch_ok')} v${d.version}`);
+  reportsState._renderFn();
+}
+async function _repArchOpen(formId, period, version) { // архіўны payload рэндэрыцца ТЫМІ Ж спажыўцамі (сэнс ААП)
+  const form = reportsState.data?.nodes?.find(n => n.id === formId); if (!form) return;
+  const d = await _repPost({ action: 'report_archive_get', type: form.fields.repType, period, version });
+  if (!d?.payload) { _repStatus(formId, t('err'), true); return; }
+  form.fields._payload = d.payload; form.fields._archInfo = { period, version }; form.fields._compare = null;
+  reportsState._renderFn();
+}
+// ── ⚖ Параўнанне (генерычнае для ЎСІХ тыпаў — бо payload адзіны): архіўны здымак перыяду ↔
+// СВЕЖЫ пералік ТАГО Ж перыяду сёння. v1 раўнуе зводку + сумы totals-слупкоў (пер-радковы дыф
+// патрабуе стабільных ключоў радкоў — пазней)
+async function _repArchCompare(formId, period, version) {
+  const form = reportsState.data?.nodes?.find(n => n.id === formId); if (!form) return;
+  const [fromP, toP] = String(period).split('_');
+  const [a, b] = await Promise.all([
+    _repPost({ action: 'report_archive_get', type: form.fields.repType, period, version }),
+    _repPost({ action: 'report_data', type: form.fields.repType, from: fromP, to: toP }),
+  ]);
+  if (!a?.payload || !b?.payload) { _repStatus(formId, t('err'), true); return; }
+  form.fields._payload = b.payload; form.fields._archInfo = null;
+  form.fields._compare = { a: a.payload, b: b.payload, version };
+  reportsState._renderFn();
+}
+function _repCompareHtml(form) {
+  const cp = form.fields._compare; if (!cp) return '';
+  const rows = [];
+  const numOr = v => (typeof v === 'number' || (!isNaN(v) && String(v).trim() !== '')) ? +v : null;
+  const push = (label, va, vb) => { const na = numOr(va), nb = numOr(vb);
+    rows.push({ label, a: va ?? '—', b: vb ?? '—',
+      d: (na != null && nb != null) ? Math.round((nb - na) * 100) / 100 : '',
+      p: (na != null && nb != null && na !== 0) ? Math.round((nb - na) / na * 1000) / 10 + '%' : '' }); };
+  const sumMap = pl => new Map((pl.summary || []).map(e => [e.k, e.v]));
+  const [sa, sb] = [sumMap(cp.a), sumMap(cp.b)];
+  [...new Set([...sa.keys(), ...sb.keys()])].forEach(k => push(_repSumLabel(k), sa.get(k), sb.get(k)));
+  const totMap = pl => { const m2 = new Map(); (pl.tables || []).forEach(tb => (tb.columns || []).forEach(c => {
+    if ((c.totals || []).includes('sum')) m2.set(tb.title + '·' + c.label,
+      Math.round((tb.rows || []).reduce((s2, r) => s2 + (+r[c.key] || 0), 0) * 100) / 100); })); return m2; };
+  const [ta, tb2] = [totMap(cp.a), totMap(cp.b)];
+  [...new Set([...ta.keys(), ...tb2.keys()])].forEach(k => { const [tt, cl] = k.split('·'); push(`Σ ${t(tt)} · ${t(cl)}`, ta.get(k), tb2.get(k)); });
+  const td = 'padding:6px 10px;border-bottom:1px solid var(--border);font-size:0.82rem';
+  return `<div style="margin:8px 12px;border:1px solid var(--accent);border-radius:10px;overflow:hidden">
+    <div style="padding:8px 12px;font-weight:700;font-size:0.85rem">⚖ ${escHtml(t('rep_compare'))}: 📦 v${+cp.version} ↔ ${escHtml(t('rep_cur'))}</div>
+    <div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse"><thead><tr>
+      <th style="${td};text-align:left"></th><th style="${td};text-align:right">📦 ${escHtml(t('rep_arch'))}</th>
+      <th style="${td};text-align:right">${escHtml(t('rep_cur'))}</th><th style="${td};text-align:right">Δ</th><th style="${td};text-align:right">Δ%</th></tr></thead>
+    <tbody>${rows.map(r => `<tr><td style="${td}">${escHtml(String(r.label))}</td><td style="${td};text-align:right">${escHtml(String(r.a))}</td><td style="${td};text-align:right">${escHtml(String(r.b))}</td><td style="${td};text-align:right;${+r.d > 0 ? 'color:var(--success)' : +r.d < 0 ? 'color:var(--error)' : ''}">${escHtml(String(r.d))}</td><td style="${td};text-align:right">${escHtml(String(r.p))}</td></tr>`).join('')}</tbody></table></div></div>`;
+}
+// ── ЭКСПАРЦЁРЫ (агульныя для ЎСІХ тыпаў; працуюць з БЯГУЧАГА payload — і свежага, і архіўнага) ──
+function _repColText(c, v) { // значэнне ячэйкі → чытэльны тэкст (адзіны рэзалв для CSV/XLSX/PDF)
+  if (v === undefined || v === null || v === '') return '';
+  if (c.labelMap && c.labelMap[v]) return t(c.labelMap[v]);
+  if (c.type === 'datetime') return String(v).slice(0, 19).replace('T', ' ');
+  if (c.type === 'date') return String(v).slice(0, 10);
+  return String(v);
+}
+function _repMeta(form) { const m = form.fields._payload?.meta || {};
+  const cat = REPORT_CATALOG.find(x => x.id === m.type);
+  return { title: cat ? t(cat.label) : (m.type || ''), period: `${m.from || ''} — ${m.to || ''}`,
+    at: m.generatedAt ? fmtDateTime(m.generatedAt) : '', by: m.by || '',
+    fname: `report_${m.type}_${m.from}_${m.to}` };
+}
+function _repDownload(name, mime, content) {
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([content], { type: mime }));
+  a.download = name; a.click();
+  setTimeout(() => URL.revokeObjectURL(a.href), 5000);
+}
+function _repExportCSV(formId) { // BOM + «;» — інакш Excel псуе кірыліцу і не дзеліць слупкі ў еўра-лакалях
+  const form = reportsState.data?.nodes?.find(n => n.id === formId); if (!form?.fields._payload) return;
+  const pl = form.fields._payload, m = _repMeta(form);
+  const esc = v => { const s3 = String(v ?? ''); return /[;"\n]/.test(s3) ? '"' + s3.replace(/"/g, '""') + '"' : s3; };
+  const lines = [[m.title], [m.period], [`${t('rep_generated')}: ${m.at}`, `${t('col_who')}: ${m.by}`], []];
+  (pl.summary || []).forEach(e => lines.push([_repSumLabel(e.k), e.v]));
+  (pl.tables || []).forEach(tb => { const cols = (tb.columns || []).map(c => ({ ...c, ...(c.enrich ? _REP_ENRICH[c.enrich] || {} : {}) }));
+    lines.push([], [t(tb.title)], cols.map(c => t(c.label)));
+    (tb.rows || []).forEach(r => lines.push(cols.map(c => _repColText(c, r[c.key])))); });
+  _repDownload(m.fname + '.csv', 'text/csv;charset=utf-8', '\ufeff' + lines.map(l => l.map(esc).join(';')).join('\r\n'));
+}
+// XLSX — ляніва SheetJS з CDN (прэцэдэнт lazy-CDN: qrcode на старонцы білета); вынікі = ЖЫВЫЯ ФОРМУЛЫ
+// SUBTOTAL(9): ігнаруюць адфільтраванае і пералічваюцца пасля выдалення радкоў (бухгалтарскі сцэнар №1)
+let _xlsxLibP = null;
+function _xlsxLibLoad() {
+  if (window.XLSX) return Promise.resolve(true);
+  if (!_xlsxLibP) _xlsxLibP = new Promise(res => { const sc = document.createElement('script');
+    sc.src = 'https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js';
+    sc.onload = () => res(true); sc.onerror = () => res(false); document.head.appendChild(sc); });
+  return _xlsxLibP;
+}
+async function _repExportXLSX(formId) {
+  const form = reportsState.data?.nodes?.find(n => n.id === formId); if (!form?.fields._payload) return;
+  if (!await _xlsxLibLoad()) { _repStatus(formId, t('err'), true); return; }
+  const pl = form.fields._payload, m = _repMeta(form);
+  const wb = XLSX.utils.book_new();
+  // Аркуш «Зводка» — чалавечы; дадзеныя — асобнымі ПЛОСКІМІ аркушамі (бух-канон: без аб'яднаных ячэек)
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet([[m.title], [m.period],
+    [t('rep_generated'), m.at], [t('col_who'), m.by], [],
+    ...(pl.summary || []).map(e => [_repSumLabel(e.k), e.v])]), t('rep_summary').slice(0, 31));
+  const used = new Set();
+  (pl.tables || []).forEach(tb => { const cols = (tb.columns || []).map(c => ({ ...c, ...(c.enrich ? _REP_ENRICH[c.enrich] || {} : {}) }));
+    const aoa = [cols.map(c => t(c.label))];
+    (tb.rows || []).forEach(r => aoa.push(cols.map(c => c.type === 'number' ? (+r[c.key] || 0) : _repColText(c, r[c.key]))));
+    const ws = XLSX.utils.aoa_to_sheet(aoa);
+    const n = (tb.rows || []).length;
+    ws['!autofilter'] = { ref: XLSX.utils.encode_range({ s: { r: 0, c: 0 }, e: { r: n, c: cols.length - 1 } }) };
+    cols.forEach((c, ci) => { if ((c.totals || []).includes('sum') && n) { // радок вынікаў = формула, не лічба
+      ws[XLSX.utils.encode_cell({ r: n + 1, c: ci })] = { t: 'n', f: `SUBTOTAL(9,${XLSX.utils.encode_col(ci)}2:${XLSX.utils.encode_col(ci)}${n + 1})` }; } });
+    if (n) ws['!ref'] = XLSX.utils.encode_range({ s: { r: 0, c: 0 }, e: { r: n + 1, c: cols.length - 1 } });
+    let nm = t(tb.title).slice(0, 31) || tb.id; while (used.has(nm)) nm = (nm + '2').slice(0, 31); used.add(nm);
+    XLSX.utils.book_append_sheet(wb, ws, nm); });
+  XLSX.writeFile(wb, m.fname + '.xlsx');
+}
+function _repExportPDF(formId) { // фіксацыя дакумента: reader.js style:'paper' (як фактура) + window.print
+  const form = reportsState.data?.nodes?.find(n => n.id === formId); if (!form?.fields._payload) return;
+  const pl = form.fields._payload, m = _repMeta(form);
+  const td = 'padding:5px 8px;border:1px solid #ccc;font-size:12px';
+  const sumHtml = (pl.summary || []).map(e => `<div>${escHtml(_repSumLabel(e.k))}: <b>${escHtml(String(e.v))}</b></div>`).join('');
+  const tablesHtml = (pl.tables || []).map(tb => { const cols = (tb.columns || []).map(c => ({ ...c, ...(c.enrich ? _REP_ENRICH[c.enrich] || {} : {}) }));
+    const tot = cols.map(c => (c.totals || []).includes('sum') ? Math.round((tb.rows || []).reduce((s2, r) => s2 + (+r[c.key] || 0), 0) * 100) / 100 : '');
+    return `<h3 style="margin:18px 0 6px;font-size:14px">${escHtml(t(tb.title))}</h3>
+    <table style="border-collapse:collapse;width:100%"><thead><tr>${cols.map(c => `<th style="${td};background:#f2f2f2;text-align:left">${escHtml(t(c.label))}</th>`).join('')}</tr></thead>
+    <tbody>${(tb.rows || []).map(r => `<tr>${cols.map(c => `<td style="${td}${c.type === 'number' ? ';text-align:right' : ''}">${escHtml(_repColText(c, r[c.key]))}</td>`).join('')}</tr>`).join('')}</tbody>
+    ${tot.some(x => x !== '') ? `<tfoot><tr>${tot.map(x => `<td style="${td};font-weight:700;text-align:right">${escHtml(String(x))}</td>`).join('')}</tr></tfoot>` : ''}</table>`; }).join('');
+  openReaderWindow({ style: 'paper', title: m.title, lang: adminLang,
+    meta: `${m.period} · ${t('rep_generated')}: ${m.at} · ${t('col_who')}: ${m.by}`, // 🕐👤 — і ў дакуменце
+    bodyHtml: `<div style="font-size:13px;line-height:1.5">${sumHtml}${tablesHtml}</div>`,
+    siteName: REPO, labels: { pdfprint: '🖨 PDF', close: '✕', share: '↗' } });
+}
+
+// ════════════════════════════════════════
 // GENERAL SETTINGS — Агульныя налады
 // ════════════════════════════════════════
 
@@ -13947,6 +14264,7 @@ document.querySelectorAll('.nav-item').forEach(item => {
     if (item.dataset.page==='sections') setTimeout(renderSections, 100); // персістэнтная старонка → перарэндэр (pick-рэжым/скід стэйлу)
     if (item.dataset.page==='sitepage') setTimeout(loadSitePageEditor, 100);
     if (item.dataset.page==='appointments') setTimeout(loadAppointmentsEditor, 100);
+    if (item.dataset.page==='reports') setTimeout(loadReportsEditor, 100);
     if (item.dataset.page==='monitor') { currentNodeState = monitorState; setTimeout(loadMonitor,100); }
     if (item.dataset.page==='ppff-test') { loadPpffTestEditor(); }
   });
@@ -14117,7 +14435,7 @@ function _allNodeStates() {
   return [infoDrawerState, ordersState, appointmentsState, clientsState, languagesState, privacyState,
     companyState, generalContactState, generalBankingState, generalSecurityState, emailRoutingState, themeState,
     filesState, servicesState, faqState, advantagesState, testimonialsState, howWeWorkState, promotionsState, pricesState,
-    monitorState, ppffTestState, usersState, chatsState, deliveryState, sectionsState, siteSectionsState]; // sectionsState — корань «Секцыі сайта» (быў прапушчаны → драг/фокус не бачылі яго вузлоў)
+    monitorState, ppffTestState, usersState, chatsState, deliveryState, reportsState, sectionsState, siteSectionsState]; // sectionsState — корань «Секцыі сайта» (быў прапушчаны → драг/фокус не бачылі яго вузлоў)
 }
 document.addEventListener('mousedown', e => {
   for (const s of _allNodeStates()) {
