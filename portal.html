@@ -37,6 +37,15 @@
     .prof-row { font-size: 0.9rem; color: var(--muted); margin-top: 6px; display: flex; align-items: center; gap: 8px; }
     .prof-row b { color: var(--text); font-weight: 600; }
     .prof-sec-title { font-family: 'Unbounded', sans-serif; font-size: 0.95rem; font-weight: 600; margin: 18px 0 8px; }
+    /* 📖 Даведка кліенту ў кабінеце — той жа згортвальны блок, што ў мадалках сайта (.site-help) */
+    .cab-help { border: 1px solid var(--border); border-radius: 10px; margin: 0 0 12px; background: color-mix(in srgb, var(--accent) 6%, transparent); }
+    .cab-help > summary { cursor: pointer; list-style: none; display: flex; align-items: center; gap: 6px; padding: 9px 11px; font-size: 0.82rem; font-weight: 700; color: var(--accent); }
+    .cab-help > summary::-webkit-details-marker { display: none; }
+    .cab-help .ch-arr { display: inline-block; transition: transform 0.15s; opacity: 0.7; }
+    .cab-help[open] > summary .ch-arr { transform: rotate(90deg); }
+    .cab-help .ch-body { padding: 0 11px 11px; font-size: 0.82rem; line-height: 1.55; opacity: 0.9; }
+    .cab-help .ch-body p { margin: 0 0 6px; }
+    .cab-help .ch-body p:last-child { margin-bottom: 0; }
     body.cab-body { padding: 0; } /* прыбіраем цёмны фон iframe па краях акна кабінета */
     .login-box.cab .login-logo { margin-top: 26px; } /* дамен ніжэй — каб не перасякаўся з крыжыкам ✕ у верхнім левым куце */
     .login-logo { font-family: 'Unbounded', sans-serif; font-size: 1.4rem; font-weight: 700; color: var(--accent); margin-bottom: 8px; }
@@ -517,6 +526,133 @@ function _cabDate(iso) { const [y, m, d] = String(iso).split('-'); return d && m
 
 // ── 📅 «Мае запісы» — паказ + самакіраванне («кліент заўсёды правы», як падпіскі).
 // `canManage` лічыць СЕРВЕР (палітыка паслугі `bookCancelLead` + мінулы час) — UI яе не ведае.
+// 📖 ДАВЕДКА КЛІЕНТУ Ў КАБІНЕЦЕ — код-каталог (люстэрка SITE_HELP сайта, тэксты для кліента).
+// Тэмы: appt (мае запісы — перанос/адмена), sub (мае падпіскі). be/en рукамі, 11 моў ніжэй.
+const PORTAL_HELP = {
+  be: { _title: 'Даведка',
+    appt: { t: 'Мае запісы', b: [
+      'Тут вашы браніраванні. «🎫 Білет» — код для паказу на месцы.',
+      '«Перанесці» падбярэ іншы вольны час, «Адмяніць» вызваліць запіс.',
+      'Перанесці ці адмяніць можна да пэўнага тэрміну перад пачаткам — потым напішыце нам у чат.' ] },
+    sub: { t: 'Мае падпіскі', b: [
+      'Кожны перыяд падпіскі — асобны заказ з рэквізітамі для аплаты.',
+      '«Прыпыніць» спыняе новыя заказы, «Аднавіць» уключае іх зноў.',
+      '«Адмяніць» — незваротна: аднавіць гэтую падпіску нельга, толькі аформіць новую.' ] } },
+  en: { _title: 'Help',
+    appt: { t: 'My appointments', b: [
+      'These are your bookings. «🎫 Ticket» is the code to show on arrival.',
+      '«Reschedule» finds another free time, «Cancel» frees the slot.',
+      'You can reschedule or cancel up to a set time before the start — after that, message us in chat.' ] },
+    sub: { t: 'My subscriptions', b: [
+      'Each subscription period is a separate order with payment details.',
+      '«Pause» stops new orders, «Resume» turns them back on.',
+      '«Cancel» is final: this subscription cannot be restored, only a new one created.' ] } },
+  uk: { _title: "Довідка",
+    appt: { t: "Мої записи", b: [
+      "Тут ваші бронювання. «🎫 Квиток» — код для показу на місці.",
+      "«Перенести» підбере інший вільний час, «Скасувати» звільнить запис.",
+      "Перенести чи скасувати можна до певного терміну перед початком — потім напишіть нам у чат." ] },
+    sub: { t: "Мої підписки", b: [
+      "Кожен період підписки — окреме замовлення з реквізитами для оплати.",
+      "«Призупинити» зупиняє нові замовлення, «Відновити» вмикає їх знову.",
+      "«Скасувати» — незворотно: відновити цю підписку не можна, лише оформити нову." ] } },
+  ru: { _title: "Справка",
+    appt: { t: "Мои записи", b: [
+      "Здесь ваши брони. «🎫 Билет» — код для показа на месте.",
+      "«Перенести» подберёт другое свободное время, «Отменить» освободит запись.",
+      "Перенести или отменить можно до определённого срока перед началом — потом напишите нам в чат." ] },
+    sub: { t: "Мои подписки", b: [
+      "Каждый период подписки — отдельный заказ с реквизитами для оплаты.",
+      "«Приостановить» останавливает новые заказы, «Возобновить» включает их снова.",
+      "«Отменить» — необратимо: восстановить эту подписку нельзя, только оформить новую." ] } },
+  pl: { _title: "Pomoc",
+    appt: { t: "Moje wizyty", b: [
+      "To Twoje rezerwacje. «🎫 Bilet» to kod do okazania na miejscu.",
+      "«Przełóż» dobierze inny wolny termin, «Odwołaj» zwolni wizytę.",
+      "Przełożyć lub odwołać można do ustalonego czasu przed początkiem — później napisz do nas na czacie." ] },
+    sub: { t: "Moje subskrypcje", b: [
+      "Każdy okres subskrypcji to osobne zamówienie z danymi do płatności.",
+      "«Wstrzymaj» zatrzymuje nowe zamówienia, «Wznów» włącza je ponownie.",
+      "«Anuluj» jest nieodwracalne: tej subskrypcji nie da się przywrócić, można tylko utworzyć nową." ] } },
+  de: { _title: "Hilfe",
+    appt: { t: "Meine Termine", b: [
+      "Das sind Ihre Buchungen. «🎫 Ticket» ist der Code zum Vorzeigen vor Ort.",
+      "«Verschieben» sucht eine andere freie Zeit, «Stornieren» gibt den Termin frei.",
+      "Verschieben oder stornieren geht bis zu einer festgelegten Zeit vor Beginn — danach schreiben Sie uns im Chat." ] },
+    sub: { t: "Meine Abos", b: [
+      "Jeder Abo-Zeitraum ist eine eigene Bestellung mit Zahlungsdaten.",
+      "«Pausieren» stoppt neue Bestellungen, «Fortsetzen» aktiviert sie wieder.",
+      "«Kündigen» ist endgültig: dieses Abo lässt sich nicht wiederherstellen, nur neu abschließen." ] } },
+  fr: { _title: "Aide",
+    appt: { t: "Mes rendez-vous", b: [
+      "Voici vos réservations. «🎫 Billet» est le code à présenter sur place.",
+      "«Reporter» trouve un autre créneau libre, «Annuler» libère le rendez-vous.",
+      "Vous pouvez reporter ou annuler jusqu’à un délai avant le début — ensuite, écrivez-nous dans le chat." ] },
+    sub: { t: "Mes abonnements", b: [
+      "Chaque période d’abonnement est une commande distincte avec les coordonnées de paiement.",
+      "«Suspendre» arrête les nouvelles commandes, «Reprendre» les réactive.",
+      "«Annuler» est définitif : cet abonnement ne peut être rétabli, seulement recréé." ] } },
+  es: { _title: "Ayuda",
+    appt: { t: "Mis citas", b: [
+      "Estas son sus reservas. «🎫 Entrada» es el código para mostrar al llegar.",
+      "«Reprogramar» busca otro hueco libre, «Cancelar» libera la cita.",
+      "Puede reprogramar o cancelar hasta un plazo antes del inicio; después, escríbanos en el chat." ] },
+    sub: { t: "Mis suscripciones", b: [
+      "Cada periodo de suscripción es un pedido aparte con los datos de pago.",
+      "«Pausar» detiene los nuevos pedidos, «Reanudar» los activa de nuevo.",
+      "«Cancelar» es definitivo: esta suscripción no se puede restaurar, solo crear una nueva." ] } },
+  it: { _title: "Guida",
+    appt: { t: "I miei appuntamenti", b: [
+      "Queste sono le tue prenotazioni. «🎫 Biglietto» è il codice da mostrare all’arrivo.",
+      "«Sposta» trova un altro orario libero, «Annulla» libera l’appuntamento.",
+      "Puoi spostare o annullare entro un certo tempo prima dell’inizio; dopo, scrivici in chat." ] },
+    sub: { t: "I miei abbonamenti", b: [
+      "Ogni periodo di abbonamento è un ordine separato con i dati di pagamento.",
+      "«Sospendi» ferma i nuovi ordini, «Riprendi» li riattiva.",
+      "«Annulla» è definitivo: questo abbonamento non può essere ripristinato, solo crearne uno nuovo." ] } },
+  pt: { _title: "Ajuda",
+    appt: { t: "As minhas marcações", b: [
+      "Estas são as suas reservas. «🎫 Bilhete» é o código para mostrar no local.",
+      "«Remarcar» procura outro horário livre, «Cancelar» liberta a marcação.",
+      "Pode remarcar ou cancelar até um certo prazo antes do início; depois, escreva-nos no chat." ] },
+    sub: { t: "As minhas subscrições", b: [
+      "Cada período de subscrição é uma encomenda separada com os dados de pagamento.",
+      "«Pausar» para novas encomendas, «Retomar» ativa-as de novo.",
+      "«Cancelar» é definitivo: esta subscrição não pode ser reposta, só criar uma nova." ] } },
+  zh: { _title: "帮助",
+    appt: { t: "我的预约", b: [
+      "这些是您的预约。「🎫 凭证」是到场出示的代码。",
+      "「改期」会另选空闲时间，「取消」会释放该预约。",
+      "开始前的规定时限内可改期或取消；之后请在聊天中联系我们。" ] },
+    sub: { t: "我的订阅", b: [
+      "每个订阅周期都是一笔单独的订单，附带付款信息。",
+      "「暂停」停止新订单，「恢复」重新开启。",
+      "「取消」不可逆：该订阅无法恢复，只能新建。" ] } },
+  ar: { _title: "المساعدة",
+    appt: { t: "مواعيدي", b: [
+      "هذه حجوزاتك. «🎫 التذكرة» هي الرمز الذي تُظهره عند الوصول.",
+      "«تغيير الموعد» يجد وقتًا آخر متاحًا، و«إلغاء» يحرر الموعد.",
+      "يمكنك تغيير الموعد أو إلغاؤه حتى مهلة محددة قبل البداية — بعدها راسلنا في الدردشة." ] },
+    sub: { t: "اشتراكاتي", b: [
+      "كل فترة اشتراك هي طلب منفصل مع بيانات الدفع.",
+      "«إيقاف مؤقت» يوقف الطلبات الجديدة، و«استئناف» يعيد تشغيلها.",
+      "«إلغاء» نهائي: لا يمكن استعادة هذا الاشتراك، بل إنشاء اشتراك جديد فقط." ] } },
+  hu: { _title: "Súgó",
+    appt: { t: "Időpontjaim", b: [
+      "Ezek a foglalásaid. A «🎫 Jegy» a helyszínen bemutatandó kód.",
+      "Az «Áthelyezés» másik szabad időpontot keres, a «Lemondás» felszabadítja az időpontot.",
+      "A kezdés előtt meghatározott időpontig helyezheted át vagy mondhatod le — utána írj nekünk a csevegésben." ] },
+    sub: { t: "Előfizetéseim", b: [
+      "Minden előfizetési időszak külön rendelés a fizetési adatokkal.",
+      "A «Szüneteltetés» leállítja az új rendeléseket, a «Folytatás» újra bekapcsolja.",
+      "A «Lemondás» végleges: ez az előfizetés nem állítható vissza, csak új hozható létre." ] } },
+};
+function _cabHelpHtml(key) {
+  const d = PORTAL_HELP[detectPortalLang()] || PORTAL_HELP.en || PORTAL_HELP.be;
+  const tp = d && d[key]; if (!tp) return '';
+  return `<details class="cab-help"><summary><span class="ch-arr">▸</span>❓ ${escChat(d._title || 'Help')} · ${escChat(tp.t)}</summary>`
+    + `<div class="ch-body">${(tp.b || []).map(p => `<p>${escChat(p)}</p>`).join('')}</div></details>`;
+}
 function renderCabinetAppts() {
   const el = document.getElementById('cab-appts');
   if (!el) return;
@@ -546,7 +682,7 @@ function renderCabinetAppts() {
       </div>
     </div>`;
   }).join('');
-  el.innerHTML = `<div class="prof-sec-title">📅 ${escChat(PT.appts_title)}</div>${rows}<div class="error-msg" id="cab-appts-msg" style="min-height:0;text-align:left"></div>`;
+  el.innerHTML = `<div class="prof-sec-title">📅 ${escChat(PT.appts_title)}</div>${_cabHelpHtml('appt')}${rows}<div class="error-msg" id="cab-appts-msg" style="min-height:0;text-align:left"></div>`;
 }
 // паведамленне пад секцыяй запісаў (inline, НЕ сістэмны alert) — той жа патэрн, што _subsMsg
 function _apptsMsg(txt, ok) {
@@ -608,7 +744,7 @@ function renderCabinetSubs() {
       </div>
     </div>`;
   }).join('');
-  el.innerHTML = `<div class="prof-sec-title">🔁 ${escChat(PT.subs_title)}</div>${rows}<div class="error-msg" id="cab-subs-msg" style="min-height:0;text-align:left"></div>`;
+  el.innerHTML = `<div class="prof-sec-title">🔁 ${escChat(PT.subs_title)}</div>${_cabHelpHtml('sub')}${rows}<div class="error-msg" id="cab-subs-msg" style="min-height:0;text-align:left"></div>`;
 }
 async function cabSubSet(subId, status, name) {
   const doIt = async () => {
