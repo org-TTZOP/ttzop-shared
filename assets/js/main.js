@@ -1005,7 +1005,11 @@ const SITE_HELP = {
     order: { t: "Як аформіць", b: [
       "Увядзіце email — на яго прыйдзе 6-значны код для пацверджання.",
       "Код стварае ваш кабінет, каб вы бачылі статус і гісторыю заказаў.",
-      "Пасля пацверджання мы атрымаем заказ і звяжамся з вамі." ] } },
+      "Пасля пацверджання мы атрымаем заказ і звяжамся з вамі." ] },
+    sub: { t: "Падпіска", b: [
+      "Кожны перыяд падпіскі — асобны заказ з рэквізітамі для аплаты.",
+      "Кіраваць падпіскай (паўза, аднаўленне, адмена) можна ў кабінеце.",
+      "Націсніце OK — адкрыецца кабінет, дзе вы пацвердзіце падпіску." ] } },
   en: { _title: 'Help',
     book: { t: 'How to book', b: [
       'Pick a convenient day and time — only free slots are shown.',
@@ -1018,7 +1022,11 @@ const SITE_HELP = {
     order: { t: "How to check out", b: [
       "Enter your email — a 6-digit confirmation code will be sent to it.",
       "The code creates your account so you can see the order status and history.",
-      "After confirming, we receive the order and get in touch." ] } },
+      "After confirming, we receive the order and get in touch." ] },
+    sub: { t: "Subscription", b: [
+      "Each subscription period is a separate order with payment details.",
+      "You manage the subscription (pause, resume, cancel) in your account.",
+      "Press OK — your account opens, where you confirm the subscription." ] } },
   uk: { _title: "Довідка",
     book: { t: "Як забронювати", b: [
       "Виберіть зручний день і час — показані лише вільні слоти.",
@@ -1031,7 +1039,11 @@ const SITE_HELP = {
     order: { t: "Як оформити", b: [
       "Введіть email — на нього прийде 6-значний код для підтвердження.",
       "Код створює ваш кабінет, щоб ви бачили статус та історію замовлень.",
-      "Після підтвердження ми отримаємо замовлення і зв’яжемося з вами." ] } },
+      "Після підтвердження ми отримаємо замовлення і зв’яжемося з вами." ] },
+    sub: { t: "Підписка", b: [
+      "Кожен період підписки — окреме замовлення з реквізитами для оплати.",
+      "Керувати підпискою (пауза, відновлення, скасування) можна в кабінеті.",
+      "Натисніть OK — відкриється кабінет, де ви підтвердите підписку." ] } },
   ru: { _title: "Справка",
     book: { t: "Как забронировать", b: [
       "Выберите удобный день и время — показаны только свободные слоты.",
@@ -1044,7 +1056,11 @@ const SITE_HELP = {
     order: { t: "Как оформить", b: [
       "Введите email — на него придёт 6-значный код для подтверждения.",
       "Код создаёт ваш кабинет, чтобы вы видели статус и историю заказов.",
-      "После подтверждения мы получим заказ и свяжемся с вами." ] } },
+      "После подтверждения мы получим заказ и свяжемся с вами." ] },
+    sub: { t: "Подписка", b: [
+      "Каждый период подписки — отдельный заказ с реквизитами для оплаты.",
+      "Управлять подпиской (пауза, возобновление, отмена) можно в кабинете.",
+      "Нажмите OK — откроется кабинет, где вы подтвердите подписку." ] } },
   pl: { _title: "Pomoc",
     book: { t: "Jak zarezerwować", b: [
       "Wybierz dogodny dzień i godzinę — pokazane są tylko wolne terminy.",
@@ -1057,7 +1073,11 @@ const SITE_HELP = {
     order: { t: "Jak złożyć zamówienie", b: [
       "Podaj e-mail — przyjdzie na niego 6-cyfrowy kod potwierdzenia.",
       "Kod tworzy Twoje konto, byś widział status i historię zamówień.",
-      "Po potwierdzeniu otrzymamy zamówienie i skontaktujemy się z Tobą." ] } },
+      "Po potwierdzeniu otrzymamy zamówienie i skontaktujemy się z Tobą." ] },
+    sub: { t: "Subskrypcja", b: [
+      "Każdy okres subskrypcji to osobne zamówienie z danymi do płatności.",
+      "Subskrypcją (wstrzymanie, wznowienie, anulowanie) zarządzasz w koncie.",
+      "Naciśnij OK — otworzy się konto, w którym potwierdzisz subskrypcję." ] } },
   de: { _title: "Hilfe",
     book: { t: "So buchen Sie", b: [
       "Wählen Sie einen passenden Tag und eine Uhrzeit — angezeigt werden nur freie Zeiten.",
@@ -1070,7 +1090,11 @@ const SITE_HELP = {
     order: { t: "So schließen Sie ab", b: [
       "Geben Sie Ihre E-Mail ein — ein 6-stelliger Bestätigungscode wird gesendet.",
       "Der Code erstellt Ihr Konto, damit Sie Status und Bestellverlauf sehen.",
-      "Nach der Bestätigung erhalten wir die Bestellung und melden uns." ] } },
+      "Nach der Bestätigung erhalten wir die Bestellung und melden uns." ] },
+    sub: { t: "Abo", b: [
+      "Jeder Abo-Zeitraum ist eine eigene Bestellung mit Zahlungsdaten.",
+      "Das Abo (Pausieren, Fortsetzen, Kündigen) verwalten Sie im Konto.",
+      "Klicken Sie OK — Ihr Konto öffnet sich, wo Sie das Abo bestätigen." ] } },
   fr: { _title: "Aide",
     book: { t: "Comment réserver", b: [
       "Choisissez un jour et une heure — seuls les créneaux libres sont affichés.",
@@ -1083,7 +1107,11 @@ const SITE_HELP = {
     order: { t: "Comment finaliser", b: [
       "Saisissez votre e-mail — un code de confirmation à 6 chiffres y sera envoyé.",
       "Le code crée votre compte pour voir le statut et l’historique des commandes.",
-      "Après confirmation, nous recevons la commande et vous contactons." ] } },
+      "Après confirmation, nous recevons la commande et vous contactons." ] },
+    sub: { t: "Abonnement", b: [
+      "Chaque période d’abonnement est une commande distincte avec les coordonnées de paiement.",
+      "Vous gérez l’abonnement (suspendre, reprendre, annuler) dans votre compte.",
+      "Cliquez sur OK — votre compte s’ouvre pour confirmer l’abonnement." ] } },
   es: { _title: "Ayuda",
     book: { t: "Cómo reservar", b: [
       "Elija un día y una hora — solo se muestran los huecos libres.",
@@ -1096,7 +1124,11 @@ const SITE_HELP = {
     order: { t: "Cómo finalizar", b: [
       "Introduzca su correo — le enviaremos un código de confirmación de 6 dígitos.",
       "El código crea su cuenta para ver el estado y el historial de pedidos.",
-      "Tras confirmar, recibimos el pedido y nos ponemos en contacto." ] } },
+      "Tras confirmar, recibimos el pedido y nos ponemos en contacto." ] },
+    sub: { t: "Suscripción", b: [
+      "Cada periodo de suscripción es un pedido aparte con los datos de pago.",
+      "La suscripción (pausar, reanudar, cancelar) se gestiona en su cuenta.",
+      "Pulse OK — se abrirá su cuenta para confirmar la suscripción." ] } },
   it: { _title: "Guida",
     book: { t: "Come prenotare", b: [
       "Scegli un giorno e un orario comodi — sono mostrati solo gli slot liberi.",
@@ -1109,7 +1141,11 @@ const SITE_HELP = {
     order: { t: "Come concludere", b: [
       "Inserisci la tua email — riceverai un codice di conferma a 6 cifre.",
       "Il codice crea il tuo account per vedere stato e storico degli ordini.",
-      "Dopo la conferma riceviamo l’ordine e ti contattiamo." ] } },
+      "Dopo la conferma riceviamo l’ordine e ti contattiamo." ] },
+    sub: { t: "Abbonamento", b: [
+      "Ogni periodo di abbonamento è un ordine separato con i dati di pagamento.",
+      "Gestisci l’abbonamento (sospendi, riprendi, annulla) nel tuo account.",
+      "Premi OK — si apre il tuo account per confermare l’abbonamento." ] } },
   pt: { _title: "Ajuda",
     book: { t: "Como reservar", b: [
       "Escolha um dia e uma hora — só são mostrados os horários livres.",
@@ -1122,7 +1158,11 @@ const SITE_HELP = {
     order: { t: "Como finalizar", b: [
       "Introduza o seu e-mail — será enviado um código de confirmação de 6 dígitos.",
       "O código cria a sua conta para ver o estado e o histórico de encomendas.",
-      "Após confirmar, recebemos a encomenda e entramos em contacto." ] } },
+      "Após confirmar, recebemos a encomenda e entramos em contacto." ] },
+    sub: { t: "Subscrição", b: [
+      "Cada período de subscrição é uma encomenda separada com os dados de pagamento.",
+      "Gere a subscrição (pausar, retomar, cancelar) na sua conta.",
+      "Prima OK — a sua conta abre para confirmar a subscrição." ] } },
   zh: { _title: "帮助",
     book: { t: "如何预约", b: [
       "选择方便的日期和时间——仅显示空闲时段。",
@@ -1135,7 +1175,11 @@ const SITE_HELP = {
     order: { t: "如何结算", b: [
       "输入邮箱——我们会发送一个 6 位确认码。",
       "该验证码会创建您的账户，便于查看订单状态与历史。",
-      "确认后，我们即收到订单并与您联系。" ] } },
+      "确认后，我们即收到订单并与您联系。" ] },
+    sub: { t: "订阅", b: [
+      "每个订阅周期都是一笔单独的订单，附带付款信息。",
+      "订阅的暂停、恢复、取消都在账户中管理。",
+      "点击 OK——将打开账户，供您确认订阅。" ] } },
   ar: { _title: "المساعدة",
     book: { t: "كيفية الحجز", b: [
       "اختر اليوم والوقت المناسبين — تظهر المواعيد المتاحة فقط.",
@@ -1148,7 +1192,11 @@ const SITE_HELP = {
     order: { t: "كيفية إتمام الطلب", b: [
       "أدخل بريدك الإلكتروني — سيصلك رمز تأكيد من 6 أرقام.",
       "ينشئ الرمز حسابك لتتابع حالة الطلبات وسجلها.",
-      "بعد التأكيد نستلم الطلب ونتواصل معك." ] } },
+      "بعد التأكيد نستلم الطلب ونتواصل معك." ] },
+    sub: { t: "الاشتراك", b: [
+      "كل فترة اشتراك هي طلب منفصل مع بيانات الدفع.",
+      "تدير الاشتراك (إيقاف مؤقت، استئناف، إلغاء) من حسابك.",
+      "اضغط OK — سيفتح حسابك لتأكيد الاشتراك." ] } },
   hu: { _title: "Súgó",
     book: { t: "Hogyan foglaljon", b: [
       "Válasszon megfelelő napot és időpontot — csak a szabad idősávok látszanak.",
@@ -1161,7 +1209,11 @@ const SITE_HELP = {
     order: { t: "Hogyan zárja le", b: [
       "Adja meg az e-mailjét — egy 6 jegyű megerősítő kód érkezik rá.",
       "A kód létrehozza a fiókját, hogy lássa a rendelés állapotát és előzményeit.",
-      "A megerősítés után megkapjuk a rendelést, és felvesszük Önnel a kapcsolatot." ] } },
+      "A megerősítés után megkapjuk a rendelést, és felvesszük Önnel a kapcsolatot." ] },
+    sub: { t: "Előfizetés", b: [
+      "Minden előfizetési időszak külön rendelés a fizetési adatokkal.",
+      "Az előfizetést (szüneteltetés, folytatás, lemondás) a fiókjában kezeli.",
+      "Nyomja meg az OK-t — megnyílik a fiókja, ahol megerősíti az előfizetést." ] } },
 };
 // згортвальны блок падказкі; key — тэма з SITE_HELP; пуста для мовы/тэмы → нічога не малюем
 function _siteHelpHtml(key) {
@@ -2206,7 +2258,9 @@ function bookIntentApply() {
 function subscribeItem(id, name) {
   const ta = document.createElement('textarea'); ta.innerHTML = name || ''; // onclick-атрыбут нясе HTML-энтыці (&#39; і інш.) — дэкод, каб confirm кабінета паказваў чысты тэкст
   try { localStorage.setItem('ttzop_sub_intent', JSON.stringify({ id, name: ta.value })); } catch {}
-  openCabinet('cabinet');
+  const ui = getUI();
+  // 📖 замест моўчкі-рэдырэкту — confirm з падказкай (як гэта працуе) перад пераходам у кабінет
+  siteConfirm(`${ui.sub_btn}${ta.value ? ': ' + ta.value : ''}`, () => openCabinet('cabinet'), false, _siteHelpHtml('sub'));
 }
 // 🔁 S2: падпіска «Свой сайт» → існуючы order-flow стварэння сайта (паддамен → email-код → аўта-стварэнне);
 // падпіску ў D1 заводзіць register_order па пазіцыі кошыка (fulfil=subscription правяраецца з CONTENT KV)
@@ -2263,7 +2317,9 @@ function closeCabinetMenu() {
   document.removeEventListener('mousedown', _cabinetMenuOutside);
 }
 // кастомнае пацверджанне сайта (сістэмныя confirm/alert у прадукце ЗАБАРОНЕНЫ; люстэрка portalConfirm кабінета)
-function siteConfirm(msg, onOk, danger) {
+// extraHtml — неабавязковы БЛОК пад паведамленнем (гатовы HTML ад каллера, напр. _siteHelpHtml). Універсальны
+// слот: любы поток можа прымацаваць кантэкст (падказку) да confirm, без bespoke-мадалкі
+function siteConfirm(msg, onOk, danger, extraHtml) {
   document.getElementById('site-confirm')?.remove();
   const ov = document.createElement('div');
   ov.id = 'site-confirm';
@@ -2271,6 +2327,7 @@ function siteConfirm(msg, onOk, danger) {
   const esc = s => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;');
   ov.innerHTML = `<div style="background:var(--surface,#181c27);border:1px solid var(--border,#2a2f45);border-radius:12px;max-width:340px;width:100%;padding:18px 18px 14px;box-shadow:0 16px 48px rgba(0,0,0,0.5)">
     <div style="font-size:0.92rem;line-height:1.5;white-space:pre-line;color:var(--text,#e8eaf0)">${esc(msg)}</div>
+    ${extraHtml ? `<div style="margin-top:12px">${extraHtml}</div>` : ''}
     <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:16px;align-items:center">
       <button id="sc-no" style="background:none;border:none;color:var(--muted,#9aa1ad);cursor:pointer;font-size:1rem;padding:8px 12px">✕</button><!-- моўна-нейтральны знак — без новага i18n-ключа -->
       <button id="sc-ok" style="background:${danger ? 'var(--error,#ef4444)' : 'var(--accent,#f97316)'};color:#fff;border:none;border-radius:8px;cursor:pointer;font-weight:600;font-size:0.9rem;padding:8px 20px">OK</button>
