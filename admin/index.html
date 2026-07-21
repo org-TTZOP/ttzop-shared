@@ -10655,11 +10655,11 @@ FORM_SCHEMAS.ppffHelp = Object.assign({
   },
   // 🧾 ВІДЫ ПАЗІЦЫЙ КАТАЛОГА — тая ж аўтатабліца, толькі крыніца ITEM_KINDS: кліент бачыць, што
   // ўмее кожны від і чаму СТО не пытае маршрут. Генеруецца з кода → не разыдзецца з ім
-  { type: 'table', title: 'kinds_matrix_title', dataKey: '_itemKinds', defaultView: 'full',
+  { type: 'table', title: 'kinds_matrix_title', dataKey: '_itemKinds', defaultView: 'full', keepOrder: true, // парадак каталога, не журнальны «навейшыя зверху»
     dataFn: () => Object.entries(ITEM_KINDS).map(([id, k]) => ({ id, ...k })),
     columnsFn: () => [
       { key: '_kind',  title: t('item_kind'),   sticky: 'left', type: 'html', render: (v, row) => escHtml(t(row.label)) },
-      { key: '_desc',  title: t('f_description'), type: 'html', render: (v, row) => `<span style="color:var(--muted)">${escHtml(t(row.desc))}</span>` },
+      { key: '_desc',  title: t('f_description'), type: 'html', style: 'min-width:260px', render: (v, row) => `<span style="color:var(--muted)">${escHtml(t(row.desc))}</span>` },
       { key: '_ful',   title: t('svc_fulfil'),  type: 'html', render: (v, row) => escHtml(t({ cart: 'fulfil_cart', booking: 'fulfil_booking', inquiry: 'fulfil_inquiry', subscription: 'fulfil_sub' }[row.fulfil] || row.fulfil)) },
       ...[['route', 'svc_route'], ['group', 'svc_group_max'], ['fixed', 'svc_fixed'], ['segments', 'svc_segments'], ['lead', 'svc_lead']]
         .map(([cap, key]) => ({ key: 'cap_' + cap, title: t(key), type: 'html', style: 'text-align:center',
