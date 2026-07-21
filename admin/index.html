@@ -4822,12 +4822,15 @@ function _secLockToggle(formId, secId) {
 // агульныя пункты ⋯-меню ЛЮБОЙ секцыі (СЕКЦЫЯ-ПРОДАК): пакуль 🔒/🔓. Віртуальная форма (Куб/Расклад —
 // няма ў s.data.nodes) — без замка (не персістыўся б); форма пад поўным 🔒 — пер-секцыйны тогл не мае сэнсу
 function _sectionMenuCommonHtml(form, section, s, menuId) {
-  if (!_scap(section, 'canLock', form, s)) return '';
-  if (!s?.data?.nodes?.some(n => n.id === form.id)) return '';
+  // 🖨 Друк АСОБНАЙ секцыі («як бачыш»: фільтр/сартыроўка на момант націску) — на ЛЮБОЙ секцыі,
+  // у т.л. віртуальнай (праз кэш рэндэру _tblSectionCache); частка сістэмы Справаздач (payload-ААП)
+  const printBtn = `<button class="node-overflow-item" title="${t('node_print')}" onclick="_sectionPrint('${escHtml(String(form.id))}','${escHtml(String(section.dataKey || _secId(section)))}');nodeCloseOverflow('${menuId}')">🖨</button>`;
+  if (!_scap(section, 'canLock', form, s)) return printBtn;
+  if (!s?.data?.nodes?.some(n => n.id === form.id)) return printBtn;
   // форма пад поўным 🔒 → цьмяны НЕклікабельны індыкатар з прычынай (каб «зніклыя кнопкі» не заганялі ў зман)
-  if (form.fields?._locked) return `<button class="node-overflow-item" title="${t('node_locked_by_form')}" style="opacity:0.4;cursor:default" onclick="event.stopPropagation()">${_icoLock(false)}</button>`;
+  if (form.fields?._locked) return printBtn + `<button class="node-overflow-item" title="${t('node_locked_by_form')}" style="opacity:0.4;cursor:default" onclick="event.stopPropagation()">${_icoLock(false)}</button>`;
   const locked = (form.fields?._lockedSecs || []).includes(_secId(section));
-  return `<button class="node-overflow-item" title="${t(locked ? 'node_unlock' : 'node_lock')}" onclick="_secLockToggle('${form.id}','${escHtml(_secId(section))}');nodeCloseOverflow('${menuId}')" style="${locked ? 'color:var(--accent)' : 'opacity:0.6'}">${_icoLock(!!locked)}</button>`; // іконка = ДЗЕЯННЕ (замкнёная секцыя → адкрыты замок «адамкнуць», акцэнт); СТАН — пры назве секцыі
+  return printBtn + `<button class="node-overflow-item" title="${t(locked ? 'node_unlock' : 'node_lock')}" onclick="_secLockToggle('${form.id}','${escHtml(_secId(section))}');nodeCloseOverflow('${menuId}')" style="${locked ? 'color:var(--accent)' : 'opacity:0.6'}">${_icoLock(!!locked)}</button>`; // іконка = ДЗЕЯННЕ (замкнёная секцыя → адкрыты замок «адамкнуць», акцэнт); СТАН — пры назве секцыі
 }
 function _secLockIconHtml(form, section) { // замок пры назве залочанай секцыі: свой = акцэнт; ад формы = цьмяны (прычына ў тултыпе)
   if (form?.fields?._locked) return `<span style="margin-left:2px;opacity:0.45;display:inline-flex;vertical-align:middle" title="${t('node_locked_by_form')}">${_icoLock(false)}</span>`;
@@ -8066,7 +8069,9 @@ function _nodeRootMenuHtml(s, menuId, leftMenu = false) {
   const sortBtn = (!s._localOnly && cap('canSort')) ? `<button class="node-overflow-item${s._treeSortOpen?.has(null)?' active':''}" title="${t('node_sort_az')}" onclick="nodeToggleSort(null);nodeCloseOverflow('${menuId}')">⇅</button>` : '';
   const rootFilterActive = s._folderFilters?.[null] !== undefined;
   const filterBtn = cap('hasFilter') ? `<button class="node-overflow-item${rootFilterActive?' active':''}" title="${t('node_filter')}" onclick="nodeToggleFolderFilter(null);nodeCloseOverflow('${menuId}')">${_icoFilter(rootFilterActive)}</button>` : '';
-  const items = `${addFolder}${addNote}${addItem}${addForm}${sortBtn}${filterBtn}${s._rootMenuExtraHtml ? s._rootMenuExtraHtml(menuId) : ''}`;
+  // 🖨 Друк УСЯГО РМ (усе вузлы верхняга ўзроўню з паддрэвамі) — cap hasPrint ад _rootType (дэфолт regular=true)
+  const printBtn = cap('hasPrint') ? `<button class="node-overflow-item" title="${t('node_print')}" onclick="_rootPrint();nodeCloseOverflow('${menuId}')">🖨</button>` : '';
+  const items = `${addFolder}${addNote}${addItem}${addForm}${sortBtn}${filterBtn}${printBtn}${s._rootMenuExtraHtml ? s._rootMenuExtraHtml(menuId) : ''}`;
   if (!items) return '';
   return `<div class="node-overflow-menu-grid" id="nof-${menuId}"${pos}>${items}</div>`;
 }
@@ -10955,7 +10960,35 @@ function _repExportPDF(formId) { const f = reportsState.data?.nodes?.find(n => n
 // ── 🖨 ДРУК ЛЮБОГА ВУЗЛА (ПРОДАКФПФ, cap hasPrint): паддрэва вузла (дзеці, БЕЗ бацькоў) →
 // той жа payload → тыя ж экспарцёры. Table-секцыі ідуць «як бачыш»: бягучы пер-калонкавы фільтр
 // і сартыроўка (_tblProcessRows — адзіны код з рэндэрам) + аўта-Σ па лічбавых слупках ──
-function _printPayload(node, s) {
+// адна Table-секцыя формы → payload-табліца («як бачыш»: фільтр+сартыроўка секцыі на момант націску)
+function _printTableOf(form, sec, s, titlePrefix) {
+  const raw = sec.dataFn ? (sec.dataFn(form, s) || []) : (form.fields?.[sec.dataKey] || []);
+  if (!raw.length) return null;
+  const allCols = (sec.columnsFn ? sec.columnsFn(form, s) : sec.columns) || [];
+  const cols = allCols.filter(c => c.key && !['html', 'link', 'input'].includes(c.type));
+  if (!cols.length) return null;
+  const vk = form.id + '::' + (sec.dataKey || sec.id);
+  const numeric = _tblNumericCols(cols, raw);
+  // «на момант націску»: бягучы фільтр+сартыроўка гэтай секцыі — той жа код, што экран
+  const { sortedRows } = _tblProcessRows(raw, cols, _colFilterMap(s, vk), s._tableSort?.get(vk), sec.keepOrder, numeric);
+  const outCols = cols.map(c => ({ key: c.key, labelText: c.title !== undefined ? c.title : t(c.label || ''), type: c.type,
+    labelMap: c.labelMap, ml: c.ml,
+    // аўта-Σ: яўныя totals секцыі АБО лічбавы слупок (акрамя дат) — «аўтаматычныя вынікі»
+    totals: c.totals || ((numeric[c.key] || c.type === 'number') && !['date', 'datetime', 'time', 'select'].includes(c.type) ? ['sum'] : undefined) }));
+  const secTitle = sec.title ? t(sec.title) : '';
+  return { titleText: secTitle ? `${titlePrefix} — ${secTitle}` : titlePrefix, columns: outCols,
+    rows: sortedRows.map(r => { const o = {}; outCols.forEach(c => { let v = r[c.key]; if (c.ml) v = _mlGet(v, _settingsLang()); o[c.key] = v; }); return o; }) };
+}
+// Flat-секцыя → радкі Параметр/Значэнне (select праз labelMap, ml па бягучай мове кантэнту)
+function _printFlatSecRows(form, sec, s) {
+  const out = [];
+  (sec.blocks || []).forEach(b => { if (b.visible && !b.visible(form, s)) return;
+    let v = form.fields?.[b.key]; if (b.ml) v = _mlGet(v, _settingsLang());
+    if (b.labelMap && b.labelMap[v]) v = t(b.labelMap[v]);
+    if (v != null && v !== '' && typeof v !== 'object') out.push({ p: t(b.label), v: String(v) }); });
+  return out;
+}
+function _printPayload(node, s) { // node=null → УВЕСЬ РМ (усе вузлы верхняга ўзроўню)
   const tables = [];
   const flatCols = [{ key: 'p', labelText: t('print_prop') }, { key: 'v', labelText: t('print_val') }];
   const label = n => (typeof _folderLabel === 'function' ? _folderLabel(n) : '') || n.name || t('form_record');
@@ -10977,31 +11010,12 @@ function _printPayload(node, s) {
     if (n.type === 'form') {
       const schema = FORM_SCHEMAS[n.formSchema || _nodeCfg(s, n, '_formSchema')] || [];
       const flatRows = [], secTables = []; // flat (Параметр/Значэнне) друкуецца ПЕРШЫМ, потым табліцы формы
-      const pushFlat = (lbl, v) => { if (v != null && v !== '' && typeof v !== 'object') flatRows.push({ p: lbl, v: String(v) }); };
       if (!Array.isArray(schema) && schema.sections) {
         for (const sec of schema.sections) {
           if (sec.visible && !sec.visible(n, s)) continue;
-          if (sec.type === 'flat') (sec.blocks || []).forEach(b => { if (b.visible && !b.visible(n, s)) return;
-            let v = n.fields?.[b.key]; if (b.ml) v = _mlGet(v, _settingsLang());
-            if (b.labelMap && b.labelMap[v]) v = t(b.labelMap[v]); // select-код → бачны лэйбл
-            pushFlat(t(b.label), v); });
+          if (sec.type === 'flat') flatRows.push(..._printFlatSecRows(n, sec, s));
           else if (sec.type === 'table' && (sec.dataKey || sec.dataFn)) {
-            const raw = sec.dataFn ? (sec.dataFn(n, s) || []) : (n.fields?.[sec.dataKey] || []);
-            if (!raw.length) continue;
-            const allCols = (sec.columnsFn ? sec.columnsFn(n, s) : sec.columns) || [];
-            const cols = allCols.filter(c => c.key && !['html', 'link', 'input'].includes(c.type));
-            if (!cols.length) continue;
-            const vk = n.id + '::' + (sec.dataKey || sec.id);
-            const numeric = _tblNumericCols(cols, raw);
-            // «на момант націску»: бягучы фільтр+сартыроўка гэтай секцыі — той жа код, што экран
-            const { sortedRows } = _tblProcessRows(raw, cols, _colFilterMap(s, vk), s._tableSort?.get(vk), sec.keepOrder, numeric);
-            const outCols = cols.map(c => ({ key: c.key, labelText: c.title !== undefined ? c.title : t(c.label || ''), type: c.type,
-              labelMap: c.labelMap, ml: c.ml,
-              // аўта-Σ: яўныя totals секцыі АБО лічбавы слупок (акрамя дат) — «аўтаматычныя вынікі»
-              totals: c.totals || ((numeric[c.key] || c.type === 'number') && !['date', 'datetime', 'time', 'select'].includes(c.type) ? ['sum'] : undefined) }));
-            const secTitle = sec.title ? t(sec.title) : '';
-            secTables.push({ titleText: secTitle ? `${here} — ${secTitle}` : here, columns: outCols,
-              rows: sortedRows.map(r => { const o = {}; outCols.forEach(c => { let v = r[c.key]; if (c.ml) v = _mlGet(v, _settingsLang()); o[c.key] = v; }); return o; }) });
+            const tb = _printTableOf(n, sec, s, here); if (tb) secTables.push(tb);
           }
         }
       } else if (Array.isArray(schema)) flatRows.push(...arrRows(schema, n));
@@ -11019,13 +11033,19 @@ function _printPayload(node, s) {
       .sort((a, b2) => (a.order || 0) - (b2.order || 0))
       .forEach(k => walk(k, here));
   };
-  walk(node, '');
-  return { meta: { titleText: label(node), generatedAt: new Date().toISOString(),
+  let title;
+  if (node) { walk(node, ''); title = label(node); }
+  else { // увесь РМ: усе вузлы верхняга ўзроўню ў парадку дрэва
+    (s?.data?.nodes || []).filter(k => k && (k.parentId ?? null) === null && !k._deleted)
+      .sort((a, b2) => (a.order || 0) - (b2.order || 0)).forEach(k => walk(k, ''));
+    title = (typeof s._rootName === 'function' ? s._rootName() : s._rootName) || document.querySelector('.page.active .page-title, #page-' + (s._section || '') + ' .page-title')?.textContent?.trim() || (s._section || '');
+  }
+  return { meta: { titleText: title, generatedAt: new Date().toISOString(),
     by: typeof _myActorLabel === 'function' ? _myActorLabel() : '' }, // 🕐👤 — і ў друку вузла
     summary: [], tables: tables.filter(tb => (tb.rows || []).length) };
 }
-function _nodePrint(id) { // 🖨 у ⋯: мадалка фармату → payload паддрэва → агульны экспарцёр
-  const s = currentNodeState; const node = s?.data?.nodes?.find(n => n.id === id); if (!node) return;
+// АДЗІНЫ дыялог друку (мадалка фармату) — тры кропкі ўваходу: вузел (⋯ вузла) / секцыя (⋯ секцыі) / увесь РМ (⋯ кораня)
+function _printDialog(buildFn) {
   _nfmApplySchema(Object.assign([
     { key: 'fmt', type: 'select', label: 'print_format', options: ['xlsx', 'csv', 'pdf'],
       labelMap: { xlsx: 'XLSX', csv: 'CSV', pdf: 'PDF' } } // t(літарал) → сам літарал (ключа няма — і не трэба)
@@ -11036,10 +11056,31 @@ function _nodePrint(id) { // 🖨 у ⋯: мадалка фармату → payl
   modal.style.display = 'flex';
   const el = document.getElementById('nfm-f-fmt'); if (el) el.value = 'xlsx';
   _nfmCustomSubmit = fields => {
-    const pl = _printPayload(node, s);
-    if (!pl.tables.length) { showAlert(t('rep_no_data')); return; }
+    const pl = buildFn();
+    if (!pl || !(pl.tables || []).length) { showAlert(t('rep_no_data')); return; }
     if (fields.fmt === 'csv') _expCSV(pl); else if (fields.fmt === 'pdf') _expPDF(pl); else _expXLSX(pl, () => showAlert(t('err')));
   };
+}
+function _nodePrint(id) { // 🖨 у ⋯ вузла: паддрэва (дзеці, без бацькоў)
+  const s = currentNodeState; const node = s?.data?.nodes?.find(n => n.id === id); if (!node) return;
+  _printDialog(() => _printPayload(node, s));
+}
+function _rootPrint() { // 🖨 у ⋯ кораня РМ: увесь РМ (усе вузлы верхняга ўзроўню)
+  const s = currentNodeState; if (!s) return;
+  _printDialog(() => _printPayload(null, s));
+}
+function _sectionPrint(formId, secKey) { // 🖨 у ⋯ АСОБНАЙ секцыі (у т.л. віртуальнай — праз кэш рэндэру)
+  const s = currentNodeState; if (!s) return;
+  const form = s?.data?.nodes?.find(n => n.id === formId) || { id: formId, fields: {} }; // віртуальная форма — толькі dataFn-крыніцы
+  const sec = _tblFindSection(formId, secKey); if (!sec || (!sec.type && !sec.dataKey && !sec.blocks)) return;
+  const ttl = () => { const lbl = (typeof _folderLabel === 'function' && s?.data?.nodes?.some(n => n.id === formId)) ? _folderLabel(form) : '';
+    return { meta: { titleText: (lbl ? lbl + ' — ' : '') + (sec.title ? t(sec.title) : secKey), generatedAt: new Date().toISOString(),
+      by: typeof _myActorLabel === 'function' ? _myActorLabel() : '' }, summary: [], tables: [] }; };
+  _printDialog(() => { const pl = ttl();
+    if (sec.type === 'flat' || sec.blocks) { const rows = _printFlatSecRows(form, sec, s);
+      if (rows.length) pl.tables.push({ titleText: pl.meta.titleText, columns: [{ key: 'p', labelText: t('print_prop') }, { key: 'v', labelText: t('print_val') }], rows }); }
+    else { const tb = _printTableOf(form, sec, s, pl.meta.titleText.split(' — ')[0] || pl.meta.titleText); if (tb) pl.tables.push(tb); }
+    return pl; });
 }
 
 // ════════════════════════════════════════
