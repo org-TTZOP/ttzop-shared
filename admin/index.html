@@ -1559,6 +1559,7 @@ const CONTENT_TYPES = {
     canBeLocked: true, // 🔒 тогл адмінскага замка ў ⋯ (мультыюзер Этап 1; пры з'яўленні правоў — гейт canLock)
     canMakeCurrent: f => f.active !== false, // нельга зрабіць бягучай схаваную запісь (locked не блакуе — можна мяняць бягучую)
     hasInfo: true, hasDescription: true,
+    hasPrint: true, // 🖨 Друк/экспарт паддрэва вузла (мадалка фармату XLSX/CSV/PDF; «як бачыш» — з фільтрам/сартыроўкай)
     hasLink: true, // 🔗 скапіяваць deep-link на вузел (#go={page}/{id}) — устаўляецца ў чат/email/нататкі
     // [Б1] кіраванне дзецьмі — Папка ← true; Форма і ФайлБлок = false
     canAddFolder: f => !f.fields?._locked, canAddItem: f => !f.fields?._locked, canAddForm: f => !f.fields?._locked, // 🔒 залочаная папка не прымае дзяцей
@@ -4260,6 +4261,7 @@ function _nodeMenuItemsHtml(node, mid, s) {
     cap('canBeLocked') ? `<button class="node-overflow-item" title="${t(node.fields?._locked ? 'node_unlock' : 'node_lock')}" onclick="nodeToggleLock('${node.id}');nodeCloseOverflow('${mid}')" style="${node.fields?._locked ? 'color:var(--accent)' : 'opacity:0.6'}">${_icoLock(!!node.fields?._locked)}</button>` : '', // іконка = ДЗЕЯННЕ (замкнёны аб'ект → адкрыты замок «адамкнуць», акцэнт); СТАН паказвае іконка пры назве
     cap('canRename') ? `<button class="node-overflow-item" title="${t('node_rename')}" onclick="${renameClick};nodeCloseOverflow('${mid}')">✎</button>` : '', // секцыйныя формы больш НЕ выключаны глабальна: чыя назва = node.name (тэма) — пераназываюцца; чыя ў палях — canRename:false канфігам
     cap('hasDescription') ? `<button class="node-overflow-item" title="${t('node_description')}" onclick="nodeEditDescription('${node.id}');nodeCloseOverflow('${mid}')">📝</button>` : '',
+    cap('hasPrint') ? `<button class="node-overflow-item" title="${t('node_print')}" onclick="_nodePrint('${node.id}');nodeCloseOverflow('${mid}')">🖨</button>` : '', // 🖨 экспарт паддрэва «як бачыш» (фільтр/сартыроўка секцый на момант націску)
     (node.type === 'form' && _formMlEntries(node, s).length) ? `<button class="node-overflow-item" title="${t('tr_btn')}" onclick="_nodeTranslate('${node.id}');nodeCloseOverflow('${mid}')">🌐${_trLeftCache != null ? `<sup style="font-size:0.6em;opacity:0.7">${_trLeftCache}</sup>` : ''}</button>` : '', // 🌐 AI-пераклад пустых моў (генерычна: форма з ml-палямі)
     (node.type === 'folder' && (s?.data?.nodes || []).some(n => n.type === 'form' && n.parentId === node.id && _formMlEntries(n, s).length)) ? `<button class="node-overflow-item" title="${t('tr_tree_btn')}" onclick="_nodeTranslateTree('${node.id}');nodeCloseOverflow('${mid}')">🌐</button>` : '', // 🌐 перакласці ЎСЕ формы паддрэва
     (node.type === 'file' && _nodeIsImage(node)) ? `<button class="node-overflow-item" title="${t('pe_title')}" onclick="_nodeFileEditPhoto('${node.id}');nodeCloseOverflow('${mid}')">🪄</button>` : '', // ✂️ рэдагаваць ужо загружанае фота
@@ -5123,6 +5125,49 @@ const _TREE_PREVIEW = 15; // прэв'ю дзяцей Папкі ў ДРЭВЕ (
 //  • ЖУРНАЛ зменаў (section.changeTypes) → 'collapsed' — не раскрываецца аўтаматычна, не займае экран (1 радок-загаловак)
 //  • накапляльнікі/спісы → 'preview' (навейшыя _TBL_PREVIEW радкоў)
 // defaultView: явны стан (замяняе захардкоджаную логіку)
+// 🔢 Excel-правіла: слупок з чыста лічбавымі значэннямі → выраўноўваем справа (th+td).
+// Аўта-дэтэкцыя па ўсіх радках; type select/date/datetime/html/link/checkbox не чапаем (свая семантыка).
+function _tblNumericCols(columns, rows) {
+  const right = {};
+  columns.forEach(c => {
+    if (c.align === 'right') { right[c.key] = true; return; } // яўны opt-in (для html/input лічбаў, якіх аўта-дэтэкцыя не бачыць)
+    if (![undefined, 'number', 'text', 'input'].includes(c.type)) return; // html/select/date — аўта-дэтэкцыя не лезе ў разметку
+    const vals = rows.map(r => r[c.key]).filter(v => v != null && v !== '');
+    if (vals.length && vals.every(v => !isNaN(v) && !isNaN(parseFloat(v)))) right[c.key] = true;
+  });
+  return right;
+}
+// Пер-калонкавы фільтр + сартыроўка Table-секцыі — АДЗІН хэлпер для рэндэру і 🖨 Друку (стан
+// «як бачыш» = адзін код). Фільтр: радок праходзіць умовы КОЖНАЙ актыўнай калонкі (між калонкамі І);
+// унутры калонкі OR-групы па join='or' (і>|); умова {term,op}: '' substring; '=','>','<','>=','<='.
+function _tblProcessRows(rows, columns, colFilters, sortState, keepOrder, colRight) {
+  let filteredRows = rows;
+  const activeCols = Object.keys(colFilters || {}).filter(ck => (colFilters[ck] || []).some(r => (r.val || '').trim()));
+  if (activeCols.length) filteredRows = rows.filter(row => activeCols.every(ck => {
+    const col = columns.find(c => c.key === ck);
+    const isDate = !!col && (col.type === 'date' || col.type === 'datetime');
+    const isNum = !isDate && (col?.type === 'number' || !!colRight?.[ck]); // лічбавы слупок (тып або аўта-дэтэкцыя)
+    const cv = String((col?.ml ? _mlGet(row[ck], _settingsLang()) : row[ck]) ?? '').toLowerCase(); // ml: фільтр па бачным тэксце
+    const conds = (colFilters[ck] || []).map(r => ({ term: (r.val || '').trim().toLowerCase(), op: r.op || '', join: r.join })).filter(c => c.term);
+    if (!conds.length) return true;
+    const groups = []; let cur = [];
+    conds.forEach((c, i) => { if (i > 0 && c.join === 'or') { groups.push(cur); cur = []; } cur.push(c); });
+    groups.push(cur);
+    return groups.some(g => g.every(c => _filterCondMatch(cv, c, isNum)));
+  }));
+  // Сартыроўка: лічбавае або лексіграфічнае параўнанне
+  let sortedRows = keepOrder ? [...filteredRows] : [...filteredRows].reverse();
+  if (sortState) {
+    const { key: sk, dir } = sortState;
+    sortedRows = [...filteredRows].sort((a, b) => {
+      const smlc = columns.find(c => c.key === sk); // ml-слупок сартуецца па бачным тэксце
+      const va = (smlc?.ml ? _mlGet(a[sk], _settingsLang()) : a[sk]) ?? '', vb = (smlc?.ml ? _mlGet(b[sk], _settingsLang()) : b[sk]) ?? '';
+      const n = (!isNaN(va) && !isNaN(vb) && va !== '' && vb !== '') ? Number(va) - Number(vb) : String(va).localeCompare(String(vb));
+      return dir === 'asc' ? n : -n;
+    });
+  }
+  return { filteredRows, sortedRows };
+}
 function _tblDefaultView(section) {
   if (section?.defaultView) return section.defaultView;
   return section && section.changeTypes ? 'collapsed' : 'preview';
@@ -5198,47 +5243,11 @@ function _nodeTableSectionHtml(form, section, s, mover = '') {
   if (!total && !section.emptyHeader) return `<div class="form-section-table">${titleRow}${footer}</div>`; // dataFn-секцыя без радкоў = «загружаецца» → толькі назва; emptyHeader:true → усё роўна паказаць каркас з загалоўкам калонак
   // columnsFn: дынамічныя калонкі (напр. Даведка — колькасць залежыць ад CONTENT_TYPES)
   const columns = section.columnsFn ? section.columnsFn(form, s) : (section.columns || []);
-  // 🔢 Excel-правіла: слупок з чыста лічбавымі значэннямі → выраўноўваем справа (th+td).
-  // Аўта-дэтэкцыя па ўсіх радках; type select/date/datetime/html/link/checkbox не чапаем (свая семантыка).
-  const _colRight = {};
-  columns.forEach(c => {
-    if (c.align === 'right') { _colRight[c.key] = true; return; } // яўны opt-in (для html/input лічбаў, якіх аўта-дэтэкцыя не бачыць)
-    if (![undefined, 'number', 'text', 'input'].includes(c.type)) return; // html/select/date — аўта-дэтэкцыя не лезе ў разметку
-    const vals = rows.map(r => r[c.key]).filter(v => v != null && v !== '');
-    if (vals.length && vals.every(v => !isNaN(v) && !isNaN(parseFloat(v)))) _colRight[c.key] = true;
-  });
+  // 🔢 Аўта-дэтэкцыя лічбавых слупкоў + фільтр/сартыроўка — вылучаны ў агульныя хэлперы
+  // (_tblNumericCols/_tblProcessRows): іх жа ўжывае 🖨 Друк, каб экспартаваць РОЎНА бачнае
+  const _colRight = _tblNumericCols(columns, rows);
   const _alignSt = c => _colRight[c.key] ? ';text-align:right' : ''; // дадаём апошнім → перакрывае text-align:left
-  // Пер-калонкавы фільтр: радок праходзіць, калі праходзіць умовы КОЖНАЙ актыўнай калонкі (між калонкамі — І).
-  // Унутры калонкі: умовы дзеляцца на OR-групы па join='or'; група = усе ўмовы мусяць супасці (І);
-  // калонка ОК, калі хоць адна група супала (і>| — і звязвае мацней за |).
-  // Умова = {term, op}: op '' → substring; '=','>','<','>=','<=' → параўнанне (лічба для number-слупкоў, лексікаграфічнае ISO для date).
-  let filteredRows = rows;
-  if (_isFilterable) {
-    const activeCols = Object.keys(colFilters).filter(ck => (colFilters[ck] || []).some(r => (r.val || '').trim()));
-    if (activeCols.length) filteredRows = rows.filter(row => activeCols.every(ck => {
-      const col = columns.find(c => c.key === ck);
-      const isDate = !!col && (col.type === 'date' || col.type === 'datetime');
-      const isNum = !isDate && (col?.type === 'number' || !!_colRight[ck]); // лічбавы слупок (тып або аўта-дэтэкцыя)
-      const cv = String((col?.ml ? _mlGet(row[ck], _settingsLang()) : row[ck]) ?? '').toLowerCase(); // ml: фільтр па бачным тэксце
-      const conds = (colFilters[ck] || []).map(r => ({ term: (r.val || '').trim().toLowerCase(), op: r.op || '', join: r.join })).filter(c => c.term);
-      if (!conds.length) return true;
-      const groups = []; let cur = [];
-      conds.forEach((c, i) => { if (i > 0 && c.join === 'or') { groups.push(cur); cur = []; } cur.push(c); });
-      groups.push(cur);
-      return groups.some(g => g.every(c => _filterCondMatch(cv, c, isNum)));
-    }));
-  }
-  // Сартыроўка: лічбавае або лексіграфічнае параўнанне
-  let sortedRows = section.keepOrder ? [...filteredRows] : [...filteredRows].reverse();
-  if (sortState) {
-    const { key: sk, dir } = sortState;
-    sortedRows = [...filteredRows].sort((a, b) => {
-      const smlc = columns.find(c => c.key === sk); // ml-слупок сартуецца па бачным тэксце
-      const va = (smlc?.ml ? _mlGet(a[sk], _settingsLang()) : a[sk]) ?? '', vb = (smlc?.ml ? _mlGet(b[sk], _settingsLang()) : b[sk]) ?? '';
-      const n = (!isNaN(va) && !isNaN(vb) && va !== '' && vb !== '') ? Number(va) - Number(vb) : String(va).localeCompare(String(vb));
-      return dir === 'asc' ? n : -n;
-    });
-  }
+  const { filteredRows, sortedRows } = _tblProcessRows(rows, columns, _isFilterable ? colFilters : {}, sortState, section.keepOrder, _colRight);
   const visTotal = sortedRows.length;
   // Колькі радкоў бачна: 'preview' = 3; лік = порцыі (15/30/…); 'full' — толькі яўны defaultView (Даведка) / легасі
   const shownN = view === 'full' ? visTotal : Math.min(typeof view === 'number' ? view : _TBL_PREVIEW, visTotal);
@@ -10845,7 +10854,12 @@ function _repCompareHtml(form) {
       <th style="${td};text-align:right">${escHtml(t('rep_cur'))}</th><th style="${td};text-align:right">Δ</th><th style="${td};text-align:right">Δ%</th></tr></thead>
     <tbody>${rows.map(r => `<tr><td style="${td}">${escHtml(String(r.label))}</td><td style="${td};text-align:right">${escHtml(String(r.a))}</td><td style="${td};text-align:right">${escHtml(String(r.b))}</td><td style="${td};text-align:right;${+r.d > 0 ? 'color:var(--success)' : +r.d < 0 ? 'color:var(--error)' : ''}">${escHtml(String(r.d))}</td><td style="${td};text-align:right">${escHtml(String(r.p))}</td></tr>`).join('')}</tbody></table></div></div>`;
 }
-// ── ЭКСПАРЦЁРЫ (агульныя для ЎСІХ тыпаў; працуюць з БЯГУЧАГА payload — і свежага, і архіўнага) ──
+// ── ЭКСПАРЦЁРЫ — ЧЫСТЫЯ payload-функцыі (агульныя спажыўцы: Справаздачы І 🖨 Друк любога вузла) ──
+// Меткі ў payload двух відаў: i18n-КЛЮЧЫ (label/title — справаздачы: архіў рэндэрыцца на любой мове)
+// АБО ЛІТАРАЛЫ (labelText/titleText — 🖨 Друк: назвы вузлоў/секцый ужо разрэзолвены на момант друку)
+const _expTblTitle = tb => tb.titleText ?? t(tb.title || '');
+const _expColLabel = c => c.labelText ?? (c.title !== undefined ? c.title : t(c.label || ''));
+const _expCols = tb => (tb.columns || []).map(c => ({ ...c, ...(c.enrich ? _REP_ENRICH[c.enrich] || {} : {}) }));
 function _repColText(c, v) { // значэнне ячэйкі → чытэльны тэкст (адзіны рэзалв для CSV/XLSX/PDF)
   if (v === undefined || v === null || v === '') return '';
   if (c.labelMap && c.labelMap[v]) return t(c.labelMap[v]);
@@ -10853,11 +10867,13 @@ function _repColText(c, v) { // значэнне ячэйкі → чытэльн
   if (c.type === 'date') return String(v).slice(0, 10);
   return String(v);
 }
-function _repMeta(form) { const m = form.fields._payload?.meta || {};
+function _expDisp(pl) { // шапка выхаду: назва/перыяд/🕐 калі/👤 кім + імя файла
+  const m = pl.meta || {};
   const cat = REPORT_CATALOG.find(x => x.id === m.type);
-  return { title: cat ? t(cat.label) : (m.type || ''), period: `${m.from || ''} — ${m.to || ''}`,
+  const title = m.titleText || (cat ? t(cat.label) : (m.type || ''));
+  return { title, period: (m.from || m.to) ? `${m.from || ''} — ${m.to || ''}` : '',
     at: m.generatedAt ? fmtDateTime(m.generatedAt) : '', by: m.by || '',
-    fname: `report_${m.type}_${m.from}_${m.to}` };
+    fname: m.titleText ? 'export_' + String(m.titleText).replace(/[^\wЀ-ӿ-]+/g, '_').slice(0, 40) : `report_${m.type}_${m.from}_${m.to}` };
 }
 function _repDownload(name, mime, content) {
   const a = document.createElement('a');
@@ -10865,14 +10881,13 @@ function _repDownload(name, mime, content) {
   a.download = name; a.click();
   setTimeout(() => URL.revokeObjectURL(a.href), 5000);
 }
-function _repExportCSV(formId) { // BOM + «;» — інакш Excel псуе кірыліцу і не дзеліць слупкі ў еўра-лакалях
-  const form = reportsState.data?.nodes?.find(n => n.id === formId); if (!form?.fields._payload) return;
-  const pl = form.fields._payload, m = _repMeta(form);
+function _expCSV(pl) { // BOM + «;» — інакш Excel псуе кірыліцу і не дзеліць слупкі ў еўра-лакалях
+  const m = _expDisp(pl);
   const esc = v => { const s3 = String(v ?? ''); return /[;"\n]/.test(s3) ? '"' + s3.replace(/"/g, '""') + '"' : s3; };
-  const lines = [[m.title], [m.period], [`${t('rep_generated')}: ${m.at}`, `${t('col_who')}: ${m.by}`], []];
+  const lines = [[m.title], ...(m.period ? [[m.period]] : []), [`${t('rep_generated')}: ${m.at}`, `${t('col_who')}: ${m.by}`], []];
   (pl.summary || []).forEach(e => lines.push([_repSumLabel(e.k), e.v]));
-  (pl.tables || []).forEach(tb => { const cols = (tb.columns || []).map(c => ({ ...c, ...(c.enrich ? _REP_ENRICH[c.enrich] || {} : {}) }));
-    lines.push([], [t(tb.title)], cols.map(c => t(c.label)));
+  (pl.tables || []).forEach(tb => { const cols = _expCols(tb);
+    lines.push([], [_expTblTitle(tb)], cols.map(_expColLabel));
     (tb.rows || []).forEach(r => lines.push(cols.map(c => _repColText(c, r[c.key])))); });
   _repDownload(m.fname + '.csv', 'text/csv;charset=utf-8', '\ufeff' + lines.map(l => l.map(esc).join(';')).join('\r\n'));
 }
@@ -10886,18 +10901,25 @@ function _xlsxLibLoad() {
     sc.onload = () => res(true); sc.onerror = () => res(false); document.head.appendChild(sc); });
   return _xlsxLibP;
 }
-async function _repExportXLSX(formId) {
-  const form = reportsState.data?.nodes?.find(n => n.id === formId); if (!form?.fields._payload) return;
-  if (!await _xlsxLibLoad()) { _repStatus(formId, t('err'), true); return; }
-  const pl = form.fields._payload, m = _repMeta(form);
+// шырыні слупкоў пад змест (wch) — «эксель вылазіў за граніцы слупкоў» (заўвага карыстальніка 2026-07-21)
+function _xlsxAutoWidth(ws, aoa) {
+  const w = [];
+  aoa.forEach(row => row.forEach((v, ci) => { const L = String(v ?? '').length; if (!w[ci] || L > w[ci]) w[ci] = L; }));
+  ws['!cols'] = w.map(x => ({ wch: Math.min(48, Math.max(8, (x || 0) + 2)) }));
+}
+async function _expXLSX(pl, onErr) {
+  if (!await _xlsxLibLoad()) { onErr?.(); return; }
+  const m = _expDisp(pl);
   const wb = XLSX.utils.book_new();
   // Аркуш «Зводка» — чалавечы; дадзеныя — асобнымі ПЛОСКІМІ аркушамі (бух-канон: без аб'яднаных ячэек)
-  XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet([[m.title], [m.period],
+  const sumAoa = [[m.title], ...(m.period ? [[m.period]] : []),
     [t('rep_generated'), m.at], [t('col_who'), m.by], [],
-    ...(pl.summary || []).map(e => [_repSumLabel(e.k), e.v])]), t('rep_summary').slice(0, 31));
+    ...(pl.summary || []).map(e => [_repSumLabel(e.k), e.v])];
+  const wsSum = XLSX.utils.aoa_to_sheet(sumAoa); _xlsxAutoWidth(wsSum, sumAoa);
+  XLSX.utils.book_append_sheet(wb, wsSum, t('rep_summary').slice(0, 31));
   const used = new Set();
-  (pl.tables || []).forEach(tb => { const cols = (tb.columns || []).map(c => ({ ...c, ...(c.enrich ? _REP_ENRICH[c.enrich] || {} : {}) }));
-    const aoa = [cols.map(c => t(c.label))];
+  (pl.tables || []).forEach((tb, ti) => { const cols = _expCols(tb);
+    const aoa = [cols.map(_expColLabel)];
     (tb.rows || []).forEach(r => aoa.push(cols.map(c => c.type === 'number' ? (+r[c.key] || 0) : _repColText(c, r[c.key]))));
     const ws = XLSX.utils.aoa_to_sheet(aoa);
     const n = (tb.rows || []).length;
@@ -10905,25 +10927,109 @@ async function _repExportXLSX(formId) {
     cols.forEach((c, ci) => { if ((c.totals || []).includes('sum') && n) { // радок вынікаў = формула, не лічба
       ws[XLSX.utils.encode_cell({ r: n + 1, c: ci })] = { t: 'n', f: `SUBTOTAL(9,${XLSX.utils.encode_col(ci)}2:${XLSX.utils.encode_col(ci)}${n + 1})` }; } });
     if (n) ws['!ref'] = XLSX.utils.encode_range({ s: { r: 0, c: 0 }, e: { r: n + 1, c: cols.length - 1 } });
-    let nm = t(tb.title).slice(0, 31) || tb.id; while (used.has(nm)) nm = (nm + '2').slice(0, 31); used.add(nm);
+    _xlsxAutoWidth(ws, aoa);
+    let nm = (_expTblTitle(tb) || ('T' + ti)).replace(/[\\/?*\[\]:]/g, ' ').slice(0, 31); while (used.has(nm)) nm = (nm + '2').slice(0, 31); used.add(nm);
     XLSX.utils.book_append_sheet(wb, ws, nm); });
   XLSX.writeFile(wb, m.fname + '.xlsx');
 }
-function _repExportPDF(formId) { // фіксацыя дакумента: reader.js style:'paper' (як фактура) + window.print
-  const form = reportsState.data?.nodes?.find(n => n.id === formId); if (!form?.fields._payload) return;
-  const pl = form.fields._payload, m = _repMeta(form);
+function _expPDF(pl) { // фіксацыя дакумента: reader.js style:'paper' (як фактура) + window.print
+  const m = _expDisp(pl);
   const td = 'padding:5px 8px;border:1px solid #ccc;font-size:12px';
   const sumHtml = (pl.summary || []).map(e => `<div>${escHtml(_repSumLabel(e.k))}: <b>${escHtml(String(e.v))}</b></div>`).join('');
-  const tablesHtml = (pl.tables || []).map(tb => { const cols = (tb.columns || []).map(c => ({ ...c, ...(c.enrich ? _REP_ENRICH[c.enrich] || {} : {}) }));
+  const tablesHtml = (pl.tables || []).map(tb => { const cols = _expCols(tb);
     const tot = cols.map(c => (c.totals || []).includes('sum') ? Math.round((tb.rows || []).reduce((s2, r) => s2 + (+r[c.key] || 0), 0) * 100) / 100 : '');
-    return `<h3 style="margin:18px 0 6px;font-size:14px">${escHtml(t(tb.title))}</h3>
-    <table style="border-collapse:collapse;width:100%"><thead><tr>${cols.map(c => `<th style="${td};background:#f2f2f2;text-align:left">${escHtml(t(c.label))}</th>`).join('')}</tr></thead>
+    return `<h3 style="margin:18px 0 6px;font-size:14px">${escHtml(_expTblTitle(tb))}</h3>
+    <table style="border-collapse:collapse;width:100%"><thead><tr>${cols.map(c => `<th style="${td};background:#f2f2f2;text-align:left">${escHtml(_expColLabel(c))}</th>`).join('')}</tr></thead>
     <tbody>${(tb.rows || []).map(r => `<tr>${cols.map(c => `<td style="${td}${c.type === 'number' ? ';text-align:right' : ''}">${escHtml(_repColText(c, r[c.key]))}</td>`).join('')}</tr>`).join('')}</tbody>
     ${tot.some(x => x !== '') ? `<tfoot><tr>${tot.map(x => `<td style="${td};font-weight:700;text-align:right">${escHtml(String(x))}</td>`).join('')}</tr></tfoot>` : ''}</table>`; }).join('');
   openReaderWindow({ style: 'paper', title: m.title, lang: adminLang,
-    meta: `${m.period} · ${t('rep_generated')}: ${m.at} · ${t('col_who')}: ${m.by}`, // 🕐👤 — і ў дакуменце
+    meta: `${m.period ? m.period + ' · ' : ''}${t('rep_generated')}: ${m.at} · ${t('col_who')}: ${m.by}`, // 🕐👤 — і ў дакуменце
     bodyHtml: `<div style="font-size:13px;line-height:1.5">${sumHtml}${tablesHtml}</div>`,
     siteName: REPO, labels: { pdfprint: '🖨 PDF', close: '✕', share: '↗' } });
+}
+// тонкія абгорткі РМ Справаздач (кнопкі трымаюць formId; ядро — payload-функцыі вышэй)
+function _repExportCSV(formId) { const f = reportsState.data?.nodes?.find(n => n.id === formId)?.fields; if (f?._payload) _expCSV(f._payload); }
+function _repExportXLSX(formId) { const f = reportsState.data?.nodes?.find(n => n.id === formId)?.fields; if (f?._payload) _expXLSX(f._payload, () => _repStatus(formId, t('err'), true)); }
+function _repExportPDF(formId) { const f = reportsState.data?.nodes?.find(n => n.id === formId)?.fields; if (f?._payload) _expPDF(f._payload); }
+
+// ── 🖨 ДРУК ЛЮБОГА ВУЗЛА (ПРОДАКФПФ, cap hasPrint): паддрэва вузла (дзеці, БЕЗ бацькоў) →
+// той жа payload → тыя ж экспарцёры. Table-секцыі ідуць «як бачыш»: бягучы пер-калонкавы фільтр
+// і сартыроўка (_tblProcessRows — адзіны код з рэндэрам) + аўта-Σ па лічбавых слупках ──
+function _printPayload(node, s) {
+  const tables = [];
+  const flatCols = [{ key: 'p', labelText: t('print_prop') }, { key: 'v', labelText: t('print_val') }];
+  const label = n => (typeof _folderLabel === 'function' ? _folderLabel(n) : '') || n.name || t('form_record');
+  const walk = (n, path) => {
+    if (!n || n._deleted) return;
+    const here = path ? `${path} / ${label(n)}` : label(n);
+    if (n.type === 'form') {
+      const schema = FORM_SCHEMAS[n.formSchema || _nodeCfg(s, n, '_formSchema')] || [];
+      const flatRows = [];
+      const pushFlat = (lbl, v) => { if (v != null && v !== '' && typeof v !== 'object') flatRows.push({ p: lbl, v: String(v) }); };
+      if (!Array.isArray(schema) && schema.sections) {
+        for (const sec of schema.sections) {
+          if (sec.visible && !sec.visible(n, s)) continue;
+          if (sec.type === 'flat') (sec.blocks || []).forEach(b => { if (b.visible && !b.visible(n, s)) return;
+            let v = n.fields?.[b.key]; if (b.ml) v = _mlGet(v, _settingsLang());
+            if (b.labelMap && b.labelMap[v]) v = t(b.labelMap[v]); // select-код → бачны лэйбл
+            pushFlat(t(b.label), v); });
+          else if (sec.type === 'table' && (sec.dataKey || sec.dataFn)) {
+            const raw = sec.dataFn ? (sec.dataFn(n, s) || []) : (n.fields?.[sec.dataKey] || []);
+            if (!raw.length) continue;
+            const allCols = (sec.columnsFn ? sec.columnsFn(n, s) : sec.columns) || [];
+            const cols = allCols.filter(c => c.key && !['html', 'link', 'input'].includes(c.type));
+            if (!cols.length) continue;
+            const vk = n.id + '::' + (sec.dataKey || sec.id);
+            const numeric = _tblNumericCols(cols, raw);
+            // «на момант націску»: бягучы фільтр+сартыроўка гэтай секцыі — той жа код, што экран
+            const { sortedRows } = _tblProcessRows(raw, cols, _colFilterMap(s, vk), s._tableSort?.get(vk), sec.keepOrder, numeric);
+            const outCols = cols.map(c => ({ key: c.key, labelText: c.title !== undefined ? c.title : t(c.label || ''), type: c.type,
+              labelMap: c.labelMap, ml: c.ml,
+              // аўта-Σ: яўныя totals секцыі АБО лічбавы слупок (акрамя дат) — «аўтаматычныя вынікі»
+              totals: c.totals || ((numeric[c.key] || c.type === 'number') && !['date', 'datetime', 'time', 'select'].includes(c.type) ? ['sum'] : undefined) }));
+            const secTitle = sec.title ? t(sec.title) : '';
+            tables.push({ titleText: secTitle ? `${here} — ${secTitle}` : here, columns: outCols,
+              rows: sortedRows.map(r => { const o = {}; outCols.forEach(c => { let v = r[c.key]; if (c.ml) v = _mlGet(v, _settingsLang()); o[c.key] = v; }); return o; }) });
+          }
+        }
+      } else if (Array.isArray(schema)) schema.forEach(b => { if (!b.key || String(b.key).startsWith('_')) return;
+        let v = n.fields?.[b.key]; if (b.ml) v = _mlGet(v, _settingsLang());
+        if (b.labelMap && b.labelMap[v]) v = t(b.labelMap[v]);
+        pushFlat(t(b.label || b.key), v); });
+      if (flatRows.length) tables.push({ titleText: here, columns: flatCols, rows: flatRows });
+    } else if (n.type === 'file' || n.type === 'item') {
+      tables.push({ titleText: here, columns: flatCols, rows: [
+        ...(n.description ? [{ p: t('field_description'), v: String(n.description) }] : []),
+        ...(n.url ? [{ p: 'URL', v: String(n.url) }] : []),
+        ...(!n.description && !n.url && n.fields?.text ? [{ p: t('print_val'), v: String(n.fields.text) }] : []),
+      ].filter(r => r.v) });
+    }
+    // дзеці (уключна, БЕЗ бацькоў) — у парадку дрэва
+    (s?.data?.nodes || []).filter(k => k && (k.parentId ?? null) === n.id && !k._deleted)
+      .sort((a, b2) => (a.order || 0) - (b2.order || 0))
+      .forEach(k => walk(k, here));
+  };
+  walk(node, '');
+  return { meta: { titleText: label(node), generatedAt: new Date().toISOString(),
+    by: typeof _myActorLabel === 'function' ? _myActorLabel() : '' }, // 🕐👤 — і ў друку вузла
+    summary: [], tables: tables.filter(tb => (tb.rows || []).length) };
+}
+function _nodePrint(id) { // 🖨 у ⋯: мадалка фармату → payload паддрэва → агульны экспарцёр
+  const s = currentNodeState; const node = s?.data?.nodes?.find(n => n.id === id); if (!node) return;
+  _nfmApplySchema(Object.assign([
+    { key: 'fmt', type: 'select', label: 'print_format', options: ['xlsx', 'csv', 'pdf'],
+      labelMap: { xlsx: 'XLSX', csv: 'CSV', pdf: 'PDF' } } // t(літарал) → сам літарал (ключа няма — і не трэба)
+  ], { _noName: true }));
+  _nfmTitle(`🖨 ${t('node_print')}`);
+  const modal = document.getElementById('node-form-modal');
+  modal.dataset.mode = 'add';
+  modal.style.display = 'flex';
+  const el = document.getElementById('nfm-f-fmt'); if (el) el.value = 'xlsx';
+  _nfmCustomSubmit = fields => {
+    const pl = _printPayload(node, s);
+    if (!pl.tables.length) { showAlert(t('rep_no_data')); return; }
+    if (fields.fmt === 'csv') _expCSV(pl); else if (fields.fmt === 'pdf') _expPDF(pl); else _expXLSX(pl, () => showAlert(t('err')));
+  };
 }
 
 // ════════════════════════════════════════
