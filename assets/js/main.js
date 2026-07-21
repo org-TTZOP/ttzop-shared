@@ -988,6 +988,137 @@ const STATIC_I18N = {
   },
 };
 
+// 📖 ДАВЕДКА НАВЕДВАЛЬНІКУ — код-каталог нашых UI-падказак (люстэрка HELP_T панэлі, але тэкст для КЛІЕНТА).
+// Паказваецца згортвальным блокам УНУТРЫ кантэксту (мадалка броні/кошыка), а не асобнай старонкай —
+// той самы прынцып, што секцыя ў ⓘ панэлі. Тэма = {t:загаловак, b:[абзацы]}. be/en рукамі, 11 моў ніжэй.
+// Новая тэма = адзін ключ. НЕ блытаць з FAQ: FAQ — кантэнт КЛІЕНТА (пра яго бізнес), тут — як карыстацца сайтам.
+const SITE_HELP = {
+  be: { _title: 'Даведка',
+    book: { t: 'Як забраніраваць', b: [
+      'Выберыце зручны дзень і час — паказаны толькі свабодныя слоты.',
+      'Каб пацвердзіць запіс, трэба ўвайсці ў кабінет (пошта + код) — так ваш час замацуецца за вамі.',
+      'Пасля броні прыйдзе ліст-напамін; перанесці ці адмяніць запіс можна ў кабінеце.' ] },
+    cart: { t: 'Як замовіць', b: [
+      'Праверце склад заказу і націсніце афармленне.',
+      'Мы звяжамся і дашлём рэквізіты для аплаты; нумар заказу прыйдзе на вашу пошту.',
+      'Сачыць за статусам і гісторыяй заказаў зручна ў кабінеце.' ] } },
+  en: { _title: 'Help',
+    book: { t: 'How to book', b: [
+      'Pick a convenient day and time — only free slots are shown.',
+      'To confirm the booking you sign in to your account (email + code), so the slot is reserved for you.',
+      'You will get a reminder email; you can reschedule or cancel from your account.' ] },
+    cart: { t: 'How to order', b: [
+      'Check the order and press checkout.',
+      'We will get in touch and send the payment details; the order number arrives by email.',
+      'You can follow the status and order history in your account.' ] } },
+  uk: { _title: "Довідка",
+    book: { t: "Як забронювати", b: [
+      "Виберіть зручний день і час — показані лише вільні слоти.",
+      "Щоб підтвердити запис, увійдіть у кабінет (пошта + код) — так ваш час закріпиться за вами.",
+      "Після броні прийде лист-нагадування; перенести чи скасувати запис можна в кабінеті." ] },
+    cart: { t: "Як замовити", b: [
+      "Перевірте склад замовлення і натисніть оформлення.",
+      "Ми зв’яжемося і надішлемо реквізити для оплати; номер замовлення прийде на вашу пошту.",
+      "Стежити за статусом та історією замовлень зручно в кабінеті." ] } },
+  ru: { _title: "Справка",
+    book: { t: "Как забронировать", b: [
+      "Выберите удобный день и время — показаны только свободные слоты.",
+      "Чтобы подтвердить запись, войдите в кабинет (почта + код) — так ваше время закрепится за вами.",
+      "После брони придёт письмо-напоминание; перенести или отменить запись можно в кабинете." ] },
+    cart: { t: "Как заказать", b: [
+      "Проверьте состав заказа и нажмите оформление.",
+      "Мы свяжемся и пришлём реквизиты для оплаты; номер заказа придёт на вашу почту.",
+      "Следить за статусом и историей заказов удобно в кабинете." ] } },
+  pl: { _title: "Pomoc",
+    book: { t: "Jak zarezerwować", b: [
+      "Wybierz dogodny dzień i godzinę — pokazane są tylko wolne terminy.",
+      "Aby potwierdzić rezerwację, zaloguj się do konta (e-mail + kod) — dzięki temu termin zostanie dla Ciebie zarezerwowany.",
+      "Otrzymasz e-mail z przypomnieniem; termin możesz przełożyć lub odwołać w koncie." ] },
+    cart: { t: "Jak zamówić", b: [
+      "Sprawdź zawartość zamówienia i naciśnij złożenie zamówienia.",
+      "Skontaktujemy się i wyślemy dane do płatności; numer zamówienia przyjdzie na e-mail.",
+      "Status i historię zamówień wygodnie śledzisz w koncie." ] } },
+  de: { _title: "Hilfe",
+    book: { t: "So buchen Sie", b: [
+      "Wählen Sie einen passenden Tag und eine Uhrzeit — angezeigt werden nur freie Zeiten.",
+      "Zum Bestätigen melden Sie sich im Konto an (E-Mail + Code), damit der Termin für Sie reserviert wird.",
+      "Sie erhalten eine Erinnerungs-E-Mail; verschieben oder stornieren können Sie den Termin im Konto." ] },
+    cart: { t: "So bestellen Sie", b: [
+      "Prüfen Sie die Bestellung und klicken Sie auf Zur Kasse.",
+      "Wir melden uns und senden die Zahlungsdaten; die Bestellnummer kommt per E-Mail.",
+      "Status und Bestellverlauf verfolgen Sie bequem im Konto." ] } },
+  fr: { _title: "Aide",
+    book: { t: "Comment réserver", b: [
+      "Choisissez un jour et une heure — seuls les créneaux libres sont affichés.",
+      "Pour confirmer, connectez-vous à votre compte (e-mail + code) : le créneau vous est ainsi réservé.",
+      "Vous recevrez un e-mail de rappel ; vous pouvez reporter ou annuler depuis votre compte." ] },
+    cart: { t: "Comment commander", b: [
+      "Vérifiez la commande et cliquez sur commander.",
+      "Nous vous contacterons et enverrons les coordonnées de paiement ; le numéro arrive par e-mail.",
+      "Suivez le statut et l’historique de vos commandes dans votre compte." ] } },
+  es: { _title: "Ayuda",
+    book: { t: "Cómo reservar", b: [
+      "Elija un día y una hora — solo se muestran los huecos libres.",
+      "Para confirmar, inicie sesión en su cuenta (correo + código): así el hueco queda reservado para usted.",
+      "Recibirá un correo de recordatorio; puede reprogramar o cancelar desde su cuenta." ] },
+    cart: { t: "Cómo pedir", b: [
+      "Revise el pedido y pulse tramitar.",
+      "Nos pondremos en contacto y enviaremos los datos de pago; el número llega por correo.",
+      "Siga el estado y el historial de pedidos en su cuenta." ] } },
+  it: { _title: "Guida",
+    book: { t: "Come prenotare", b: [
+      "Scegli un giorno e un orario comodi — sono mostrati solo gli slot liberi.",
+      "Per confermare accedi al tuo account (email + codice): così l’orario resta riservato a te.",
+      "Riceverai un’email di promemoria; puoi spostare o annullare dall’account." ] },
+    cart: { t: "Come ordinare", b: [
+      "Controlla l’ordine e premi ordina.",
+      "Ti contatteremo e invieremo i dati di pagamento; il numero d’ordine arriva via email.",
+      "Segui stato e storico degli ordini nel tuo account." ] } },
+  pt: { _title: "Ajuda",
+    book: { t: "Como reservar", b: [
+      "Escolha um dia e uma hora — só são mostrados os horários livres.",
+      "Para confirmar, entre na sua conta (e-mail + código) — assim o horário fica reservado para si.",
+      "Receberá um e-mail de lembrete; pode remarcar ou cancelar na sua conta." ] },
+    cart: { t: "Como encomendar", b: [
+      "Verifique a encomenda e clique em finalizar.",
+      "Entraremos em contacto e enviaremos os dados de pagamento; o número chega por e-mail.",
+      "Acompanhe o estado e o histórico de encomendas na sua conta." ] } },
+  zh: { _title: "帮助",
+    book: { t: "如何预约", b: [
+      "选择方便的日期和时间——仅显示空闲时段。",
+      "确认预约需登录账户（邮箱 + 验证码），这样该时段就为您保留。",
+      "您会收到提醒邮件；可在账户中改期或取消。" ] },
+    cart: { t: "如何下单", b: [
+      "核对订单并点击结算。",
+      "我们会与您联系并发送付款信息；订单编号将发到您的邮箱。",
+      "在账户中可方便地跟踪订单状态与历史。" ] } },
+  ar: { _title: "المساعدة",
+    book: { t: "كيفية الحجز", b: [
+      "اختر اليوم والوقت المناسبين — تظهر المواعيد المتاحة فقط.",
+      "لتأكيد الحجز سجّل الدخول إلى حسابك (البريد + رمز)، فيُحجز الموعد باسمك.",
+      "ستصلك رسالة تذكير؛ ويمكنك تغيير الموعد أو إلغاؤه من حسابك." ] },
+    cart: { t: "كيفية الطلب", b: [
+      "راجع الطلب واضغط على إتمام الطلب.",
+      "سنتواصل معك ونرسل بيانات الدفع؛ ويصل رقم الطلب إلى بريدك.",
+      "تابع حالة الطلبات وسجلها بسهولة من حسابك." ] } },
+  hu: { _title: "Súgó",
+    book: { t: "Hogyan foglaljon", b: [
+      "Válasszon megfelelő napot és időpontot — csak a szabad idősávok látszanak.",
+      "A megerősítéshez lépjen be a fiókjába (e-mail + kód), így az időpont Önnek lesz fenntartva.",
+      "Emlékeztető e-mailt kap; a fiókjában áthelyezheti vagy lemondhatja az időpontot." ] },
+    cart: { t: "Hogyan rendeljen", b: [
+      "Ellenőrizze a rendelést, és kattintson a megrendelésre.",
+      "Felvesszük Önnel a kapcsolatot, és elküldjük a fizetési adatokat; a rendelésszám e-mailben érkezik.",
+      "A rendelés állapotát és előzményeit kényelmesen követheti a fiókjában." ] } },
+};
+// згортвальны блок падказкі; key — тэма з SITE_HELP; пуста для мовы/тэмы → нічога не малюем
+function _siteHelpHtml(key) {
+  const d = SITE_HELP[currentUiLang] || SITE_HELP.en || SITE_HELP.be;
+  const tp = d && d[key]; if (!tp) return '';
+  return `<details class="site-help"><summary><span class="sh-arr">▸</span>❓ ${_dsEsc(d._title || 'Help')} · ${_dsEsc(tp.t)}</summary>`
+    + `<div class="sh-body">${(tp.b || []).map(p => `<p>${_dsEsc(p)}</p>`).join('')}</div></details>`;
+}
+
 function getI18n(data, lang) {
   const primary = getPrimaryLang(data);
   const builtin = STATIC_I18N[lang] || STATIC_I18N['en'] || {};
@@ -1891,6 +2022,7 @@ function renderCartModalBody() {
       ${rowsHtml}
       ${addrHtml}
       ${totalsHtml}
+      <div style="padding-top:12px">${_siteHelpHtml('cart')}</div>
     </div>
     <div style="padding:16px 24px;border-top:1px solid var(--border,#2a2f45);display:flex;gap:8px;justify-content:space-between">
       <button onclick="clearCart()" style="padding:10px 16px;background:none;border:1px solid var(--border,#2a2f45);border-radius:8px;color:var(--muted,#6b7280);cursor:pointer;font-size:0.85rem">${ui.cart_clear}</button>
@@ -2002,6 +2134,7 @@ function bookItem(itemId, name, startDate) {
   openSlotsModal({ api: API_URL, repo: SITE_REPO, serviceId: itemId, name, lang: currentUiLang, days: _BK_DAYS, startDate,
     token: () => localStorage.getItem('ttzop_portal_token'),
     labels: _bkLabels(),
+    help: _siteHelpHtml('book'), // 📖 «Як забраніраваць» — згортвальны блок унізе мадалкі (кабінет-перанос help не перадае)
     confirm: (msg, onOk) => siteConfirm(msg, onOk, false),
     onNeedLogin: it => { // бронь патрабуе сесіі: намер перажывае ўваход (той жа патэрн, што ttzop_sub_intent)
       try { localStorage.setItem('ttzop_book_intent', JSON.stringify({ id: it.serviceId, name: it.name, date: it.date })); } catch {}

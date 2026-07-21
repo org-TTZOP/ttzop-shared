@@ -55,6 +55,7 @@
       <div id="bk-qty" style="display:none;align-items:center;gap:8px;margin-bottom:10px"></div>
       <div style="font-size:0.8rem;color:var(--muted,#9aa1ad);margin-bottom:6px">${esc(L(cfg, 'time'))}</div>
       <div id="bk-slots" style="display:flex;flex-wrap:wrap;gap:6px;min-height:40px"></div>
+      ${cfg.help ? '<div style="margin-top:14px">' + cfg.help + '</div>' : ''}
     </div>`;
     ov.addEventListener('click', e => { if (e.target === ov) ov.remove(); });
     document.body.appendChild(ov);
