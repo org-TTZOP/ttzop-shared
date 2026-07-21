@@ -10959,9 +10959,21 @@ function _printPayload(node, s) {
   const tables = [];
   const flatCols = [{ key: 'p', labelText: t('print_prop') }, { key: 'v', labelText: t('print_val') }];
   const label = n => (typeof _folderLabel === 'function' ? _folderLabel(n) : '') || n.name || t('form_record');
+  // масіў-схема (простая форма АБО папка-сутнасць з fields, як заказ/кліент) → радкі Параметр/Значэнне
+  const arrRows = (schema, n) => { const out = [];
+    (schema || []).forEach(b => { if (!b.key || String(b.key).startsWith('_')) return;
+      let v = n.fields?.[b.key]; if (b.ml) v = _mlGet(v, _settingsLang());
+      if (b.labelMap && b.labelMap[v]) v = t(b.labelMap[v]);
+      if (v != null && v !== '' && typeof v !== 'object') out.push({ p: t(b.label || b.key), v: String(v) }); });
+    return out; };
   const walk = (n, path) => {
     if (!n || n._deleted) return;
     const here = path ? `${path} / ${label(n)}` : label(n);
+    if (n.type === 'folder' && n.fields && s?._folderSchema && Object.keys(n.fields).some(k => !k.startsWith('_'))) {
+      // папка-сутнасць (заказ/кліент у дрэве — лянівыя дэталі): друкуем яе fields па drawer-схеме (як ⓘ)
+      const fr = arrRows(FORM_SCHEMAS[s._folderSchema], n);
+      if (fr.length) tables.push({ titleText: here, columns: flatCols, rows: fr });
+    }
     if (n.type === 'form') {
       const schema = FORM_SCHEMAS[n.formSchema || _nodeCfg(s, n, '_formSchema')] || [];
       const flatRows = [];
@@ -10992,10 +11004,7 @@ function _printPayload(node, s) {
               rows: sortedRows.map(r => { const o = {}; outCols.forEach(c => { let v = r[c.key]; if (c.ml) v = _mlGet(v, _settingsLang()); o[c.key] = v; }); return o; }) });
           }
         }
-      } else if (Array.isArray(schema)) schema.forEach(b => { if (!b.key || String(b.key).startsWith('_')) return;
-        let v = n.fields?.[b.key]; if (b.ml) v = _mlGet(v, _settingsLang());
-        if (b.labelMap && b.labelMap[v]) v = t(b.labelMap[v]);
-        pushFlat(t(b.label || b.key), v); });
+      } else if (Array.isArray(schema)) flatRows.push(...arrRows(schema, n));
       if (flatRows.length) tables.push({ titleText: here, columns: flatCols, rows: flatRows });
     } else if (n.type === 'file' || n.type === 'item') {
       tables.push({ titleText: here, columns: flatCols, rows: [
