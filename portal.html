@@ -657,7 +657,7 @@ function renderCabinetAppts() {
   const el = document.getElementById('cab-appts');
   if (!el) return;
   const list = lastCabData?.appointments || [];
-  if (!list.length) { el.innerHTML = ''; return; } // запісаў няма — секцыя не паказваецца
+  // пусты спіс — секцыя ўсё роўна паказвае загаловак+падказку (кліент з нуля бачыць, як гэта працуе)
   const stColor = { scheduled: 'var(--accent)', confirmed: 'var(--success, #22c55e)', completed: 'var(--muted)', cancelled: 'var(--error, #ef4444)', no_show: '#f59e0b' };
   const btn = (label, fn, danger) => `<button onclick="${fn}" style="background:none;border:1px solid var(--border);border-radius:6px;color:${danger ? 'var(--error)' : 'var(--accent)'};cursor:pointer;font-size:0.78rem;padding:3px 8px">${escChat(label)}</button>`;
   const rows = list.map(a => {
@@ -726,7 +726,7 @@ function renderCabinetSubs() {
   const el = document.getElementById('cab-subs');
   if (!el) return;
   const subs = lastCabData?.subscriptions || [];
-  if (!subs.length) { el.innerHTML = ''; return; } // падпісак няма — секцыя не паказваецца
+  // пусты спіс — секцыя ўсё роўна паказвае загаловак+падказку (кліент з нуля бачыць, як гэта працуе)
   const stColor = { active: 'var(--success, #22c55e)', paused: '#f59e0b', cancelled: 'var(--error, #ef4444)' };
   const rows = subs.map(s => {
     const per = s.period === 'year' ? PT.per_year : PT.per_month;
