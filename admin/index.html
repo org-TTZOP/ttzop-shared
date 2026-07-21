@@ -238,6 +238,11 @@
     .node-overflow-item.danger:hover { color: #ef4444; background: rgba(239,68,68,0.06); }
     .node-overflow-item.active { color: var(--accent); }
     .node-overflow-sep { height: 1px; background: var(--border); margin: 4px 4px; }
+    /* 📖 Даведка ў ⓘ-панэлі: згортванне дыскложурам ▸/▾ (канон — стрэлка злева перад назвай, паварот ад details[open]) */
+    .help-sec > summary { cursor: pointer; font-size: 0.75rem; font-weight: 700; color: var(--label); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 8px; list-style: none; display: flex; align-items: center; gap: 5px; }
+    .help-sec > summary::-webkit-details-marker { display: none; } /* Safari малюе свой трохкутнік — глушым, стрэлка ў разметцы */
+    .help-arr { display: inline-block; transition: transform 0.15s; color: var(--muted); }
+    .help-sec[open] > summary .help-arr { transform: rotate(90deg); }
     .node-overflow-menu-grid { display: none; position: absolute; right: 0; top: calc(100% + 4px); background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 4px; min-width: 120px; box-shadow: 0 8px 24px rgba(0,0,0,0.18); z-index: 1100; flex-wrap: wrap; gap: 2px; } /* 1100 > Leaflet-панэлі (400–1000): меню секцыі Мапа адкрывалася ПАД мапай і выглядала пустым */
     .node-overflow-menu-grid.open { display: flex; }
     .node-overflow-menu-grid .node-overflow-item { width: 34px; height: 34px; padding: 0; gap: 0; font-size: 0.85rem; justify-content: center; white-space: nowrap; overflow: hidden; }
@@ -6572,6 +6577,46 @@ function nodeCloseInfoDrawer() {
   infoDrawerState._parentState = null;
 }
 
+// ─── 📖 ДАВЕДКА (секцыя ⓘ-панэлі) ───
+// Тэксты — у admin/help-i18n.js, ЛЯНІВА: файл цягнецца пры першым адкрыцці ⓘ, каб не цяжарыць старт панэлі.
+let _helpLoading = null;
+let _helpOpen = true; // разгорнутасць Даведкі памятаецца ў межах сесіі (навічку — адкрыта, дасведчанаму — згорнута)
+function _helpEnsure(onReady) {
+  if (typeof HELP_T !== 'undefined') return true;                 // ужо ў памяці
+  if (!_helpLoading) {
+    _helpLoading = new Promise(res => {
+      const sc = document.createElement('script');
+      sc.src = 'help-i18n.js?v=' + APP_VERSION;
+      sc.onload = () => res(true); sc.onerror = () => res(false); // не даехаў — Даведка проста не паказваецца
+      document.head.appendChild(sc);
+    });
+  }
+  _helpLoading.then(ok => { if (ok) onReady?.(); });
+  return false;
+}
+// ключ тэмы вузла: канкрэтнае перакрывае агульнае (як _ncap → CONTENT_TYPES.regular)
+function _helpTopic(node, s) {
+  const dict = (typeof HELP_T !== 'undefined') && (HELP_T[adminLang] || HELP_T.en || HELP_T.be);
+  if (!dict || !node) return null;
+  // канкрэтнае → агульнае: формасхема → тып змесціва → тэма РМ → голы тып вузла (папка/форма/файл).
+  // rm_ ВЫШЭЙ за type_: у бізнес-РМ звычайная папка-катэгорыя тлумачыцца кантэкстам РМ, а не «як працуе папка»
+  for (const k of [node.formSchema, node.contentType, 'rm_' + (s?._section || ''), 'type_' + node.type])
+    if (k && dict[k]) return dict[k];
+  return null;
+}
+function _helpSectionHtml(node, s) {
+  if (!_helpEnsure(() => renderInfoDrawerTree())) return ''; // грузіцца — перарэндэр сам дамалюе
+  const tp = _helpTopic(node, s); if (!tp) return '';         // няма тэмы — няма секцыі (нуль шуму)
+  const dict = HELP_T[adminLang] || HELP_T.en || HELP_T.be;
+  const open = _helpOpen ? ' open' : '';
+  return `<details class="help-sec"${open} ontoggle="_helpOpen=this.open">
+    <summary><span class="help-arr">▸</span>❓ ${escHtml(dict._title || 'Help')} · ${escHtml(tp.t)}</summary>
+    <div style="font-size:0.85rem;line-height:1.5;color:var(--fg);margin-bottom:12px">
+      ${(tp.b || []).map(p => `<p style="margin:0 0 8px">${escHtml(p)}</p>`).join('')}
+    </div>
+  </details>`;
+}
+
 function _drawerLegendHtml(node, parentState) {
   if (!node || !parentState) return '';
   const rows = [];
@@ -6648,7 +6693,7 @@ function _nodeInfoDrawerHtml(node, s) {
   const trashHtml = (s?._trashEnabled === true || (s?._trashEnabled !== false && !s?._localOnly)) // яўны opt-in — як у nodeDelete
     ? _nodeTrashHtml(s)
     : (s?._drawerTrash?.() || '');
-  return metaHtml + relatedHtml + legendHtml + trashHtml;
+  return _helpSectionHtml(node, s) + metaHtml + relatedHtml + legendHtml + trashHtml; // 📖 Даведка — першай: спярша «што гэта», потым дэталі
 }
 
 function renderInfoDrawerTree() {
