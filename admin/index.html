@@ -10976,7 +10976,7 @@ function _printPayload(node, s) {
     }
     if (n.type === 'form') {
       const schema = FORM_SCHEMAS[n.formSchema || _nodeCfg(s, n, '_formSchema')] || [];
-      const flatRows = [];
+      const flatRows = [], secTables = []; // flat (Параметр/Значэнне) друкуецца ПЕРШЫМ, потым табліцы формы
       const pushFlat = (lbl, v) => { if (v != null && v !== '' && typeof v !== 'object') flatRows.push({ p: lbl, v: String(v) }); };
       if (!Array.isArray(schema) && schema.sections) {
         for (const sec of schema.sections) {
@@ -11000,12 +11000,13 @@ function _printPayload(node, s) {
               // аўта-Σ: яўныя totals секцыі АБО лічбавы слупок (акрамя дат) — «аўтаматычныя вынікі»
               totals: c.totals || ((numeric[c.key] || c.type === 'number') && !['date', 'datetime', 'time', 'select'].includes(c.type) ? ['sum'] : undefined) }));
             const secTitle = sec.title ? t(sec.title) : '';
-            tables.push({ titleText: secTitle ? `${here} — ${secTitle}` : here, columns: outCols,
+            secTables.push({ titleText: secTitle ? `${here} — ${secTitle}` : here, columns: outCols,
               rows: sortedRows.map(r => { const o = {}; outCols.forEach(c => { let v = r[c.key]; if (c.ml) v = _mlGet(v, _settingsLang()); o[c.key] = v; }); return o; }) });
           }
         }
       } else if (Array.isArray(schema)) flatRows.push(...arrRows(schema, n));
       if (flatRows.length) tables.push({ titleText: here, columns: flatCols, rows: flatRows });
+      tables.push(...secTables); // табліцы формы — пасля яе Параметраў
     } else if (n.type === 'file' || n.type === 'item') {
       tables.push({ titleText: here, columns: flatCols, rows: [
         ...(n.description ? [{ p: t('field_description'), v: String(n.description) }] : []),
