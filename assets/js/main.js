@@ -1525,8 +1525,10 @@ const _svcFiles = (nodes, pid) => (nodes || []).filter(x => x && (x.parentId ?? 
 // што відаць публіцы. Каб маршрут/групавасць не «вылазілі» з дадзеных, якія від больш не выкарыстоўвае
 // (СТО з выпадковымі кропкамі маршруту). Новы від = радок тут і ў ITEM_KINDS панэлі.
 const _ITEM_KIND_CAPS = { goods: [], service: ['lead'], group: ['lead', 'group'], tour: ['lead', 'group', 'fixed', 'route'], sub: [], inquiry: [] };
+// hasOwnProperty-гард: kind='constructor' з дадзеных вярнуў бы ўспадкаваную Function → .includes крашыў бы ўсю праекцыю
+const _svcKindCaps = k => Object.prototype.hasOwnProperty.call(_ITEM_KIND_CAPS, k) ? _ITEM_KIND_CAPS[k] : null;
 function _svcKindOf(f) { // той жа інфер, што панэльны _kindOf (легасі без поля kind)
-  if (f.kind && _ITEM_KIND_CAPS[f.kind]) return f.kind;
+  if (f.kind && _svcKindCaps(f.kind)) return f.kind;
   const ff = f.fulfil || 'cart';
   if (ff === 'subscription') return 'sub';
   if (ff === 'inquiry') return 'inquiry';
@@ -1535,7 +1537,7 @@ function _svcKindOf(f) { // той жа інфер, што панэльны _kin
   if (+f.groupMax > 0) return 'group';
   return 'service';
 }
-const _svcKindHas = (f, cap) => (_ITEM_KIND_CAPS[_svcKindOf(f)] || []).includes(cap);
+const _svcKindHas = (f, cap) => (_svcKindCaps(_svcKindOf(f)) || []).includes(cap);
 function _svcItems(nodes) {
   const items = [];
   const walk = (pid, path, hidUp) => (nodes || [])
@@ -2318,7 +2320,9 @@ function closeCabinetMenu() {
 }
 // кастомнае пацверджанне сайта (сістэмныя confirm/alert у прадукце ЗАБАРОНЕНЫ; люстэрка portalConfirm кабінета)
 // extraHtml — неабавязковы БЛОК пад паведамленнем (гатовы HTML ад каллера, напр. _siteHelpHtml). Універсальны
-// слот: любы поток можа прымацаваць кантэкст (падказку) да confirm, без bespoke-мадалкі
+// слот: любы поток можа прымацаваць кантэкст (падказку) да confirm, без bespoke-мадалкі.
+// ⚠️ extraHtml НЕ эскейпіцца (у адрозненне ад msg) — толькі ДАВЕРАНЫ HTML з кода (як bodyHtml у reader.js);
+// дадзеныя карыстальніка ўнутры мусіць эскейпіць каллер ДА перадачы
 function siteConfirm(msg, onOk, danger, extraHtml) {
   document.getElementById('site-confirm')?.remove();
   const ov = document.createElement('div');

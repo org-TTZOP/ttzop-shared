@@ -753,13 +753,14 @@ function _apiTopupAddRow(form, s) {
 }
 async function _apiTopupApply(fields) {
   const usd = parseFloat(String(fields.usd).replace(',', '.'));
-  if (!(usd > 0)) return;
+  if (!(usd > 0)) { showAlert(t('err_save')); return; } // няправільная сума — не моўчкі (мадал ужо закрыты)
   try {
     const res = await fetch(API, { method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ action: 'add_api_topup', repo: REPO, password, usd, note: fields.note || '' }) });
     if (res.ok) { const d = await res.json(); monitorState._apiBalance = d.apiBalance; monitorState._apiTopups = d.topups;
       if (currentNodeState === monitorState) renderNodeEditor(monitorState); }
-  } catch {}
+    else showAlert(t('err_save')); // маўклівы збой хаваў бы незапісанае папаўненне (напр. 400 bad_amount)
+  } catch { showAlert(t('err_save')); }
 }
 // 🧾 КОД-КАТАЛОГ ВІДАЎ ПАЗІЦЫІ КАТАЛОГА (люстэрка SITE_VIEW_TYPES для секцый): від = набор ЗДОЛЬНАСЦЯЎ,
 // што вырашае ЯКІЯ секцыі формы бачныя. Раней усе booking-секцыі стаялі пад адной умовай fulfil==='booking',
@@ -775,9 +776,11 @@ const ITEM_KINDS = {
 };
 // від пазіцыі: яўны fields.kind, інакш ІНФЕР па легасі-дадзеных (нічога не губляем — старыя пазіцыі
 // самі трапляюць у свой від; нармалізацыя servicesState пячэ вынік у fields.kind)
+// hasOwnProperty-гард: kind='constructor' з дадзеных не мусіць праходзіць як «від» (успадкаваны ключ)
+const _kindDef = k => Object.prototype.hasOwnProperty.call(ITEM_KINDS, k) ? ITEM_KINDS[k] : null;
 function _kindOf(form) {
   const f = form?.fields || {};
-  if (f.kind && ITEM_KINDS[f.kind]) return f.kind;
+  if (f.kind && _kindDef(f.kind)) return f.kind;
   const ff = f.fulfil || 'cart';
   if (ff === 'subscription') return 'sub';
   if (ff === 'inquiry') return 'inquiry';
@@ -786,7 +789,7 @@ function _kindOf(form) {
   if (+f.groupMax > 0) return 'group';         // ліміт удзельнікаў → групавы занятак
   return 'service';
 }
-function _kindHas(form, cap) { return (ITEM_KINDS[_kindOf(form)]?.caps || []).includes(cap); } // гейт бачнасці секцый/палёў
+function _kindHas(form, cap) { return (_kindDef(_kindOf(form))?.caps || []).includes(cap); } // гейт бачнасці секцый/палёў
 // від дыктуе Спосаб атрымання: змена «Віду» ў мадале жыва перастаўляе fulfil (з каскадам яго onChange — напр. Перыяд падпіскі)
 function _kindSyncFulfil(kindId) {
   const el = document.getElementById('nfm-f-fulfil'), k = ITEM_KINDS[kindId];
