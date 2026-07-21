@@ -10852,12 +10852,52 @@ function _repCompareHtml(form) {
   const [ta, tb2] = [totMap(cp.a), totMap(cp.b)];
   [...new Set([...ta.keys(), ...tb2.keys()])].forEach(k => { const [tt, cl] = k.split('·'); push(`Σ ${t(tt)} · ${t(cl)}`, ta.get(k), tb2.get(k)); });
   const td = 'padding:6px 10px;border-bottom:1px solid var(--border);font-size:0.82rem';
-  return `<div style="margin:8px 12px;border:1px solid var(--accent);border-radius:10px;overflow:hidden">
-    <div style="padding:8px 12px;font-weight:700;font-size:0.85rem">⚖ ${escHtml(t('rep_compare'))}: 📦 v${+cp.version} ↔ ${escHtml(t('rep_cur'))}</div>
-    <div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse"><thead><tr>
+  const sumTable = `<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse"><thead><tr>
       <th style="${td};text-align:left"></th><th style="${td};text-align:right">📦 ${escHtml(t('rep_arch'))}</th>
       <th style="${td};text-align:right">${escHtml(t('rep_cur'))}</th><th style="${td};text-align:right">Δ</th><th style="${td};text-align:right">Δ%</th></tr></thead>
-    <tbody>${rows.map(r => `<tr><td style="${td}">${escHtml(String(r.label))}</td><td style="${td};text-align:right">${escHtml(String(r.a))}</td><td style="${td};text-align:right">${escHtml(String(r.b))}</td><td style="${td};text-align:right;${+r.d > 0 ? 'color:var(--success)' : +r.d < 0 ? 'color:var(--error)' : ''}">${escHtml(String(r.d))}</td><td style="${td};text-align:right">${escHtml(String(r.p))}</td></tr>`).join('')}</tbody></table></div></div>`;
+    <tbody>${rows.map(r => `<tr><td style="${td}">${escHtml(String(r.label))}</td><td style="${td};text-align:right">${escHtml(String(r.a))}</td><td style="${td};text-align:right">${escHtml(String(r.b))}</td><td style="${td};text-align:right;${+r.d > 0 ? 'color:var(--success)' : +r.d < 0 ? 'color:var(--error)' : ''}">${escHtml(String(r.d))}</td><td style="${td};text-align:right">${escHtml(String(r.p))}</td></tr>`).join('')}</tbody></table></div>`;
+  // 🔬 ПЕР-РАДКОВЫ ДЫФ: табліцы з keyCol (заказ→id, запіс/падпіска→_k) — што дадана/выдалена/зменена
+  const tblById = pl => new Map((pl.tables || []).map(tb => [tb.id, tb]));
+  const [mA, mB] = [tblById(cp.a), tblById(cp.b)];
+  const diffBlocks = [...mB.keys()].map(id => _repRowDiffHtml(mA.get(id), mB.get(id))).filter(Boolean).join('');
+  return `<div style="margin:8px 12px;border:1px solid var(--accent);border-radius:10px;overflow:hidden">
+    <div style="padding:8px 12px;font-weight:700;font-size:0.85rem">⚖ ${escHtml(t('rep_compare'))}: 📦 v${+cp.version} ↔ ${escHtml(t('rep_cur'))}</div>
+    ${sumTable}${diffBlocks}</div>`;
+}
+// пер-табліцавы дыф двух здымкаў па keyCol: {added:[row], removed:[row], changed:[{a,b,keys:Set}]}.
+// Без keyCol (напр. payments — рэестр падзей) дыфу няма. Ключ — схаваны (_k) ці бачны слупок (id).
+function _repRowDiff(tA, tB) {
+  const key = (tB && tB.keyCol) || (tA && tA.keyCol);
+  if (!key || !tB) return null;
+  const cols = (tB.columns || []); // бачныя слупкі (без key, калі key схаваны — _k няма ў columns)
+  const mapA = new Map((tA?.rows || []).map(r => [String(r[key]), r]));
+  const mapB = new Map((tB.rows || []).map(r => [String(r[key]), r]));
+  const added = [], removed = [], changed = [];
+  for (const [k, rb] of mapB) { if (!mapA.has(k)) { added.push(rb); continue; }
+    const ra = mapA.get(k);
+    const keys = new Set(cols.filter(c => String(ra[c.key] ?? '') !== String(rb[c.key] ?? '')).map(c => c.key));
+    if (keys.size) changed.push({ a: ra, b: rb, keys }); }
+  for (const [k, ra] of mapA) if (!mapB.has(k)) removed.push(ra);
+  return { added, removed, changed, cols };
+}
+function _repRowDiffHtml(tA, tB) {
+  const d = _repRowDiff(tA, tB); if (!d) return '';
+  if (!d.added.length && !d.removed.length && !d.changed.length) return ''; // нічога не змянілася — блок не малюем
+  const cols = _expCols(tB); // з enrich (статус-бэджы як тэкст)
+  const td = 'padding:5px 9px;border-bottom:1px solid var(--border);font-size:0.8rem;white-space:nowrap';
+  const cell = (c, v) => escHtml(_repColText(c, v));
+  const head = `<tr><th style="${td};text-align:center;width:24px"></th>${cols.map(c => `<th style="${td};text-align:left">${escHtml(_expColLabel(c))}</th>`).join('')}</tr>`;
+  const plain = (r, tag, bg) => `<tr style="background:${bg}"><td style="${td};text-align:center">${tag}</td>${cols.map(c => `<td style="${td}">${cell(c, r[c.key])}</td>`).join('')}</tr>`;
+  const chg = e => `<tr style="background:color-mix(in srgb,var(--accent) 8%,transparent)"><td style="${td};text-align:center">✏</td>${cols.map(c => e.keys.has(c.key)
+    ? `<td style="${td}"><span style="color:var(--muted);text-decoration:line-through">${cell(c, e.a[c.key])}</span> → <b>${cell(c, e.b[c.key])}</b></td>`
+    : `<td style="${td}">${cell(c, e.b[c.key])}</td>`).join('')}</tr>`;
+  const tint = v => `color-mix(in srgb,${v} 10%,transparent)`;
+  const body = d.added.map(r => plain(r, '➕', tint('var(--success)')))
+    .concat(d.changed.map(chg))
+    .concat(d.removed.map(r => plain(r, '➖', tint('var(--error)')))).join('');
+  const cnt = `<span style="color:var(--success)">➕${d.added.length}</span> · <span style="color:var(--accent)">✏${d.changed.length}</span> · <span style="color:var(--error)">➖${d.removed.length}</span>`;
+  return `<div style="margin:8px 10px 4px"><div style="font-size:0.8rem;font-weight:600;margin-bottom:4px">${escHtml(_expTblTitle(tB))} — ${cnt}</div>
+    <div style="overflow-x:auto;max-height:340px;overflow-y:auto"><table style="width:100%;border-collapse:collapse"><thead>${head}</thead><tbody>${body}</tbody></table></div></div>`;
 }
 // ── ЭКСПАРЦЁРЫ — ЧЫСТЫЯ payload-функцыі (агульныя спажыўцы: Справаздачы І 🖨 Друк любога вузла) ──
 // Меткі ў payload двух відаў: i18n-КЛЮЧЫ (label/title — справаздачы: архіў рэндэрыцца на любой мове)
