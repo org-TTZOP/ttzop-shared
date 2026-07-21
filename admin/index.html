@@ -759,6 +759,38 @@ async function _apiTopupApply(fields) {
       if (currentNodeState === monitorState) renderNodeEditor(monitorState); }
   } catch {}
 }
+// 🧾 КОД-КАТАЛОГ ВІДАЎ ПАЗІЦЫІ КАТАЛОГА (люстэрка SITE_VIEW_TYPES для секцый): від = набор ЗДОЛЬНАСЦЯЎ,
+// што вырашае ЯКІЯ секцыі формы бачныя. Раней усе booking-секцыі стаялі пад адной умовай fulfil==='booking',
+// таму пазіцыя СТО («запіс на час») пытала маршрут і выезды экскурсіі. Новы від = адзін радок тут.
+// caps: route (мапа+кропкі) · group (ліміт удзельнікаў) · fixed (фіксаваныя выезды) · segments (этапы+групы рэсурсаў) · lead (запасы часу)
+const ITEM_KINDS = {
+  goods:   { label: 'item_goods',   desc: 'kind_goods_desc',   fulfil: 'cart',         caps: [] },
+  service: { label: 'item_service', desc: 'kind_service_desc', fulfil: 'booking',      caps: ['segments', 'lead'] },
+  group:   { label: 'item_group',   desc: 'kind_group_desc',   fulfil: 'booking',      caps: ['segments', 'lead', 'group'] },
+  tour:    { label: 'item_tour',    desc: 'kind_tour_desc',    fulfil: 'booking',      caps: ['segments', 'lead', 'group', 'fixed', 'route'] },
+  sub:     { label: 'item_sub',     desc: 'kind_sub_desc',     fulfil: 'subscription', caps: [], fields: { period: 'month' } },
+  inquiry: { label: 'item_inquiry', desc: 'kind_inquiry_desc', fulfil: 'inquiry',      caps: [] }
+};
+// від пазіцыі: яўны fields.kind, інакш ІНФЕР па легасі-дадзеных (нічога не губляем — старыя пазіцыі
+// самі трапляюць у свой від; нармалізацыя servicesState пячэ вынік у fields.kind)
+function _kindOf(form) {
+  const f = form?.fields || {};
+  if (f.kind && ITEM_KINDS[f.kind]) return f.kind;
+  const ff = f.fulfil || 'cart';
+  if (ff === 'subscription') return 'sub';
+  if (ff === 'inquiry') return 'inquiry';
+  if (ff !== 'booking') return 'goods';
+  if ((f._route || []).length) return 'tour';  // ёсць кропкі маршруту → экскурсія/выезд
+  if (+f.groupMax > 0) return 'group';         // ліміт удзельнікаў → групавы занятак
+  return 'service';
+}
+function _kindHas(form, cap) { return (ITEM_KINDS[_kindOf(form)]?.caps || []).includes(cap); } // гейт бачнасці секцый/палёў
+// від дыктуе Спосаб атрымання: змена «Віду» ў мадале жыва перастаўляе fulfil (з каскадам яго onChange — напр. Перыяд падпіскі)
+function _kindSyncFulfil(kindId) {
+  const el = document.getElementById('nfm-f-fulfil'), k = ITEM_KINDS[kindId];
+  if (!el || !k?.fulfil) return;
+  el.value = k.fulfil; _nfmFieldChange('fulfil', k.fulfil);
+}
 // label у схемах — t()-КЛЮЧ (прынцып мультымоўнасці), рэндэрыцца праз t(f.label)
 const FORM_SCHEMAS = {
   orders: [
@@ -784,6 +816,11 @@ const FORM_SCHEMAS = {
     { type: 'flat', id: 'main', title: 'section_main_data', editable: true, onEdit: (form, s) => _nodeFlatSectionEdit(form, s),
       blocks: [
         { key: 'name',        type: 'text',     label: 'f_name',             readOnly: () => true, nameField: true },
+        // 🧾 ВІД ПАЗІЦЫІ (код-каталог ITEM_KINDS): вырашае, якія секцыі/палі бачныя — СТО не пытае маршрут экскурсіі
+        { key: 'kind',        type: 'select',   label: 'item_kind', hintMap: Object.fromEntries(Object.entries(ITEM_KINDS).map(([k, v]) => [k, v.desc])),
+          readOnly: () => true, default: 'goods',
+          options: () => Object.keys(ITEM_KINDS), labelMap: Object.fromEntries(Object.entries(ITEM_KINDS).map(([k, v]) => [k, v.label])),
+          onChange: v => _kindSyncFulfil(v) }, // від дыктуе Спосаб атрымання
         { key: 'type',        type: 'select',   label: 'service_type_label', readOnly: () => true, default: 'general',
           options: () => IS_PLATFORM ? ['general','subdomain'] : ['general'], labelMap: { general: 'service_general', subdomain: 'service_subdomain' },
           // «Свой сайт» → Спосаб толькі [🔁 Падпіска, 💬 Запыт] з аўта-Падпіскай (кошык/запіс для сайта бессэнсоўныя)
@@ -812,14 +849,14 @@ const FORM_SCHEMAS = {
           options: ['before','after'], labelMap: { before: 'pay_before', after: 'pay_after' } },
         { key: 'bufferAfter', type: 'number',   label: 'svc_buffer',         readOnly: () => true }, // буфер пасля ўсёй паслугі
         { key: 'bookLead',    type: 'number',   label: 'svc_lead',           readOnly: () => true, // ⏳ мінімальны запас перад бронню (хв); 0 = можна браць бліжэйшы слот. Ужывае ТОЛЬКІ публічны шлях (booking_slots/portal_book) — адмін бранюе без абмежаванняў
-          visible: form => (form.fields?.fulfil || 'cart') === 'booking' },
+          visible: form => _kindHas(form, 'lead') },
         { key: 'bookCancelLead', type: 'number', label: 'svc_cancel_lead',   readOnly: () => true, // ⏳ запас перад ПАЧАТКАМ, раней за які кліент ужо не адменіць/не перанясе запіс сам (хв); 0 = хоць за хвіліну
-          visible: form => (form.fields?.fulfil || 'cart') === 'booking' },
+          visible: form => _kindHas(form, 'lead') },
         { key: 'groupMax',    type: 'number',   label: 'svc_group_max', hint: 'svc_group_max_hint', readOnly: () => true, // 👥 ГРУПАВАЯ паслуга (ёга/экскурсія): ліміт удзельнікаў адной групы; 0/пуста = звычайная адзіночная (1 слот = 1 кліент)
-          visible: form => (form.fields?.fulfil || 'cart') === 'booking' },
+          visible: form => _kindHas(form, 'group') },
         { key: 'bookFixed',   type: 'select',   label: 'svc_fixed', hint: 'svc_fixed_hint', readOnly: () => true, default: 'no', // 📅 фіксаваныя выезды: публіка не стварае слотаў — толькі далучаецца да выездаў, створаных адмінам (запіс + ⧉ серыя)
           options: ['no','yes'], labelMap: { no: 'spv_no', yes: 'spv_yes' },
-          visible: form => (form.fields?.fulfil || 'cart') === 'booking' && +form.fields?.groupMax > 0 }, // мае сэнс толькі ў групавой (далучэнне да існуючага выезду)
+          visible: form => _kindHas(form, 'fixed') && +form.fields?.groupMax > 0 }, // мае сэнс толькі ў групавой (далучэнне да існуючага выезду)
         { key: 'trPack',      type: 'number',   label: 'svc_trpack', hint: 'svc_trpack_hint', readOnly: () => true, // 🌐 пазіцыя-ПАКЕТ AI-перакладаў (варыянт B, толькі платформа): >0 = колькі крэдытаў дае купля; paid → _trPackGrant налічвае сайту-мэце
           visible: () => IS_PLATFORM }
       ] },
@@ -828,9 +865,9 @@ const FORM_SCHEMAS = {
     // 🗺 МАРШРУТ ЭКСКУРСІІ (booking): мапа ў points-рэжыме (клік = кропка) + накапляльнік кропак з ml-назвамі.
     // План для сайта (адносныя часы, агульная працягласць) фарміруецца з парадку і часоў аўтаматычна (_svcItems.route)
     { type: 'map', title: 'svc_route_map', dataKey: '_routeView', points: '_route',
-      visible: form => (form.fields?.fulfil || 'cart') === 'booking' },
+      visible: form => _kindHas(form, 'route') },
     { type: 'table', title: 'svc_route', dataKey: '_route', addable: true, rowEditable: true, rowDeletable: true, keepOrder: true,
-      visible: form => (form.fields?.fulfil || 'cart') === 'booking',
+      visible: form => _kindHas(form, 'route'),
       onAdd: (form, s) => _accRowAdd(form, s, '_route'),
       headerExtra: form => _routeSummaryHtml(form), // «N · ~2 гадз 35 хв» у загалоўку секцыі
       rowSchema: [
@@ -858,7 +895,7 @@ const FORM_SCHEMAS = {
       ] },
     // ГРУПЫ РЭСУРСАЎ (E2): {назва, палітыка}. Сегменты адной групы → той самы рэсурс паводле палітыкі (strict/prefer/any)
     { type: 'table', title: 'svc_groups', dataKey: '_groups', addable: true, rowEditable: true, keepOrder: true,
-      visible: form => (form.fields?.fulfil || 'cart') === 'booking', // booking-секцыя: толькі пры спосабе 📅 Запіс
+      visible: form => _kindHas(form, 'segments'), // этапы/групы рэсурсаў — толькі ў відаў з caps 'segments' (ITEM_KINDS)
       onAdd: (form, s) => _accRowAdd(form, s, '_groups'),
       rowSchema: [
         { key: 'label',  type: 'text',   label: 'f_name' },
@@ -885,7 +922,7 @@ const FORM_SCHEMAS = {
       ] },
     // ЭТАПЫ ПАСЛУГІ (харэаграфія): сегмент = {назва, тып рэсурсу, кандыдаты, група, зрух, працяг}. duration>0 любога сегмента → паслуга бранявальная
     { type: 'table', title: 'svc_segments', dataKey: '_segments', addable: true, rowEditable: true, keepOrder: true,
-      visible: form => (form.fields?.fulfil || 'cart') === 'booking', // booking-секцыя: толькі пры спосабе 📅 Запіс
+      visible: form => _kindHas(form, 'segments'), // этапы/групы рэсурсаў — толькі ў відаў з caps 'segments' (ITEM_KINDS)
       onAdd: (form, s) => _accRowAdd(form, s, '_segments'),
       rowSchema: [
         { key: 'label',      type: 'text',        label: 'f_name' },
@@ -915,12 +952,10 @@ const FORM_SCHEMAS = {
       ] }
   ], _noName: true,
   _seedFolders: [{ key: 'photos', sysKey: 'folder_photos' }], // 🌱 аўта-Папка-0 «📸 Фота» (генерычны механізм _formSeedFolders)
-  // пікер пры +🗒 у Каталогу: від = прэсэт спосабу атрымання (форма адна і тая ж)
-  _newFieldsPick: () => [
-    { id: 'goods',   label: 'item_goods',   fields: { fulfil: 'cart' } },
-    { id: 'service', label: 'item_service', fields: { fulfil: 'booking' } },
-    { id: 'sub',     label: 'item_sub',     fields: { fulfil: 'subscription', period: 'month' } }
-  ] },
+  // пікер пры +🗒 у Каталогу: від з ITEM_KINDS (форма адна і тая ж — від задае прэсэт палёў і бачнасць секцый);
+  // desc → жывая падказка пад выбарам (генерычны hintMap мадала)
+  _newFieldsPick: () => Object.entries(ITEM_KINDS).map(([id, k]) =>
+    ({ id, label: k.label, hint: k.desc, fields: { kind: id, fulfil: k.fulfil, ...(k.fields || {}) } })) },
   faq:         [{ key: 'answer',      type: 'textarea', label: 'faq_answer' }],
   advantage:   [{ key: 'icon',        type: 'text',     label: 'ph_icon',            inRow: true },
                 { key: 'description', type: 'textarea', label: 'field_description' }],
@@ -2727,6 +2762,7 @@ let servicesState = { data: null, saving: false, selected: new Set(), expanded: 
       f._segments.forEach(sg => { if (!sg.pick) sg.pick = (Array.isArray(sg.candidates) && sg.candidates.length) ? 'specific' : 'any'; }); // міграцыя: яўны рэжым выбару (candidates→specific, пуста→any)
       // К1 «Каталог»: спосаб атрымання (інфер легасі: актыўныя этапы → 📅 запіс; пераходны cta v4.547 'chat' → 💬 запыт; інакш 🛒 заказ)
       if (!f.fulfil) f.fulfil = f._segments.some(_segActive) ? 'booking' : (f.cta === 'chat' ? 'inquiry' : 'cart');
+      if (!f.kind) f.kind = _kindOf(n); // 🧾 міграцыя віду (ITEM_KINDS): інфер па легасі-дадзеных пячэцца ў поле
       _formSeedFolders(data.nodes, n, 'services'); // 🌱 аўта-Папка «📸 Фота» (аднаразова; выдаленая не ўваскрасае)
     }
   }) };
@@ -5941,7 +5977,15 @@ function _setFavicon(url) { // WebP-favicon Safari ігнаруе → канве
 }
 function _nfmFieldChange(key, val) { // f.onChange хук палёў мадала (напр. аўтакошт ад паслугі)
   const f = _nfmCurrentSchema?.find(x => x.key === key);
+  _nfmHintSync(key, val); // жывая падказка выбару (f.hintMap) — да хука, каб той мог перарэндэрыць поле
   f?.onChange?.(val);
+}
+// ЖЫВАЯ падказка пад полем: тэкст hintMap[значэнне] (i18n-ключ). Механізм шаблона — любое поле з hintMap
+function _nfmHintSync(key, val) {
+  const f = _nfmCurrentSchema?.find(x => x.key === key); if (!f?.hintMap) return;
+  const el = document.getElementById('nfm-h-' + key); if (!el) return;
+  const k = f.hintMap[val];
+  el.textContent = k ? t(k) : '';
 }
 // дынамічны загаловак мадала (кантэкст дзеяння); пусты → дэфолт «Запіс»
 function _nfmTitle(text) { const el = document.getElementById('nfm-title'); if (el) el.textContent = text || t('form_record'); }
@@ -5960,7 +6004,7 @@ function _nfmApplySchema(schema) {
     const input = f.type === 'textarea'
       ? `<textarea id="nfm-f-${f.key}" class="field-input" style="margin:0;padding:9px 12px;min-height:72px;resize:vertical"></textarea>`
       : f.type === 'select'
-      ? `<select id="nfm-f-${f.key}" class="field-input" style="margin:0;padding:9px 12px"${f.onChange ? ` onchange="_nfmFieldChange('${f.key}',this.value)"` : ''}><option value="">—</option>${opts.map(o=>`<option value="${o}">${f.labelMap?.[o]?t(f.labelMap[o]):(optLabels[o]??o)}</option>`).join('')}</select>`
+      ? `<select id="nfm-f-${f.key}" class="field-input" style="margin:0;padding:9px 12px"${(f.onChange || f.hintMap) ? ` onchange="_nfmFieldChange('${f.key}',this.value)"` : ''}><option value="">—</option>${opts.map(o=>`<option value="${o}">${f.labelMap?.[o]?t(f.labelMap[o]):(optLabels[o]??o)}</option>`).join('')}</select>`
       : f.type === 'multiselect' // ПРОДАКФПФ: мадал умее multiselect (як inline) — кантэйнер чэкбоксаў; чытанне праз _nfmReadVal, перадзагрузка праз _nfmSetMulti
       ? `<div id="nfm-f-${f.key}" data-ms="1" style="padding:4px 0;max-height:240px;overflow-y:auto">${_nfmMultiBody(f, opts, optLabels, null)}</div>`
       : f.type === 'image' // 📷 генерычная выява ў мадале (R2): мініяцюра + загрузка + ✕; значэнне {url,thumbUrl} у схаваным input (JSON)
@@ -5970,7 +6014,8 @@ function _nfmApplySchema(schema) {
       : f.type === 'time'
       ? _timeFieldHtml('nfm-f-' + f.key, '', '', !!f.allowEmpty) // час 24ч = барабан ЧЧ:ММ; allowEmpty=опцыя «--» (напр. выходны ў графіку)
       : `<input type="${f.type==='number'?'number':'text'}" id="nfm-f-${f.key}" class="field-input" style="margin:0;padding:9px 12px${f.type==='number'?';text-align:right':''}"${f.type==='number'?' step="any" min="0"':''}>`;
-    const hint = f.hint ? `<div style="font-size:0.72rem;color:var(--muted);margin-top:4px;line-height:1.4">${escHtml(t(f.hint))}</div>` : ''; // генерычная падказка-прыклады пад полем (i18n-ключ у схеме)
+    // генерычная падказка пад полем: f.hint = статычны i18n-ключ; f.hintMap = ЖЫВАЯ (значэнне→ключ, абнаўляецца праз _nfmHintSync пры змене select)
+    const hint = (f.hint || f.hintMap) ? `<div id="nfm-h-${f.key}" style="font-size:0.72rem;color:var(--muted);margin-top:4px;line-height:1.4">${f.hint ? escHtml(t(f.hint)) : ''}</div>` : '';
     return `<div class="form-group" style="margin-bottom:14px"><label style="${lblStyle}">${escHtml(t(f.label))}</label>${input}${hint}</div>`;
   }).join('');
 }
@@ -6335,11 +6380,13 @@ function nodeAddForm(folderId, schemaKey) {
     const pick = typeof schema._newFieldsPick === 'function' ? schema._newFieldsPick() : schema._newFieldsPick;
     if (Array.isArray(pick) && pick.length) { // генерычны пікер ВІДУ новай формы (хук схемы; Каталог: Тавар/Паслуга/Падпіска)
       _nfmApplySchema(Object.assign([
-        { key: 'newKind', type: 'select', label: 'what_create', options: pick.map(tp => tp.id), labelMap: Object.fromEntries(pick.map(tp => [tp.id, tp.label])) }
+        { key: 'newKind', type: 'select', label: 'what_create', options: pick.map(tp => tp.id), labelMap: Object.fromEntries(pick.map(tp => [tp.id, tp.label])),
+          hintMap: Object.fromEntries(pick.filter(tp => tp.hint).map(tp => [tp.id, tp.hint])) } // падказка «што гэта за від» — жыва пад выбарам
       ], { _noName: true }));
       const modal = document.getElementById('node-form-modal');
       modal.dataset.mode = 'add';
       const el = document.getElementById('nfm-f-newKind'); if (el) el.value = pick[0].id;
+      _nfmHintSync('newKind', pick[0].id); // падказка дэфолтнага віду адразу
       modal.style.display = 'flex';
       _nfmCustomSubmit = fields => { const tp = pick.find(x => x.id === fields.newKind) || pick[0]; _nodeCreateSectionForm(s, folderId, key, tp.fields); };
       return;
@@ -10884,7 +10931,7 @@ function _nodeCreateSectionForm(s, folderId, key, extraFields) { // extraFields 
     : key === 'resourceStructure'
     ? { resourceName: '', resourceType: 'person', _history: [], _schedule: [] }
     : key === 'services'
-    ? { name: '', type: 'general', description: '', price: '', currency: settings?.currency?.code || 'EUR', paymentMode: 'before', bufferAfter: '', _history: [], _groups: [], _segments: [] }
+    ? { name: '', type: 'general', kind: 'goods', description: '', price: '', currency: settings?.currency?.code || 'EUR', paymentMode: 'before', bufferAfter: '', _history: [], _groups: [], _segments: [] } // kind перакрые прэсэт пікера віду
     : { companyName: {}, address: {}, hours: {}, map: {}, _history: [], _phones: [], _emails: [], _schedule: [] };
   if (extraFields) Object.assign(fields, extraFields); // прэсэт віду (напр. fulfil тавара/паслугі/падпіскі)
   const _now = new Date().toISOString();
@@ -10916,7 +10963,7 @@ function _nodeFlatSectionEdit(form, s, secId = 'main') { // рэдагаванн
   const lang = _settingsLang();
   // ml-палі: у назве паля паказваем бягучую мову (каб юзер ведаў, што рэдагуе менавіта яе)
   _nfmApplySchema(Object.assign(flds.map(b => ({ key: b.key, type: ['textarea','select','multiselect','number'].includes(b.type) ? b.type : 'text',
-    label: b.ml ? `${t(b.label)} (${_langLabel(lang)})` : b.label, options: b.options, optionLabels: b.optionLabels, labelMap: b.labelMap, onChange: b.onChange })), { _noName: true })); // onChange блока → мадал (залежныя палі, напр. badge→badgeText)
+    label: b.ml ? `${t(b.label)} (${_langLabel(lang)})` : b.label, options: b.options, optionLabels: b.optionLabels, labelMap: b.labelMap, hint: b.hint, hintMap: b.hintMap, onChange: b.onChange })), { _noName: true })); // onChange блока → мадал (залежныя палі, напр. badge→badgeText); hint/hintMap — падказкі блока (раней губляліся)
   _nfmTitle(t(main.title)); // кантэкст: якую секцыю рэдагуем
   const modal = document.getElementById('node-form-modal'); modal.dataset.mode = 'add';
   flds.forEach(b => {
@@ -10927,6 +10974,7 @@ function _nodeFlatSectionEdit(form, s, secId = 'main') { // рэдагаванн
     }
   });
   flds.forEach(b => { if (b.onChange) b.onChange(document.getElementById('nfm-f-' + b.key)?.value); }); // ініц залежнасцяў па загружаных значэннях (як у _accRowModal)
+  flds.forEach(b => { if (b.hintMap) _nfmHintSync(b.key, document.getElementById('nfm-f-' + b.key)?.value); }); // тое ж для ЖЫВЫХ падказак (hintMap)
   // генерычны `lockIf(form)=>msg` блока: непустое паведамленне = поле ў мадале заблакавана (напр. view тыпу, на які спасылаюцца секцыі)
   flds.forEach(b => { const msg = b.lockIf?.(form); if (msg) { const el = document.getElementById('nfm-f-' + b.key); if (el) { el.disabled = true; el.title = msg; } } });
   modal.style.display = 'flex';
