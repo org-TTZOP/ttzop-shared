@@ -5189,9 +5189,13 @@ function _nodeTableSectionHtml(form, section, s, mover = '') {
   if (!s._tableView) s._tableView = new Map();
   const viewKey = form.id + '::' + (section.dataKey || section.id || '');
   const view = s._tableView.get(viewKey) || _tblDefaultView(section);
-  // Кэшуем секцыю па viewKey — каб onclick-хандлеры маглі знайсці яе без s.data.nodes
+  // Кэшуем секцыю + ФОРМУ (з дадзенымі) па viewKey — каб onclick-хандлеры (🖨 друк / ➕ дадаць)
+  // знайшлі іх без s.data.nodes: віртуальныя секцыі (напр. «Папаўненні API» у целе Формы-0) трымаюць
+  // радкі ў сваёй inline-форме, не ў вузле — інакш друк такой секцыі бачыў бы пусты form.fields
   if (!window._tblSectionCache) window._tblSectionCache = new Map();
+  if (!window._tblFormCache) window._tblFormCache = new Map();
   window._tblSectionCache.set(viewKey, section);
+  window._tblFormCache.set(viewKey, form);
   // thSt: sticky top + фон каб радкі не праглядалі пры скроле
   const thSt = 'padding:5px 10px;font-size:0.7rem;font-weight:700;color:var(--label);text-transform:uppercase;letter-spacing:0.05em;text-align:left;border-bottom:1px solid var(--border);white-space:nowrap;position:sticky;top:0;background:var(--surface);z-index:1';
   const tdSt = 'padding:5px 10px;font-size:0.82rem;border-bottom:1px solid var(--border);vertical-align:top';
@@ -11087,18 +11091,18 @@ function _printPayload(node, s) { // node=null → УВЕСЬ РМ (усе ву�
 // АДЗІНЫ дыялог друку (мадалка фармату) — тры кропкі ўваходу: вузел (⋯ вузла) / секцыя (⋯ секцыі) / увесь РМ (⋯ кораня)
 function _printDialog(buildFn) {
   _nfmApplySchema(Object.assign([
-    { key: 'fmt', type: 'select', label: 'print_format', options: ['xlsx', 'csv', 'pdf'],
-      labelMap: { xlsx: 'XLSX', csv: 'CSV', pdf: 'PDF' } } // t(літарал) → сам літарал (ключа няма — і не трэба)
+    { key: 'fmt', type: 'select', label: 'print_format', options: ['pdf', 'xlsx', 'csv'], // PDF першы = дэфолт (рашэнне карыстальніка)
+      labelMap: { pdf: 'PDF', xlsx: 'XLSX', csv: 'CSV' } } // t(літарал) → сам літарал (ключа няма — і не трэба)
   ], { _noName: true }));
   _nfmTitle(`🖨 ${t('node_print')}`);
   const modal = document.getElementById('node-form-modal');
   modal.dataset.mode = 'add';
   modal.style.display = 'flex';
-  const el = document.getElementById('nfm-f-fmt'); if (el) el.value = 'xlsx';
+  const el = document.getElementById('nfm-f-fmt'); if (el) el.value = 'pdf'; // дэфолт — PDF
   _nfmCustomSubmit = fields => {
     const pl = buildFn();
-    if (!pl || !(pl.tables || []).length) { showAlert(t('rep_no_data')); return; }
-    if (fields.fmt === 'csv') _expCSV(pl); else if (fields.fmt === 'pdf') _expPDF(pl); else _expXLSX(pl, () => showAlert(t('err')));
+    if (!pl || !(pl.tables || []).length) { showAlert(t('print_empty')); return; } // «няма даных для друку» (НЕ rep_no_data пра перыяд)
+    if (fields.fmt === 'csv') _expCSV(pl); else if (fields.fmt === 'xlsx') _expXLSX(pl, () => showAlert(t('err'))); else _expPDF(pl);
   };
 }
 function _nodePrint(id) { // 🖨 у ⋯ вузла: паддрэва (дзеці, без бацькоў)
@@ -11111,7 +11115,8 @@ function _rootPrint() { // 🖨 у ⋯ кораня РМ: увесь РМ (ус�
 }
 function _sectionPrint(formId, secKey) { // 🖨 у ⋯ АСОБНАЙ секцыі (у т.л. віртуальнай — праз кэш рэндэру)
   const s = currentNodeState; if (!s) return;
-  const form = s?.data?.nodes?.find(n => n.id === formId) || { id: formId, fields: {} }; // віртуальная форма — толькі dataFn-крыніцы
+  // форма з ДАДЗЕНЫМІ: вузел дрэва → з nodes; віртуальная секцыя (Форма-0 body) → з _tblFormCache (радкі ў inline-форме)
+  const form = s?.data?.nodes?.find(n => n.id === formId) || window._tblFormCache?.get(formId + '::' + secKey) || { id: formId, fields: {} };
   const sec = _tblFindSection(formId, secKey); if (!sec || (!sec.type && !sec.dataKey && !sec.blocks)) return;
   const ttl = () => { const lbl = (typeof _folderLabel === 'function' && s?.data?.nodes?.some(n => n.id === formId)) ? _folderLabel(form) : '';
     return { meta: { titleText: (lbl ? lbl + ' — ' : '') + (sec.title ? t(sec.title) : secKey), generatedAt: new Date().toISOString(),
@@ -13181,7 +13186,8 @@ const _AUDIT_ACT_LABELS = {
   file_upload: 'audit_act_upload', info_upload: 'audit_act_upload',
   file_purge: 'audit_act_delete', user_delete: 'audit_act_delete',
   user_invite: 'audit_act_invite', user_update: 'audit_act_user',
-  verify_email_code: 'audit_act_email'
+  verify_email_code: 'audit_act_email',
+  report_data: 'audit_act_report', report_archive: 'audit_act_archive' // 📊 фарміраванне / архіваванне справаздачы
 };
 // «Дзе» — РМ, у якім адбылося дзеянне: экшн → ключ РМ (люстэрка worker _ACTION_RIGHTS/_fileRightSec)
 const _AUDIT_ACT_PLACE = {
@@ -13191,7 +13197,8 @@ const _AUDIT_ACT_PLACE = {
   user_invite: 'users', user_update: 'users', user_delete: 'users', verify_email_code: 'users',
   refresh_exchange_rates: 'languages', append_rates_history: 'languages',
   init_rates_history: 'languages', save_rate_overrides: 'languages',
-  content_set: 'sections', content_migrate: 'sections', set_watermark: 'general'
+  content_set: 'sections', content_migrate: 'sections', set_watermark: 'general',
+  report_data: 'reports', report_archive: 'reports' // 📊 РМ Справаздачы
 };
 function _auditFileSec(f) { // шлях файла → ключ РМ (люстэрка worker _fileRightSec)
   if (!f) return '';
@@ -13208,6 +13215,7 @@ function _auditFileSec(f) { // шлях файла → ключ РМ (люстэ
 function _auditPlace(action, target) { // лэйбл РМ — тыя ж nav_* ключы, што і меню/табліца правоў (без новых перакладаў)
   const key = (action === 'write' || action === 'read') ? _auditFileSec(target) : (_AUDIT_ACT_PLACE[action] || '');
   if (key === 'users') return t('nav_users');
+  if (key === 'reports') return t('nav_reports'); // 📊 РМ Справаздачы — не ў матрыцы правоў (гейт пер-тыпавы), лэйбл з меню
   const m = _RIGHTS_SECTIONS.find(x => x.key === key);
   return m ? t(m.label) : '';
 }
