@@ -11001,52 +11001,8 @@ function _repReaderCfg(pl) {
     bodyHtml: `<div style="font-size:13px;line-height:1.5">${sumHtml}${tablesHtml}</div>`,
     siteName: REPO, labels: { pdfprint: '🖨 PDF', close: '✕', share: '↗' } };
 }
-function _expPDF(pl) { openReaderWindow(_repReaderCfg(pl)); } // фіксацыя дакумента: reader.js style:'paper' (як фактура) + window.print
-// ── БАЙТЫ ФАЙЛА (для чат-шэрынгу): base64 па фармаце. Uint8Array→base64 чанкамі (вялікі spread падае) ──
-function _bytesToB64(u8) { let bin = ''; for (let i = 0; i < u8.length; i += 8192) bin += String.fromCharCode.apply(null, u8.subarray(i, i + 8192)); return btoa(bin); }
-function _strToB64(str) { return _bytesToB64(new TextEncoder().encode(str)); }
-// jsPDF + html2canvas ляніва (PDF праз РЭНДЭР DOM у выяву → усе мовы карэктна: be/ru/uk/ar/zh, без праблем шрыфтоў jsPDF)
-let _pdfLibP = null;
-function _pdfLibLoad() {
-  if (window.jspdf && window.html2canvas) return Promise.resolve(true);
-  if (!_pdfLibP) _pdfLibP = new Promise(res => {
-    const load = (src) => new Promise(r => { const sc = document.createElement('script'); sc.src = src; sc.onload = () => r(true); sc.onerror = () => r(false); document.head.appendChild(sc); });
-    Promise.all([
-      window.jspdf ? true : load('https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js'),
-      window.html2canvas ? true : load('https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js'),
-    ]).then(rs => res(rs.every(Boolean) && !!window.jspdf && !!window.html2canvas));
-  });
-  return _pdfLibP;
-}
-async function _pdfB64(pl) {
-  if (!await _pdfLibLoad()) return null;
-  const m = _expDisp(pl); const { sumHtml, tablesHtml } = _repPaperBody(pl);
-  const wrap = document.createElement('div');
-  wrap.style.cssText = "position:fixed;left:-99999px;top:0;width:760px;background:#fff;color:#111;padding:28px;font-family:Arial,'Helvetica Neue',sans-serif;font-size:13px;line-height:1.5";
-  wrap.setAttribute('dir', document.documentElement.getAttribute('dir') || 'ltr'); // RTL (ar) захоўваецца ў выяве
-  wrap.innerHTML = `<h2 style="margin:0 0 4px;font-size:18px">${escHtml(m.title)}</h2>
-    <div style="font-size:11px;color:#666;margin-bottom:14px">${escHtml((m.period ? m.period + ' · ' : '') + t('rep_generated') + ': ' + m.at + ' · ' + t('col_who') + ': ' + m.by)}</div>${sumHtml}${tablesHtml}`;
-  document.body.appendChild(wrap);
-  try {
-    const canvas = await html2canvas(wrap, { scale: 2, backgroundColor: '#fff', logging: false });
-    const { jsPDF } = window.jspdf;
-    const pdf = new jsPDF('p', 'pt', 'a4');
-    const pw = pdf.internal.pageSize.getWidth(), ph = pdf.internal.pageSize.getHeight();
-    const imgH = canvas.height * pw / canvas.width;
-    const img = canvas.toDataURL('image/jpeg', 0.9);
-    let pos = 0, left = imgH; // паджынацыя: адна доўгая выява, зрух па -ph на старонку
-    pdf.addImage(img, 'JPEG', 0, pos, pw, imgH); left -= ph;
-    while (left > 0) { pos -= ph; pdf.addPage(); pdf.addImage(img, 'JPEG', 0, pos, pw, imgH); left -= ph; }
-    return _bytesToB64(new Uint8Array(pdf.output('arraybuffer')));
-  } catch (e) { console.warn('[pdf gen fail]', e?.message); return null; } finally { document.body.removeChild(wrap); }
-}
-// адзіны генератар байтаў файла па фармаце → {b64,name,mime} (для чат-шэрынгу)
-async function _repFileBytes(pl, fmt) {
-  const m = _expDisp(pl);
-  if (fmt === 'csv') return { b64: _strToB64(_csvString(pl)), name: m.fname + '.csv', mime: 'text/csv' };
-  if (fmt === 'xlsx') { if (!await _xlsxLibLoad()) return null; return { b64: XLSX.write(_xlsxWorkbook(pl), { type: 'base64' }), name: m.fname + '.xlsx', mime: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }; }
-  const b64 = await _pdfB64(pl); return b64 ? { b64, name: m.fname + '.pdf', mime: 'application/pdf' } : null;
-}
+function _expPDF(pl) { openReaderWindow(_repReaderCfg(pl)); } // фіксацыя дакумента: reader.js style:'paper' → браўзерны 🖨/захаваць PDF
+// (jsPDF/html2canvas генератар PDF-байтаў выдалены разам з чат-файлам: у чат ідзе спасылка-адкрыццё, а ⬇ PDF адкрывае reader-акно)
 // тонкія абгорткі РМ Справаздач (кнопкі трымаюць formId; ядро — payload-функцыі вышэй)
 function _repExportCSV(formId) { const f = reportsState.data?.nodes?.find(n => n.id === formId)?.fields; if (f?._payload) _expCSV(f._payload); }
 function _repExportXLSX(formId) { const f = reportsState.data?.nodes?.find(n => n.id === formId)?.fields; if (f?._payload) _expXLSX(f._payload, () => _repStatus(formId, t('err'), true)); }
@@ -11149,9 +11105,9 @@ function _nodeDeepLink(nodeId) { return `${location.origin}${location.pathname}#
 let _shareCfg = null, _shareMode = 'pdf';
 function _shareOpen(cfg) {
   const modes = [];
-  // 📄 Дакумент — ПЕРШЫ (дэфолт): у чат ідзе спасылка, адчот адкрываецца як HTML праз reader.js
-  // (гарантавана рэндэрыцца ва ўкладцы браўзера, не спампоўваецца як PDF незалежна ад налад браўзера)
-  if (cfg.buildPayload) modes.push({ id: 'reader', ico: '📄', label: t('share_reader') }, { id: 'pdf', ico: '📕', label: 'PDF' }, { id: 'xlsx', ico: '📗', label: 'Excel' }, { id: 'csv', ico: '📘', label: 'CSV' });
+  // Пліткі = ФАРМАТЫ ФАЙЛА для ⬇ Спампаваць. У чат жа адчот ідзе ЗАЎСЁДЫ спасылкай-адкрыццём (reader.js,
+  // гл. _shareDoSend) — без асобнай пліткі «Дакумент» (яна блытала: спасылка vs файл выглядалі як два фарматы).
+  if (cfg.buildPayload) modes.push({ id: 'pdf', ico: '📕', label: 'PDF' }, { id: 'xlsx', ico: '📗', label: 'Excel' }, { id: 'csv', ico: '📘', label: 'CSV' });
   if (cfg.linkUrl) modes.push({ id: 'link', ico: '🔗', label: t('share_link') });
   if (!modes.length) return;
   _shareCfg = cfg; _shareMode = modes[0].id;
@@ -11173,12 +11129,14 @@ function _shareSetMode(m) {
   _shareMode = m;
   document.querySelectorAll('[data-smode]').forEach(b => b.style.borderColor = b.dataset.smode === m ? 'var(--accent)' : 'var(--border)');
   const act = document.getElementById('share-actions'); if (!act) return;
-  const dl = m === 'link' ? '📋 ' + t('btn_copy') : m === 'reader' ? '👁 ' + t('share_open') : '⬇ ' + t('share_download');
+  const dl = m === 'link' ? '📋 ' + t('btn_copy') : '⬇ ' + t('share_download');
   const abtn = 'padding:11px;border-radius:10px;cursor:pointer;font-size:0.85rem;font-weight:600;flex:1';
+  // падказка пад кнопкамі: тлумачыць, што ⬇ = файл, а 💬 у чат = спасылка (адкрыецца ў браўзеры) — знята блытаніна
+  const hint = m !== 'link' ? `<div style="font-size:0.72rem;color:var(--muted);margin-top:8px;line-height:1.35">💬 ${escHtml(t('share_chat_hint'))}</div>` : '';
   act.innerHTML = `<div style="display:flex;gap:8px">
     <button onclick="_shareDownload()" style="${abtn};background:var(--surface2);border:1px solid var(--border);color:var(--text)">${dl}</button>
     <button onclick="_shareChatStep()" style="${abtn};background:none;border:1px solid var(--accent);color:var(--accent)">💬 ${escHtml(t('share_to_chat'))}</button>
-  </div>`;
+  </div>${hint}`;
 }
 function _shareDownload() { // ⬇ спампаваць файл / 📋 скапіяваць спасылку
   if (_shareMode === 'link') { _copyText(_shareCfg.linkUrl); document.getElementById('share-modal')?.remove(); return; }
@@ -11200,27 +11158,20 @@ async function _shareChatStep() { // 💬 → выбар адрасатаў-су
 async function _shareDoSend() {
   const to = [...document.querySelectorAll('#share-modal [data-share-peer]:checked')].map(cb => cb.dataset.sharePeer);
   if (!to.length) { showAlert(t('share_pick_users')); return; }
-  const btn = document.getElementById('share-send-btn'); if (btn) { btn.disabled = true; btn.textContent = '⏳'; } // генерацыя PDF можа заняць секунду
+  const btn = document.getElementById('share-send-btn'); if (btn) { btn.disabled = true; btn.textContent = '⏳'; } // зрэз payload у KV можа заняць секунду
   try {
     let msg;
-    if (_shareMode === 'link') msg = { text: _shareCfg.linkUrl };
-    else if (_shareMode === 'reader') { // 📄 зрэз payload → KV (пад аўтарызацыяй) → спасылка #doc= у чат
+    // 💬 У чат — ЗАЎСЁДЫ спасылкай-адкрыццём (не файлам): payload → KV → #doc= → адкрыецца ў браўзеры
+    // атрымальніка праз reader.js (PDF-файл спампоўваўся б наладай браўзера). Фарматы-пліткі — толькі для ⬇ Спампаваць.
+    if (_shareMode === 'link') msg = { text: _shareCfg.linkUrl }; // 🔗 вузел-дыплінк (не payload) — як быў
+    else {
       const pl = _shareCfg.buildPayload?.();
       if (!pl || !(pl.tables || []).length) { showAlert(t('print_empty')); return; }
       let token = null;
       try { const r = await fetch(API, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'sharedoc_put', repo: REPO, password, payload: pl, title: _shareCfg.title || '' }) }); if (r.ok) token = (await r.json()).token; } catch {}
       if (!token) { showAlert(t('err')); return; }
       const url = `${location.origin}${location.pathname}#doc=${token}`;
-      msg = { text: '📄 ' + (_shareCfg.title || t('share_reader')) + '\n' + url };
-    }
-    else {
-      const pl = _shareCfg.buildPayload?.();
-      if (!pl || !(pl.tables || []).length) { showAlert(t('print_empty')); return; }
-      const file = await _repFileBytes(pl, _shareMode); if (!file) { showAlert(t('err')); return; }
-      let url = null;
-      try { const r = await fetch(API, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'file_upload', repo: REPO, password, prefix: 'chat', data: file.b64, contentType: file.mime, fileName: file.name }) }); if (r.ok) url = (await r.json()).url; } catch {}
-      if (!url) { showAlert(t('err')); return; }
-      msg = { text: '📊 ' + (_shareCfg.title || ''), attachments: [{ url, name: file.name, mimeType: file.mime }] };
+      msg = { text: '📄 ' + (_shareCfg.title || t('share_open_doc')) + '\n' + url };
     }
     const rs = await Promise.all(to.map(uid => fetch(API, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'chat_send', repo: REPO, password, toUserId: uid, ...msg }) }).catch(() => null)));
     document.getElementById('share-modal')?.remove();
