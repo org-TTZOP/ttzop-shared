@@ -13644,10 +13644,34 @@ let chatsState = {
     const f = form.fields || {}; // імя + тып чатніка + бэдж непрачытаных
     const kind = `<span style="font-size:0.7rem;color:var(--muted)">${escHtml(t(f._kind === 'client' ? 'chat_kind_client' : 'chat_kind_user'))}</span>`;
     const badge = f._unread ? ` <span class="chat-badge">${f._unread}</span>` : '';
-    return `${escHtml(f.label || '—')} ${kind}${badge}`;
+    // email пад імем (толькі калі прыслаў воркер — глядач АДМІН): відаць адразу, без ⓘ
+    const email = f._email ? `<div style="font-size:0.7rem;color:var(--muted);margin-top:1px">${escHtml(f._email)}</div>` : '';
+    return `<div>${escHtml(f.label || '—')} ${kind}${badge}${email}</div>`;
   },
-  _nodeSearchText: node => node.fields?._lastText || '' // пошук і па апошнім паведамленні
+  _nodeSearchText: node => (node.fields?._lastText || '') + ' ' + (node.fields?._email || ''), // пошук і па апошнім паведамленні + email
+  _drawerRelated: node => _chatPeerCardHtml(node) // ⓘ-панэль: картка суразмоўцы (лагін/роля/статус/правы/кантакт)
 };
+// ⓘ-картка суразмоўцы РМ Чаты (той жа _drawerCard, што кліент/заказ/запіс). Роля+статус — заўсёды;
+// лагін(email)/правы/кантакт — толькі калі chat_peers іх прыслаў (глядач АДМІН — гейт у воркеры).
+function _chatPeerCardHtml(node) {
+  const f = node?.fields; if (!f || !f._peerId) return ''; // толькі чатнікі (не хост/стандартныя адказы)
+  const isClient = f._kind === 'client';
+  const roleLabel = isClient ? t('chat_kind_client') : (f._role === 'owner' ? t('right_owner') : t('chat_kind_user'));
+  const stKey = 'user_status_' + f._status;
+  const statusLabel = f._status ? (t(stKey) !== stKey ? t(stKey) : f._status) : '';
+  const rows = [{ k: t('chat_role'), v: escHtml(roleLabel) }];
+  if (statusLabel) rows.push({ k: t('f_status'), v: escHtml(statusLabel) });
+  if (f._email) rows.push({ k: t('f_email'), v: escHtml(f._email) });
+  if (isClient && f._phone) rows.push({ k: t('phone'), v: escHtml(f._phone) });
+  if (!isClient) rows.push({ k: 'ID', v: escHtml(f._peerId) });
+  const sections = [{ title: t('chat_account'), rows }];
+  // правы доступу — толькі супрацоўніку і толькі калі прыслаў воркер (адмін); той самы рэндэр, што РМ Карыстальнікі
+  if (!isClient && f._rights && typeof f._rights === 'object')
+    sections.push({ title: t('user_rights'), html: _rightsViewTableHtml({ fields: { _isOwner: f._role === 'owner', ..._rightsToFields(f._rights) } }) });
+  const actions = [];
+  if (isClient && f._clientId) actions.push({ icon: '↗', label: t('client_details'), onclick: `goToClientCard('${f._clientId}')` });
+  return _drawerCard({ hero: { title: f.label || '—', subtitle: f._email || '', badge: { text: roleLabel } }, actions, sections });
+}
 async function loadChatsEditor() {
   currentNodeState = chatsState;
   const ed = document.getElementById('chats-editor');
@@ -13673,7 +13697,9 @@ async function loadChatsEditor() {
   // жывыя дыялогі (з апошнім паведамленнем) зверху, астатнія суразмоўцы ніжэй
   peers.slice().sort((a, b) => (byPeer[b.id]?.lastAt || '').localeCompare(byPeer[a.id]?.lastAt || '')).forEach((p, i) => {
     nodes.push({ id: 'chat-' + p.id, type: 'form', formSchema: 'chatDetails', parentId: p.kind === 'client' ? 'chats-clients' : 'chats-list', order: i, name: p.label, fields: {
-      label: p.label, _peerId: p.id, _kind: p.kind || 'user', _unread: byPeer[p.id]?.unread || 0, _lastText: byPeer[p.id]?.lastText || '', _chatMsgs: null } });
+      label: p.label, _peerId: p.id, _kind: p.kind || 'user', _unread: byPeer[p.id]?.unread || 0, _lastText: byPeer[p.id]?.lastText || '', _chatMsgs: null,
+      // ⓘ-картка суразмоўцы: палі прыходзяць з chat_peers (email/rights/phone/clientId — толькі калі глядач АДМІН)
+      _email: p.email || '', _status: p.status || '', _role: p.role || '', _rights: p.rights || null, _phone: p.phone || '', _clientId: p.clientId || '' } });
   });
   chatsState.data = { nodes };
   chatsState.expanded.add('chats-host');
