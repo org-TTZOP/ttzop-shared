@@ -2433,6 +2433,7 @@ async function _loginAvatarFetch(email) {
 })();
 // Праверка firstLogin пры загрузцы + аднаўленне сесіі па токене (Этап 3-2: без паўторнага ўводу пароля)
 (async function checkAuthStatus() {
+  if (await _docLinkCheck()) return; // 📄 #doc={token} — публічны прагляд дакумента БЕЗ логіна (новая ўкладка сесіі не мае)
   if (authToken) {
     try {
       const r = await fetch(API, { method:'POST', headers:{'Content-Type':'application/json'},
@@ -8365,25 +8366,31 @@ function _lookApplyCheck() {
   setTimeout(() => _lookApplyPair(decodeURIComponent(m[1]), decodeURIComponent(m[2])), 500);
 }
 window.addEventListener('hashchange', () => { if (_panelShown) _lookApplyCheck(); });
-// 📄 #doc={token}: атрымальнік (супрацоўнік) адкрывае дасланы ў чат зрэз адчота як HTML-дакумент праз
-// reader.js — гарантавана рэндэрыцца ва ўкладцы браўзера (не спампоўваецца як PDF). Payload чытаецца з KV
-// пад аўтарызацыяй свайго repo (sharedoc_get); замяняем бягучую старонку дакументам, ✕ вяртае ў панэль.
+// 📄 #doc={token}: адкрыць дасланы ў чат зрэз адчота як HTML-дакумент праз reader.js — гарантавана
+// рэндэрыцца ва ўкладцы браўзера (не спампоўваецца як PDF). ⚠️ БЕЗ ЛОГІНА: спасылка адкрываецца ў НОВАЙ
+// укладцы, а сесія панэлі — у sessionStorage (пер-таб) → новая ўкладка сесіі не мае. Таму sharedoc_get
+// ПУБЛІЧНЫ (token=capability) і гэты чэк выклікаецца ў boot ДА session_check. Вяртае true, калі хэш быў
+// #doc (boot не працягвае звычайны шлях). Замяняем старонку дакументам; ✕ (closeHref) → /admin/.
 async function _docLinkCheck() {
   const m = /^#doc=([a-z0-9]+)$/i.exec(location.hash || '');
-  if (!m) return;
+  if (!m) return false;
   const token = m[1];
   history.replaceState(null, '', location.pathname + location.search); // сцерці хэш, каб F5 не паўтараў
+  let rec = null;
   try {
-    const r = await fetch(API, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'sharedoc_get', repo: REPO, password, token }) });
-    if (!r.ok) { showAlert(t('doc_not_found')); return; }
-    const rec = await r.json();
-    if (!rec || !rec.payload) { showAlert(t('doc_not_found')); return; }
+    const r = await fetch(API, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'sharedoc_get', repo: REPO, token }) });
+    if (r.ok) rec = await r.json();
+  } catch {}
+  if (rec && rec.payload) {
     const cfg = _repReaderCfg(rec.payload);
-    cfg.closeHref = location.pathname; // ✕ у чытачы вяртае ў панэль
+    cfg.closeHref = location.pathname; // ✕ у чытачы → /admin/ (панэль/лагін)
     replaceWithReaderDoc(cfg);
-  } catch { showAlert(t('doc_not_found')); }
+  } else { // токен пратух/няправільны — простая старонка, НЕ экран лагіна
+    document.body.innerHTML = `<div style="min-height:100vh;display:flex;align-items:center;justify-content:center;font-family:sans-serif;color:#555;padding:24px;text-align:center;font-size:1rem">${escHtml(t('doc_not_found'))}</div>`;
+  }
+  return true;
 }
-window.addEventListener('hashchange', () => { if (_panelShown) _docLinkCheck(); });
+window.addEventListener('hashchange', () => { if (_panelShown) _docLinkCheck(); }); // той-жа-таб клік па #doc (рэдка: спасылкі _blank)
 // асноўны шлях «✓ Выбраць»: прэв'ю шле выбар сюды і само закрываецца — панэль ужо адкрытая, дублікат не ствараецца
 // BroadcastChannel 'ttzop-look' — толькі стары шлях палітра+дызайн ({p,d} з сайта «✓ Выбраць»).
 // Фаза D рэдагаванне секцый БОЛЬШ НЕ праз панэль: оверлэй піша ў чарнавік прама праз worker draft_set
@@ -10555,7 +10562,7 @@ function showPanel() {
   if (!_topbarClockTimer) _topbarClockTimer = setInterval(_topbarClockTick, 1000); // 🕐 жывы гадзіннік пояса галоўнага філіяла
   _deepLinkCheck(); // 🔗 #go={page}/{nodeId} — адкрыць РМ і сфакусаваць вузел па спасылцы
   _lookApplyCheck(); // 👁 #look={palette}/{design} — ужыць выбраны ў прэв'ю варыянт выгляду
-  _docLinkCheck(); // 📄 #doc={token} — адкрыць зрэз адчота, дасланы ў чат, як HTML-дакумент
+  // (📄 #doc={token} апрацоўваецца ў boot ДА session_check — публічна, без логіна; тут не трэба)
   _setFavicon(settings.company?.logoIcon); // favicon браўзера з іконкі кампаніі
   renderAdminLangPicker();
   applyUILang();
