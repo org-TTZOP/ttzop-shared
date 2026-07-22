@@ -8365,6 +8365,25 @@ function _lookApplyCheck() {
   setTimeout(() => _lookApplyPair(decodeURIComponent(m[1]), decodeURIComponent(m[2])), 500);
 }
 window.addEventListener('hashchange', () => { if (_panelShown) _lookApplyCheck(); });
+// 📄 #doc={token}: атрымальнік (супрацоўнік) адкрывае дасланы ў чат зрэз адчота як HTML-дакумент праз
+// reader.js — гарантавана рэндэрыцца ва ўкладцы браўзера (не спампоўваецца як PDF). Payload чытаецца з KV
+// пад аўтарызацыяй свайго repo (sharedoc_get); замяняем бягучую старонку дакументам, ✕ вяртае ў панэль.
+async function _docLinkCheck() {
+  const m = /^#doc=([a-z0-9]+)$/i.exec(location.hash || '');
+  if (!m) return;
+  const token = m[1];
+  history.replaceState(null, '', location.pathname + location.search); // сцерці хэш, каб F5 не паўтараў
+  try {
+    const r = await fetch(API, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'sharedoc_get', repo: REPO, password, token }) });
+    if (!r.ok) { showAlert(t('doc_not_found')); return; }
+    const rec = await r.json();
+    if (!rec || !rec.payload) { showAlert(t('doc_not_found')); return; }
+    const cfg = _repReaderCfg(rec.payload);
+    cfg.closeHref = location.pathname; // ✕ у чытачы вяртае ў панэль
+    replaceWithReaderDoc(cfg);
+  } catch { showAlert(t('doc_not_found')); }
+}
+window.addEventListener('hashchange', () => { if (_panelShown) _docLinkCheck(); });
 // асноўны шлях «✓ Выбраць»: прэв'ю шле выбар сюды і само закрываецца — панэль ужо адкрытая, дублікат не ствараецца
 // BroadcastChannel 'ttzop-look' — толькі стары шлях палітра+дызайн ({p,d} з сайта «✓ Выбраць»).
 // Фаза D рэдагаванне секцый БОЛЬШ НЕ праз панэль: оверлэй піша ў чарнавік прама праз worker draft_set
@@ -10536,6 +10555,7 @@ function showPanel() {
   if (!_topbarClockTimer) _topbarClockTimer = setInterval(_topbarClockTick, 1000); // 🕐 жывы гадзіннік пояса галоўнага філіяла
   _deepLinkCheck(); // 🔗 #go={page}/{nodeId} — адкрыць РМ і сфакусаваць вузел па спасылцы
   _lookApplyCheck(); // 👁 #look={palette}/{design} — ужыць выбраны ў прэв'ю варыянт выгляду
+  _docLinkCheck(); // 📄 #doc={token} — адкрыць зрэз адчота, дасланы ў чат, як HTML-дакумент
   _setFavicon(settings.company?.logoIcon); // favicon браўзера з іконкі кампаніі
   renderAdminLangPicker();
   applyUILang();
@@ -10973,13 +10993,15 @@ function _repPaperBody(pl) {
     ${tot.some(x => x !== '') ? `<tfoot><tr>${tot.map(x => `<td style="${td};font-weight:700;text-align:right">${escHtml(String(x))}</td>`).join('')}</tr></tfoot>` : ''}</table>`; }).join('');
   return { sumHtml, tablesHtml };
 }
-function _expPDF(pl) { // фіксацыя дакумента: reader.js style:'paper' (як фактура) + window.print
+// адзіны білдэр reader-cfg з payload — для лакальнага openReaderWindow (📄/📕) і для #doc replaceWithReaderDoc
+function _repReaderCfg(pl) {
   const m = _expDisp(pl); const { sumHtml, tablesHtml } = _repPaperBody(pl);
-  openReaderWindow({ style: 'paper', title: m.title, lang: adminLang,
+  return { style: 'paper', title: m.title, lang: adminLang,
     meta: `${m.period ? m.period + ' · ' : ''}${t('rep_generated')}: ${m.at} · ${t('col_who')}: ${m.by}`, // 🕐👤 — і ў дакуменце
     bodyHtml: `<div style="font-size:13px;line-height:1.5">${sumHtml}${tablesHtml}</div>`,
-    siteName: REPO, labels: { pdfprint: '🖨 PDF', close: '✕', share: '↗' } });
+    siteName: REPO, labels: { pdfprint: '🖨 PDF', close: '✕', share: '↗' } };
 }
+function _expPDF(pl) { openReaderWindow(_repReaderCfg(pl)); } // фіксацыя дакумента: reader.js style:'paper' (як фактура) + window.print
 // ── БАЙТЫ ФАЙЛА (для чат-шэрынгу): base64 па фармаце. Uint8Array→base64 чанкамі (вялікі spread падае) ──
 function _bytesToB64(u8) { let bin = ''; for (let i = 0; i < u8.length; i += 8192) bin += String.fromCharCode.apply(null, u8.subarray(i, i + 8192)); return btoa(bin); }
 function _strToB64(str) { return _bytesToB64(new TextEncoder().encode(str)); }
@@ -11127,7 +11149,9 @@ function _nodeDeepLink(nodeId) { return `${location.origin}${location.pathname}#
 let _shareCfg = null, _shareMode = 'pdf';
 function _shareOpen(cfg) {
   const modes = [];
-  if (cfg.buildPayload) modes.push({ id: 'pdf', ico: '📕', label: 'PDF' }, { id: 'xlsx', ico: '📗', label: 'Excel' }, { id: 'csv', ico: '📘', label: 'CSV' });
+  // 📄 Дакумент — ПЕРШЫ (дэфолт): у чат ідзе спасылка, адчот адкрываецца як HTML праз reader.js
+  // (гарантавана рэндэрыцца ва ўкладцы браўзера, не спампоўваецца як PDF незалежна ад налад браўзера)
+  if (cfg.buildPayload) modes.push({ id: 'reader', ico: '📄', label: t('share_reader') }, { id: 'pdf', ico: '📕', label: 'PDF' }, { id: 'xlsx', ico: '📗', label: 'Excel' }, { id: 'csv', ico: '📘', label: 'CSV' });
   if (cfg.linkUrl) modes.push({ id: 'link', ico: '🔗', label: t('share_link') });
   if (!modes.length) return;
   _shareCfg = cfg; _shareMode = modes[0].id;
@@ -11149,7 +11173,7 @@ function _shareSetMode(m) {
   _shareMode = m;
   document.querySelectorAll('[data-smode]').forEach(b => b.style.borderColor = b.dataset.smode === m ? 'var(--accent)' : 'var(--border)');
   const act = document.getElementById('share-actions'); if (!act) return;
-  const dl = m === 'link' ? '📋 ' + t('btn_copy') : '⬇ ' + t('share_download');
+  const dl = m === 'link' ? '📋 ' + t('btn_copy') : m === 'reader' ? '👁 ' + t('share_open') : '⬇ ' + t('share_download');
   const abtn = 'padding:11px;border-radius:10px;cursor:pointer;font-size:0.85rem;font-weight:600;flex:1';
   act.innerHTML = `<div style="display:flex;gap:8px">
     <button onclick="_shareDownload()" style="${abtn};background:var(--surface2);border:1px solid var(--border);color:var(--text)">${dl}</button>
@@ -11180,6 +11204,15 @@ async function _shareDoSend() {
   try {
     let msg;
     if (_shareMode === 'link') msg = { text: _shareCfg.linkUrl };
+    else if (_shareMode === 'reader') { // 📄 зрэз payload → KV (пад аўтарызацыяй) → спасылка #doc= у чат
+      const pl = _shareCfg.buildPayload?.();
+      if (!pl || !(pl.tables || []).length) { showAlert(t('print_empty')); return; }
+      let token = null;
+      try { const r = await fetch(API, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'sharedoc_put', repo: REPO, password, payload: pl, title: _shareCfg.title || '' }) }); if (r.ok) token = (await r.json()).token; } catch {}
+      if (!token) { showAlert(t('err')); return; }
+      const url = `${location.origin}${location.pathname}#doc=${token}`;
+      msg = { text: '📄 ' + (_shareCfg.title || t('share_reader')) + '\n' + url };
+    }
     else {
       const pl = _shareCfg.buildPayload?.();
       if (!pl || !(pl.tables || []).length) { showAlert(t('print_empty')); return; }
@@ -13659,6 +13692,7 @@ function _chatLinkify(text) { // бяспечна: спачатку эскейп
   return esc.replace(/(https?:\/\/[^\s<]+)/g, u => {
     const go = u.indexOf('#go='); // 🔗 unutraная deep-link спасылка панэлі → той жа таб (hashchange зловіць), кампактны выгляд
     if (go > -1 && u.startsWith(location.origin)) return `<a href="${u.slice(go)}">🔗 ${u.slice(go + 4)}</a>`;
+    if (u.indexOf('#doc=') > -1 && u.startsWith(location.origin)) return `<a href="${u}" target="_blank" rel="noopener">📄 ${escHtml(t('share_open_doc'))}</a>`; // 📄 зрэз адчота → НОВАЯ ўкладка (reader.js)
     return `<a href="${u}" target="_blank" rel="noopener">${u}</a>`;
   }).replace(/\n/g, '<br>');
 }
