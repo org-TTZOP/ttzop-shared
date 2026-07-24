@@ -817,7 +817,7 @@ const FORM_SCHEMAS = {
     { key: 'date',        type: 'date',   label: 'f_date' },
     { key: 'amount',      type: 'number', label: 'f_amount' },
     { key: 'status', type: 'select',
-      options: ['new','reviewing','confirmed','in_progress','awaiting_payment','paid','completed','cancelled','paused'],
+      options: ['new','reviewing','confirmed','in_progress','awaiting_payment','paid','completed','cancelled'], // 'paused' — не ручны (⏸ site_pause), але ў labelMap застаецца для ПАКАЗУ ўжо стаўленага
       labelMap: { 'new':'order_new','reviewing':'order_reviewing','confirmed':'order_confirmed',
         'in_progress':'order_in_progress','awaiting_payment':'order_awaiting_payment',
         'paid':'order_paid','completed':'order_completed','cancelled':'order_cancelled','paused':'order_paused' },
@@ -10573,7 +10573,9 @@ async function _doSaveOrderStatus(notifyClient) {
 function _orderTableAddStatus(form, s) {
   // цана-0 (бясплатная паслуга/кансультацыя) → канвеер прапускае аплатную фазу (awaiting_payment/paid)
   const total = (form.fields?._cartRows || []).reduce((sum, r) => sum + (parseFloat(r.price) || 0) * (parseInt(r.qty) || 1), 0);
-  const statusOpts = ['new','reviewing','confirmed','in_progress','awaiting_payment','paid','completed','cancelled','paused']
+  // 🛡️ F7: 'paused' — НЕ ручны статус: ён выключае сайт кліента і ставіцца толькі кнопкай ⏸
+  // (site_pause, платформа+owner). Воркер адхіляе яго ў update_order_status → тут не прапануем.
+  const statusOpts = ['new','reviewing','confirmed','in_progress','awaiting_payment','paid','completed','cancelled']
     .filter(st => total > 0 || (st !== 'awaiting_payment' && st !== 'paid'));
   _nfmApplySchema(Object.assign([
     { key: 'status', type: 'select', label: 'f_status',
