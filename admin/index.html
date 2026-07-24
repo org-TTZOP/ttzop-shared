@@ -6903,6 +6903,7 @@ function nodeMakeCurrent(id) {
   if (!node.fields) node.fields = {};
   node.fields._current = true;
   node.updatedAt = new Date().toISOString();
+  s._onMakeCurrent?.(node); // хук: РМ можа зрэагаваць на змену бягучага (напр. panelview → ужыць схему іконак + KV)
   nodeSave(); nodeRender();
 }
 
@@ -7025,7 +7026,7 @@ function _mIco(id, plain) { const p = MENU_ICONS[id]; return p ? `<svg class="mi
 function _mIcoColored(id, col) { const p = MENU_ICONS[id]; return p ? `<svg viewBox="0 0 16 16" width="16" height="16" fill="none" style="display:block;pointer-events:none;margin:0 auto;color:${col || 'var(--label)'}">${p}</svg>` : ''; }
 _iconSchemeInject(); // ужыць схему адразу пры загрузцы (да ўваходу — з localStorage/дэфолт A)
 
-// ── РМ «Выгляд панэлі кіравання»: галерэя трох схем іконак + ○ Бягучая (асабіста, пер-супрацоўніка) ──
+// ── РМ «Выгляд панэлі кіравання» (КАНОН Ф/П/ПФФ): Форма-0 → Папка «Тыпы іконак» → 3 Формы (A/B/C) з ○ Бягучая ──
 const PV_GROUPS = [ // прэв'ю ⋯-меню па зонах (падзеленыя палоскамі, як у рэальным меню)
   ['addFolder', 'addForm', 'addFile', 'addNote'],
   ['dup', 'design', 'sort', 'arrange', 'restore', 'reset'],
@@ -7043,29 +7044,48 @@ function _pvMenuHtml(sc) { // статычнае прэв'ю дропдаўна 
   ).join('');
   return `<div style="display:inline-flex;flex-wrap:wrap;gap:3px;background:var(--surface);border:1px solid var(--border);border-radius:11px;padding:6px;max-width:264px">${cells}</div>`;
 }
-function _pvCardHtml(sc) {
-  const isCur = _iconScheme === sc;
-  const nameKey = { A: 'pv_scheme_a', B: 'pv_scheme_b', C: 'pv_scheme_c' }[sc];
-  const descKey = { A: 'pv_a_desc', B: 'pv_b_desc', C: 'pv_c_desc' }[sc];
-  return `<div style="border:1.5px solid ${isCur ? 'var(--accent)' : 'var(--border)'};border-radius:14px;padding:16px;display:flex;flex-direction:column;gap:12px;background:var(--surface2);transition:border-color 0.15s">
-    <div style="display:flex;align-items:center;gap:8px">
-      <span class="node-current-dot${isCur ? ' is-current' : ''}" title="${t(isCur ? 'pv_current' : 'lbl_not_current')}"></span>
-      <b style="font-size:0.98rem">${escHtml(t(nameKey))}</b>
-      ${isCur ? `<span style="margin-left:auto;font-size:0.72rem;font-weight:700;color:var(--accent);border:1px solid var(--accent);border-radius:20px;padding:2px 9px">✓ ${escHtml(t('pv_current'))}</span>` : ''}
-    </div>
-    <div style="font-size:0.82rem;color:var(--muted);line-height:1.5;min-height:2.4em">${escHtml(t(descKey))}</div>
-    ${_pvMenuHtml(sc)}
-    ${isCur ? '' : `<button onclick="_iconSchemeApply('${sc}', true); renderPanelView()" style="margin-top:2px;padding:10px;border-radius:10px;cursor:pointer;font-size:0.85rem;font-weight:600;background:none;border:1px solid var(--accent);color:var(--accent)">${escHtml(t('pv_make_current'))}</button>`}
-  </div>`;
+// цела Формы-схемы (секцыя-прэв'ю): апісанне + жывое прэв'ю ⋯-меню ў колерах гэтай схемы
+function _pvSchemeBody(form) {
+  const sc = form.fields?._scheme || 'A';
+  const descKey = { A: 'pv_a_desc', B: 'pv_b_desc', C: 'pv_c_desc' }[sc] || 'pv_a_desc';
+  return `<div style="font-size:0.85rem;color:var(--muted);line-height:1.5;margin-bottom:12px">${escHtml(t(descKey))}</div>${_pvMenuHtml(sc)}`;
 }
-function renderPanelView() {
-  const ed = document.getElementById('panelview-editor'); if (!ed) return;
-  ed.innerHTML = `<div style="max-width:900px">
-    <div style="font-size:0.9rem;color:var(--muted);line-height:1.55;margin-bottom:18px">${escHtml(t('pv_desc'))}</div>
-    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:14px">${ICON_SCHEME_IDS.map(_pvCardHtml).join('')}</div>
-  </div>`;
+FORM_SCHEMAS.pvScheme = { sections: [{ type: 'table', title: 'pv_preview', dataKey: '_pvPreview', bodyFn: form => _pvSchemeBody(form) }] }; // адна секцыя-прэв'ю (Table-продак з bodyFn)
+CONTENT_TYPES['pv-root'] = { // Форма-0 хост РМ: структура фіксаваная (прэсэты з кода, карыстальнік не змяняе)
+  canAddFolder: false, canAddForm: false, canAddItem: false, canDelete: false, canRename: false, // сістэмны хост РМ
+  canMoveOrder: false, canRelocate: false, canDuplicate: false, canActive: false, showActiveDot: false, // сістэмны хост РМ
+  showCurrentDot: false, canMakeCurrent: false, hasTrash: false, canSort: false, hasFilter: false, canLayout: false, // сістэмны хост РМ (няма стану/фільтра)
+};
+CONTENT_TYPES['pv-types'] = { // Папка «Тыпы іконак»: сістэмны кантэйнер трох прэсэтаў (склад фіксаваны кодам)
+  canAddFolder: false, canAddForm: false, canAddItem: false, canDelete: false, canRename: false, // сістэмны кантэйнер прэсэтаў
+  canMoveOrder: false, canRelocate: false, canDuplicate: false, canActive: false, showActiveDot: false, // сістэмны кантэйнер прэсэтаў
+  showCurrentDot: false, canMakeCurrent: false, hasTrash: false, canSort: false, hasFilter: false, canLayout: false, // сістэмны кантэйнер прэсэтаў (сам не выбіраецца)
+};
+CONTENT_TYPES['pvScheme'] = { // Форма-прэсэт схемы: толькі ○ Бягучая (showCurrentDot/canMakeCurrent — ад ПРОДАКФПФ)
+  showCurrentDot: f => !!f.fields?._current, // ○ бягучая схема
+  canRename: false, canDelete: false, canDuplicate: false, canMoveOrder: false, canRelocate: false, // прэсэт з кода (назва/склад/парадак фіксаваныя)
+  canActive: false, showActiveDot: false, // няма «актыўнай» — толькі «бягучая» (○)
+  canAddFolder: false, canAddForm: false, canAddItem: false, canSort: false, hasFilter: false, // ліставая форма-прэсэт (без дзяцей)
+  hasDesign: false, hasDescription: false, hasTrash: false, canBeLocked: false, canLayout: false, // прэсэт з кода — не рэдагуецца/не блакуецца
+};
+function _pvBuildNodes() { // хук _buildFn: будуем дрэва з код-каталога (нічога ў settings; «бягучая» — у KV пер-userId)
+  const host = { id: 'pv-host', type: 'form', formSchema: 'sectionsHost', parentId: null, order: 0, name: t('pv_title'), fields: {} };
+  const folder = { id: 'pv-folder', type: 'folder', parentId: 'pv-host', order: 0, contentType: 'pv-types', name: t('pv_folder_types'), fields: {} };
+  const nameKey = { A: 'pv_scheme_a', B: 'pv_scheme_b', C: 'pv_scheme_c' };
+  const forms = ICON_SCHEME_IDS.map((sc, i) => ({ id: 'pv-' + sc, type: 'form', formSchema: 'pvScheme', parentId: 'pv-folder', order: i, name: t(nameKey[sc]), fields: { _scheme: sc, _current: _iconScheme === sc } }));
+  panelViewState.data = { nodes: [host, folder, ...forms] };
+  panelViewState.expanded = new Set(['pv-host', 'pv-folder', ...forms.map(f => f.id)]); // раскрыць хост+папку+тры Формы → адразу відаць прэв'ю кожнай схемы
 }
-function loadPanelViewEditor() { renderPanelView(); }
+let panelViewState = {
+  data: null, saving: false, selected: new Set(), expanded: new Set(),
+  _movePanel: false, _relocateId: null, _section: 'panelview', _editorId: 'panelview-editor',
+  _localOnly: true, _spaceOnly: true, _rootType: 'pv-root', _rootName: () => t('pv_title'),
+  _buildFn: () => _pvBuildNodes(),
+  _onMakeCurrent: node => { if (node.fields?._scheme) _iconSchemeApply(node.fields._scheme, true); }, // ○ Бягучая → ужыць схему + захаваць пер-супрацоўніка (KV)
+  _saveFn: () => {}, // нічога ў settings: прэсэты з кода, «бягучая» жыве ў KV panel_prefs пер-userId
+  _renderFn: () => { currentNodeState = panelViewState; renderNodeEditor(panelViewState); },
+};
+function loadPanelViewEditor() { _pvBuildNodes(); currentNodeState = panelViewState; renderNodeEditor(panelViewState); }
 // схема колераў = профіль актыўнага супрацоўніка (Хваля 2). Пакуль дэфолт «B» — монахром+стан праз CSS.
 function _mIco(id) { const p = MENU_ICONS[id]; return p ? `<svg viewBox="0 0 16 16" width="16" height="16" fill="none" style="display:block;pointer-events:none;margin:0 auto">${p}</svg>` : ''; }
 
@@ -14880,7 +14900,7 @@ function _allNodeStates() {
   return [infoDrawerState, ordersState, appointmentsState, clientsState, languagesState, privacyState,
     companyState, generalContactState, generalBankingState, generalSecurityState, emailRoutingState, themeState,
     filesState, servicesState, faqState, advantagesState, testimonialsState, howWeWorkState, promotionsState, pricesState,
-    monitorState, ppffTestState, usersState, chatsState, deliveryState, reportsState, sectionsState, siteSectionsState]; // sectionsState — корань «Секцыі сайта» (быў прапушчаны → драг/фокус не бачылі яго вузлоў)
+    monitorState, ppffTestState, usersState, chatsState, deliveryState, reportsState, sectionsState, siteSectionsState, panelViewState]; // sectionsState — корань «Секцыі сайта» (быў прапушчаны → драг/фокус не бачылі яго вузлоў)
 }
 document.addEventListener('mousedown', e => {
   for (const s of _allNodeStates()) {
