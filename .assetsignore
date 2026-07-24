@@ -6,8 +6,22 @@ wrangler.jsonc
 merge-settings.py
 migrate-to-i18n.py
 test-results
+# 🛡️ F4: дадзеныя сайта не мусяць аддавацца статыкай — публічны шлях толькі праз воркер
+# (`/content/{site}/{section}`, дзе працуе фільтр сакрэтаў _publicSettings).
+# ⚠️ Git-дэплой Pages гэты файл ІГНАРУЕ — рэальны гейт тут robіць functions/_middleware.js;
+# спіс трымаем для Workers Static Assets і як дэкларацыю намеру.
+# ⚠️ settings-template.json і migrations.json тут БЫЛІ — прыбраны: панэль чытае іх са свайго
+# дамена (_settingsReconcileDefaults), яны мусяць дэплоіцца (у middleware — белы спіс).
 content/clients
 content/auth.json
 content/consents.json
-content/migrations.json
-content/settings-template.json
+content/settings.json
+content/settings_history.json
+content/reset_code.json
+content/email_verify.json
+content/exchange-rates.json
+content/exchange_rates_history.json
+content/appointments.json
+content/privacy
+content/sections.json
+content/services
