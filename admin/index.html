@@ -7066,8 +7066,6 @@ let panelViewState = {
   _renderFn: () => { currentNodeState = panelViewState; renderNodeEditor(panelViewState); },
 };
 function loadPanelViewEditor() { _pvBuildNodes(); currentNodeState = panelViewState; renderNodeEditor(panelViewState); }
-// схема колераў = профіль актыўнага супрацоўніка (Хваля 2). Пакуль дэфолт «B» — монахром+стан праз CSS.
-function _mIco(id) { const p = MENU_ICONS[id]; return p ? `<svg viewBox="0 0 16 16" width="16" height="16" fill="none" style="display:block;pointer-events:none;margin:0 auto">${p}</svg>` : ''; }
 
 // ▲▼ перастаноўка ФОРМЫ сярод сясцёр-форм (парытэт з nodeMoveFolder)
 function nodeMoveForm(id, dir) { nodeMove(id, dir); }
