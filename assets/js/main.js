@@ -2518,6 +2518,8 @@ async function detectLangByIp(activeLangs) {
 let orderStep = 'privacy'; // privacy → form → verify → [intake] → done
 let orderIntake = null;    // №3а: адказы анкеты «Свой сайт» (null = прапушчана)
 let orderEmail = '';
+let orderToken = '';       // 🛡️ білет пацверджанага email ад verify_order_code — сервер правярае яго ў register_order
+let orderPortalToken = ''; // альтэрнатыўны доказ: сесія кабінета (заказ без паўторнага кода)
 let orderDelivery = '', orderDeliveryCost = null, orderDeliveryZone = ''; // C2a/C2b: адрас + налічаны кошт + зона дастаўкі
 let privacyVersion = '';
 
@@ -2855,7 +2857,7 @@ async function sendOrderCode() {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ action: 'portal_me', repo: SITE_REPO, token: cabToken })
       });
-      if (meRes.ok) { await registerOrder(); showModal('done'); return; }
+      if (meRes.ok) { orderPortalToken = cabToken; await registerOrder(); showModal('done'); return; } // токен сесіі = доказ email для register_order
     } catch { /* сесія не пацвердзілася — звычайны шлях з кодам */ }
   }
 
@@ -2895,7 +2897,9 @@ async function registerOrder() {
       ...(orderDelivery ? { deliveryAddress: orderDelivery } : {}), // C2a: выбраны адрас дастаўкі
       ...(orderDeliveryCost != null ? { deliveryCost: orderDeliveryCost, deliveryZone: orderDeliveryZone } : {}), // C2b: налічаны кошт+зона
       ...((desiredSubdomain || trPackSub) ? { desiredSubdomain: desiredSubdomain || trPackSub } : {}), // trpack: мэта едзе тым жа полем заказа
-      ...(orderIntake ? { intake: orderIntake } : {}) // №3а: анкета «Свой сайт» (апцыянальная)
+      ...(orderIntake ? { intake: orderIntake } : {}), // №3а: анкета «Свой сайт» (апцыянальная)
+      ...(orderToken ? { orderToken } : {}),           // 🛡️ доказ валодання email: білет кода…
+      ...(orderPortalToken ? { portalToken: orderPortalToken } : {}) // …або сесія кабінета
     })
   });
   if (!regRes.ok) {
@@ -2925,6 +2929,8 @@ async function verifyOrderCode() {
       btn.disabled = false; btn.textContent = ui.verify_btn;
       return;
     }
+
+    orderToken = verifyData.orderToken || ''; // 🛡️ білет пацверджанага email → у register_order
 
     // 2. №3а: «Свой сайт» → крок анкеты (сайт народзіцца напоўнены). Іншыя заказы — як раней.
     if (desiredSubdomain) { showModal('intake'); return; }
