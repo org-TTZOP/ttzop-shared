@@ -486,6 +486,8 @@
         <div class="nav-item" data-page="reports"><span class="icon">📈</span> <span data-i18n="nav_reports">Справаздачы</span></div><!-- 📊 payload-ААП: тыпы з REPORT_CATALOG; правы гейтуе сервер пер-тып -->
         <div class="nav-item" data-page="languages"><span class="icon">🌐</span> <span data-i18n="nav_languages">Рэгіянальныя налады</span></div>
         <div class="nav-item" data-page="theme"><span class="icon">🎨</span> <span data-i18n="nav_theme">Тэма і колер</span></div>
+        <div class="nav-item" data-page="panelview"><span class="icon">🖥️</span> <span data-i18n="nav_panelview">Выгляд панэлі</span></div><!-- 🎨 асабісты выгляд панэлі (схема іконак) — даступны ЎСІМ супрацоўнікам, без гейта правоў -->
+
         <div class="nav-item" data-page="users" id="nav-users" style="display:none"><span class="icon">👤</span> <span data-i18n="nav_users">Карыстальнікі</span></div><!-- бачны толькі owner/canManageUsers (3-4) -->
         <div class="nav-item" data-page="chats" id="nav-chats"><span class="icon" style="position:relative">💬<span id="nav-chats-badge" class="chat-badge" style="position:absolute;top:-7px;right:-11px;display:none"></span></span> <span data-i18n="nav_chats">Чаты</span></div><!-- бэдж на іконцы (у вузкім сайдбары слова схавана; бэдж унутры .icon не ломіць правіла span:last-child) -->
 
@@ -559,6 +561,11 @@
       <div class="page" id="page-reports">
         <div class="page-title" data-i18n="nav_reports">Справаздачы</div>
         <div id="reports-editor"></div>
+      </div>
+      <!-- ══ ВЫГЛЯД ПАНЭЛІ (асабісты, схема іконак ⋯-меню) ══ -->
+      <div class="page" id="page-panelview">
+        <div class="page-title" data-i18n="pv_title">Выгляд панэлі кіравання</div>
+        <div id="panelview-editor"></div>
       </div>
 
       <!-- ══ СТАРОНКА САЙТА (Фаза 2a дынамічных секцый) ══ -->
@@ -2593,6 +2600,7 @@ async function _bootAfterAuth() {
   // пераключалка ёсць і на login-экране (login-lang-picker), і ў тапбары — чалавек выбірае сам)
   await loadSections();
   showPanel();
+  _iconSchemeLoad(); // 🎨 падцягнуць асабісты выбар схемы іконак супрацоўніка (серверны KV, не блакуем UI)
   if (_wizActive()) _wizGo(); // 🧭 новы сайт — правесці ўладальніка па 4 кроках (existing сайты: wizardStep undefined → нічога)
 }
 
@@ -4239,7 +4247,7 @@ function _nodeMenuItemsHtml(node, mid, s) {
   const dupClick     = nt === 'folder' ? `nodeDuplicateFolder('${node.id}')` : `nodeDuplicateItem('${node.id}')`;
   const relocClick   = nt === 'folder' ? `nodeShowRelocatePanel('${node.id}')` : `nodeStartRelocate('${node.id}')`;
   const delClick     = nt === 'folder' ? `nodeDeleteFolder('${node.id}')` : `nodeDeleteItemById('${node.id}')`;
-  const delIco       = _mIco('del'); // адзіная mono-іконка выдалення (папка/форма/файл)
+  const delIco       = _mIco('del', true); // адзіная іконка выдалення; plain → чырвоны ад .danger, не ад схемы
   const g1 = [
     cap('canActive') ? `<button class="node-overflow-item" title="${t(node.active!==false?'lang_hidden':'lang_active')}" onclick="${activeClick};nodeCloseOverflow('${mid}')">${_activeDotHtml(node.active === false)}</button>` : '',
     cap('canAddFolder') ? `<button class="node-overflow-item" title="${t('folder_add_sub')}" onclick="nodeAddFolder('${node.id}');nodeCloseOverflow('${mid}')">${_mIco('addFolder')}</button>` : '',
@@ -4251,7 +4259,7 @@ function _nodeMenuItemsHtml(node, mid, s) {
   const g2 = [
     cap('canDuplicate') ? `<button class="node-overflow-item" title="${t('btn_duplicate')}" onclick="${dupClick};nodeCloseOverflow('${mid}')">${_mIco('dup')}</button>` : '',
     cap('hasDesign') ? `<button class="node-overflow-item" title="${t('files_design')}" onclick="nodeToggleDesign();nodeCloseOverflow('${mid}')">${_mIco('design')}</button>` : '',
-    cap('canSort') ? `<button class="node-overflow-item${s._treeSortOpen?.has(node.id)?' active':''}" title="${t('node_sort_az')}" onclick="nodeToggleSort('${node.id}');nodeCloseOverflow('${mid}')">${_mIco('sort')}</button>` : '',
+    cap('canSort') ? `<button class="node-overflow-item${s._treeSortOpen?.has(node.id)?' active':''}" title="${t('node_sort_az')}" onclick="nodeToggleSort('${node.id}');nodeCloseOverflow('${mid}')">${_mIco('sort', s._treeSortOpen?.has(node.id))}</button>` : '',
     // Размяшчэнне дзяцей — на ЛЮБЫМ кантэйнеры з >1 дзіцем: 💾 Запомніць (кліенцкі дэфолт) · ↩ Аднавіць (да снімка, калі ёсць) · ↺ Па змаўчанні (завадскі)
     _nodeArrangeShow(node, s) ? `<button class="node-overflow-item" title="${t('layout_remember')}" onclick="_nodeArrangeRemember('${node.id}');nodeCloseOverflow('${mid}')">${_mIco('arrange')}</button>` : '',
     (_nodeArrangeShow(node, s) && _nodeHasArrangeSnapshot(node)) ? `<button class="node-overflow-item" title="${t('layout_restore')}" onclick="_nodeArrangeRestore('${node.id}');nodeCloseOverflow('${mid}')">${_mIco('restore')}</button>` : '',
@@ -4261,14 +4269,14 @@ function _nodeMenuItemsHtml(node, mid, s) {
     cap('hasFilter') ? `<button class="node-overflow-item${filterOn?' active':''}" title="${t('node_filter')}" onclick="nodeToggleFolderFilter('${node.id}');nodeCloseOverflow('${mid}')">${_icoFilter(filterOn)}</button>`
       : (_formHasRichtext(node, s) ? `<button class="node-overflow-item" title="${t('node_filter')}" onclick="nodeFindInText('${node.id}');nodeCloseOverflow('${mid}')">${_icoFilter(false)}</button>` : ''), // форма з richtext: 🔍 пошук у тэксце (як усе фільтры, у ⋯)
     (cap('canMakeCurrent') && !node.fields?._current) ? `<button class="node-overflow-item" title="${t('btn_make_current')}" onclick="nodeMakeCurrent('${node.id}');nodeCloseOverflow('${mid}')">${_currentDotHtml(true)}</button>` : '',
-    cap('canBeLocked') ? `<button class="node-overflow-item" title="${t(node.fields?._locked ? 'node_unlock' : 'node_lock')}" onclick="nodeToggleLock('${node.id}');nodeCloseOverflow('${mid}')" style="${node.fields?._locked ? 'color:var(--accent)' : 'opacity:0.6'}">${_mIco('lock')}</button>` : '', // іконка = ДЗЕЯННЕ (замкнёны аб'ект → адкрыты замок «адамкнуць», акцэнт); СТАН паказвае іконка пры назве
+    cap('canBeLocked') ? `<button class="node-overflow-item" title="${t(node.fields?._locked ? 'node_unlock' : 'node_lock')}" onclick="nodeToggleLock('${node.id}');nodeCloseOverflow('${mid}')" style="${node.fields?._locked ? 'color:var(--accent)' : 'opacity:0.6'}">${_mIco('lock', true)}</button>` : '', // іконка = ДЗЕЯННЕ (замкнёны аб'ект → адкрыты замок «адамкнуць», акцэнт); СТАН паказвае іконка пры назве
     cap('canRename') ? `<button class="node-overflow-item" title="${t('node_rename')}" onclick="${renameClick};nodeCloseOverflow('${mid}')">${_mIco('rename')}</button>` : '', // секцыйныя формы больш НЕ выключаны глабальна: чыя назва = node.name (тэма) — пераназываюцца; чыя ў палях — canRename:false канфігам
     cap('hasDescription') ? `<button class="node-overflow-item" title="${t('node_description')}" onclick="nodeEditDescription('${node.id}');nodeCloseOverflow('${mid}')">${_mIco('desc')}</button>` : '',
     (node.type === 'form' && _formMlEntries(node, s).length) ? `<button class="node-overflow-item" title="${t('tr_btn')}" onclick="_nodeTranslate('${node.id}');nodeCloseOverflow('${mid}')">${_mIco('translate')}${_trLeftCache != null ? `<sup style="font-size:0.6em;opacity:0.7">${_trLeftCache}</sup>` : ''}</button>` : '', // 🌐 AI-пераклад пустых моў (генерычна: форма з ml-палямі)
     (node.type === 'folder' && (s?.data?.nodes || []).some(n => n.type === 'form' && n.parentId === node.id && _formMlEntries(n, s).length)) ? `<button class="node-overflow-item" title="${t('tr_tree_btn')}" onclick="_nodeTranslateTree('${node.id}');nodeCloseOverflow('${mid}')">${_mIco('translate')}</button>` : '', // 🌐 перакласці ЎСЕ формы паддрэва
     (node.type === 'file' && _nodeIsImage(node)) ? `<button class="node-overflow-item" title="${t('pe_title')}" onclick="_nodeFileEditPhoto('${node.id}');nodeCloseOverflow('${mid}')">${_mIco('photo')}</button>` : '', // ✂️ рэдагаваць ужо загружанае фота
     // 📤 УНІФІКАВАНАЯ «Падзяліцца» (спасылка/файл × спампаваць/чат) — адна замест 🔗+📤+🖨 (ААП: адзін механізм)
-    (cap('hasLink') || cap('hasPrint')) ? `<button class="node-overflow-item" title="${t('node_share')}" onclick="_nodeShare('${node.id}');nodeCloseOverflow('${mid}')">${_icoShare()}</button>` : '',
+    (cap('hasLink') || cap('hasPrint')) ? `<button class="node-overflow-item" title="${t('node_share')}" onclick="_nodeShare('${node.id}');nodeCloseOverflow('${mid}')">${_mIco('share')}</button>` : '',
     cap('canRelocate') ? `<button class="node-overflow-item" title="${t('folder_move_to')}" onclick="${relocClick};nodeCloseOverflow('${mid}')">${_mIco('move')}</button>` : ''
   ].filter(Boolean).join('');
   const gx = s._nodeMenuExtra?.(node, mid) ?? '';
@@ -4826,13 +4834,13 @@ function _secLockToggle(formId, secId) {
 function _sectionMenuCommonHtml(form, section, s, menuId) {
   // 📤 Падзяліцца АСОБНАЙ секцыяй («як бачыш»: фільтр/сартыроўка на момант націску) — на ЛЮБОЙ секцыі,
   // у т.л. віртуальнай (праз кэш _tblSectionCache); файл (без спасылкі — секцыя не мае deep-link)
-  const printBtn = `<button class="node-overflow-item" title="${t('node_share')}" onclick="_sectionShare('${escHtml(String(form.id))}','${escHtml(String(section.dataKey || _secId(section)))}');nodeCloseOverflow('${menuId}')">${_icoShare()}</button>`;
+  const printBtn = `<button class="node-overflow-item" title="${t('node_share')}" onclick="_sectionShare('${escHtml(String(form.id))}','${escHtml(String(section.dataKey || _secId(section)))}');nodeCloseOverflow('${menuId}')">${_mIco('share')}</button>`;
   if (!_scap(section, 'canLock', form, s)) return printBtn;
   if (!s?.data?.nodes?.some(n => n.id === form.id)) return printBtn;
   // форма пад поўным 🔒 → цьмяны НЕклікабельны індыкатар з прычынай (каб «зніклыя кнопкі» не заганялі ў зман)
-  if (form.fields?._locked) return printBtn + `<button class="node-overflow-item" title="${t('node_locked_by_form')}" style="opacity:0.4;cursor:default" onclick="event.stopPropagation()">${_mIco('lock')}</button>`;
+  if (form.fields?._locked) return printBtn + `<button class="node-overflow-item" title="${t('node_locked_by_form')}" style="opacity:0.4;cursor:default" onclick="event.stopPropagation()">${_mIco('lock', true)}</button>`;
   const locked = (form.fields?._lockedSecs || []).includes(_secId(section));
-  return printBtn + `<button class="node-overflow-item" title="${t(locked ? 'node_unlock' : 'node_lock')}" onclick="_secLockToggle('${form.id}','${escHtml(_secId(section))}');nodeCloseOverflow('${menuId}')" style="${locked ? 'color:var(--accent)' : 'opacity:0.6'}">${_mIco('lock')}</button>`; // іконка = ДЗЕЯННЕ (замкнёная секцыя → адкрыты замок «адамкнуць», акцэнт); СТАН — пры назве секцыі
+  return printBtn + `<button class="node-overflow-item" title="${t(locked ? 'node_unlock' : 'node_lock')}" onclick="_secLockToggle('${form.id}','${escHtml(_secId(section))}');nodeCloseOverflow('${menuId}')" style="${locked ? 'color:var(--accent)' : 'opacity:0.6'}">${_mIco('lock', true)}</button>`; // іконка = ДЗЕЯННЕ (замкнёная секцыя → адкрыты замок «адамкнуць», акцэнт); СТАН — пры назве секцыі
 }
 function _secLockIconHtml(form, section) { // замок пры назве залочанай секцыі: свой = акцэнт; ад формы = цьмяны (прычына ў тултыпе)
   if (form?.fields?._locked) return `<span style="margin-left:2px;opacity:0.45;display:inline-flex;vertical-align:middle" title="${t('node_locked_by_form')}">${_icoLock(false)}</span>`;
@@ -6971,7 +6979,93 @@ const MENU_ICONS = {
   move:'<path d="M2 5.6V4Q2 3 3 3H5.9L7 4.6H10Q11 4.6 11 5.6V7.4" stroke="currentColor" stroke-width="1.4"/><path d="M6 11.2h6.4M9.7 8.6l2.7 2.6-2.7 2.6" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>',
   del:'<path d="M3.5 4.6h9M6 4.6V3.3Q6 2.6 6.7 2.6h2.6Q10 2.6 10 3.3V4.6M4.8 4.6l.55 8.1Q5.4 13.4 6.4 13.4h3.2Q10.6 13.4 10.65 12.7L11.2 4.6" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/><path d="M6.8 6.8v4.4M9.2 6.8v4.4" stroke="currentColor" stroke-width="1.25" stroke-linecap="round"/>',
   lock:'<rect x="3.6" y="7" width="8.8" height="6.2" rx="1.5" stroke="currentColor" stroke-width="1.5"/><path d="M5.5 7V5.3a2.5 2.5 0 0 1 5 0V7" stroke="currentColor" stroke-width="1.5"/>',
+  share:'<rect x="3.1" y="6.6" width="9.8" height="6.9" rx="1.5" stroke="currentColor" stroke-width="1.4"/><path d="M8 9.6V2.6M5.6 5 8 2.6 10.4 5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>',
 };
+// ── СХЕМЫ КОЛЕРУ ІКОНАК (код-каталог, як прэсэты тэм) — выбар пер-супрацоўніка (KV panel_prefs) ──
+// A = ідэнтычнасць (кожная свой колер) · B = монахром (пуста → усе шэрыя) · C = гібрыд (якары + стан).
+// Стан (актыў/замкнёны/фільтр-on/выдаліць) заўсёды пераважвае схему — гл. `plain` у _mIco + CSS .active/.danger.
+const ICON_SCHEMES = {
+  A: { addFolder:'#f59e0b', addForm:'#60a5fa', addFile:'#34d399', addNote:'#fbbf24', eye:'#38bdf8', dup:'#a78bfa',
+       design:'#94a3b8', sort:'#94a3b8', arrange:'#f472b6', restore:'#94a3b8', reset:'#94a3b8', rename:'#a3b3c9',
+       desc:'#a3b3c9', translate:'#3b82f6', photo:'#ec4899', move:'#f59e0b', del:'#ef4444', lock:'#eab308', share:'#f97316' },
+  B: {},
+  C: { addFolder:'#f59e0b', move:'#f59e0b', share:'#f97316', translate:'#f97316', del:'#ef4444' },
+};
+const ICON_SCHEME_IDS = ['A', 'B', 'C'];
+let _iconScheme = 'A'; // дэфолт з каробкі — каляровая (A); перакрываецца localStorage/сервернымі prefs
+try { const _sv = localStorage.getItem('ttzop_icon_scheme_' + (typeof REPO !== 'undefined' ? REPO : '')); if (ICON_SCHEME_IDS.includes(_sv)) _iconScheme = _sv; } catch {}
+// CSS актыўнай схемы: пер-іконку .mi-<id>{color} (глабальна — і ⋯-меню, і Даведка). Пуста (схема B) = нічога → шэры.
+function _iconSchemeCss(scheme) {
+  const m = ICON_SCHEMES[scheme] || {};
+  return Object.keys(m).map(id => `.mi-${id}{color:${m[id]}}`).join('');
+}
+function _iconSchemeInject() {
+  let st = document.getElementById('mi-scheme-css');
+  if (!st) { st = document.createElement('style'); st.id = 'mi-scheme-css'; document.head.appendChild(st); }
+  st.textContent = _iconSchemeCss(_iconScheme);
+}
+// прымяніць схему лакальна (CSS + localStorage) і — калі save — захаваць на серверы пер-супрацоўніка
+function _iconSchemeApply(id, save) {
+  if (!ICON_SCHEME_IDS.includes(id)) return;
+  _iconScheme = id;
+  try { localStorage.setItem('ttzop_icon_scheme_' + REPO, id); } catch {}
+  _iconSchemeInject();
+  if (save) fetch(API, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'panel_prefs_set', repo: REPO, password, prefs: { iconScheme: id } }) }).catch(() => {});
+}
+// падцягнуць серверны выбар пасля ўваходу (ідзе за супрацоўнікам на любой прыладзе)
+async function _iconSchemeLoad() {
+  try {
+    const r = await fetch(API, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'panel_prefs_get', repo: REPO, password }) });
+    if (r.ok) { const id = (await r.json())?.prefs?.iconScheme; if (ICON_SCHEME_IDS.includes(id) && id !== _iconScheme) _iconSchemeApply(id, false); }
+  } catch {}
+}
+// іконка ⋯-меню: клас mi-<id> бярэ колер актыўнай схемы; plain=true (кнопкі-стан: замок/выдаліць/актыўны сорт) → без колеру схемы, каб пераважыў стан (акцэнт/чырвоны)
+function _mIco(id, plain) { const p = MENU_ICONS[id]; return p ? `<svg class="mi${plain ? '' : ' mi-' + id}" viewBox="0 0 16 16" width="16" height="16" fill="none" style="display:block;pointer-events:none;margin:0 auto">${p}</svg>` : ''; }
+// іконка з ЯЎНЫМ колерам (для прэв'ю схем у РМ «Выгляд панэлі» — паказвае колер НЕ актыўнай схемы)
+function _mIcoColored(id, col) { const p = MENU_ICONS[id]; return p ? `<svg viewBox="0 0 16 16" width="16" height="16" fill="none" style="display:block;pointer-events:none;margin:0 auto;color:${col || 'var(--label)'}">${p}</svg>` : ''; }
+_iconSchemeInject(); // ужыць схему адразу пры загрузцы (да ўваходу — з localStorage/дэфолт A)
+
+// ── РМ «Выгляд панэлі кіравання»: галерэя трох схем іконак + ○ Бягучая (асабіста, пер-супрацоўніка) ──
+const PV_GROUPS = [ // прэв'ю ⋯-меню па зонах (падзеленыя палоскамі, як у рэальным меню)
+  ['addFolder', 'addForm', 'addFile', 'addNote'],
+  ['dup', 'design', 'sort', 'arrange', 'restore', 'reset'],
+  ['rename', 'desc', 'translate', 'photo', 'lock'],
+  ['share'], ['move'], ['del'],
+];
+function _pvColor(sc, id) { // колер іконкі ў прэв'ю канкрэтнай схемы (del заўсёды чырвоны = стан danger)
+  if (id === 'del') return '#ef4444';
+  return (ICON_SCHEMES[sc] || {})[id] || '#9aa3b8';
+}
+function _pvMenuHtml(sc) { // статычнае прэв'ю дропдаўна ў колерах схемы sc
+  const cells = PV_GROUPS.map((g, gi) =>
+    g.map(id => `<span style="width:34px;height:34px;display:grid;place-items:center">${_mIcoColored(id, _pvColor(sc, id))}</span>`).join('') +
+    (gi < PV_GROUPS.length - 1 ? '<div style="width:100%;height:1px;background:var(--border);margin:2px 0"></div>' : '')
+  ).join('');
+  return `<div style="display:inline-flex;flex-wrap:wrap;gap:3px;background:var(--surface);border:1px solid var(--border);border-radius:11px;padding:6px;max-width:264px">${cells}</div>`;
+}
+function _pvCardHtml(sc) {
+  const isCur = _iconScheme === sc;
+  const nameKey = { A: 'pv_scheme_a', B: 'pv_scheme_b', C: 'pv_scheme_c' }[sc];
+  const descKey = { A: 'pv_a_desc', B: 'pv_b_desc', C: 'pv_c_desc' }[sc];
+  return `<div style="border:1.5px solid ${isCur ? 'var(--accent)' : 'var(--border)'};border-radius:14px;padding:16px;display:flex;flex-direction:column;gap:12px;background:var(--surface2);transition:border-color 0.15s">
+    <div style="display:flex;align-items:center;gap:8px">
+      <span class="node-current-dot${isCur ? ' is-current' : ''}" title="${t(isCur ? 'pv_current' : 'lbl_not_current')}"></span>
+      <b style="font-size:0.98rem">${escHtml(t(nameKey))}</b>
+      ${isCur ? `<span style="margin-left:auto;font-size:0.72rem;font-weight:700;color:var(--accent);border:1px solid var(--accent);border-radius:20px;padding:2px 9px">✓ ${escHtml(t('pv_current'))}</span>` : ''}
+    </div>
+    <div style="font-size:0.82rem;color:var(--muted);line-height:1.5;min-height:2.4em">${escHtml(t(descKey))}</div>
+    ${_pvMenuHtml(sc)}
+    ${isCur ? '' : `<button onclick="_iconSchemeApply('${sc}', true); renderPanelView()" style="margin-top:2px;padding:10px;border-radius:10px;cursor:pointer;font-size:0.85rem;font-weight:600;background:none;border:1px solid var(--accent);color:var(--accent)">${escHtml(t('pv_make_current'))}</button>`}
+  </div>`;
+}
+function renderPanelView() {
+  const ed = document.getElementById('panelview-editor'); if (!ed) return;
+  ed.innerHTML = `<div style="max-width:900px">
+    <div style="font-size:0.9rem;color:var(--muted);line-height:1.55;margin-bottom:18px">${escHtml(t('pv_desc'))}</div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:14px">${ICON_SCHEME_IDS.map(_pvCardHtml).join('')}</div>
+  </div>`;
+}
+function loadPanelViewEditor() { renderPanelView(); }
 // схема колераў = профіль актыўнага супрацоўніка (Хваля 2). Пакуль дэфолт «B» — монахром+стан праз CSS.
 function _mIco(id) { const p = MENU_ICONS[id]; return p ? `<svg viewBox="0 0 16 16" width="16" height="16" fill="none" style="display:block;pointer-events:none;margin:0 auto">${p}</svg>` : ''; }
 
@@ -8102,7 +8196,7 @@ function _nodeRootMenuHtml(s, menuId, leftMenu = false) {
   const rootFilterActive = s._folderFilters?.[null] !== undefined;
   const filterBtn = cap('hasFilter') ? `<button class="node-overflow-item${rootFilterActive?' active':''}" title="${t('node_filter')}" onclick="nodeToggleFolderFilter(null);nodeCloseOverflow('${menuId}')">${_icoFilter(rootFilterActive)}</button>` : '';
   // 📤 Падзяліцца УСІМ РМ (усе вузлы верхняга ўзроўню з паддрэвамі) — файл; cap hasPrint ад _rootType (дэфолт regular=true)
-  const printBtn = cap('hasPrint') ? `<button class="node-overflow-item" title="${t('node_share')}" onclick="_rootShare();nodeCloseOverflow('${menuId}')">${_icoShare()}</button>` : '';
+  const printBtn = cap('hasPrint') ? `<button class="node-overflow-item" title="${t('node_share')}" onclick="_rootShare();nodeCloseOverflow('${menuId}')">${_mIco('share')}</button>` : '';
   const items = `${addFolder}${addNote}${addItem}${addForm}${sortBtn}${filterBtn}${printBtn}${s._rootMenuExtraHtml ? s._rootMenuExtraHtml(menuId) : ''}`;
   if (!items) return '';
   return `<div class="node-overflow-menu-grid" id="nof-${menuId}"${pos}>${items}</div>`;
@@ -14615,6 +14709,7 @@ document.querySelectorAll('.nav-item').forEach(item => {
     if (item.dataset.page==='sitepage') setTimeout(loadSitePageEditor, 100);
     if (item.dataset.page==='appointments') setTimeout(loadAppointmentsEditor, 100);
     if (item.dataset.page==='reports') setTimeout(loadReportsEditor, 100);
+    if (item.dataset.page==='panelview') setTimeout(loadPanelViewEditor, 100);
     if (item.dataset.page==='monitor') { currentNodeState = monitorState; setTimeout(loadMonitor,100); }
     if (item.dataset.page==='ppff-test') { loadPpffTestEditor(); }
   });
