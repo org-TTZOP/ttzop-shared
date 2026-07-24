@@ -1404,7 +1404,23 @@ FORM_SCHEMAS.companyStructure = Object.assign({
     { type: 'flat', id: 'payment', title: 'payment_section', editable: true, visible: form => (form.parentId ?? null) === null,
       onEdit: (form, s) => _nodeFlatSectionEdit(form, s, 'payment'),
       blocks: [ { key: 'paymentInstructions', type: 'textarea', label: 'payment_instructions', readOnly: () => true, ml: true, settingsKey: 'paymentInstructions' },
-        { key: 'payDays', type: 'number', label: 'pay_days', readOnly: () => true, settingsKey: 'payDays' } ] }
+        { key: 'payDays', type: 'number', label: 'pay_days', readOnly: () => true, settingsKey: 'payDays' } ] },
+    // ГЛАБАЛЬНЫ ЧОРНЫ СПІС ПАДДАМЕНАЎ — толькі галоўны офіс платформы. Дзейнічае на ЎСЕ прапановы
+    // (пер-пазіцыйны спіс у Каталогу застаецца і толькі ДАДАЕ забароны). settingsKey → settings.blockedSubs,
+    // воркер чытае жывыя налады пры кожнай праверцы — ні кнопкі «сінхранізаваць», ні публікацыі не трэба.
+    // ⚠️ Код-мінімум (RFC-імёны + прастора ttzop*) адсюль НЕ аслабляецца — панэль можа толькі дадаць.
+    { type: 'table', id: 'blocked-subs', title: 'blocked_subs_all', dataKey: '_blockedSubsAll', settingsKey: 'blockedSubs',
+      addable: true, rowEditable: true, rowDeletable: true, keepOrder: true,
+      visible: form => IS_PLATFORM && (form.parentId ?? null) === null,
+      onAdd: (form, s) => _accRowAdd(form, s, '_blockedSubsAll'),
+      rowSchema: [
+        { key: 'pattern', type: 'text', label: 'svc_bs_pattern', hint: 'svc_bs_hint' },
+        { key: 'note',    type: 'text', label: 'f_note' }
+      ],
+      columns: [
+        { key: 'pattern', label: 'svc_bs_pattern', type: 'text' },
+        { key: 'note',    label: 'f_note',         type: 'text' }
+      ] }
   ],
   // free-layout цяпер ДЭФОЛТ для ўсіх секцыйных форм (гл. _isFreeForm) — сцяг зняты; толькі дэфолтны парадак застаецца пер-схемай:
   _layoutDefault: all => { const isLogo = o => o.node && o.node.contentType === 'company-logos'; return [...all.filter(isLogo), ...all.filter(o => !isLogo(o))]; } // Папка «Лагатыпы» — першай зверху па змаўчанні
@@ -11636,7 +11652,11 @@ function _buildCompanyForms() {
     : { id: n.id, type: 'form', formSchema: n.formSchema, parentId: n.parentId ?? null, order: n.order || 0, name: n.name || '', fields: n.fields || {} }; });
   // company Form-0 (галоўны офіс) → сховішча company-tree; settingsKey-блокі секцый (напр. Web3Forms) — з settings (крыніца ісціны)
   const head0 = nodes.find(n => n.type === 'form' && n.formSchema === 'companyStructure' && (n.parentId ?? null) === null);
-  if (head0) { head0._store = 'company-tree'; head0._sys = true; _companySettingsBlocks().forEach(b => (head0.fields || (head0.fields = {}))[b.key] = settings[b.settingsKey] || ''); } // галоўны офіс — сістэмны каркас (не выдаліць/не перамясціць)
+  if (head0) {
+    head0._store = 'company-tree'; head0._sys = true; // галоўны офіс — сістэмны каркас (не выдаліць/не перамясціць)
+    _companySettingsBlocks().forEach(b => (head0.fields || (head0.fields = {}))[b.key] = settings[b.settingsKey] || '');
+    _companySettingsTables().forEach(sec => (head0.fields || (head0.fields = {}))[sec.dataKey] = Array.isArray(settings[sec.settingsKey]) ? settings[sec.settingsKey] : []);
+  }
   // дадатковыя Form-0 Прасторы «Агульныя налады» (не ў companyTree — захоўваюцца сваімі Метадамі):
   // 3-5: «Акаўнт уладальніка» (Email+пароль) перанесены ў картку owner РМ Карыстальнікі (бачны толькі самому ўладальніку)
   nodes.push({ id: 'general-ppff', type: 'form', formSchema: 'ppffHelp', parentId: null, order: 99, _store: 'readonly', name: t('caps_matrix_title'), fields: {} }); // Даведка (read-only)
@@ -11679,6 +11699,7 @@ function _companyProjectSite() {
   }
   if (f._phones && f._phones[0]) settings.phone = f._phones[0].value || '';
   _companySettingsBlocks().forEach(b => settings[b.settingsKey] = f[b.key] || ''); // settingsKey-блокі (Web3Forms/Інструкцыі аплаты) → settings
+  _companySettingsTables().forEach(sec => settings[sec.settingsKey] = Array.isArray(f[sec.dataKey]) ? f[sec.dataKey] : []); // settingsKey-табліцы (чорны спіс паддаменаў) → settings
   // C3-1: рэквізіты аплат = ○ Бягучы банк галоўнага офіса (fallback: першы па парадку) + першы рахунак →
   // settings.banking {accountHolder,bankName,iban,bic} — АБ'ЕКТ, як чытаюць worker getBankingHtml / чат {banking} / кабінет
   const banksF = nodes.find(n => n.type === 'folder' && n.contentType === 'company-banks' && n.parentId === head.id);
@@ -11692,6 +11713,11 @@ function _companyProjectSite() {
 // Блокі секцый companyStructure з settingsKey (захоўваюцца ў settings, не ў companyTree; толькі галоўны офіс)
 function _companySettingsBlocks() {
   return (FORM_SCHEMAS.companyStructure.sections || []).flatMap(sec => (sec.blocks || []).filter(b => b.settingsKey));
+}
+// Тое ж для СЕКЦЫЙ-накапляльнікаў: секцыя з settingsKey трымае свой масіў у settings.<key>, а не ў companyTree
+// (люстэрка _companySettingsBlocks — механізм адзін, розніца толькі «поле vs табліца»)
+function _companySettingsTables() {
+  return (FORM_SCHEMAS.companyStructure.sections || []).filter(sec => sec.settingsKey && sec.dataKey);
 }
 // Стварэнне формы-секцыі (Банк/Філіял) адразу з дэфолтамі; філіял атрымлівае свае Папкі-0 Банкі/Філіялы (рэкурсія)
 // 🌑 «новае нараджаецца НеАктыЎНЫМ» (генерычны сцяг стэйта _newInactive): новы вузел ствараецца з active:false —
