@@ -11137,12 +11137,19 @@ function _shareSetMode(m) {
   document.querySelectorAll('[data-smode]').forEach(b => b.style.borderColor = b.dataset.smode === m ? 'var(--accent)' : 'var(--border)');
   const act = document.getElementById('share-actions'); if (!act) return;
   const dl = m === 'link' ? '📋 ' + t('btn_copy') : '⬇ ' + t('share_download');
-  const abtn = 'padding:11px;border-radius:10px;cursor:pointer;font-size:0.85rem;font-weight:600;flex:1';
-  // падказка пад кнопкамі: тлумачыць, што ⬇ = файл, а 💬 у чат = спасылка (адкрыецца ў браўзеры) — знята блытаніна
-  const hint = m !== 'link' ? `<div style="font-size:0.72rem;color:var(--muted);margin-top:8px;line-height:1.35">💬 ${escHtml(t('share_chat_hint'))}</div>` : '';
+  const abtn = 'padding:11px;border-radius:10px;font-size:0.85rem;font-weight:600;flex:1';
+  // 💬 У чат нясе толькі СПАСЫЛКУ (дакумент-чытач / вузел-дыплінк) → мае сэнс толькі для PDF і 🔗;
+  // Excel/CSV — файлы на дыск, у чат не ідуць → кнопка глушыцца (кліент больш не думае, што выбраў Excel, а прыйшоў PDF)
+  const chatOk = m === 'pdf' || m === 'link';
+  // падказка пад кнопкамі: pdf → «у чат спасылкай»; xlsx/csv → «толькі спампаваць»; link → без падказкі (і так спасылка)
+  const hint = !chatOk ? `<div style="font-size:0.72rem;color:var(--muted);margin-top:8px;line-height:1.35">💬 ${escHtml(t('share_chat_pdf_only'))}</div>`
+    : (m === 'pdf' ? `<div style="font-size:0.72rem;color:var(--muted);margin-top:8px;line-height:1.35">💬 ${escHtml(t('share_chat_hint'))}</div>` : '');
+  const chatBtn = chatOk
+    ? `<button onclick="_shareChatStep()" style="${abtn};cursor:pointer;background:none;border:1px solid var(--accent);color:var(--accent)">💬 ${escHtml(t('share_to_chat'))}</button>`
+    : `<button disabled title="${escHtml(t('share_chat_pdf_only'))}" style="${abtn};cursor:not-allowed;opacity:0.4;background:none;border:1px solid var(--border);color:var(--muted)">💬 ${escHtml(t('share_to_chat'))}</button>`;
   act.innerHTML = `<div style="display:flex;gap:8px">
-    <button onclick="_shareDownload()" style="${abtn};background:var(--surface2);border:1px solid var(--border);color:var(--text)">${dl}</button>
-    <button onclick="_shareChatStep()" style="${abtn};background:none;border:1px solid var(--accent);color:var(--accent)">💬 ${escHtml(t('share_to_chat'))}</button>
+    <button onclick="_shareDownload()" style="${abtn};cursor:pointer;background:var(--surface2);border:1px solid var(--border);color:var(--text)">${dl}</button>
+    ${chatBtn}
   </div>${hint}`;
 }
 function _shareDownload() { // ⬇ спампаваць файл / 📋 скапіяваць спасылку
@@ -11153,6 +11160,7 @@ function _shareDownload() { // ⬇ спампаваць файл / 📋 скап
   if (_shareMode === 'csv') _expCSV(pl); else if (_shareMode === 'xlsx') _expXLSX(pl, () => showAlert(t('err'))); else _expPDF(pl);
 }
 async function _shareChatStep() { // 💬 → выбар адрасатаў-супрацоўнікаў
+  if (!(_shareMode === 'pdf' || _shareMode === 'link')) return; // у чат — толькі спасылка (PDF-дакумент / дыплінк), не Excel/CSV
   let peers = [];
   try { const r = await fetch(API, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'chat_peers', repo: REPO, password }) }); if (r.ok) peers = (await r.json()).peers || []; } catch {}
   peers = peers.filter(p => p.kind === 'user'); // толькі супрацоўнікі — бізнес-дакумент кліенту не шлём (уцечка)
