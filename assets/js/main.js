@@ -3445,13 +3445,13 @@ function _dSecMenu(id, btn) {
   // g1 — як у панэлі: ● актыў · +📂 Папка · +🗒 (раздзел → пікер тыпаў секцый, аналаг пікера віду ў
   // Каталогу; ліставая → пазіцыя; іншая секцыя — без 🗒: «Форму не кладуць у Форму») · +📎 Файл
   const g1 = mi(_dDot(!hidden), hidden ? _dL('Схавана — паказаць', 'Hidden — show') : _dL('Актыўна — схаваць', 'Active — hide'), `_dSecSetEnabled('${_dsEsc(id)}',${hidden})`)
-    + (!isFile ? mi('+📂', _dL('Дадаць Папку', 'Add folder'), `_dAddNode('folder','','${_dsEsc(id)}')`) : '')
-    + (isFolder ? mi('+🗒', _dL('Дадаць Секцыю', 'Add section'), `_dTypePick('${_dsEsc(id)}',this)`)
-      : itemKey ? mi('+🗒', _dL('Дадаць пазіцыю', 'Add item'), `_dItemAdd('${_dsEsc(id)}','${_dsEsc(itemKey)}','${_dsEsc(sec.type)}')`) : '')
-    + (!isFile ? mi('+📎', _dL('Дадаць Файл (фота)', 'Add file (photo)'), `_dFileAdd('${_dsEsc(id)}')`) : '');
-  const g2 = mi('⧉', _dL('Дубляваць', 'Duplicate'), `_dSecDup('${_dsEsc(id)}')`);
-  const g3 = mi('✎', _dL('Пераназваць', 'Rename'), `_dSecFocusTitle('${_dsEsc(id)}')`);
-  const g4 = mi('✕', _dL('Выдаліць', 'Delete'), `_dSecDelete('${_dsEsc(id)}')`, 'ds-mi-del');
+    + (!isFile ? mi(window.TTZOP_mIco('addFolder'), _dL('Дадаць Папку', 'Add folder'), `_dAddNode('folder','','${_dsEsc(id)}')`) : '')
+    + (isFolder ? mi(window.TTZOP_mIco('addForm'), _dL('Дадаць Секцыю', 'Add section'), `_dTypePick('${_dsEsc(id)}',this)`)
+      : itemKey ? mi(window.TTZOP_mIco('addForm'), _dL('Дадаць пазіцыю', 'Add item'), `_dItemAdd('${_dsEsc(id)}','${_dsEsc(itemKey)}','${_dsEsc(sec.type)}')`) : '')
+    + (!isFile ? mi(window.TTZOP_mIco('addFile'), _dL('Дадаць Файл (фота)', 'Add file (photo)'), `_dFileAdd('${_dsEsc(id)}')`) : '');
+  const g2 = mi(window.TTZOP_mIco('dup'), _dL('Дубляваць', 'Duplicate'), `_dSecDup('${_dsEsc(id)}')`);
+  const g3 = mi(window.TTZOP_mIco('rename'), _dL('Пераназваць', 'Rename'), `_dSecFocusTitle('${_dsEsc(id)}')`);
+  const g4 = mi(window.TTZOP_mIco('del'), _dL('Выдаліць', 'Delete'), `_dSecDelete('${_dsEsc(id)}')`, 'ds-mi-del');
   const m = document.createElement('div'); m.id = 'ds-menu'; m.className = 'ds-menu ds-menu-grid';
   m.innerHTML = [g1, g2, g3, g4].filter(Boolean).join(sep)
     + (params ? `${sep}<div class="ds-mi-sep">🎨 ${_svcEsc(_dL('Параметры', 'Params'))}</div><div class="ds-mparams">${params}</div>` : '');
@@ -3565,9 +3565,9 @@ function _dItemMenu(secId, key, idx, type, btn) { // ⋯ пазіцыі — та
   const sep = '<div class="ds-msep"></div>';
   const m = document.createElement('div'); m.id = 'ds-menu'; m.className = 'ds-menu ds-menu-grid';
   m.innerHTML = [
-    _dItemFields(type).length ? mi('✎', _dL('Рэдагаваць', 'Edit'), `_dItemEdit('${_dsEsc(secId)}','${_dsEsc(key)}',${idx},'${_dsEsc(type)}')`) : '',
-    mi('⧉', _dL('Дубляваць', 'Duplicate'), `_dItemDup('${_dsEsc(secId)}','${_dsEsc(key)}',${idx})`),
-    mi('✕', _dL('Выдаліць', 'Delete'), `_dItemDelete('${_dsEsc(secId)}','${_dsEsc(key)}',${idx})`, 'ds-mi-del') // канонны чырвоны ✕
+    _dItemFields(type).length ? mi(window.TTZOP_mIco('rename'), _dL('Рэдагаваць', 'Edit'), `_dItemEdit('${_dsEsc(secId)}','${_dsEsc(key)}',${idx},'${_dsEsc(type)}')`) : '',
+    mi(window.TTZOP_mIco('dup'), _dL('Дубляваць', 'Duplicate'), `_dItemDup('${_dsEsc(secId)}','${_dsEsc(key)}',${idx})`),
+    mi(window.TTZOP_mIco('del'), _dL('Выдаліць', 'Delete'), `_dItemDelete('${_dsEsc(secId)}','${_dsEsc(key)}',${idx})`, 'ds-mi-del') // канонны чырвоны ✕
   ].filter(Boolean).join(sep);
   document.body.appendChild(m);
   const r = btn.getBoundingClientRect();
@@ -3637,13 +3637,13 @@ function _dSrcMenu(id, btn) { // тая ж панэльная сетка іко�
   const m = document.createElement('div'); m.id = 'ds-menu'; m.className = 'ds-menu ds-menu-grid';
   // g1 — Папкі-групы: +📂/+🗒/+📎; пазіцыя: +📎 (фота → яе аўта-Папка «Фота», парытэт з панэллю)
   const g1 = n.type === 'folder'
-    ? mi('+📂', _dL('Дадаць Папку', 'Add folder'), `_dSrcAdd('folder','${_dsEsc(id)}')`) + mi('+🗒', _dL('Дадаць пазіцыю', 'Add item'), `_dSrcTypePick('${_dsEsc(id)}',this)`) + mi('+📎', _dL('Дадаць фота', 'Add photo'), `_dSrcFilePick('${_dsEsc(id)}')`)
-    : mi('+📎', _dL('Фота карткі (слайдэр)', 'Card photos (slider)'), `_dSrcFilePick('${_dsEsc(id)}')`) + mi('📝', _dL('Падрабязнае апісанне', 'Full description'), `_dSrcBodyEdit('${_dsEsc(id)}')`);
+    ? mi(window.TTZOP_mIco('addFolder'), _dL('Дадаць Папку', 'Add folder'), `_dSrcAdd('folder','${_dsEsc(id)}')`) + mi(window.TTZOP_mIco('addForm'), _dL('Дадаць пазіцыю', 'Add item'), `_dSrcTypePick('${_dsEsc(id)}',this)`) + mi(window.TTZOP_mIco('addFile'), _dL('Дадаць фота', 'Add photo'), `_dSrcFilePick('${_dsEsc(id)}')`)
+    : mi(window.TTZOP_mIco('addFile'), _dL('Фота карткі (слайдэр)', 'Card photos (slider)'), `_dSrcFilePick('${_dsEsc(id)}')`) + mi(window.TTZOP_mIco('desc'), _dL('Падрабязнае апісанне', 'Full description'), `_dSrcBodyEdit('${_dsEsc(id)}')`);
   m.innerHTML = [
     g1,
-    mi('⧉', _dL('Дубляваць', 'Duplicate'), `_dMenuClose();_dSrcPost({op:'dup',id:'${_dsEsc(id)}'})`),
-    mi('✎', _dL('Рэдагаваць', 'Edit'), `_dSrcEdit('${_dsEsc(id)}')`),
-    mi('✕', _dL('Выдаліць', 'Delete'), `_dSrcDelete('${_dsEsc(id)}')`, 'ds-mi-del')
+    mi(window.TTZOP_mIco('dup'), _dL('Дубляваць', 'Duplicate'), `_dMenuClose();_dSrcPost({op:'dup',id:'${_dsEsc(id)}'})`),
+    mi(window.TTZOP_mIco('rename'), _dL('Рэдагаваць', 'Edit'), `_dSrcEdit('${_dsEsc(id)}')`),
+    mi(window.TTZOP_mIco('del'), _dL('Выдаліць', 'Delete'), `_dSrcDelete('${_dsEsc(id)}')`, 'ds-mi-del')
   ].filter(Boolean).join(sep);
   document.body.appendChild(m);
   const r = btn.getBoundingClientRect();
