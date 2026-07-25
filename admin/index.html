@@ -747,7 +747,7 @@ function _monitorTopChartHtml() {
 // ═══ 🚨 ЖУРНАЛ АЛЕРТАЎ — АДЗІН дэскрыптар секцыі на ДВА выгляды (узор _trLedger) ═══
 // site='' → глабальны (усе паддамены, калонка «Сайт» бачная); site=паддамен → зрэз карткі (калонка схаваная).
 // Дадзеныя ленава ў form.fields._alerts праз dataFn — той жа канон, што выпіс перакладаў.
-const _AL_KINDS = { limit: 'al_k_limit', sentinel: 'al_k_sentinel', llm: 'al_k_llm', email: 'al_k_email', crash: 'al_k_crash', payment: 'al_k_payment' };
+const _AL_KINDS = { limit: 'al_k_limit', sentinel: 'al_k_sentinel', llm: 'al_k_llm', email: 'al_k_email', crash: 'al_k_crash', payment: 'al_k_payment', backup: 'al_k_backup' }; // backup — збой дзённага здымка
 const _AL_SEV = { info: 'al_s_info', warn: 'al_s_warn', crit: 'al_s_crit' };
 const _alertsInflight = new Set();
 function _alertsSection(withSite) { // withSite=false → картка паддамена (сайт і так відны ў назве формы)
@@ -784,6 +784,63 @@ function _alertsSummaryHtml(form) { // зводка ў загалоўку: кр�
 // 🚨 глабальны журнал у целе Формы-0 Маніторынга (як «Папаўненні API»): віртуальная форма al-all
 function _monitorAlertsHtml() {
   return _nodeTableSectionHtml({ id: 'al-all', fields: monitorState._alAll || (monitorState._alAll = {}) }, _alertsSection(true), monitorState);
+}
+// 🗄️ спіс здымкаў — віртуальная форма bak-all (той жа шлях, што al-all)
+function _monitorBackupsHtml() {
+  return _nodeTableSectionHtml({ id: 'bak-all', fields: monitorState._bakAll || (monitorState._bakAll = {}) }, _BACKUP_SECTION, monitorState);
+}
+// 🗄️ БЭКАПЫ: КАНОННАЯ Table-секцыя ў целе Формы-0 Маніторынга (той жа дэскрыптар-узор, што алерты:
+// ленавы dataFn + emptyHeader + зводка ў headerExtra). ➕ у ⋯ = «зрабіць здымак зараз» (рэестр-onAdd,
+// толькі без мадала палёў: у здымка няма параметраў). Аднаўленне — НЕ тут, а tools/backup-restore.mjs
+// (гл. docs/backup-restore.md): яно перазапісвае жывое і мусіць патрабаваць CLI-доступу да сакрэтаў.
+const _BACKUP_SECTION = { type: 'table', title: 'bak_title', dataKey: '_backups', addable: true, emptyHeader: true,
+  onAdd: () => _backupRunNow(),
+  dataFn: (form, s) => _backupData(form),
+  headerExtra: (form, s) => _backupSummaryHtml(form),
+  columns: [
+    { key: 'day',      label: 'bak_col_day',    type: 'text' },
+    { key: 'd1Rows',   label: 'bak_col_d1',     type: 'number', align: 'right' },
+    { key: 'kvKeys',   label: 'bak_col_kv',     type: 'number', align: 'right' },
+    { key: 'r2Files',  label: 'bak_col_r2',     type: 'number', align: 'right' },
+    { key: 'errors',   label: 'bak_col_errors', type: 'number', align: 'right' },
+    { key: 'reason',   label: 'bak_col_reason', type: 'text' },
+  ] };
+let _bakInflight = false;
+function _backupData(form) { // ленавая загрузка (узор _alertsData)
+  if (form.fields._backups === undefined && !_bakInflight) { _bakInflight = true; _backupLoad(form); }
+  return Array.isArray(form.fields._backups) ? form.fields._backups : [];
+}
+async function _backupLoad(form) {
+  try {
+    const res = await fetch(API, { method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'backup_list', repo: REPO, password, limit: 60 }) });
+    const d = res.ok ? await res.json() : null;
+    form.fields._backups = Array.isArray(d?.rows) ? d.rows : [];
+    if (currentNodeState === monitorState) renderNodeEditor(monitorState);
+  } catch { form.fields._backups = []; } finally { _bakInflight = false; }
+}
+function _backupSummaryHtml(form) { // зводка: калі быў апошні здымак і ці быў ён чысты
+  const rows = Array.isArray(form.fields?._backups) ? form.fields._backups : [];
+  if (!rows.length) return `<span style="font-size:0.75rem;color:#ef4444;font-weight:400">${escHtml(t('bak_none'))}</span>`;
+  const last = rows[0], bad = (+last.errors || 0) > 0;
+  // ⏳ здымак старэйшы за 2 сутак = «бэкапу фактычна няма» — гэта мусіць быць чырвоным, а не спакойным
+  const stale = (Date.now() - new Date(last.day + 'T00:00:00Z')) > 2 * 86400e3;
+  const col = bad || stale ? '#ef4444' : 'var(--muted)';
+  return `<span style="font-size:0.75rem;color:${col};font-weight:400">${escHtml(t('bak_summary').replace('{day}', last.day || '—').replace('{n}', last.d1Rows ?? '—'))}</span>`;
+}
+async function _backupRunNow() {
+  showConfirm(t('bak_run_confirm'), async () => {
+    const form = { id: 'bak-all', fields: monitorState._bakAll || (monitorState._bakAll = {}) };
+    try {
+      const res = await fetch(API, { method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'backup_run', repo: REPO, password }) });
+      const d = await res.json().catch(() => ({}));
+      if (!res.ok || d.error) { showAlert(_srvErrText(res, d, t('err_save'))); return; }
+      const m = d.manifest || {}, rows = Object.values(m.d1 || {}).reduce((a, b) => a + b, 0);
+      showAlert(t('bak_done').replace('{n}', rows).replace('{k}', Object.values(m.kv || {}).reduce((a, b) => a + b, 0)).replace('{e}', (m.errors || []).length));
+      form.fields._backups = undefined; _backupLoad(form); // перачытаць спіс
+    } catch (e) { showAlert(t('err_connection')); }
+  }, { label: t('bak_run'), danger: false });
 }
 // 💰 КАНОННАЯ Table-секцыя «Папаўненні API» (наш баланс Anthropic) у целе Формы-0 Маніторынгу:
 // рэестр-onAdd (як аплаты ў заказе) — ➕ у ⋯ адкрывае мадал сумы; зводка балансу праз headerExtra.
@@ -12721,7 +12778,7 @@ let monitorState = {
   _rootName: () => t('nav_monitor'),
   _autoRefreshEnabled: false, _lastRefresh: null, _autoRefreshMs: 300000, // 5 хвілін
   _formSchema: 'monitorStat', // caps праз CONTENT_TYPES['monitorStat/Client']
-  _formBodyHtml: () => _monitorAlertsHtml() + _monitorApiBalanceHtml() + _monitorTopChartHtml(), // 🚨 Алерты + 💰 Папаўненні API + 📈 «Дынаміка лімітаў» у целе Формы-0 (вышэй за Папкі-0)
+  _formBodyHtml: () => _monitorAlertsHtml() + _monitorBackupsHtml() + _monitorApiBalanceHtml() + _monitorTopChartHtml(), // 🚨 Алерты + 🗄️ Бэкапы + 💰 Папаўненні API + 📈 «Дынаміка лімітаў» у целе Формы-0 (вышэй за Папкі-0)
   _loadFn: async () => loadMonitor(),
   _onFolderExpand: folder => {
     if (folder.id === 'mf-overview') {
