@@ -1987,7 +1987,10 @@ CONTENT_TYPES['emailRoute']        = { // нашчадак ПРОДАКФПФ; �
 };
 CONTENT_TYPES['ownerAccount']      = { ..._formFixed }; // акаўнт уладальніка
 CONTENT_TYPES['ppffHelp']          = { ..._formFixed }; // даведка Ф/П/ПФФ (read-only)
-CONTENT_TYPES['regional']          = { ..._formFixed }; // Рэгіянальныя налады (карэнная форма)
+CONTENT_TYPES['currency']          = { ..._formFixed }; // Форма «Валюта сайта» ў Папцы-0 «Валюта» (валюта + курсы + гісторыя)
+CONTENT_TYPES['cur-root']          = { canSelect: false, showActiveDot: false, canActive: false, showCurrentDot: false, canMakeCurrent: false, // сістэмны кантэйнер: адна форма з кода
+  canAddFolder: false, canAddItem: false, canAddForm: false, // сістэмны кантэйнер: склад фіксаваны кодам (валюта — не калекцыя)
+  canDelete: false, canRename: false, canRelocate: false, canDuplicate: false, canMoveOrder: false, hasTrash: false }; // сістэмны кантэйнер (не карыстальніцкая папка)
 CONTENT_TYPES['orders']            = { ..._formFixed }; // заказ: чытальны
 CONTENT_TYPES['orderDetails'] = { // нашчадак CONTENT_TYPES['form'] → ПРОДАКФПФ; ТОЛЬКІ абмежаванні (ааП)
   canMoveOrder: false,   // адзіная форма ў заказе — перасоўванне не мае сэнсу
@@ -6984,9 +6987,16 @@ const MENU_ICONS = window.TTZOP_MENU_ICONS;
 const ICON_SCHEMES = {
   A: { addFolder:'#f59e0b', addForm:'#60a5fa', addFile:'#34d399', addNote:'#fbbf24', eye:'#38bdf8', dup:'#a78bfa',
        design:'#94a3b8', sort:'#94a3b8', arrange:'#f472b6', restore:'#94a3b8', reset:'#94a3b8', rename:'#a3b3c9',
-       desc:'#a3b3c9', translate:'#3b82f6', photo:'#ec4899', move:'#f59e0b', del:'#ef4444', lock:'#eab308', share:'#f97316' },
+       desc:'#a3b3c9', translate:'#3b82f6', photo:'#ec4899', move:'#f59e0b', del:'#ef4444', lock:'#eab308', share:'#f97316',
+       // дзеянні дыялогаў + фарматы файлаў (мадалка «Падзяліцца»)
+       download:'#94a3b8', copy:'#a3b3c9', chat:'#60a5fa', filePdf:'#ef4444', fileXls:'#22c55e', fileCsv:'#60a5fa', link:'#38bdf8',
+       // бакавое меню (навігацыя РМ) — тыя ж хады, што несла эмодзі-разметка
+       navMonitor:'#60a5fa', navTest:'#a78bfa', navGeneral:'#94a3b8', navPrivacy:'#fbbf24', navClients:'#38bdf8',
+       navOrders:'#f59e0b', navAppointments:'#34d399', navDelivery:'#f472b6', navSitepage:'#f97316', navSections:'#fbbf24',
+       navReports:'#4ade80', navLanguages:'#38bdf8', navTheme:'#ec4899', navPanelview:'#94a3b8', navUsers:'#a3b3c9', navChats:'#60a5fa' },
   B: {},
-  C: { addFolder:'#f59e0b', move:'#f59e0b', share:'#f97316', translate:'#f97316', del:'#ef4444' },
+  C: { addFolder:'#f59e0b', move:'#f59e0b', share:'#f97316', translate:'#f97316', del:'#ef4444',
+       filePdf:'#ef4444', link:'#f97316', navChats:'#f97316' }, // якары: небяспека/спасылка/жывая перапіска
 };
 const ICON_SCHEME_IDS = ['A', 'B', 'C'];
 let _iconScheme = 'A'; // дэфолт з каробкі — каляровая (A); перакрываецца localStorage/сервернымі prefs
@@ -7018,9 +7028,26 @@ async function _iconSchemeLoad() {
 }
 // іконка ⋯-меню: клас mi-<id> бярэ колер актыўнай схемы; plain=true (кнопкі-стан: замок/выдаліць/актыўны сорт) → без колеру схемы, каб пераважыў стан (акцэнт/чырвоны)
 function _mIco(id, plain) { const p = MENU_ICONS[id]; return p ? `<svg class="mi${plain ? '' : ' mi-' + id}" viewBox="0 0 16 16" width="16" height="16" fill="none" style="display:block;pointer-events:none;margin:0 auto">${p}</svg>` : ''; }
+// іконка ЛЮБОГА памеру са схемай (пліткі/кнопкі дыялогаў: той жа mi-<id>, што ў ⋯-меню → адзін колер-кантракт)
+function _mIcoBig(id, size) { return window.TTZOP_mIco(id, { cls: 'mi mi-' + id, size: size || 24 }); }
 // іконка з ЯЎНЫМ колерам (для прэв'ю схем у РМ «Выгляд панэлі» — паказвае колер НЕ актыўнай схемы)
 function _mIcoColored(id, col) { const p = MENU_ICONS[id]; return p ? `<svg viewBox="0 0 16 16" width="16" height="16" fill="none" style="display:block;pointer-events:none;margin:0 auto;color:${col || 'var(--label)'}">${p}</svg>` : ''; }
+// ── БАКАВОЕ МЕНЮ: page → іконка (код-каталог). Разметка трымала эмодзі → на Тэсле (Chromium без каляровага
+// emoji-шрыфту) выпадалі ў контур, і схема іконак іх не бачыла. Новы РМ = адзін радок тут ──
+const NAV_ICONS = { monitor:'navMonitor', 'ppff-test':'navTest', general:'navGeneral', privacy:'navPrivacy',
+  clients:'navClients', orders:'navOrders', appointments:'navAppointments', delivery:'navDelivery',
+  sitepage:'navSitepage', sections:'navSections', reports:'navReports', languages:'navLanguages',
+  theme:'navTheme', panelview:'navPanelview', users:'navUsers', chats:'navChats' };
+function _navIconsApply() { // эмодзі ў .icon → SVG (колер бярэ актыўная схема праз клас mi-<id>)
+  document.querySelectorAll('.nav-item[data-page]').forEach(el => {
+    const id = NAV_ICONS[el.dataset.page]; if (!id) return;
+    const ic = el.querySelector('.icon'); if (!ic || ic.querySelector('svg')) return;
+    [...ic.childNodes].forEach(n => { if (n.nodeType === 3) n.remove(); }); // зняць эмодзі-тэкст; БЭДЖ-элемент (чаты) не чапаем
+    ic.insertAdjacentHTML('afterbegin', _mIco(id));
+  });
+}
 _iconSchemeInject(); // ужыць схему адразу пры загрузцы (да ўваходу — з localStorage/дэфолт A)
+_navIconsApply();    // сайдбар малюецца разметкай (не рэндэрам) → падмяняем іконкі раз, адразу пасля разбору
 
 // ── РМ «Выгляд панэлі кіравання» (КАНОН Ф/П/ПФФ): Форма-0 → Папка «Тыпы іконак» → 3 Формы (A/B/C) з ○ Бягучая ──
 const PV_GROUPS = [ // прэв'ю ⋯-меню па зонах (падзеленыя палоскамі, як у рэальным меню)
@@ -7040,11 +7067,28 @@ function _pvMenuHtml(sc) { // статычнае прэв'ю дропдаўна 
   ).join('');
   return `<div style="display:inline-flex;flex-wrap:wrap;gap:3px;background:var(--surface);border:1px solid var(--border);border-radius:11px;padding:6px;max-width:264px">${cells}</div>`;
 }
-// цела Формы-схемы (секцыя-прэв'ю): апісанне + жывое прэв'ю ⋯-меню ў колерах гэтай схемы
+// прэв'ю БАКАВОГА МЕНЮ ў колерах схемы: рэпрэзентатыўны зрэз РМ (не ўвесь спіс — прэв'ю мусіць быць кампактным)
+const PV_NAV = [['general', 'nav_general'], ['clients', 'nav_clients'], ['orders', 'nav_orders'],
+  ['appointments', 'nav_appointments'], ['sections', 'nav_sections'], ['reports', 'nav_reports'], ['chats', 'nav_chats']];
+function _pvNavHtml(sc) { // макет сайдбара; першы радок «актыўны» — як у жывой панэлі
+  const rows = PV_NAV.map(([page, key], i) => {
+    const id = NAV_ICONS[page], on = i === 0;
+    return `<div style="display:flex;align-items:center;gap:8px;padding:6px 7px;border-radius:7px;font-size:0.76rem;${on ? 'background:rgba(249,115,22,0.12);color:var(--accent)' : 'color:var(--muted)'}">
+      <span style="width:20px;flex:0 0 auto;display:grid;place-items:center">${_mIcoColored(id, _pvColor(sc, id))}</span>
+      <span style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${escHtml(t(key))}</span></div>`;
+  }).join('');
+  return `<div style="width:162px;flex:0 0 auto;background:var(--surface);border:1px solid var(--border);border-radius:11px;padding:6px">${rows}</div>`;
+}
+// цела Формы-схемы (секцыя-прэв'ю): апісанне + ДВЕ вобласці — бакавое меню (злева) і ⋯-меню — у колерах гэтай схемы
 function _pvSchemeBody(form) {
   const sc = form.fields?._scheme || 'A';
   const descKey = { A: 'pv_a_desc', B: 'pv_b_desc', C: 'pv_c_desc' }[sc] || 'pv_a_desc';
-  return `<div style="font-size:0.85rem;color:var(--muted);line-height:1.5;margin-bottom:12px">${escHtml(t(descKey))}</div>${_pvMenuHtml(sc)}`;
+  const cap = 'font-size:0.7rem;font-weight:700;color:var(--label);text-transform:uppercase;letter-spacing:0.05em;margin-bottom:5px';
+  return `<div style="font-size:0.85rem;color:var(--muted);line-height:1.5;margin-bottom:12px">${escHtml(t(descKey))}</div>
+    <div style="display:flex;gap:16px;flex-wrap:wrap;align-items:flex-start">
+      <div><div style="${cap}">${escHtml(t('pv_prev_nav'))}</div>${_pvNavHtml(sc)}</div>
+      <div><div style="${cap}">${escHtml(t('pv_prev_menu'))}</div>${_pvMenuHtml(sc)}</div>
+    </div>`;
 }
 FORM_SCHEMAS.pvScheme = { sections: [{ type: 'table', title: 'pv_preview', dataKey: '_pvPreview', bodyFn: form => _pvSchemeBody(form) }] }; // адна секцыя-прэв'ю (Table-продак з bodyFn)
 CONTENT_TYPES['pv-root'] = { // Форма-0 хост РМ: структура фіксаваная (прэсэты з кода, карыстальнік не змяняе)
@@ -11252,17 +11296,18 @@ function _shareOpen(cfg) {
   const modes = [];
   // Пліткі = ФАРМАТЫ ФАЙЛА для ⬇ Спампаваць. У чат жа адчот ідзе ЗАЎСЁДЫ спасылкай-адкрыццём (reader.js,
   // гл. _shareDoSend) — без асобнай пліткі «Дакумент» (яна блытала: спасылка vs файл выглядалі як два фарматы).
-  if (cfg.buildPayload) modes.push({ id: 'pdf', ico: '📕', label: 'PDF' }, { id: 'xlsx', ico: '📗', label: 'Excel' }, { id: 'csv', ico: '📘', label: 'CSV' });
-  if (cfg.linkUrl) modes.push({ id: 'link', ico: '🔗', label: t('share_link') });
+  // ico = id з агульнага SVG-набору (эмодзі 📕📗📘🔗 на Тэсле выпадалі ў ледзь бачны контур і схему іконак ігнаравалі)
+  if (cfg.buildPayload) modes.push({ id: 'pdf', ico: 'filePdf', label: 'PDF' }, { id: 'xlsx', ico: 'fileXls', label: 'Excel' }, { id: 'csv', ico: 'fileCsv', label: 'CSV' });
+  if (cfg.linkUrl) modes.push({ id: 'link', ico: 'link', label: t('share_link') });
   if (!modes.length) return;
   _shareCfg = cfg; _shareMode = modes[0].id;
   document.getElementById('share-modal')?.remove();
   const ov = document.createElement('div'); ov.id = 'share-modal';
   ov.style.cssText = 'position:fixed;inset:0;z-index:1100;background:rgba(0,0,0,0.6);display:flex;align-items:center;justify-content:center;padding:16px';
-  const mbtn = m => `<button onclick="_shareSetMode('${m.id}')" data-smode="${m.id}" style="display:flex;flex-direction:column;align-items:center;gap:5px;padding:12px 10px;background:var(--surface2);border:1px solid var(--border);border-radius:10px;cursor:pointer;flex:1"><span style="font-size:1.7rem;line-height:1">${m.ico}</span><span style="font-size:0.75rem;color:var(--text);font-weight:600">${escHtml(m.label)}</span></button>`;
+  const mbtn = m => `<button onclick="_shareSetMode('${m.id}')" data-smode="${m.id}" style="display:flex;flex-direction:column;align-items:center;gap:6px;padding:12px 10px;background:var(--surface2);border:1px solid var(--border);border-radius:10px;cursor:pointer;flex:1"><span style="display:grid;place-items:center">${_mIcoBig(m.ico, 26)}</span><span style="font-size:0.75rem;color:var(--text);font-weight:600">${escHtml(m.label)}</span></button>`;
   ov.innerHTML = `<div style="background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:18px 20px 20px;box-shadow:0 16px 48px rgba(0,0,0,0.45);position:relative;width:min(400px,92vw)">
     <button onclick="document.getElementById('share-modal').remove()" title="${escHtml(t('btn_cancel'))}" style="position:absolute;top:8px;right:10px;background:none;border:none;color:var(--error);font-size:1.25rem;cursor:pointer;line-height:1;padding:2px 6px">✕</button>
-    <div style="font-size:0.9rem;font-weight:700;margin:2px 0 12px;padding-right:26px">📤 ${escHtml(t('node_share'))}${cfg.title ? ': ' + escHtml(cfg.title) : ''}</div>
+    <div style="font-size:0.9rem;font-weight:700;margin:2px 0 12px;padding-right:26px;display:flex;align-items:center;gap:7px">${_mIcoBig('share', 17)}<span>${escHtml(t('node_share'))}${cfg.title ? ': ' + escHtml(cfg.title) : ''}</span></div>
     <div style="display:flex;gap:8px;margin-bottom:14px">${modes.map(mbtn).join('')}</div>
     <div id="share-actions"></div>
   </div>`;
@@ -11274,17 +11319,21 @@ function _shareSetMode(m) {
   _shareMode = m;
   document.querySelectorAll('[data-smode]').forEach(b => b.style.borderColor = b.dataset.smode === m ? 'var(--accent)' : 'var(--border)');
   const act = document.getElementById('share-actions'); if (!act) return;
-  const dl = m === 'link' ? '📋 ' + t('btn_copy') : '⬇ ' + t('share_download');
-  const abtn = 'padding:11px;border-radius:10px;font-size:0.85rem;font-weight:600;flex:1';
+  // PDF-плітка нічога не спампоўвае — яна АДКРЫВАЕ дакумент-чытач (reader.js, 🖨 ужо ўнутры). Раней кнопка
+  // звалася «Спампаваць» і на заблакаваным папапе не рабіла нічога → «як паглядзець PDF?». Цяпер яўна «Паглядзець».
+  const dl = m === 'link' ? _mIcoBig('copy', 17) + escHtml(t('btn_copy'))
+    : m === 'pdf' ? _mIcoBig('eye', 17) + escHtml(t('share_view'))
+    : _mIcoBig('download', 17) + escHtml(t('share_download'));
+  const abtn = 'padding:11px;border-radius:10px;font-size:0.85rem;font-weight:600;flex:1;display:inline-flex;align-items:center;justify-content:center;gap:7px';
   // 💬 У чат нясе толькі СПАСЫЛКУ (дакумент-чытач / вузел-дыплінк) → мае сэнс толькі для PDF і 🔗;
   // Excel/CSV — файлы на дыск, у чат не ідуць → кнопка глушыцца (кліент больш не думае, што выбраў Excel, а прыйшоў PDF)
   const chatOk = m === 'pdf' || m === 'link';
   // падказка пад кнопкамі: pdf → «у чат спасылкай»; xlsx/csv → «толькі спампаваць»; link → без падказкі (і так спасылка)
-  const hint = !chatOk ? `<div style="font-size:0.72rem;color:var(--muted);margin-top:8px;line-height:1.35">💬 ${escHtml(t('share_chat_pdf_only'))}</div>`
-    : (m === 'pdf' ? `<div style="font-size:0.72rem;color:var(--muted);margin-top:8px;line-height:1.35">💬 ${escHtml(t('share_chat_hint'))}</div>` : '');
+  const hintRow = txt => `<div style="font-size:0.72rem;color:var(--muted);margin-top:8px;line-height:1.35;display:flex;align-items:flex-start;gap:6px">${_mIcoBig('chat', 14)}<span>${escHtml(txt)}</span></div>`;
+  const hint = !chatOk ? hintRow(t('share_chat_pdf_only')) : (m === 'pdf' ? hintRow(t('share_chat_hint')) : '');
   const chatBtn = chatOk
-    ? `<button onclick="_shareChatStep()" style="${abtn};cursor:pointer;background:none;border:1px solid var(--accent);color:var(--accent)">💬 ${escHtml(t('share_to_chat'))}</button>`
-    : `<button disabled title="${escHtml(t('share_chat_pdf_only'))}" style="${abtn};cursor:not-allowed;opacity:0.4;background:none;border:1px solid var(--border);color:var(--muted)">💬 ${escHtml(t('share_to_chat'))}</button>`;
+    ? `<button onclick="_shareChatStep()" style="${abtn};cursor:pointer;background:none;border:1px solid var(--accent);color:var(--accent)">${_mIcoBig('chat', 17)}${escHtml(t('share_to_chat'))}</button>`
+    : `<button disabled title="${escHtml(t('share_chat_pdf_only'))}" style="${abtn};cursor:not-allowed;opacity:0.4;background:none;border:1px solid var(--border);color:var(--muted)">${_mIcoBig('chat', 17)}${escHtml(t('share_to_chat'))}</button>`;
   act.innerHTML = `<div style="display:flex;gap:8px">
     <button onclick="_shareDownload()" style="${abtn};cursor:pointer;background:var(--surface2);border:1px solid var(--border);color:var(--text)">${dl}</button>
     ${chatBtn}
@@ -14078,7 +14127,8 @@ const KNOWN_LANGS = [
 ];
 
 // ─── ВАЛЮТА САЙТА: Секцыя «Валюта» (Блок Даных) у Форме-0 «Рэгіянальныя налады» ───
-FORM_SCHEMAS.regional = Object.assign({
+// ААП: усё валютнае — у СВАЁЙ Форме ў Папцы-0 «Валюта» (было проста ў Форме-0 РМ разам з Мовамі)
+FORM_SCHEMAS.currency = Object.assign({
   sections: [
     { type: 'flat', id: 'currency', title: 'card_currency', blocks: [
       { type: 'custom', render: () => {
@@ -14382,9 +14432,11 @@ function loadPpffTestEditor() {
 function _langCodeOf(folder) { return (settings.languages || [])[folder.fields?._idx]?.code || folder.id.replace(/^lang-/, ''); }
 function _langsBuildNodes() {
   const s = languagesState;
-  // ШАБЛОН: РМ → Форма-0 «Рэгіянальныя налады» (Секцыя Валюта) → Папка-0 «Мовы» → мова-Папкі → Формы
+  // ШАБЛОН: РМ → Форма-0 «Рэгіянальныя налады» → Папкі-0 «Валюта» (Форма «Валюта сайта») і «Мовы» (мова-Формы)
   const nodes = [
-    { id: 'reg-host',  type: 'form',   formSchema: 'regional', parentId: null,       order: 0, name: t('page_languages_title'), fields: {} },
+    { id: 'reg-host',  type: 'form',   formSchema: 'sectionsHost', parentId: null,   order: 0, name: t('page_languages_title'), fields: {} },
+    { id: 'reg-cur',   type: 'folder', contentType: 'cur-root',  parentId: 'reg-host', order: 0, name: t('reg_folder_currency'), fields: {}, infoNodes: [] },
+    { id: 'reg-cur-f', type: 'form',   formSchema: 'currency',   parentId: 'reg-cur',  order: 0, name: t('card_currency'), fields: {} },
     { id: 'reg-langs', type: 'folder', contentType: 'langs-root', parentId: 'reg-host', order: 1, name: t('card_lang_list'), fields: {}, infoNodes: [] }
   ];
   (settings.languages || []).forEach((lang, i) => {
@@ -14397,7 +14449,7 @@ function _langsBuildNodes() {
         _current: lang.code === _primaryCode() } }); // ааП: Бягучая праз fields._current, не _langIsPrimary
   });
   s.data = { nodes };
-  if (!s._loaded) { s.expanded.add('reg-host'); s.expanded.add('reg-langs'); s._loaded = true; } // адкрыць РАЗ (інакш rebuild не дае згарнуць)
+  if (!s._loaded) { ['reg-host', 'reg-cur', 'reg-cur-f', 'reg-langs'].forEach(id => s.expanded.add(id)); s._loaded = true; } // адкрыць РАЗ (інакш rebuild не дае згарнуць); Форма «Валюта» — раскрытая, каб секцыі былі відаць адразу
 }
 // nodes → settings.languages (БЕЗ запісу на сервер). Выклікаецца і перад кожным
 // рэндэрам: генерычныя node-функцыі робяць render да save, інакш змены губляюцца

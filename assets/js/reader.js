@@ -140,7 +140,9 @@
     });
   }
   function openReaderWindow(cfg) {
-    var w = global.open('', '_blank'); if (!w) return; // папап-блакер → ціха (застаецца мадалка/старонка)
+    // папап-блакер (Тэсла блакуе часцей за ўсё) → НЕ маўчым: дакумент адкрываецца мадалкай у гэтай жа
+    // старонцы. Раней ціхі return выглядаў як мёртвая кнопка («як паглядзець PDF?») ва ЎСІХ спажыўцоў.
+    var w = global.open('', '_blank'); if (!w) return openReaderModal(cfg);
     try { if (!cfg._homeHref) cfg._homeHref = global.location.origin + global.location.pathname; } catch (e) {} // фолбэк ✕ калі window.close() адмоўлены (Tesla Atom: _blank у тым жа акне)
     mountReaderDoc(w, cfg); // same-origin (about:blank ад opener) → localStorage памеру працуе
   }
