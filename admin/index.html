@@ -6807,9 +6807,15 @@ function _helpStructureHtml(node, s) { // «Што ўнутры»: секцыі+
         }
       }
     }
-    // Папкі-0 унутры Формы (канон «Форма → Секцыі + Папкі-0»)
+    // Папкі-0 унутры Формы (канон «Форма → Секцыі + Папкі-0»). ⚠️ ІМЁНЫ — толькі калі гэта СТРУКТУРА
+    // (sysKey = сістэмная назва з кода, напр. «Лагатыпы»/«Мовы»); інакш гэта ДАНЫЯ (папкі-дні заказаў,
+    // карткі кліентаў) — іх спіс дублюе дрэва і засмечвае даведку: паказваем толькі лік
     const kf = (s?.data?.nodes || []).filter(n => n.parentId === node.id && n.type === 'folder');
-    if (kf.length) out.push(_helpRow('📂', t('help_holds'), '') + _helpSub(kf.map(k => _folderLabel(k) || '—')));
+    if (kf.length) {
+      const struct = kf.filter(k => k.sysKey || _ncap(k, s, 'canDelete') === false);
+      out.push(_helpRow('📂', t('help_holds'), struct.length === kf.length ? '' : String(kf.length)));
+      if (struct.length) out.push(_helpSub(struct.map(k => _folderLabel(k) || '—')));
+    }
   } else if (node.type === 'folder') {
     const kids = (s?.data?.nodes || []).filter(n => n.parentId === node.id);
     const byType = ['folder', 'form', 'file', 'item'].map(tp => [tp, kids.filter(k => k.type === tp).length]).filter(([, n]) => n);
