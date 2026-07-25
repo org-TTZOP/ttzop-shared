@@ -11281,6 +11281,11 @@ function _pdfFontLoad() { // TTF → base64 → VFS jsPDF (раз на сесі�
   }).catch(() => null);
   return _pdfFontP;
 }
+// тэкст для PDF: зняць эмодзі — у DejaVu іх няма, і «⚙ У працы» рэндэрылася як «Ф У працы»
+// (кірыліца/лацінка застаюцца; лэйбл статусу і так нясе слова)
+function _pdfText(v) {
+  return String(v ?? '').replace(/[\u{1F000}-\u{1FAFF}\u{2600}-\u{27BF}\u{2B00}-\u{2BFF}\u{FE0F}\u{20E3}\u{2190}-\u{21FF}]/gu, '').replace(/\s{2,}/g, ' ').trim();
+}
 // SVG-графік payload → PNG dataURL (jsPDF не малюе SVG; растар тут дарэчы — гэта карцінка, не тэкст)
 function _chartPng(tb, scale = 2) {
   const cfg = _expChart(tb); if (!cfg) return Promise.resolve(null);
@@ -11332,8 +11337,8 @@ async function _expPDFFile(pl, onErr) {
       styles: { font, fontSize: 7.5, cellPadding: 3, overflow: 'linebreak' },
       headStyles: { font, fillColor: [242, 242, 242], textColor: 30, fontStyle: 'normal' },
       footStyles: { font, fillColor: [255, 255, 255], textColor: 30, fontStyle: 'normal' },
-      head: [cols.map(_expColLabel)],
-      body: (tb.rows || []).map(r => cols.map(c => _repColText(c, r[c.key]))),
+      head: [cols.map(c => _pdfText(_expColLabel(c)))],
+      body: (tb.rows || []).map(r => cols.map(c => _pdfText(_repColText(c, r[c.key])))),
       ...(tot.some(x => x !== '') ? { foot: [tot] } : {}),
       columnStyles: Object.fromEntries(cols.map((c, i) => [i, { halign: c.type === 'number' ? 'right' : 'left' }])),
     });
