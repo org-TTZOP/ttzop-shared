@@ -6811,10 +6811,12 @@ function _helpStructureHtml(node, s) { // «Што ўнутры»: секцыі+
     // (sysKey = сістэмная назва з кода, напр. «Лагатыпы»/«Мовы»); інакш гэта ДАНЫЯ (папкі-дні заказаў,
     // карткі кліентаў) — іх спіс дублюе дрэва і засмечвае даведку: паказваем толькі лік
     const kf = (s?.data?.nodes || []).filter(n => n.parentId === node.id && n.type === 'folder');
+    // ⚠️ прызнак «структура vs даныя» — ЛІК, а не caps: сістэмных Папак-0 у Формы адзінкі (Валюта, Мовы,
+    // Лагатыпы), а даных растуць дзясяткамі (папкі-дні заказаў). Спроба вызначаць па canDelete:false
+    // правалілася — папкі-дні таксама не выдаляюцца (жывая праверка 2026-07-25)
     if (kf.length) {
-      const struct = kf.filter(k => k.sysKey || _ncap(k, s, 'canDelete') === false);
-      out.push(_helpRow('📂', t('help_holds'), struct.length === kf.length ? '' : String(kf.length)));
-      if (struct.length) out.push(_helpSub(struct.map(k => _folderLabel(k) || '—')));
+      out.push(_helpRow('📂', t('help_holds'), kf.length > 6 ? String(kf.length) : ''));
+      if (kf.length <= 6) out.push(_helpSub(kf.map(k => _folderLabel(k) || '—')));
     }
   } else if (node.type === 'folder') {
     const kids = (s?.data?.nodes || []).filter(n => n.parentId === node.id);
