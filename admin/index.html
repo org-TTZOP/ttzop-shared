@@ -10974,6 +10974,25 @@ function _repTableSection(tb) { // payload-табліца → канонная T
   return { type: 'table', title: tb.title, dataKey: '_rt_' + tb.id, keepOrder: true, emptyHeader: true, sortable: true,
     columns: (tb.columns || []).map(c => ({ ...c, ...(c.enrich ? _REP_ENRICH[c.enrich] || {} : {}) })) };
 }
+// ── 📤 ЭКСПАРТ АДЧОТУ «ЯК БАЧЫШ» (заўвага карыстальніка 2026-07-25) ──
+// Табліцы выніку — канонныя Table-секцыі з фільтрам/сартыроўкай, але экспарт браў СЫРЫ payload
+// сервера → адфільтраваў на экране, а ў файл ішло ўсё. Друк вузла даўно ідзе «як бачыш»
+// (`_printTableOf` → `_tblProcessRows`), таму канон разыходзіўся. Тут той жа код-шлях.
+// ⚠️ Архіў (📌) наўмысна пакідае СЫРЫ payload: здымак = нязменны запіс даных за перыяд, не выгляд экрана.
+function _repPayloadSeen(form, s) {
+  const pl = form?.fields?._payload; if (!pl) return null;
+  const tables = (pl.tables || []).map(tb => {
+    const sec = _repTableSection(tb), raw = tb.rows || [], cols = sec.columns || [];
+    const vk = form.id + '::' + sec.dataKey;
+    const numeric = _tblNumericCols(cols, raw);
+    const { sortedRows } = _tblProcessRows(raw, cols, _colFilterMap(s, vk), s._tableSort?.get(vk), sec.keepOrder, numeric);
+    return { ...tb, rows: sortedRows, ...(sortedRows.length !== raw.length ? { filtered: { n: sortedRows.length, m: raw.length } } : {}) };
+  });
+  return { ...pl, tables };
+}
+const _repSeen = formId => { const f = reportsState.data?.nodes?.find(n => n.id === formId); return f ? _repPayloadSeen(f, reportsState) : null; };
+// подпіс «адфільтравана N з M» — каб чытач дакумента не думаў, што бачыць увесь перыяд
+const _repFilteredNote = tb => tb.filtered ? t('rep_filtered').replace('{n}', tb.filtered.n).replace('{m}', tb.filtered.m) : '';
 function _repResultBodyHtml(form, s) {
   const pl = form.fields._payload;
   if (!pl) return `<div style="padding:10px 12px;color:var(--muted);font-size:0.85rem">${escHtml(t('rep_no_data'))}</div>`;
@@ -11245,7 +11264,9 @@ function _repPaperBody(pl) {
   const sumHtml = (pl.summary || []).map(e => `<div>${escHtml(_repSumLabel(e.k))}: <b>${escHtml(String(e.v))}</b></div>`).join('');
   const tablesHtml = (pl.tables || []).map(tb => { const cols = _expCols(tb);
     const tot = cols.map(c => (c.totals || []).includes('sum') ? Math.round((tb.rows || []).reduce((s2, r) => s2 + (+r[c.key] || 0), 0) * 100) / 100 : '');
+    const note = _repFilteredNote(tb);
     return `<h3 style="margin:18px 0 6px;font-size:14px">${escHtml(_expTblTitle(tb))}</h3>
+    ${note ? `<div style="font-size:11px;color:#777;margin:-2px 0 4px">${escHtml(note)}</div>` : ''}
     ${_repChartHtml(tb)}
     <table style="border-collapse:collapse;width:100%"><thead><tr>${cols.map(c => `<th style="${td};background:#f2f2f2;text-align:left">${escHtml(_expColLabel(c))}</th>`).join('')}</tr></thead>
     <tbody>${(tb.rows || []).map(r => `<tr>${cols.map(c => `<td style="${td}${c.type === 'number' ? ';text-align:right' : ''}">${escHtml(_repColText(c, r[c.key]))}</td>`).join('')}</tr>`).join('')}</tbody>
@@ -11327,7 +11348,9 @@ async function _expPDFFile(pl, onErr) {
     const cols = _expCols(tb);
     y += 12;
     if (y > doc.internal.pageSize.getHeight() - 120) { doc.addPage(); y = 52; }
-    doc.setFontSize(12); doc.text(_expTblTitle(tb) || '', M, y); y += 8;
+    doc.setFontSize(12); doc.text(_pdfText(_expTblTitle(tb) || ''), M, y); y += 8;
+    const fnote = _repFilteredNote(tb);
+    if (fnote) { doc.setFontSize(8); doc.setTextColor(120); doc.text(_pdfText(fnote), M, y + 6); doc.setTextColor(30); y += 10; }
     const png = await _chartPng(tb);
     if (png) { const w = Math.min(pw - M * 2, 420), h = w * png.h / png.w;
       if (y + h > doc.internal.pageSize.getHeight() - 60) { doc.addPage(); y = 52; }
@@ -11350,13 +11373,14 @@ async function _expPDFFile(pl, onErr) {
 }
 // (jsPDF/html2canvas генератар PDF-байтаў выдалены разам з чат-файлам: у чат ідзе спасылка-адкрыццё, а ⬇ PDF адкрывае reader-акно)
 // тонкія абгорткі РМ Справаздач (кнопкі трымаюць formId; ядро — payload-функцыі вышэй)
-function _repExportCSV(formId) { const f = reportsState.data?.nodes?.find(n => n.id === formId)?.fields; if (f?._payload) _expCSV(f._payload); }
-function _repExportXLSX(formId) { const f = reportsState.data?.nodes?.find(n => n.id === formId)?.fields; if (f?._payload) _expXLSX(f._payload, () => _repStatus(formId, t('err'), true)); }
-function _repExportPDF(formId) { const f = reportsState.data?.nodes?.find(n => n.id === formId)?.fields; if (f?._payload) _expPDF(f._payload); } // 👁 прагляд дакумента
+// усе выхады адчоту — праз _repSeen («як бачыш»: бягучы фільтр+сартыроўка табліц выніку)
+function _repExportCSV(formId) { const pl = _repSeen(formId); if (pl) _expCSV(pl); }
+function _repExportXLSX(formId) { const pl = _repSeen(formId); if (pl) _expXLSX(pl, () => _repStatus(formId, t('err'), true)); }
+function _repExportPDF(formId) { const pl = _repSeen(formId); if (pl) _expPDF(pl); } // 👁 прагляд дакумента
 function _repExportPDFFile(formId) { // ⬇ рэальны файл (бібліятэка+шрыфт ленава → статус-падказка замест мёртвага кліку)
-  const f = reportsState.data?.nodes?.find(n => n.id === formId)?.fields; if (!f?._payload) return;
+  const pl = _repSeen(formId); if (!pl) return;
   _repStatus(formId, t('loading'));
-  _expPDFFile(f._payload, () => _repStatus(formId, t('err'), true)).finally(() => _repStatus(formId, ''));
+  _expPDFFile(pl, () => _repStatus(formId, t('err'), true)).finally(() => _repStatus(formId, ''));
 }
 
 // ── 🖨 ДРУК ЛЮБОГА ВУЗЛА (ПРОДАКФПФ, cap hasPrint): паддрэва вузла (дзеці, БЕЗ бацькоў) →
