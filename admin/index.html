@@ -5759,8 +5759,15 @@ function _svgLineChart(rows, cfg) {
       <line x1="${pL}" y1="${pT}" x2="${pL}" y2="${pT+gH}" stroke="currentColor" opacity="0.15" stroke-width="1"/>
       <line x1="${pL}" y1="${pT+gH}" x2="${W-pR}" y2="${pT+gH}" stroke="currentColor" opacity="0.15" stroke-width="1"/>
       ${xLabels}${lines}${dots}
-    </svg>
+    </svg>${cfg.legend ? _chartLegendHtml(sortedGroups.map(([g], gi) => [g, _getColor(g, gi)])) : ''}
   </div>`;
+}
+// Легенда серый — для ДАКУМЕНТА (у панэлі ролю легенды граюць каляровыя пілюлі-фільтры над графікам,
+// а ў друку/PDF/#doc пілюль няма → без легенды лінію не звязаць з серыяй). cfg.legend:true
+function _chartLegendHtml(pairs) {
+  if (!pairs.length || (pairs.length === 1 && !pairs[0][0])) return '';
+  return `<div style="display:flex;flex-wrap:wrap;gap:4px 12px;padding:6px 0 2px;font-size:11px">${pairs.map(([g, col]) =>
+    `<span style="display:inline-flex;align-items:center;gap:5px"><span style="width:12px;height:3px;background:${col};border-radius:2px"></span>${escHtml(g)}</span>`).join('')}</div>`;
 }
 
 // Слупковы SVG-графік: xKey, yKey (без groupKey), height
@@ -11097,6 +11104,43 @@ function _repRowDiffHtml(tA, tB) {
 const _expTblTitle = tb => tb.titleText ?? t(tb.title || '');
 const _expColLabel = c => c.labelText ?? (c.title !== undefined ? c.title : t(c.label || ''));
 const _expCols = tb => (tb.columns || []).map(c => ({ ...c, ...(c.enrich ? _REP_ENRICH[c.enrich] || {} : {}) }));
+// ── 📈 ГРАФІК У ДАКУМЕНЦЕ (канал payload `tables[].chart`) ──
+// Графікі панэлі малююцца ў момант рэндэру з радкоў секцыі і ў payload не трапляли ЗУСІМ → друк/PDF/
+// #doc/архіў неслі адны табліцы. Здымак SVG не патрэбны: `_svgLineChart` дата-кіраваны, таму payload
+// нясе толькі ДЭСКРЫПТАР {xKey,yKey,groupKey,agg,...}, а дакумент перамалёўвае графік з тых жа rows —
+// значыць працуе і ў архіўным здымку, і ў атрымальніка спасылкі #doc.
+// Дэфолты для справаздач каталога (payload сервера лёгкі — прэзентацыя жыве ў панэлі, як _REP_ENRICH).
+const _REP_CHARTS = {
+  orders:   { xKey: 'date', yKey: 'paid',   agg: 'sum', yDigits: 2 }, // 💰 аплачана па днях
+  payments: { xKey: 'at',   yKey: 'amount', agg: 'sum', yDigits: 2, xCut: 10 }, // datetime → дзень (xCut)
+  appts:    { xKey: 'date', yKey: 'seats',  agg: 'sum', yDigits: 0 }, // 📅 месцы па днях
+  subs:     { xKey: 'date', yKey: 'price',  agg: 'sum', yDigits: 2 }, // 🔁 сума падпісак па днях
+};
+const _expChart = tb => tb.chart || _REP_CHARTS[tb.id] || null; // адзіны рэзалв (дакумент + xlsx)
+// радкі для графіка: xCut (абрэзка datetime да даты) + агрэгацыя па x[×групе] — сырыя радкі даюць
+// зігзаг (некалькі заказаў у адзін дзень), таму сумуем/лічым ПЕРАД рэндэрам
+function _chartRows(tb, cfg) {
+  const rows = (tb.rows || []).filter(r => r && r[cfg.xKey] != null && r[cfg.xKey] !== '');
+  const x = r => cfg.xCut ? String(r[cfg.xKey]).slice(0, cfg.xCut) : String(r[cfg.xKey]);
+  if (!cfg.agg) return rows.map(r => ({ ...r, [cfg.xKey]: x(r) }));
+  const acc = new Map(); // «x|група» → {сума, лік}
+  for (const r of rows) {
+    const g = cfg.groupKey ? String(r[cfg.groupKey] ?? '') : '';
+    const k = x(r) + ' ' + g;
+    const cur = acc.get(k) || { [cfg.xKey]: x(r), ...(cfg.groupKey ? { [cfg.groupKey]: g } : {}), _s: 0, _n: 0 };
+    const v = parseFloat(r[cfg.yKey]);
+    if (!isNaN(v)) { cur._s += v; cur._n++; }
+    acc.set(k, cur);
+  }
+  return [...acc.values()].map(o => ({ ...o, [cfg.yKey]: cfg.agg === 'count' ? o._n : cfg.agg === 'avg' ? (o._n ? o._s / o._n : 0) : o._s }));
+}
+// HTML графіка для paper-дакумента: свой светлы кантэкст колеру (у reader-дакументе няма --fg панэлі)
+function _repChartHtml(tb) {
+  const cfg = _expChart(tb); if (!cfg) return '';
+  const rows = _chartRows(tb, cfg);
+  if (new Set(rows.map(r => String(r[cfg.xKey]))).size < 2) return ''; // адна кропка — графіка няма сэнсу
+  return `<div style="color:#222;margin:6px 0 2px">${_svgLineChart(rows, { ...cfg, legend: true, height: cfg.height || 200 })}</div>`;
+}
 function _repColText(c, v) { // значэнне ячэйкі → чытэльны тэкст (адзіны рэзалв для CSV/XLSX/PDF)
   if (v === undefined || v === null || v === '') return '';
   if (c.labelMap && c.labelMap[v]) return t(c.labelMap[v]);
@@ -11168,7 +11212,23 @@ function _xlsxWorkbook(pl) {
     if (n) ws['!ref'] = XLSX.utils.encode_range({ s: { r: 0, c: 0 }, e: { r: n + 1, c: cols.length - 1 } });
     _xlsxAutoWidth(ws, aoa);
     let nm = (_expTblTitle(tb) || ('T' + ti)).replace(/[\\/?*\[\]:]/g, ' ').slice(0, 31); while (used.has(nm)) nm = (nm + '2').slice(0, 31); used.add(nm);
-    XLSX.utils.book_append_sheet(wb, ws, nm); });
+    XLSX.utils.book_append_sheet(wb, ws, nm);
+    // 📈 Аркуш серый графіка: x × групы (гатовы дыяпазон — Excel будуе дыяграму з выдзялення).
+    // ⚠️ Нэйтыўны чарт у xlsx тут не пішам: SheetJS (community) стварэння дыяграм не ўмее — патрэбны
+    // або SheetJS Pro, або ручны OOXML chart-XML + перазборка zip. Дадзеныя ж — ужо ў патрэбнай форме.
+    const cfg = _expChart(tb);
+    if (cfg) { const rows = _chartRows(tb, cfg);
+      const groups = cfg.groupKey ? [...new Set(rows.map(r => String(r[cfg.groupKey] ?? '')))].sort() : [''];
+      const xs = [...new Set(rows.map(r => String(r[cfg.xKey])))].sort();
+      if (xs.length > 1) {
+        const val = new Map(rows.map(r => [String(r[cfg.xKey]) + ' ' + (cfg.groupKey ? String(r[cfg.groupKey] ?? '') : ''), +r[cfg.yKey] || 0]));
+        const head = [_expColLabel(cols.find(c => c.key === cfg.xKey) || { label: cfg.xKey }),
+          ...groups.map(g => g || _expColLabel(cols.find(c => c.key === cfg.yKey) || { label: cfg.yKey }))];
+        const caoa = [head, ...xs.map(x => [x, ...groups.map(g => val.get(x + ' ' + g) ?? null)])];
+        const wsC = XLSX.utils.aoa_to_sheet(caoa); _xlsxAutoWidth(wsC, caoa);
+        let cn = (t('rep_chart') + ' ' + nm).replace(/[\\/?*\[\]:]/g, ' ').slice(0, 31); while (used.has(cn)) cn = (cn + '2').slice(0, 31); used.add(cn);
+        XLSX.utils.book_append_sheet(wb, wsC, cn);
+      } } });
   return wb;
 }
 async function _expXLSX(pl, onErr) {
@@ -11182,6 +11242,7 @@ function _repPaperBody(pl) {
   const tablesHtml = (pl.tables || []).map(tb => { const cols = _expCols(tb);
     const tot = cols.map(c => (c.totals || []).includes('sum') ? Math.round((tb.rows || []).reduce((s2, r) => s2 + (+r[c.key] || 0), 0) * 100) / 100 : '');
     return `<h3 style="margin:18px 0 6px;font-size:14px">${escHtml(_expTblTitle(tb))}</h3>
+    ${_repChartHtml(tb)}
     <table style="border-collapse:collapse;width:100%"><thead><tr>${cols.map(c => `<th style="${td};background:#f2f2f2;text-align:left">${escHtml(_expColLabel(c))}</th>`).join('')}</tr></thead>
     <tbody>${(tb.rows || []).map(r => `<tr>${cols.map(c => `<td style="${td}${c.type === 'number' ? ';text-align:right' : ''}">${escHtml(_repColText(c, r[c.key]))}</td>`).join('')}</tr>`).join('')}</tbody>
     ${tot.some(x => x !== '') ? `<tfoot><tr>${tot.map(x => `<td style="${td};font-weight:700;text-align:right">${escHtml(String(x))}</td>`).join('')}</tr></tfoot>` : ''}</table>`; }).join('');
@@ -11221,7 +11282,12 @@ function _printTableOf(form, sec, s, titlePrefix) {
     // аўта-Σ: яўныя totals секцыі АБО лічбавы слупок (акрамя дат) — «аўтаматычныя вынікі»
     totals: c.totals || ((numeric[c.key] || c.type === 'number') && !['date', 'datetime', 'time', 'select'].includes(c.type) ? ['sum'] : undefined) }));
   const secTitle = sec.title ? t(sec.title) : '';
+  // 📈 дэкларатыўны графік секцыі едзе ў payload разам з радкамі → друк/PDF/#doc малююць яго самі
+  // (толькі калі яго восі рэальна ёсць у выпісаных слупках — інакш чарт быў бы пусты)
+  const keys = new Set(outCols.map(c => c.key));
+  const ch = sec.chart && keys.has(sec.chart.xKey) && keys.has(sec.chart.yKey) ? sec.chart : null;
   return { titleText: secTitle ? `${titlePrefix} — ${secTitle}` : titlePrefix, columns: outCols,
+    ...(ch ? { chart: { xKey: ch.xKey, yKey: ch.yKey, groupKey: ch.groupKey, height: ch.height, yDigits: ch.yDigits } } : {}),
     rows: sortedRows.map(r => { const o = {}; outCols.forEach(c => { let v = r[c.key]; if (c.ml) v = _mlGet(v, _settingsLang()); o[c.key] = v; }); return o; }) };
 }
 // Flat-секцыя → радкі Параметр/Значэнне (select праз labelMap, ml па бягучай мове кантэнту)
@@ -14188,7 +14254,9 @@ FORM_SCHEMAS.currency = Object.assign({
           return `<div style="padding:8px 0;font-size:0.85rem;color:var(--muted)">⚠ ${escHtml(base)} не ў базе ЕЦБ — гісторыя курсаў недаступная</div>`;
         return '';
       },
-      chart: { groupKey: 'code', xKey: 'date' }, // для пілюль выбару валют і colorMap
+      // groupKey/xKey — пілюлі выбару валют і colorMap; yKey дадзены для ДАКУМЕНТА (друк/PDF/#doc малюе
+      // эфектыўны курс). У панэлі яго перакрывае chartFn ніжэй (перамыкач ECB ↔ Карэкцыя) — паводзіны тыя ж
+      chart: { groupKey: 'code', xKey: 'date', yKey: 'effective', height: 220 },
       chartFn: (chartRows, form, s, colorMap, norm) => {
         const mode = _ratesHistRateMode;
         const mkBtn = (m, lbl) => {
