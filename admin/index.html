@@ -6784,7 +6784,7 @@ function _secKindLabel(sec) { // падвід Table вызначаецца са�
   return t(_SK[sec.type] || 'sk_table');
 }
 const _helpRow = (ico, name, note) => `<div style="display:flex;gap:7px;align-items:flex-start;padding:3px 0">
-  <span style="flex:0 0 auto;min-width:18px;text-align:center">${ico}</span>
+  <span style="flex:0 0 auto;width:18px;display:grid;place-items:center;color:var(--muted)">${ico}</span>
   <span><b>${escHtml(name)}</b>${note ? `<span style="color:var(--muted)"> — ${escHtml(note)}</span>` : ''}</span></div>`;
 const _helpSub = list => list.length ? `<div style="margin:1px 0 5px 25px;font-size:0.8rem;color:var(--muted);line-height:1.45">${escHtml(list.join(' · '))}</div>` : '';
 const _helpH = txt => `<div style="font-size:0.72rem;font-weight:700;color:var(--label);text-transform:uppercase;letter-spacing:0.06em;margin:11px 0 4px">${escHtml(txt)}</div>`;
@@ -6794,12 +6794,12 @@ function _helpStructureHtml(node, s) { // «Што ўнутры»: секцыі+
     const schema = _formSchemaOf(node, s);
     if (Array.isArray(schema)) { // простая форма — плоскі спіс палёў
       const names = schema.filter(b => b.key && !String(b.key).startsWith('_') && b.label).map(b => t(b.label));
-      if (names.length) out.push(_helpRow('🗒', t('sk_flat'), t('help_fields')) + _helpSub(names));
+      if (names.length) out.push(_helpRow(_mIco('secFlat'), t('sk_flat'), t('help_fields')) + _helpSub(names));
     } else if (schema?.sections) {
       for (const sec of schema.sections) {
         if (sec.visible && !sec.visible(node, s)) continue; // умоўная секцыя, якой тут няма
         const nm = sec.title ? t(sec.title) : (sec.dataKey || sec.id || '—');
-        out.push(_helpRow(sec.type === 'map' ? '🗺' : sec.type === 'palette' ? '🎨' : sec.type === 'table' ? '📊' : '🗒', nm, _secKindLabel(sec)));
+        out.push(_helpRow(_mIco(sec.type === 'map' ? 'secMap' : sec.type === 'palette' ? 'secPalette' : sec.type === 'table' ? 'secTable' : 'secFlat'), nm, _secKindLabel(sec)));
         if (sec.type === 'flat') out.push(_helpSub((sec.blocks || []).filter(b => b.label && b.key && !String(b.key).startsWith('_')).map(b => t(b.label))));
         else if (sec.type === 'table') {
           const cols = (sec.columnsFn ? sec.columnsFn(node, s) : sec.columns) || [];
@@ -6815,19 +6815,19 @@ function _helpStructureHtml(node, s) { // «Што ўнутры»: секцыі+
     // Лагатыпы), а даных растуць дзясяткамі (папкі-дні заказаў). Спроба вызначаць па canDelete:false
     // правалілася — папкі-дні таксама не выдаляюцца (жывая праверка 2026-07-25)
     if (kf.length) {
-      out.push(_helpRow('📂', t('help_holds'), kf.length > 6 ? String(kf.length) : ''));
+      out.push(_helpRow(_mIco('addFolder'), t('help_holds'), kf.length > 6 ? String(kf.length) : ''));
       if (kf.length <= 6) out.push(_helpSub(kf.map(k => _folderLabel(k) || '—')));
     }
   } else if (node.type === 'folder') {
     const kids = (s?.data?.nodes || []).filter(n => n.parentId === node.id);
     const byType = ['folder', 'form', 'file', 'item'].map(tp => [tp, kids.filter(k => k.type === tp).length]).filter(([, n]) => n);
-    if (byType.length) out.push(_helpRow('📦', t('help_holds'), byType.map(([tp, n]) => `${t('type_' + tp) || tp}: ${n}`).join(' · ')));
+    if (byType.length) out.push(_helpRow(_mIco('addFile'), t('help_holds'), byType.map(([tp, n]) => `${t('type_' + tp) || tp}: ${n}`).join(' · ')));
     const fs = _nodeCfg(s, node, '_formSchema');
     if (_ncap(node, s, 'canAddForm') && fs) out.push(_helpRow(_mIco('addForm'), t('btn_add_form'), t('folder_type_' + fs) || fs));
     if (_ncap(node, s, 'canAddFolder')) out.push(_helpRow(_mIco('addFolder'), t('folder_add_sub'), ''));
     if (_ncap(node, s, 'canAddItem')) out.push(_helpRow(_mIco('addFile'), t('btn_add'), ''));
   } else if (node.type === 'file') {
-    out.push(_helpRow('📎', t('help_file_parts'), ''));
+    out.push(_helpRow(_mIco('addFile'), t('help_file_parts'), ''));
     out.push(_helpSub([t('node_description'), t('col_datetime'), t('f_size') || 'size'].filter(Boolean)));
   }
   return out.length ? _helpH(t('help_inside')) + out.join('') : '';
