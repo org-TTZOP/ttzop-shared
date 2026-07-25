@@ -11139,7 +11139,9 @@ function _repChartHtml(tb) {
   const cfg = _expChart(tb); if (!cfg) return '';
   const rows = _chartRows(tb, cfg);
   if (new Set(rows.map(r => String(r[cfg.xKey]))).size < 2) return ''; // адна кропка — графіка няма сэнсу
-  return `<div style="color:#222;margin:6px 0 2px">${_svgLineChart(rows, { ...cfg, legend: true, height: cfg.height || 200 })}</div>`;
+  // max-width ≈ viewBox (560): без яго svg з width:100% у шырокім целе дакумента цэнтруецца
+  // (preserveAspectRatio) і малюнак вісіць пасярод пустых палёў
+  return `<div style="color:#222;max-width:640px;margin:6px 0 2px">${_svgLineChart(rows, { ...cfg, legend: true, height: cfg.height || 200 })}</div>`;
 }
 function _repColText(c, v) { // значэнне ячэйкі → чытэльны тэкст (адзіны рэзалв для CSV/XLSX/PDF)
   if (v === undefined || v === null || v === '') return '';
