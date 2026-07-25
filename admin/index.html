@@ -12909,8 +12909,12 @@ let _ghWriteChain = Promise.resolve();
 let _wrLastStatus = 0; // код апошняга адказу на запіс (для _saveErrText)
 // тэкст збою захавання: 5xx → яўная памылка сервера з кодам (не вінім карыстальніка і не хаваем прычыну)
 function _saveErrText(e) {
-  const st = (e && e.status) || _wrLastStatus;
-  return st >= 500 ? t('err_server').replace('{code}', st) : t('err_save');
+  const st = (e && e.status !== undefined) ? e.status : _wrLastStatus;
+  if (st >= 500) return t('err_server').replace('{code}', st);
+  // st === 0 → сам fetch не даехаў: або сеціва, або воркер упаў без CORS (Cloudflare-1101 пры вычарпаным
+  // бюджэце KV — жывы кейс 2026-07-25). Гэта таксама НЕ «памылка захавання» на баку карыстальніка
+  if (!st) return t('err_connection');
+  return t('err_save');
 }
 function _writeJsonFile(file, data) {
   const run = async () => {
