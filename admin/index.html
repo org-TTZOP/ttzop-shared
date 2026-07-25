@@ -3081,7 +3081,7 @@ async function _clientApplyProfile(form, fields) {
     c.updatedAt = now; form.updatedAt = now;
     _clientsRebuildDetailsData(s.data, c);
     if (el) { el.style.color = 'var(--success)'; el.textContent = t('saved'); setTimeout(() => { if (el) el.textContent = ''; }, 2000); }
-  } catch { hist.pop(); if (el) { el.style.color = 'var(--error)'; el.textContent = t('err_save'); } }
+  } catch (e) { hist.pop(); if (el) { el.style.color = 'var(--error)'; el.textContent = _saveErrText(e); } }
   if (currentNodeState === s) nodeRender();
 }
 function _clientEditStatus(form, s) {
@@ -3116,7 +3116,7 @@ async function _clientApplyStatus(form, fields) {
     c.fields.status = entry.status;
     _clientsRebuildDetailsData(s.data, c);
     if (el) { el.style.color = 'var(--success)'; el.textContent = t('saved'); setTimeout(() => { if (el) el.textContent = ''; }, 2000); }
-  } catch { hist.pop(); if (el) { el.style.color = 'var(--error)'; el.textContent = t('err_save'); } }
+  } catch (e) { hist.pop(); if (el) { el.style.color = 'var(--error)'; el.textContent = _saveErrText(e); } }
   if (currentNodeState === s) nodeRender();
 }
 
@@ -8391,7 +8391,7 @@ async function _sectionSave(s, file, statusId) {
       body: JSON.stringify({ action: 'write', repo: REPO, password, file, content: JSON.stringify(s.data, null, 2) }) });
     s._afterSave?.(); // ШАБЛОН: пост-хук паспяховага захавання (напр. праекцыя паслуг → секцыя сайта)
     if (el) { el.style.color = 'var(--success)'; el.textContent = t('saved'); setTimeout(() => { if (el) el.textContent = ''; }, 2000); }
-  } catch { if (el) { el.style.color = 'var(--error)'; el.textContent = t('err_save'); } }
+  } catch (e) { if (el) { el.style.color = 'var(--error)'; el.textContent = _saveErrText(e); } }
   finally { s.saving = false; }
 }
 // ─── ЗАКАЗЫ (FORMS) ────────────────────────────────────────────────────────────
@@ -12906,6 +12906,12 @@ async function _loadSettingsHistory() {
 // блізкія запісы аднаго файла лавілі 409 (sha ўжо змяніўся) → «Памылка захавання». Чарга прыбірае
 // гонку, рэтрай дае воркеру перачытаць свежы sha (на загрузцы, частых захаваннях мапы і г.д.).
 let _ghWriteChain = Promise.resolve();
+let _wrLastStatus = 0; // код апошняга адказу на запіс (для _saveErrText)
+// тэкст збою захавання: 5xx → яўная памылка сервера з кодам (не вінім карыстальніка і не хаваем прычыну)
+function _saveErrText(e) {
+  const st = (e && e.status) || _wrLastStatus;
+  return st >= 500 ? t('err_server').replace('{code}', st) : t('err_save');
+}
 function _writeJsonFile(file, data) {
   const run = async () => {
     const body = JSON.stringify({ action: 'write', repo: REPO, password, file, content: JSON.stringify(data, null, 2) });
@@ -12914,10 +12920,12 @@ function _writeJsonFile(file, data) {
         const res = await fetch(API, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body });
         if (res.ok) return;
         if (res.status === 409) break; // rev_conflict: дыялог ужо быў у fetch-вушку, карыстальнік адмовіўся — не паўтараць
-      } catch {}
+        _wrLastStatus = res.status; // 🩺 запамінаем код: 5xx (напр. вычарпаны дзённы бюджэт запісаў KV) — гэта
+        // НЕ «памылка захавання па нашай віне», і паведамленне мусіць казаць праўду (гл. _saveErrText)
+      } catch { _wrLastStatus = 0; }
       if (attempt < 2) await new Promise(r => setTimeout(r, 400 * (attempt + 1))); // бэкоф перад паўторам са свежым sha
     }
-    throw new Error('write failed');
+    const err = new Error('write failed'); err.status = _wrLastStatus; throw err;
   };
   _ghWriteChain = _ghWriteChain.then(run, run); // чаргуем нават пасля памылкі папярэдняга запісу
   return _ghWriteChain;
@@ -13248,7 +13256,7 @@ async function _persistSettingsChange(n) {
     if (_settingsHistory !== null) await _writeJsonFile('content/settings_history.json', _settingsHistory); // не перапісаць "null" калі яшчэ не загружана
     await _writeJsonFile('content/settings.json', settings);
     settingsSnapshot = JSON.parse(JSON.stringify(settings));
-  } catch { for (let i = 0; i < n; i++) _settingsHistory.pop(); showAlert(t('err_save')); return false; }
+  } catch (e) { for (let i = 0; i < n; i++) _settingsHistory.pop(); showAlert(_saveErrText(e)); return false; }
 }
 
 function loadGeneralEditor() {
@@ -14552,7 +14560,7 @@ async function saveRateOverrides() {
     if (!res.ok) throw new Error((await res.json()).error);
     if (_ratesData) _ratesData.overrides = overrides;
     if (st) { st.style.color = 'var(--success)'; st.textContent = t('saved'); setTimeout(() => { if (st) st.textContent = ''; }, 2000); }
-  } catch (e) { if (st) { st.style.color = 'var(--error)'; st.textContent = t('err_save'); } }
+  } catch (e) { if (st) { st.style.color = 'var(--error)'; st.textContent = _saveErrText(e); } }
   if (btn) btn.disabled = false;
 }
 
