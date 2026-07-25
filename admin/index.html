@@ -5262,7 +5262,8 @@ function _nodeTableSectionHtml(form, section, s, mover = '') {
   // бо лік у назве секцыі паказвае адфільтраваную колькасць
   const columns = section.columnsFn ? section.columnsFn(form, s) : (section.columns || []);
   const _colRight = _tblNumericCols(columns, rows);
-  const { filteredRows, sortedRows } = _tblProcessRows(rows, columns, _isFilterable ? colFilters : {}, sortState, section.keepOrder, _colRight);
+  // згорнутай секцыі патрэбны толькі ЛІК (сартаваць няма чаго паказваць) → не паліць CPU на вялікіх табліцах
+  const { filteredRows, sortedRows } = _tblProcessRows(rows, columns, _isFilterable ? colFilters : {}, view === 'collapsed' ? null : sortState, section.keepOrder, _colRight);
   const visTotal = sortedRows.length;
   // Лік у загалоўку: пры актыўным фільтры — «21 з 273» (бачыш, што паказана НЕ ўсё; той жа сэнс, што
   // подпіс «адфільтравана N з M» у дакуменце). Без фільтра — просты «(273)»
