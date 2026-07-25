@@ -12789,10 +12789,14 @@ let monitorState = {
       const ff = form.fields || {}, trFree = Math.max(0, (+ff.trMax || 5) - (+ff.trFree || 0)), trCred = +ff.trCredits || 0;
       const trBadge = `<span style="font-size:0.72rem;color:${trFree <= 0 && trCred <= 0 ? '#ef4444' : 'var(--muted)'};margin-left:6px;white-space:nowrap" title="${escHtml(t('tr_client_badge_title'))}">🌐${trFree}+${trCred}</span>`;
       const star = form.fields?._self ? `<span title="${escHtml(t('mon_self_site'))}">⭐ </span>` : ''; // ⭐ уласны сайт платформы
+      // 📧 бэйдж дзённай квоты лістоў сайта (той жа рытм, што 🌐): чырвоны, калі вычарпана —
+      // «кліент не атрымае пацверджання» мусіць быць відаць з карткі, а не толькі з алертаў
+      const mMax = +ff.mailMax || 0, mUsed = Math.min(+ff.mailToday || 0, mMax || 999);
+      const mailBadge = mMax ? `<span style="font-size:0.72rem;color:${mUsed >= mMax ? '#ef4444' : 'var(--muted)'};margin-left:6px;white-space:nowrap" title="${escHtml(t('mail_quota_title'))}">📧${mUsed}/${mMax}</span>` : '';
       // 🚨 чып крытычных алертаў за 48 гадзін (lік з get_dashboard, адзін групавы запыт) — «што гарыць зараз»
       const al48 = +(form.fields?.alerts48) || 0;
       const alBadge = al48 ? `<span style="font-size:0.72rem;color:#ef4444;margin-left:6px;white-space:nowrap" title="${escHtml(t('alerts_badge_title'))}">⚠${al48}</span>` : '';
-      return `${star}${pingDot}<span style="color:${col}">${escHtml(_nodeName(form)||'—')}</span>${stBadge}${trBadge}${alBadge}`;
+      return `${star}${pingDot}<span style="color:${col}">${escHtml(_nodeName(form)||'—')}</span>${stBadge}${trBadge}${mailBadge}${alBadge}`;
     }
     return escHtml(_nodeName(form)||'—');
   },
@@ -12895,6 +12899,7 @@ async function _monitorLoadDashboard() {
                  orderId:c.orderId||'', clientId:c.clientId||'', _self: c.self ? true : undefined, // ⭐ уласны сайт платформы
                  // 🌐 расход перакладаў гэтага паддамена (для бэйджа + выпіса)
                  trFree:c.trFree??0, trMax:c.trMax??5, trCredits:c.trCredits??0,
+                 mailToday:c.mailToday??0, mailMax:c.mailMax??0, // 📧 дзённая квота лістоў (бэйдж 📧N/M)
                  alerts48:c.alerts48??0 } });  // 🚨 крытычных за 48 гадз (чып ⚠N у назве)
     });
     monitorState.data.nodes = newNodes;
