@@ -514,6 +514,7 @@
         <div class="page-title" data-i18n="page_general_title">Агульныя налады</div>
         <div class="page-desc" data-i18n="page_general_desc">Асноўная інфармацыя пра кампанію</div>
         <div id="general-company-editor"><div class="loading" data-i18n="loading">Загрузка...</div></div>
+        <div id="general-intake-editor"></div><!-- 📝 Анкета: перазапуск напаўнення сайта (была толькі ў патоку пакупкі) -->
         <div id="general-contact-editor" style="display:none"></div>
         <div id="general-banking-editor" style="display:none"></div>
       </div>
@@ -10970,6 +10971,79 @@ function fillForm() {
 // ════════════════════════════════════════
 // 🚚 ДАСТАЎКА (C2b) — settings-backed РМ: адна Форма-0 канфігу (build з settings.delivery, без API)
 // ════════════════════════════════════════
+// ═══ 📝 АНКЕТА (РМ Агульныя налады) — перазапуск напаўнення сайта адказамі кліента ═══
+// Была ТОЛЬКІ ў патоку пакупкі (крок 3/4): хто натыснуў «Прапусціць», губляў аўта-напаўненне назаўжды.
+// Цяпер тыя ж пытанні жывуць Формай-0, адказы — у `settings.intake`, а кнопка ✨ кліча воркер
+// `intake_fill` (адзінка AI: бясплатныя 5/мес → крэдыты; піша ТОЛЬКІ ў пустыя палі).
+FORM_SCHEMAS.intake = Object.assign({ sections: [
+  { type: 'flat', id: 'ik', title: 'ik_title', editable: true, onEdit: (form, s) => _nodeFlatSectionEdit(form.id, 'ik'), blocks: [
+    { key: 'companyName', type: 'text',     label: 'ik_company' },
+    { key: 'field',       type: 'text',     label: 'ik_field' },
+    { key: 'about',       type: 'textarea', label: 'ik_about' },
+    { key: 'phone',       type: 'text',     label: 'ik_phone' },
+    { key: 'address',     type: 'text',     label: 'ik_address' },
+  ] },
+  { type: 'table', dataKey: 'offers', title: 'ik_offers', addable: true, rowEditable: true, rowDeletable: true, keepOrder: true,
+    rowSchema: [{ key: 'name', type: 'text', label: 'ik_offer_name' }, { key: 'price', type: 'text', label: 'ik_offer_price' }],
+    columns: [{ key: 'name', label: 'ik_offer_name' }, { key: 'price', label: 'ik_offer_price', align: 'right' }] },
+  { type: 'flat', id: 'ik-gen', title: 'ik_gen_title', blocks: [
+    { key: '_gen', type: 'custom', render: (form) => `<div style="font-size:0.85rem;color:var(--muted);line-height:1.5;margin-bottom:10px">${escHtml(t('ik_gen_hint'))}</div>
+      <button class="btn-save" style="box-shadow:none;display:inline-flex;align-items:center;gap:6px" onclick="_intakeGenerate()">${_mIco('translate')}${escHtml(t('ik_generate'))}</button>
+      <span id="ik-gen-status" style="margin-left:10px;font-size:0.85rem;color:var(--muted)"></span>` },
+  ] },
+] }, { _noName: true });
+CONTENT_TYPES['intake-root'] = { canSelect: false, showActiveDot: false, canActive: false, showCurrentDot: false, canMakeCurrent: false, // РМ-хост: адна Форма-0 з кода
+  canAddFolder: false, canAddItem: false, canAddForm: false, canDelete: false, canRename: false, canRelocate: false, // склад фіксаваны кодам
+  canMoveOrder: false, canDuplicate: false, hasTrash: false, canSort: false, hasFilter: false }; // няма дзяцей — сартаваць/фільтраваць нечага
+CONTENT_TYPES['intake'] = { ..._formFixed }; // Форма-0 Анкеты: структура фіксаваная
+let intakeState = {
+  data: null, saving: false, selected: new Set(), expanded: new Set(),
+  _section: 'intake', _editorId: 'general-intake-editor',
+  _localOnly: true, _rootType: 'intake-root', _rootName: () => t('ik_title'),
+  _spaceOnly: true, _formSchema: 'intake',
+  _formNameHtml: () => escHtml(t('ik_title')),
+  _emptyHtml: () => '',
+  _saveFn: () => _intakeSave(),
+  _renderFn: () => { currentNodeState = intakeState; renderNodeEditor(intakeState); }
+};
+function _buildIntakeNodes() { // праекцыя settings.intake → адна Форма-0 (хук _buildFn, як у Дастаўкі)
+  const k = settings.intake || {};
+  intakeState.data = { nodes: [{ id: 'intake-cfg', type: 'form', formSchema: 'intake', parentId: null, order: 0, name: '',
+    fields: { companyName: k.companyName || '', field: k.field || '', about: k.about || '', phone: k.phone || '', address: k.address || '',
+      offers: (Array.isArray(k.offers) ? k.offers : []).map(o => ({ _id: o._id || ('o' + Math.random().toString(36).slice(2, 8)), name: o.name || '', price: o.price || '' })) } }] };
+  intakeState.expanded = new Set(['intake-cfg']);
+}
+intakeState._buildFn = _buildIntakeNodes;
+function _intakeSave() { // Форма-0 → settings.intake (адказы жывуць у наладах, каб іх можна было правіць колькі трэба)
+  const f = intakeState.data?.nodes?.[0]?.fields; if (!f) return;
+  settings.intake = { companyName: (f.companyName || '').trim(), field: (f.field || '').trim(), about: (f.about || '').trim(),
+    phone: (f.phone || '').trim(), address: (f.address || '').trim(),
+    offers: (Array.isArray(f.offers) ? f.offers : []).filter(o => (o.name || '').trim()).map(o => ({ _id: o._id, name: (o.name || '').trim(), price: (o.price || '').trim() })) };
+  _persistSettingsChange(0);
+}
+function loadIntakeEditor() { _buildIntakeNodes(); currentNodeState = intakeState; renderNodeEditor(intakeState); }
+// ✨ Напоўніць тэксты сайта адказамі Анкеты (адзінка AI; пішам толькі ў пустыя палі)
+async function _intakeGenerate() {
+  const f = intakeState.data?.nodes?.[0]?.fields; if (!f) return;
+  const intake = { companyName: f.companyName, field: f.field, about: f.about, phone: f.phone, address: f.address,
+    offers: (Array.isArray(f.offers) ? f.offers : []).filter(o => (o.name || '').trim()).map(o => ({ name: o.name, price: o.price })) };
+  if (!Object.values(intake).some(v => Array.isArray(v) ? v.length : (v || '').trim())) { showAlert(t('ik_gen_empty')); return; }
+  showConfirm(t('ik_gen_confirm'), async () => {
+    const st = document.getElementById('ik-gen-status'); if (st) { st.style.color = 'var(--muted)'; st.textContent = t('loading'); }
+    try {
+      const r = await fetch(API, { method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'intake_fill', repo: REPO, password, token: authToken, intake, generate: true }) });
+      const d = await r.json().catch(() => ({}));
+      if (!r.ok || d.error) {
+        if (st) { st.style.color = 'var(--error)'; st.textContent = d.error === 'tr_limit' ? t('tr_limit').replace('{max}', d.max ?? 5) : _srvErrText(r, d, t('tr_err')); }
+        return;
+      }
+      if (st) { st.style.color = 'var(--success)';
+        st.textContent = t('ik_gen_done').replace('{n}', (d.filled || 0) + (d.touched || 0)).replace('{free}', d.free ?? '—').replace('{credits}', d.credits ?? 0); }
+      await loadSettings(); nodeReloadSection(); // тэксты пісаў сервер → перачытаць налады
+    } catch (e) { if (st) { st.style.color = 'var(--error)'; st.textContent = t('err_connection'); } }
+  }, { label: t('ik_generate'), danger: false });
+}
 let deliveryState = {
   data: null, saving: false, selected: new Set(), expanded: new Set(),
   _section: 'delivery', _editorId: 'delivery-editor',
@@ -13422,6 +13496,7 @@ function loadGeneralEditor() {
   if (!Array.isArray(settings.banking)) settings.banking = [];
   // РМ «Агульныя налады» = 2 Формы-0 (Структура кампаніі · Даведка П/ПФФ) — усе ў companyState; «Акаўнт уладальніка» перанесены ў картку owner (Users РМ, 3-5)
   loadCompanyEditor();
+  loadIntakeEditor(); // 📝 Анкета — другая Форма-0 РМ
   if (_settingsHistory === null) _loadSettingsHistory().then(() => { // ленава падцягнуць гісторыю акаўнта (email) → перабудаваць Формы-0
     _buildCompanyForms();
     if (currentPage === 'general') renderNodeEditor(companyState);
@@ -15403,7 +15478,7 @@ function _allNodeStates() {
   return [infoDrawerState, ordersState, appointmentsState, clientsState, languagesState, privacyState,
     companyState, generalContactState, generalBankingState, generalSecurityState, emailRoutingState, themeState,
     filesState, servicesState, faqState, advantagesState, testimonialsState, howWeWorkState, promotionsState, pricesState,
-    monitorState, ppffTestState, usersState, chatsState, deliveryState, reportsState, sectionsState, siteSectionsState, panelViewState]; // sectionsState — корань «Секцыі сайта» (быў прапушчаны → драг/фокус не бачылі яго вузлоў)
+    monitorState, ppffTestState, usersState, chatsState, deliveryState, reportsState, sectionsState, siteSectionsState, panelViewState, intakeState]; // sectionsState — корань «Секцыі сайта» (быў прапушчаны → драг/фокус не бачылі яго вузлоў)
 }
 document.addEventListener('mousedown', e => {
   for (const s of _allNodeStates()) {
