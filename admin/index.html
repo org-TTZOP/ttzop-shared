@@ -1732,7 +1732,7 @@ const CONTENT_TYPES = {
     showActiveDot: false, canActive: false,            // статус — кастомны мультызначны (demo/active/paused/…)
     showCurrentDot: false, canMakeCurrent: false,      // паняцця «Бягучы кліент» няма
     canRename: false,                                  // імя — у профілі, не ў назве папкі
-    canRelocate: false, canDuplicate: false,           // кліентаў не перамяшчаюць і не дублікуюць hasDescription: false,
+    canRelocate: false, canDuplicate: false, hasDescription: false, //  кліентаў не перамяшчаюць і не дублікуюць
     // [Б1] — структура дзяцей кліента фіксавана
     canAddFolder: false, canAddItem: false, canAddForm: false,
     canSort: false, canLayout: false,
@@ -1833,16 +1833,17 @@ CONTENT_TYPES['sitepage-posts']        = { // Папка-0 «Артыкулы» 
   canSelect: false, showActiveDot: false, canActive: false, showCurrentDot: false, canMakeCurrent: false,
   canMoveOrder: false, canDuplicate: false, // sections.json плоскі (зняць у К3d-матрошцы)
   canRename: false, // name НЕ персістуецца (папка перабудоўваецца з sections.json) — зняць толькі разам з персістам
-  canRelocate: false, canDelete: false, // sections.json плоскі (зняць у К3d-матрошцы) hasDescription: false,
+  canRelocate: false, canDelete: false, hasDescription: false, //  sections.json плоскі (зняць у К3d-матрошцы)
   canAddFolder: false, canAddItem: false, // сайт не групуе посты і не паказвае файлы-сіроты (вокладка — поле паста)
   canBeLocked: false }; // sections.json плоскі (зняць у К3d-матрошцы)
 CONTENT_TYPES['sitePost']              = { // пост: назва = загаловак (canRename ✓ ад ПРОДАКФПФ); ● = паказ на сайце (hidden персістуецца)
-  showCurrentDot: false, canMakeCurrent: false, canRelocate: false, // адна Папка-0 — пераносіць няма куды hasDescription: false,
+  showCurrentDot: false, canMakeCurrent: false, canRelocate: false, hasDescription: false, //  адна Папка-0 — пераносіць няма куды
   canBeLocked: false }; // палі перабудоўваюцца з sections.json — замок не персістыўся б
 CONTENT_TYPES['siteSection']           = { // форма-экзэмпляр секцыі сайта; нашчадак ПРОДАКФПФ (ааП — толькі абмежаванні)
   // canRename ✓ ад ПРОДАКФПФ (ааП-аўдыт v4.575: nodeSetName люструе ў fields.title праз nameField — забарона зазлішняя)
   showCurrentDot: false, canMakeCurrent: false, // паняцця «Бягучая секцыя» няма
-  // canRelocate ✓ (🪆 К3d v4.586: экзэмпляр пераносіцца ў раздзел-Папку — было «пераносіць няма куды» пры плоскім спісе) hasDescription: false,   // description не праецыруецца ў спіс сайта — не падманваць
+  hasDescription: false,   // description не праецыруецца ў спіс сайта — не падманваць
+  // canRelocate ✓ (🪆 К3d v4.586: экзэмпляр пераносіцца ў раздзел-Папку — было «пераносіць няма куды» пры плоскім спісе)
   canAddFolder: true, // канон-выключэнне «Форма трымае Папкі-0»: экзэмпляр можа завесці Папку з файламі/укладзенымі формамі (фота ў любой секцыі — генерычна, без асобнай Галерэі)
   canBeLocked: false };    // палі перабудоўваюцца з sections.json пры кожнай загрузцы — замок не персістыўся б
 // 🧩 К2 «Тыпы секцый сайта»: Форма = Тып (сістэмныя ⚙️📄 з SITE_VIEW_TYPES + дублі юзера); прызнак [Тып] на экзэмплярах Структуры
@@ -7203,7 +7204,8 @@ CONTENT_TYPES['pvScheme'] = { // Форма-прэсэт схемы: тольк�
   showCurrentDot: f => !!f.fields?._current, // ○ бягучая схема
   canRename: false, canDelete: false, canDuplicate: false, canMoveOrder: false, canRelocate: false, // прэсэт з кода (назва/склад/парадак фіксаваныя)
   canActive: false, showActiveDot: false, // няма «актыўнай» — толькі «бягучая» (○)
-  canAddFolder: false, canAddForm: false, canAddItem: false, canSort: false, hasFilter: false, // ліставая форма-прэсэт (без дзяцей) hasDescription: false, hasTrash: false, canBeLocked: false, canLayout: false, // прэсэт з кода — не рэдагуецца/не блакуецца
+  canAddFolder: false, canAddForm: false, canAddItem: false, canSort: false, hasFilter: false, // ліставая форма-прэсэт (без дзяцей)
+  hasDescription: false, hasTrash: false, canBeLocked: false, canLayout: false, // прэсэт з кода — не рэдагуецца/не блакуецца
 };
 function _pvBuildNodes() { // хук _buildFn: будуем дрэва з код-каталога (нічога ў settings; «бягучая» — у KV пер-userId)
   const host = { id: 'pv-host', type: 'form', formSchema: 'sectionsHost', parentId: null, order: 0, name: t('pv_title'), fields: {} };
