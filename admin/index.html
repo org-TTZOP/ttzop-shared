@@ -2573,6 +2573,8 @@ document.getElementById('reset-code-input').addEventListener('keydown', e => { i
 // 5xx/не-JSON (воркер упаў, ліміт KV, Cloudflare 1101) → яўнае «памылка сервера + код», НЕ дамысленне
 // пра пароль/код. Інакш кожны збой бэкенду выглядаў як памылка карыстальніка.
 function _srvErrText(res, d, fallback) {
+  // 'server_error' — наш глабальны catch воркера: код нічога не кажа, а `detail` нясе рэальную прычыну
+  if (d && d.error === 'server_error') return t('err_server').replace('{code}', res.status) + (d.detail ? ' — ' + d.detail : '');
   if (d && d.error) return d.error;
   if (!res.ok && res.status >= 500) return t('err_server').replace('{code}', res.status);
   return fallback;
@@ -13124,11 +13126,11 @@ async function _loadSettingsHistory() {
 // блізкія запісы аднаго файла лавілі 409 (sha ўжо змяніўся) → «Памылка захавання». Чарга прыбірае
 // гонку, рэтрай дае воркеру перачытаць свежы sha (на загрузцы, частых захаваннях мапы і г.д.).
 let _ghWriteChain = Promise.resolve();
-let _wrLastStatus = 0; // код апошняга адказу на запіс (для _saveErrText)
+let _wrLastStatus = 0, _wrLastDetail = ''; // код і прычына апошняга адказу на запіс (для _saveErrText)
 // тэкст збою захавання: 5xx → яўная памылка сервера з кодам (не вінім карыстальніка і не хаваем прычыну)
 function _saveErrText(e) {
   const st = (e && e.status !== undefined) ? e.status : _wrLastStatus;
-  if (st >= 500) return t('err_server').replace('{code}', st);
+  if (st >= 500) return t('err_server').replace('{code}', st) + (_wrLastDetail ? ' — ' + _wrLastDetail : ''); // detail з глабальнага catch воркера
   // st === 0 → сам fetch не даехаў: або сеціва, або воркер упаў без CORS (Cloudflare-1101 пры вычарпаным
   // бюджэце KV — жывы кейс 2026-07-25). Гэта таксама НЕ «памылка захавання» на баку карыстальніка
   if (!st) return t('err_connection');
@@ -13142,9 +13144,10 @@ function _writeJsonFile(file, data) {
         const res = await fetch(API, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body });
         if (res.ok) return;
         if (res.status === 409) break; // rev_conflict: дыялог ужо быў у fetch-вушку, карыстальнік адмовіўся — не паўтараць
-        _wrLastStatus = res.status; // 🩺 запамінаем код: 5xx (напр. вычарпаны дзённы бюджэт запісаў KV) — гэта
+        _wrLastStatus = res.status; _wrLastDetail = ''; // 🩺 запамінаем код: 5xx (напр. вычарпаны дзённы бюджэт запісаў KV) — гэта
+        try { _wrLastDetail = ((await res.clone().json()) || {}).detail || ''; } catch {} // прычына ад воркера, калі ёсць
         // НЕ «памылка захавання па нашай віне», і паведамленне мусіць казаць праўду (гл. _saveErrText)
-      } catch { _wrLastStatus = 0; }
+      } catch { _wrLastStatus = 0; _wrLastDetail = ''; }
       if (attempt < 2) await new Promise(r => setTimeout(r, 400 * (attempt + 1))); // бэкоф перад паўторам са свежым sha
     }
     const err = new Error('write failed'); err.status = _wrLastStatus; throw err;
