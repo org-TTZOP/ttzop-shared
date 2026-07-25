@@ -5654,8 +5654,14 @@ function _nodeTableChartHtml(rows, section, form, s) {
   const norm = !!s._chartNorm.get(viewKey);
   let pillsHtml = '', chartRows = rows, colorMap = {};
   if (cfg?.groupKey) {
-    const selected = s._chartFilter.get(viewKey) || new Set();
     const allGroups = [...new Set(rows.map(r => String(r[cfg.groupKey] ?? '')))].filter(Boolean).sort();
+    // ⚠️ ЭФЕКТЫВНЫ выбар = выбар пілюль ∩ ДАСТУПНЫЯ групы (rows ужо праз фільтр табліцы). Раней стары
+    // выбар пілюль пераставаў перасякацца з фільтрам слупка (пілюля USD + фільтр «EUR») → графік
+    // маляваў 0 ліній і «—». Пусты перасек = паказваем усё даступнае; сам выбар НЕ сціраем — знімеш
+    // фільтр табліцы, і твае пілюлі вернуцца (заўвага карыстальніка 2026-07-25)
+    const rawSel = s._chartFilter.get(viewKey) || new Set();
+    const avail = new Set(allGroups);
+    const selected = new Set([...rawSel].filter(g => avail.has(g)));
     // Кнопка абс/% (толькі калі больш за адну групу)
     const normBtn = allGroups.length > 1
       ? `<button onclick="event.stopPropagation();_nodeTableChartNormToggle('${escHtml(fid)}','${escHtml(dk)}')"
