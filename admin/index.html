@@ -13030,7 +13030,7 @@ function _ensureContactTree() { // міграцыя са старых плоск
     tree.push({ id: e.id || ('em_' + i), type: 'email', parentId: 'emails-folder', order: i, address: e.address || '', labels: e.labels || {}, active: e.active !== false }));
   settings.contactTree = tree;
   delete settings.phones; delete settings.email_routing; delete settings.phone; // нічога плоскага не пакідаем
-  _persistSettingsChange(0); // захаваць міграцыю адразу (інакш спурыёзны банер «незахаваных змен»)
+  _persistSettingsChange(0, true); // захаваць міграцыю адразу (інакш спурыёзны банер «незахаваных змен»); фонава — без мадалкі пры збоі
   return tree;
 }
 function _contactPathLabels(parentId) { // ланцуг назваў папак-продкаў (прывідны шлях для Сметніцы)
@@ -13310,12 +13310,17 @@ function _generalEditEmail(form, s) {
   });
 }
 // Запіс гісторыі + settings.json; вяртае false і адкочвае N апошніх запісаў пры памылцы
-async function _persistSettingsChange(n) {
+// quiet=true — ФОНАВЫ запіс (міграцыі структуры, якія ніхто не прасіў): збой не мусіць лезці мадалкай
+// пасярод працы (жывы кейс 2026-07-25: пры вычарпаным бюджэце KV мадалка выскаквала на кожным уваходзе
+// і пры пераходзе ў РМ). Карыстальніцкія дзеянні (яны правяраюць `=== false` і адкатваюць) — як раней.
+async function _persistSettingsChange(n, quiet) {
   try {
     if (_settingsHistory !== null) await _writeJsonFile('content/settings_history.json', _settingsHistory); // не перапісаць "null" калі яшчэ не загружана
     await _writeJsonFile('content/settings.json', settings);
     settingsSnapshot = JSON.parse(JSON.stringify(settings));
-  } catch (e) { for (let i = 0; i < n; i++) _settingsHistory.pop(); showAlert(_saveErrText(e)); return false; }
+  } catch (e) { for (let i = 0; i < n; i++) _settingsHistory.pop();
+    if (quiet) console.error('фонавае захаванне settings не атрымалася:', _saveErrText(e)); else showAlert(_saveErrText(e));
+    return false; }
 }
 
 function loadGeneralEditor() {
