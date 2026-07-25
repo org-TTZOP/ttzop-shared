@@ -11258,7 +11258,87 @@ function _repReaderCfg(pl) {
     bodyHtml: `<div style="font-size:13px;line-height:1.5">${sumHtml}${tablesHtml}</div>`,
     siteName: REPO, labels: { pdfprint: '🖨 PDF', close: '✕', share: '↗' } };
 }
-function _expPDF(pl) { openReaderWindow(_repReaderCfg(pl)); } // фіксацыя дакумента: reader.js style:'paper' → браўзерны 🖨/захаваць PDF
+function _expPDF(pl) { openReaderWindow(_repReaderCfg(pl)); } // 👁 ПРАГЛЯД дакумента ў асобнай укладцы (reader.js style:'paper'; папап-блакер → мадалка)
+// ── ⬇ РЭАЛЬНЫ PDF-ФАЙЛ на дыск (jsPDF + autotable, усё ленава — важыць ~1.1МБ, грузім толькі па кліку) ──
+// Тэкставы PDF (не растр): тэкст вылучаецца і шукаецца. Кірыліца патрабуе свайго шрыфта — базавыя
+// шрыфты jsPDF яе не маюць (былі б крыжыкі), таму падцягваем DejaVuSans.ttf і рэгіструем у VFS.
+let _pdfLibP = null, _pdfFontP = null;
+const _PDF_FONT_URL = 'https://cdn.jsdelivr.net/npm/dejavu-fonts-ttf@2.37.3/ttf/DejaVuSans.ttf';
+function _pdfLibLoad() {
+  if (window.jspdf?.jsPDF && window.jspdf.jsPDF.API?.autoTable) return Promise.resolve(true);
+  if (!_pdfLibP) _pdfLibP = new Promise(res => {
+    const add = (src, next) => { const sc = document.createElement('script'); sc.src = src; sc.onload = next; sc.onerror = () => res(false); document.head.appendChild(sc); };
+    add('https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js',
+      () => add('https://cdn.jsdelivr.net/npm/jspdf-autotable@3.8.2/dist/jspdf.plugin.autotable.min.js', () => res(true)));
+  });
+  return _pdfLibP;
+}
+function _pdfFontLoad() { // TTF → base64 → VFS jsPDF (раз на сесію)
+  if (!_pdfFontP) _pdfFontP = fetch(_PDF_FONT_URL).then(r => r.ok ? r.arrayBuffer() : Promise.reject()).then(buf => {
+    let s = ''; const b = new Uint8Array(buf);
+    for (let i = 0; i < b.length; i += 8192) s += String.fromCharCode(...b.subarray(i, i + 8192)); // чанкі: spread на 757КБ разам ірве стэк
+    return btoa(s);
+  }).catch(() => null);
+  return _pdfFontP;
+}
+// SVG-графік payload → PNG dataURL (jsPDF не малюе SVG; растар тут дарэчы — гэта карцінка, не тэкст)
+function _chartPng(tb, scale = 2) {
+  const cfg = _expChart(tb); if (!cfg) return Promise.resolve(null);
+  const holder = document.createElement('div'); holder.innerHTML = _repChartHtml(tb);
+  const svg = holder.querySelector('svg'); if (!svg) return Promise.resolve(null);
+  const vb = (svg.getAttribute('viewBox') || '0 0 560 200').split(/\s+/).map(Number);
+  const W = vb[2] || 560, H = vb[3] || 200;
+  svg.setAttribute('width', W); svg.setAttribute('height', H);
+  svg.style.color = '#222'; // standalone SVG: currentColor без кантэксту → сетка/подпісы шэрымі, як у дакументе
+  const url = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(new XMLSerializer().serializeToString(svg));
+  return new Promise(res => { const img = new Image();
+    img.onload = () => { const cv = document.createElement('canvas'); cv.width = W * scale; cv.height = H * scale;
+      const cx = cv.getContext('2d'); cx.fillStyle = '#fff'; cx.fillRect(0, 0, cv.width, cv.height);
+      cx.drawImage(img, 0, 0, cv.width, cv.height);
+      res({ data: cv.toDataURL('image/png'), w: W, h: H }); };
+    img.onerror = () => res(null); img.src = url; });
+}
+async function _expPDFFile(pl, onErr) {
+  if (!await _pdfLibLoad()) { onErr?.(); return; }
+  const f64 = await _pdfFontLoad();
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({ unit: 'pt', format: 'a4' });
+  let font = 'helvetica';
+  if (f64) { doc.addFileToVFS('DejaVuSans.ttf', f64); doc.addFont('DejaVuSans.ttf', 'DejaVu', 'normal'); font = 'DejaVu'; }
+  const m = _expDisp(pl), M = 40, pw = doc.internal.pageSize.getWidth();
+  let y = 52;
+  doc.setFont(font, 'normal');
+  doc.setFontSize(16); doc.text(m.title || '', M, y); y += 20;
+  doc.setFontSize(9); doc.setTextColor(110);
+  const meta = [m.period, m.at ? `${t('rep_generated')}: ${m.at}` : '', m.by ? `${t('col_who')}: ${m.by}` : ''].filter(Boolean).join(' · ');
+  if (meta) { doc.text(meta, M, y); y += 16; }
+  doc.setTextColor(30); doc.setFontSize(10);
+  (pl.summary || []).forEach(e => { doc.text(`${_repSumLabel(e.k)}: ${e.v}`, M, y); y += 13; });
+  for (const tb of (pl.tables || [])) {
+    const cols = _expCols(tb);
+    y += 12;
+    if (y > doc.internal.pageSize.getHeight() - 120) { doc.addPage(); y = 52; }
+    doc.setFontSize(12); doc.text(_expTblTitle(tb) || '', M, y); y += 8;
+    const png = await _chartPng(tb);
+    if (png) { const w = Math.min(pw - M * 2, 420), h = w * png.h / png.w;
+      if (y + h > doc.internal.pageSize.getHeight() - 60) { doc.addPage(); y = 52; }
+      doc.addImage(png.data, 'PNG', M, y + 6, w, h); y += h + 14; }
+    const tot = cols.map(c => (c.totals || []).includes('sum')
+      ? String(Math.round((tb.rows || []).reduce((s2, r) => s2 + (+r[c.key] || 0), 0) * 100) / 100) : '');
+    doc.autoTable({
+      startY: y + 6, margin: { left: M, right: M },
+      styles: { font, fontSize: 7.5, cellPadding: 3, overflow: 'linebreak' },
+      headStyles: { font, fillColor: [242, 242, 242], textColor: 30, fontStyle: 'normal' },
+      footStyles: { font, fillColor: [255, 255, 255], textColor: 30, fontStyle: 'normal' },
+      head: [cols.map(_expColLabel)],
+      body: (tb.rows || []).map(r => cols.map(c => _repColText(c, r[c.key]))),
+      ...(tot.some(x => x !== '') ? { foot: [tot] } : {}),
+      columnStyles: Object.fromEntries(cols.map((c, i) => [i, { halign: c.type === 'number' ? 'right' : 'left' }])),
+    });
+    y = doc.lastAutoTable.finalY;
+  }
+  doc.save(m.fname + '.pdf');
+}
 // (jsPDF/html2canvas генератар PDF-байтаў выдалены разам з чат-файлам: у чат ідзе спасылка-адкрыццё, а ⬇ PDF адкрывае reader-акно)
 // тонкія абгорткі РМ Справаздач (кнопкі трымаюць formId; ядро — payload-функцыі вышэй)
 function _repExportCSV(formId) { const f = reportsState.data?.nodes?.find(n => n.id === formId)?.fields; if (f?._payload) _expCSV(f._payload); }
@@ -11370,14 +11450,19 @@ function _shareOpen(cfg) {
   // Пліткі = ФАРМАТЫ ФАЙЛА для ⬇ Спампаваць. У чат жа адчот ідзе ЗАЎСЁДЫ спасылкай-адкрыццём (reader.js,
   // гл. _shareDoSend) — без асобнай пліткі «Дакумент» (яна блытала: спасылка vs файл выглядалі як два фарматы).
   // ico = id з агульнага SVG-набору (эмодзі 📕📗📘🔗 на Тэсле выпадалі ў ледзь бачны контур і схему іконак ігнаравалі)
-  if (cfg.buildPayload) modes.push({ id: 'pdf', ico: 'filePdf', label: 'PDF' }, { id: 'xlsx', ico: 'fileXls', label: 'Excel' }, { id: 'csv', ico: 'fileCsv', label: 'CSV' });
+  if (cfg.buildPayload) modes.push({ id: 'pdf', ico: 'filePdf', label: 'PDF', view: true }, { id: 'xlsx', ico: 'fileXls', label: 'Excel' }, { id: 'csv', ico: 'fileCsv', label: 'CSV' });
   if (cfg.linkUrl) modes.push({ id: 'link', ico: 'link', label: t('share_link') });
   if (!modes.length) return;
   _shareCfg = cfg; _shareMode = modes[0].id;
   document.getElementById('share-modal')?.remove();
   const ov = document.createElement('div'); ov.id = 'share-modal';
   ov.style.cssText = 'position:fixed;inset:0;z-index:1100;background:rgba(0,0,0,0.6);display:flex;align-items:center;justify-content:center;padding:16px';
-  const mbtn = m => `<button onclick="_shareSetMode('${m.id}')" data-smode="${m.id}" style="display:flex;flex-direction:column;align-items:center;gap:6px;padding:12px 10px;background:var(--surface2);border:1px solid var(--border);border-radius:10px;cursor:pointer;flex:1"><span style="display:grid;place-items:center">${_mIcoBig(m.ico, 26)}</span><span style="font-size:0.75rem;color:var(--text);font-weight:600">${escHtml(m.label)}</span></button>`;
+  // Плітка = <div> (не <button>): PDF нясе ЎЛАСНУЮ кнопку 👁 у кутку — прагляд у асобнай укладцы,
+  // а кнопка-дзеянне ніжэй сапраўды пампуе файл. Кнопка ў кнопцы — недапушчальны HTML, таму абгортка
+  const mbtn = m => `<div data-smode-wrap="${m.id}" style="position:relative;flex:1;display:flex">
+    <button onclick="_shareSetMode('${m.id}')" data-smode="${m.id}" style="display:flex;flex-direction:column;align-items:center;gap:6px;padding:12px 10px;background:var(--surface2);border:1px solid var(--border);border-radius:10px;cursor:pointer;flex:1"><span style="display:grid;place-items:center">${_mIcoBig(m.ico, 26)}</span><span style="font-size:0.75rem;color:var(--text);font-weight:600">${escHtml(m.label)}</span></button>
+    ${m.view ? `<button onclick="event.stopPropagation();_shareViewDoc()" title="${escHtml(t('share_view'))}" style="position:absolute;top:-6px;right:-6px;width:24px;height:24px;display:grid;place-items:center;background:var(--surface);border:1px solid var(--accent);border-radius:50%;cursor:pointer;padding:0">${_mIcoBig('eye', 14)}</button>` : ''}
+  </div>`;
   ov.innerHTML = `<div style="background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:18px 20px 20px;box-shadow:0 16px 48px rgba(0,0,0,0.45);position:relative;width:min(400px,92vw)">
     <button onclick="document.getElementById('share-modal').remove()" title="${escHtml(t('btn_cancel'))}" style="position:absolute;top:8px;right:10px;background:none;border:none;color:var(--error);font-size:1.25rem;cursor:pointer;line-height:1;padding:2px 6px">✕</button>
     <div style="font-size:0.9rem;font-weight:700;margin:2px 0 12px;padding-right:26px;display:flex;align-items:center;gap:7px">${_mIcoBig('share', 17)}<span>${escHtml(t('node_share'))}${cfg.title ? ': ' + escHtml(cfg.title) : ''}</span></div>
@@ -11392,10 +11477,8 @@ function _shareSetMode(m) {
   _shareMode = m;
   document.querySelectorAll('[data-smode]').forEach(b => b.style.borderColor = b.dataset.smode === m ? 'var(--accent)' : 'var(--border)');
   const act = document.getElementById('share-actions'); if (!act) return;
-  // PDF-плітка нічога не спампоўвае — яна АДКРЫВАЕ дакумент-чытач (reader.js, 🖨 ужо ўнутры). Раней кнопка
-  // звалася «Спампаваць» і на заблакаваным папапе не рабіла нічога → «як паглядзець PDF?». Цяпер яўна «Паглядзець».
+  // PDF: кнопка-дзеянне ПАМПУЕ рэальны файл (_expPDFFile), а прагляд у асобнай укладцы — 👁 на самой плітцы
   const dl = m === 'link' ? _mIcoBig('copy', 17) + escHtml(t('btn_copy'))
-    : m === 'pdf' ? _mIcoBig('eye', 17) + escHtml(t('share_view'))
     : _mIcoBig('download', 17) + escHtml(t('share_download'));
   const abtn = 'padding:11px;border-radius:10px;font-size:0.85rem;font-weight:600;flex:1;display:inline-flex;align-items:center;justify-content:center;gap:7px';
   // 💬 У чат нясе толькі СПАСЫЛКУ (дакумент-чытач / вузел-дыплінк) → мае сэнс толькі для PDF і 🔗;
@@ -11416,8 +11499,19 @@ function _shareDownload() { // ⬇ спампаваць файл / 📋 скап
   if (_shareMode === 'link') { _copyText(_shareCfg.linkUrl); document.getElementById('share-modal')?.remove(); return; }
   const pl = _shareCfg.buildPayload?.();
   if (!pl || !(pl.tables || []).length) { showAlert(t('print_empty')); return; }
-  document.getElementById('share-modal')?.remove();
-  if (_shareMode === 'csv') _expCSV(pl); else if (_shareMode === 'xlsx') _expXLSX(pl, () => showAlert(t('err'))); else _expPDF(pl);
+  if (_shareMode === 'csv') { document.getElementById('share-modal')?.remove(); _expCSV(pl); return; }
+  if (_shareMode === 'xlsx') { document.getElementById('share-modal')?.remove(); _expXLSX(pl, () => showAlert(t('err'))); return; }
+  // PDF: бібліятэка+шрыфт ~1.1МБ грузяцца па першым кліку — трымаем мадалку з ⏳, каб клік не выглядаў мёртвым
+  const btn = document.querySelector('#share-actions button');
+  if (btn) { btn.disabled = true; btn.style.opacity = '0.6'; btn.innerHTML = '⏳ ' + escHtml(t('loading')); }
+  _expPDFFile(pl, () => showAlert(t('err'))).finally(() => document.getElementById('share-modal')?.remove());
+}
+// 👁 на плітцы PDF — прагляд дакумента ў АСОБНАЙ УКЛАДЦЫ (мадалка «Падзяліцца» застаецца адкрытай:
+// паглядзеў — і тут жа можаш спампаваць ці даслаць у чат)
+function _shareViewDoc() {
+  const pl = _shareCfg?.buildPayload?.();
+  if (!pl || !(pl.tables || []).length) { showAlert(t('print_empty')); return; }
+  _expPDF(pl);
 }
 async function _shareChatStep() { // 💬 → выбар адрасатаў-супрацоўнікаў
   if (!(_shareMode === 'pdf' || _shareMode === 'link')) return; // у чат — толькі спасылка (PDF-дакумент / дыплінк), не Excel/CSV
