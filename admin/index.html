@@ -5262,7 +5262,12 @@ function _nodeTableSectionHtml(form, section, s, mover = '') {
   // ▼▼/▶▶ справа (парытэт з вузламі hasExpandAll): ▼▼ = адкрыць адразу да порцыі (15, далей клікамі «+N яшчэ»),
   // ▶▶ = згарнуць у нуль. cycleFull (Мапа) захоўвае прамы 'full'. Кароткім табліцам хапае левага дыскложура.
   const _expanded = view !== 'collapsed' && view !== 'preview'; // порцыя (лік) або 'full'
-  const fullBtn = (section.cycleFull || total > _TBL_PREVIEW) ? `<button class="node-btn-icon" title="${_expanded ? t('tree_collapse_all') : t('tree_expand_all')}" onclick="event.stopPropagation();_tblSetView('${escHtml(fid)}','${escHtml(dk)}',${_expanded ? `'collapsed'` : (section.cycleFull ? `'full'` : _TBL_PORTION)})">${_expanded ? '▶▶' : '▼▼'}</button>` : '';
+  // ПАРЫТЭТ З РАДКОМ ВУЗЛА (там ▼▼ малюецца па cap, а не па наяўнасці дзяцей): секцыя з ЛЮБОЙ крыніцай
+  // зместу заўсёды мае ▼▼/▶▶. Раней гейт быў `total > _TBL_PREVIEW`, а ленавая крыніца (dataFn+onExpand)
+  // на ЗГОРНУТАЙ секцыі аддае 0 радкоў → кнопка «з'яўлялася» толькі пасля левага дыскложура (заўвага
+  // карыстальніка 2026-07-25). Ліку радкоў у той момант ведаць немагчыма — таму рашае наяўнасць цела.
+  const _hasBody = !!(total || section.dataFn || section.bodyFn || section.timeline);
+  const fullBtn = (section.cycleFull || _hasBody) ? `<button class="node-btn-icon" title="${_expanded ? t('tree_collapse_all') : t('tree_expand_all')}" onclick="event.stopPropagation();_tblSetView('${escHtml(fid)}','${escHtml(dk)}',${_expanded ? `'collapsed'` : (section.cycleFull ? `'full'` : _TBL_PORTION)})">${_expanded ? '▶▶' : '▼▼'}</button>` : '';
   // Парадак правага кластара — канон радка вузла: [іншае: headerExtra ↻] → ▼▼ → ▲▼(мувер) → ⋯
   const titleRow = _sectionHeaderHtml(section.title, menuId, addItem + filterItem + chartItem + menuExtra + _sectionMenuCommonHtml(form, section, s, menuId), cntHtml + _secLockIconHtml(form, section), headerExtra + refreshBtn + fullBtn + mover, leadToggle);
   const footer = section.footerHtml ? section.footerHtml(form, s) : '';
@@ -10971,7 +10976,9 @@ function _repSumLabel(k) { // 'enrich:apptStatus:scheduled' → лакальны
   return t(k);
 }
 function _repTableSection(tb) { // payload-табліца → канонная Table-секцыя (сарт/фільтр/вынікі — з ПРОДАКФПФ)
+  const ch = _expChart(tb); // той жа графік, што ў дакуменце → ⋯ 📊 і пілюлі-серыі даступныя і на экране
   return { type: 'table', title: tb.title, dataKey: '_rt_' + tb.id, keepOrder: true, emptyHeader: true, sortable: true,
+    ...(ch ? { chart: { ...ch } } : {}), // копія: _nodeTableChartHtml дапісвае ў cfg _colorMap (не пэцкаем каталог)
     columns: (tb.columns || []).map(c => ({ ...c, ...(c.enrich ? _REP_ENRICH[c.enrich] || {} : {}) })) };
 }
 // ── 📤 ЭКСПАРТ АДЧОТУ «ЯК БАЧЫШ» (заўвага карыстальніка 2026-07-25) ──
@@ -10986,7 +10993,10 @@ function _repPayloadSeen(form, s) {
     const vk = form.id + '::' + sec.dataKey;
     const numeric = _tblNumericCols(cols, raw);
     const { sortedRows } = _tblProcessRows(raw, cols, _colFilterMap(s, vk), s._tableSort?.get(vk), sec.keepOrder, numeric);
-    return { ...tb, rows: sortedRows, ...(sortedRows.length !== raw.length ? { filtered: { n: sortedRows.length, m: raw.length } } : {}) };
+    const base = _expChart(tb), chSt = base ? _chartStateOf(s, vk) : null; // пілюлі-серыі + абс/% графіка выніку
+    return { ...tb, rows: sortedRows,
+      ...(base ? { chart: { ...base, only: chSt.only, normalize: chSt.normalize } } : {}),
+      ...(sortedRows.length !== raw.length ? { filtered: { n: sortedRows.length, m: raw.length } } : {}) };
   });
   return { ...pl, tables };
 }
@@ -11138,10 +11148,18 @@ const _REP_CHARTS = {
   subs:     { xKey: 'date', yKey: 'price',  agg: 'sum', yDigits: 2 }, // 🔁 сума падпісак па днях
 };
 const _expChart = tb => tb.chart || _REP_CHARTS[tb.id] || null; // адзіны рэзалв (дакумент + xlsx)
+// СТАН ГРАФІКА НА ЭКРАНЕ (пілюлі выбраных серый + перамыкач абс/%) — таксама частка «як бачыш»:
+// выбраў адну валюту, а ў дакумент ішлі ЎСЕ (заўвага карыстальніка 2026-07-25)
+function _chartStateOf(s, viewKey) {
+  const sel = s?._chartFilter?.get(viewKey);
+  return { only: (sel && sel.size) ? [...sel] : null, normalize: !!s?._chartNorm?.get(viewKey) };
+}
 // радкі для графіка: xCut (абрэзка datetime да даты) + агрэгацыя па x[×групе] — сырыя радкі даюць
 // зігзаг (некалькі заказаў у адзін дзень), таму сумуем/лічым ПЕРАД рэндэрам
 function _chartRows(tb, cfg) {
-  const rows = (tb.rows || []).filter(r => r && r[cfg.xKey] != null && r[cfg.xKey] !== '');
+  let rows = (tb.rows || []).filter(r => r && r[cfg.xKey] != null && r[cfg.xKey] !== '');
+  // only — выбраныя пілюлі-серыі на экране (пусты/адсутны = усе, як у панэлі)
+  if (cfg.only && cfg.groupKey) { const keep = new Set(cfg.only.map(String)); rows = rows.filter(r => keep.has(String(r[cfg.groupKey] ?? ''))); }
   const x = r => cfg.xCut ? String(r[cfg.xKey]).slice(0, cfg.xCut) : String(r[cfg.xKey]);
   if (!cfg.agg) return rows.map(r => ({ ...r, [cfg.xKey]: x(r) }));
   const acc = new Map(); // «x|група» → {сума, лік}
@@ -11162,7 +11180,7 @@ function _repChartHtml(tb) {
   if (new Set(rows.map(r => String(r[cfg.xKey]))).size < 2) return ''; // адна кропка — графіка няма сэнсу
   // max-width ≈ viewBox (560): без яго svg з width:100% у шырокім целе дакумента цэнтруецца
   // (preserveAspectRatio) і малюнак вісіць пасярод пустых палёў
-  return `<div style="color:#222;max-width:640px;margin:6px 0 2px">${_svgLineChart(rows, { ...cfg, legend: true, height: cfg.height || 200 })}</div>`;
+  return `<div style="color:#222;max-width:640px;margin:6px 0 2px">${_svgLineChart(rows, { ...cfg, normalize: !!cfg.normalize, legend: true, height: cfg.height || 200 })}</div>`;
 }
 function _repColText(c, v) { // значэнне ячэйкі → чытэльны тэкст (адзіны рэзалв для CSV/XLSX/PDF)
   if (v === undefined || v === null || v === '') return '';
@@ -11406,8 +11424,10 @@ function _printTableOf(form, sec, s, titlePrefix) {
   // (толькі калі яго восі рэальна ёсць у выпісаных слупках — інакш чарт быў бы пусты)
   const keys = new Set(outCols.map(c => c.key));
   const ch = sec.chart && keys.has(sec.chart.xKey) && keys.has(sec.chart.yKey) ? sec.chart : null;
+  const chSt = ch ? _chartStateOf(s, vk) : null; // выбраныя пілюлі-серыі + абс/% на момант націску
   return { titleText: secTitle ? `${titlePrefix} — ${secTitle}` : titlePrefix, columns: outCols,
-    ...(ch ? { chart: { xKey: ch.xKey, yKey: ch.yKey, groupKey: ch.groupKey, height: ch.height, yDigits: ch.yDigits } } : {}),
+    ...(ch ? { chart: { xKey: ch.xKey, yKey: ch.yKey, groupKey: ch.groupKey, height: ch.height, yDigits: ch.yDigits,
+      _colorMap: ch._colorMap, only: chSt.only, normalize: chSt.normalize } } : {}), // _colorMap — каб колеры серый у дакуменце супалі з экранам
     rows: sortedRows.map(r => { const o = {}; outCols.forEach(c => { let v = r[c.key]; if (c.ml) v = _mlGet(v, _settingsLang()); o[c.key] = v; }); return o; }) };
 }
 // Flat-секцыя → радкі Параметр/Значэнне (select праз labelMap, ml па бягучай мове кантэнту)
