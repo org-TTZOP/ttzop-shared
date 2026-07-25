@@ -5376,9 +5376,15 @@ function _nodeTableSectionHtml(form, section, s, mover = '') {
   const wrapSt = (view === 'full' && visTotal > _TBL_PREVIEW && maxH)
     ? `overflow:auto;max-height:${maxH}${typeof maxH === 'number' ? 'px' : ''}`
     : 'overflow-x:auto';
-  // Графік — рысуецца па адфільтраваных+сартаваных радках (тых жа, што ў табліцы)
+  // Графік — рысуецца па адфільтраваных+сартаваных радках (тых жа, што ў табліцы).
+  // pillRows — радкі БЕЗ фільтра ўласнага слупка-групы (канон фасетнага пошуку: селектар не звужае сам
+  // сябе, інакш пасля выбару адной валюты/паказчыка астатнія таблеткі знікалі б і другую не дадаць)
+  const _gk = section.chart?.groupKey;
+  const pillRows = (chartOpen && _gk && (colFilters[_gk] || []).some(r => (r.val || '').trim()))
+    ? _tblProcessRows(rows, columns, Object.fromEntries(Object.entries(_isFilterable ? colFilters : {}).filter(([k]) => k !== _gk)), sortState, section.keepOrder, _colRight).sortedRows
+    : sortedRows;
   const chartHtml = (chartOpen && view !== 'collapsed')
-    ? _nodeTableChartHtml(sortedRows, section, form, s) : '';
+    ? _nodeTableChartHtml(sortedRows, section, form, s, pillRows) : '';
   // Фокус у поле фільтра пасля рэндэру (дадзеныя маглі загрузіцца асінхронна)
   if (_tblPendingFocusId) requestAnimationFrame(() => {
     const el = document.getElementById(_tblPendingFocusId);
@@ -5621,15 +5627,27 @@ document.addEventListener('pointermove', e => { // зрух >16px = скрол/�
   if (_pillLongT && _pillLongXY && Math.hypot(e.clientX - _pillLongXY.x, e.clientY - _pillLongXY.y) > 16) { clearTimeout(_pillLongT); _pillLongT = null; }
 });
 ['pointerup', 'pointercancel'].forEach(ev => document.addEventListener(ev, () => { clearTimeout(_pillLongT); _pillLongT = null; }));
+// ⚙️ ТАБЛЕТКА-СЕРЫЯ = УМОВА ФІЛЬТРА СЛУПКА-ГРУПЫ (адзін стан, рашэнне карыстальніка 2026-07-25).
+// Раней выбар серый жыў асобным `_chartFilter` → фільтр табліцы і таблеткі разыходзіліся (пілюля USD +
+// фільтр «EUR» = пусты графік). Цяпер клік па таблетцы пiша/зносіць `{val, op:'=', join:'or'}` у
+// пер-калонкавы фільтр `chart.groupKey` — звужаюцца І табліца, І графік, разсынхрон немагчымы па
+// пабудове. ААП: механізм у Table-продку, кутку хапае `chart.groupKey` (валюта `code` у Гісторыі
+// курсаў, паказчык `metric` у Дынаміцы лімітаў Маніторынга) — асобнага кода на куток НЯМА.
+function _chartPillSet(s, viewKey, groupKey) { // выбраныя серыі = '='-умовы гэтага слупка
+  const conds = (s?._tableColFilter?.get(viewKey) || {})[groupKey] || [];
+  return new Set(conds.map(c => (c.val || '').trim()).filter(Boolean));
+}
 function _nodeTableChartFilterToggle(formId, dataKey, val) {
   if (_pillLongFired) { _pillLongFired = false; return; } // доўгі націск ужо перайшоў — не перамыкаць серыю
-  const s = currentNodeState;
-  if (!s._chartFilter) s._chartFilter = new Map();
-  const key = formId + '::' + dataKey;
-  const cur = s._chartFilter.get(key) || new Set();
-  const next = new Set(cur);
-  next.has(val) ? next.delete(val) : next.add(val);
-  s._chartFilter.set(key, next);
+  const s = currentNodeState; if (!s) return;
+  const vk = formId + '::' + dataKey;
+  const gk = _tblFindSection(formId, dataKey)?.chart?.groupKey; if (!gk) return;
+  const map = _colFilterMap(s, vk);
+  const rest = (map[gk] || []).filter(c => (c.val || '').trim() && (c.val || '').trim() !== val);
+  const had = (map[gk] || []).some(c => (c.val || '').trim() === val);
+  const next = had ? rest : [...rest, { val, op: '=', join: 'or' }]; // OR: серыі складаюцца, не перасякаюцца
+  if (next.length) { next[0] = { ...next[0], join: 'and' }; map[gk] = next; } // першая ўмова — заўжды 'and' (канон стэка)
+  else delete map[gk]; // ніводнай серыі не выбрана = паказваем усе (як пусты фільтр)
   s._renderFn?.();
 }
 
@@ -5644,24 +5662,18 @@ function _nodeTableChartNormToggle(formId, dataKey) {
 
 const _CHART_COLORS = ['#f97316','#3b82f6','#22c55e','#a855f7','#ef4444','#14b8a6','#eab308','#ec4899'];
 // Диспетчар графікаў: пілюлі выбару груп + кнопка абс/% + рэндэр SVG
-function _nodeTableChartHtml(rows, section, form, s) {
+function _nodeTableChartHtml(rows, section, form, s, pillRows) {
   if (!rows.length) return `<div style="padding:6px 0;font-size:0.82rem;color:var(--muted)">—</div>`;
   const cfg = section.chart;
   const fid = form.id, dk = section.dataKey || section.id || '';
   const viewKey = fid + '::' + dk;
-  if (!s._chartFilter) s._chartFilter = new Map();
   if (!s._chartNorm) s._chartNorm = new Map();
   const norm = !!s._chartNorm.get(viewKey);
   let pillsHtml = '', chartRows = rows, colorMap = {};
   if (cfg?.groupKey) {
-    const allGroups = [...new Set(rows.map(r => String(r[cfg.groupKey] ?? '')))].filter(Boolean).sort();
-    // ⚠️ ЭФЕКТЫВНЫ выбар = выбар пілюль ∩ ДАСТУПНЫЯ групы (rows ужо праз фільтр табліцы). Раней стары
-    // выбар пілюль пераставаў перасякацца з фільтрам слупка (пілюля USD + фільтр «EUR») → графік
-    // маляваў 0 ліній і «—». Пусты перасек = паказваем усё даступнае; сам выбар НЕ сціраем — знімеш
-    // фільтр табліцы, і твае пілюлі вернуцца (заўвага карыстальніка 2026-07-25)
-    const rawSel = s._chartFilter.get(viewKey) || new Set();
-    const avail = new Set(allGroups);
-    const selected = new Set([...rawSel].filter(g => avail.has(g)));
+    // спіс таблетак — з pillRows (без фільтра ўласнага слупка), выбар — з ТАГО ЖА фільтра слупка
+    const allGroups = [...new Set((pillRows || rows).map(r => String(r[cfg.groupKey] ?? '')))].filter(Boolean).sort();
+    const selected = _chartPillSet(s, viewKey, cfg.groupKey);
     // Кнопка абс/% (толькі калі больш за адну групу)
     const normBtn = allGroups.length > 1
       ? `<button onclick="event.stopPropagation();_nodeTableChartNormToggle('${escHtml(fid)}','${escHtml(dk)}')"
@@ -5683,7 +5695,7 @@ function _nodeTableChartHtml(rows, section, form, s) {
     }${normBtn}</div>`;
     // colorMap: фіксаваны колер кожнай групы (па ўсіх allGroups, не па адфільтраваных)
     colorMap = Object.fromEntries(allGroups.map((g, gi) => [g, _CHART_COLORS[gi % _CHART_COLORS.length]]));
-    if (selected.size > 0) chartRows = rows.filter(r => selected.has(String(r[cfg.groupKey] ?? '')));
+    // радкі ўжо звужаны фільтрам слупка-групы (таблетка = яго ўмова) — другога адсеву тут НЕ трэба
     Object.assign(cfg, { _colorMap: colorMap });
   }
   if (!chartRows.length) return pillsHtml + `<div style="padding:6px 0;font-size:0.82rem;color:var(--muted)">—</div>`;
@@ -10990,7 +11002,7 @@ function _repPayloadSeen(form, s) {
     const { sortedRows } = _tblProcessRows(raw, cols, _colFilterMap(s, vk), s._tableSort?.get(vk), sec.keepOrder, numeric);
     const base = _expChart(tb), chSt = base ? _chartStateOf(s, vk) : null; // пілюлі-серыі + абс/% графіка выніку
     return { ...tb, rows: sortedRows,
-      ...(base ? { chart: { ...base, only: chSt.only, normalize: chSt.normalize } } : {}),
+      ...(base ? { chart: { ...base, normalize: chSt.normalize } } : {}), // серыі ўжо звужаны фільтрам слупка (таблетка = яго ўмова)
       ...(sortedRows.length !== raw.length ? { filtered: { n: sortedRows.length, m: raw.length } } : {}) };
   });
   return { ...pl, tables };
@@ -11143,18 +11155,14 @@ const _REP_CHARTS = {
   subs:     { xKey: 'date', yKey: 'price',  agg: 'sum', yDigits: 2 }, // 🔁 сума падпісак па днях
 };
 const _expChart = tb => tb.chart || _REP_CHARTS[tb.id] || null; // адзіны рэзалв (дакумент + xlsx)
-// СТАН ГРАФІКА НА ЭКРАНЕ (пілюлі выбраных серый + перамыкач абс/%) — таксама частка «як бачыш»:
-// выбраў адну валюту, а ў дакумент ішлі ЎСЕ (заўвага карыстальніка 2026-07-25)
-function _chartStateOf(s, viewKey) {
-  const sel = s?._chartFilter?.get(viewKey);
-  return { only: (sel && sel.size) ? [...sel] : null, normalize: !!s?._chartNorm?.get(viewKey) };
-}
+// СТАН ГРАФІКА НА ЭКРАНЕ — частка «як бачыш». Выбраныя серыі тут БОЛЬШ НЕ ПАТРЭБНЫ: таблетка = ўмова
+// фільтра слупка-групы, значыць радкі payload ужо звужаны (гл. _nodeTableChartFilterToggle). Застаўся
+// толькі перамыкач абс/% — ён свой асобны стан, у радках не адбіваецца.
+function _chartStateOf(s, viewKey) { return { normalize: !!s?._chartNorm?.get(viewKey) }; }
 // радкі для графіка: xCut (абрэзка datetime да даты) + агрэгацыя па x[×групе] — сырыя радкі даюць
 // зігзаг (некалькі заказаў у адзін дзень), таму сумуем/лічым ПЕРАД рэндэрам
 function _chartRows(tb, cfg) {
   let rows = (tb.rows || []).filter(r => r && r[cfg.xKey] != null && r[cfg.xKey] !== '');
-  // only — выбраныя пілюлі-серыі на экране (пусты/адсутны = усе, як у панэлі)
-  if (cfg.only && cfg.groupKey) { const keep = new Set(cfg.only.map(String)); rows = rows.filter(r => keep.has(String(r[cfg.groupKey] ?? ''))); }
   const x = r => cfg.xCut ? String(r[cfg.xKey]).slice(0, cfg.xCut) : String(r[cfg.xKey]);
   if (!cfg.agg) return rows.map(r => ({ ...r, [cfg.xKey]: x(r) }));
   const acc = new Map(); // «x|група» → {сума, лік}
@@ -11422,7 +11430,7 @@ function _printTableOf(form, sec, s, titlePrefix) {
   const chSt = ch ? _chartStateOf(s, vk) : null; // выбраныя пілюлі-серыі + абс/% на момант націску
   return { titleText: secTitle ? `${titlePrefix} — ${secTitle}` : titlePrefix, columns: outCols,
     ...(ch ? { chart: { xKey: ch.xKey, yKey: ch.yKey, groupKey: ch.groupKey, height: ch.height, yDigits: ch.yDigits,
-      _colorMap: ch._colorMap, only: chSt.only, normalize: chSt.normalize } } : {}), // _colorMap — каб колеры серый у дакуменце супалі з экранам
+      _colorMap: ch._colorMap, normalize: chSt.normalize } } : {}), // _colorMap — каб колеры серый у дакуменце супалі з экранам
     rows: sortedRows.map(r => { const o = {}; outCols.forEach(c => { let v = r[c.key]; if (c.ml) v = _mlGet(v, _settingsLang()); o[c.key] = v; }); return o; }) };
 }
 // Flat-секцыя → радкі Параметр/Значэнне (select праз labelMap, ml па бягучай мове кантэнту)
