@@ -2505,7 +2505,7 @@ async function resendCode() {
       info.textContent = t('new_code_sent');
     } else {
       info.style.color = 'var(--error)';
-      info.textContent = data.error || t('send_err');
+      info.textContent = _srvErrText(res, data, t('send_err')); // 5xx → «памылка сервера», не «не змаглі даслаць»
     }
   } catch(e) {
     info.style.color = 'var(--error)';
@@ -2527,6 +2527,14 @@ document.getElementById('password-input').addEventListener('keydown', e => { if(
 document.getElementById('email-input').addEventListener('keydown', e => { if(e.key!=='Enter') return; const pw=document.getElementById('password-input'); if(!pw.value.trim()) pw.focus(); else doLogin(); }); // Enter у email: пароль пусты → фокус на пароль, інакш уваход
 document.getElementById('reset-code-input').addEventListener('keydown', e => { if(e.key==='Enter') doResetPassword(); });
 
+// ⚙️ АДЗІНЫ тэкст памылкі адказу (усе аўтарызацыйныя флоў): сервер аддаў сваю прычыну → яна;
+// 5xx/не-JSON (воркер упаў, ліміт KV, Cloudflare 1101) → яўнае «памылка сервера + код», НЕ дамысленне
+// пра пароль/код. Інакш кожны збой бэкенду выглядаў як памылка карыстальніка.
+function _srvErrText(res, d, fallback) {
+  if (d && d.error) return d.error;
+  if (!res.ok && res.status >= 500) return t('err_server').replace('{code}', res.status);
+  return fallback;
+}
 async function doLogin() {
   const pwd = document.getElementById('password-input').value.trim();
   const email = (document.getElementById('email-input')?.value || '').trim(); // пуста = уваход Уладальніка паролем сайта
@@ -2547,7 +2555,10 @@ async function doLogin() {
       try { await _bootAfterAuth(); }
       catch (e) { console.error('boot after auth failed', e); document.getElementById('login-error').textContent = '⚠ ' + (e?.message || e); }
     } else {
-      document.getElementById('login-error').textContent = d.error || t('err_wrong_password');
+      // ⚠️ 5xx/не-JSON — гэта НЕ «няправільны пароль»: воркер упаў (напр. вычарпаны дзённы бюджэт запісаў
+      // KV → _sessionCreate кідае выключэнне). Раней d={} і паказвалася «Няправільны пароль» — карыстальнік
+      // марна перабіраў паролі (жывы кейс з Тэслы 2026-07-24)
+      document.getElementById('login-error').textContent = _srvErrText(res, d, t('err_wrong_password'));
       const pwdEl = document.getElementById('password-input'); pwdEl.value = ''; pwdEl.focus(); // ачысціць поле для паўторнага ўводу
     }
   } catch (e) { console.error('login fetch failed', e); document.getElementById('login-error').textContent = t('err_connection') + (e?.message ? ': ' + e.message : ''); }
@@ -2581,7 +2592,7 @@ async function doAcceptInvite() {
       authToken = d.token; currentUser = d.user || null;
       sessionStorage.setItem('ttzop_token_' + REPO, authToken);
       await _bootAfterAuth();
-    } else err.textContent = d.error || t('err');
+    } else err.textContent = _srvErrText(res, d, t('err')); // 5xx → яўная памылка сервера
   } catch { err.textContent = t('err_connection'); }
   btn.disabled = false; btn.textContent = t('invite_accept_btn');
 }
@@ -2655,8 +2666,8 @@ async function _forgotSend() {
       document.getElementById('reset-form').style.display = 'block';
       document.getElementById('reset-info').textContent = t('new_code_sent');
     } else {
-      const d = await res.json();
-      document.getElementById('login-error').textContent = d.error || t('err');
+      const d = await res.json().catch(() => ({})); // не-JSON (1101/5xx) больш не кідае выключэнне ў catch «сетка»
+      document.getElementById('login-error').textContent = _srvErrText(res, d, t('err'));
     }
   } catch { document.getElementById('login-error').textContent = t('err_connection'); }
   btn.disabled = false; btn.textContent = t('forgot_pwd');
