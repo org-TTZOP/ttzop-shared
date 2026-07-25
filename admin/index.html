@@ -10008,8 +10008,8 @@ function _cubeBodyHtml() {
       <option value="place"${s.edgeBy === 'place' ? ' selected' : ''}>${escHtml(t('cube_place'))}</option></select></label>
     <span style="font-size:0.8rem;color:var(--muted)">${escHtml(t('cube_view_lbl'))}: ${ { moment: '🕐 ' + escHtml(t('cube_moment')), person: '👤 ' + escHtml(t('cube_person')), place: '📍 ' + escHtml(t('cube_place')) }[s._view] || escHtml(t('cube_free_view')) }</span>
     ${s._entry?.serviceId ? ((s._search === 'running' || s._search === 'returning') // 🔍 аўта-сканер: праходзіць перыяд, пакідае знаходкі, садзіцца на першую
-      ? `<button class="node-btn-icon" onclick="_cubeSearchStop()" title="${escHtml(t('cube_scan_stop_t'))}">${escHtml(t('cube_stop'))}</button>`
-      : `<button class="node-btn-icon" onclick="_cubeSearchStart()" title="${escHtml(t('cube_scan_start_t'))}">${escHtml(t('cube_start'))}</button>`) : ''}
+      ? `<button class="node-btn-icon" onclick="_cubeSearchStop()" title="${escHtml(t('cube_scan_stop_t'))}" style="display:inline-flex;align-items:center;gap:5px">${_mIco('stop')}${escHtml(t('cube_stop'))}</button>`
+      : `<button class="node-btn-icon" onclick="_cubeSearchStart()" title="${escHtml(t('cube_scan_start_t'))}" style="display:inline-flex;align-items:center;gap:5px">${_mIco('search')}${escHtml(t('cube_start'))}</button>`) : ''}
     ${cubeFix}</div>`;
   // масштаб/пазіцыя → headerExtra секцыі Куб (маюць сэнс толькі калі куб раскрыты); ракурс 🕐👤📍 → ⋯-меню секцыі Куб
   const zoomBtns = `<button class="node-btn-icon" title="${escHtml(t('cube_zoom_out'))}" onclick="event.stopPropagation();_cubeZoom(0.83)">🔍−</button><button class="node-btn-icon" title="${escHtml(t('cube_zoom_in'))}" onclick="event.stopPropagation();_cubeZoom(1.2)">🔍+</button><button class="node-btn-icon" title="${escHtml(t('cube_view_reset'))}" onclick="event.stopPropagation();_cubeResetView()">⟲</button>`;
@@ -12332,10 +12332,10 @@ function _mapBodyHtml(form, section, s) { // цела Секцыі Мапа (р�
   // На слабай прыладзе (Tesla-Atom і да т.п.) кнопкі няма зусім: цяжкі сайт Google Maps ламае/тармозіць такі браўзер (_perfWeak).
   const gmapBtn = _perfWeak() ? '' : `<a id="${cid}-gmap" href="${hasCoords ? _gmapUrl(m.lat, m.lng) : '#'}" target="_blank" rel="noopener" class="btn-search" style="margin-left:auto;text-decoration:none;display:${hasCoords ? 'inline-block' : 'none'}">${t('map_open_google')}</a>`;
   const _mapRO = _secLocked(form, section); // 🔒 залочаная форма/секцыя — без радкоў пошуку/геапазіцыі (мапа толькі глядзецца)
-  return `${_mapRO ? '' : `<div class="map-geo-row" style="margin-bottom:6px"><button class="btn-search" onclick="_geoMyLocation('${form.id}','${section.dataKey}')">${t('map_my_location')}</button></div>
+  return `${_mapRO ? '' : `<div class="map-geo-row" style="margin-bottom:6px"><button class="btn-search" style="display:inline-flex;align-items:center;gap:5px" onclick="_geoMyLocation('${form.id}','${section.dataKey}')">${_mIco('pin')}${t('map_my_location')}</button></div>
     <div class="map-search-row" style="margin-bottom:8px;display:flex;gap:6px">
       <input type="text" id="${cid}-search" class="field-input" placeholder="${escHtml(t('map_placeholder'))}" style="flex:1;margin:0" onkeydown="if(event.key==='Enter'){event.preventDefault();_companyMapSearch('${form.id}','${section.dataKey}')}">
-      <button class="btn-search" onclick="_companyMapSearch('${form.id}','${section.dataKey}')">${t('map_search')}</button>
+      <button class="btn-search" style="display:inline-flex;align-items:center;gap:5px" onclick="_companyMapSearch('${form.id}','${section.dataKey}')">${_mIco('search')}${t('map_search')}</button>
     </div>`}
     <div class="company-map-canvas" id="${cid}" data-form="${form.id}" data-key="${section.dataKey}"${ptsKey ? ` data-points="${escHtml(ptsKey)}"` : ''} style="height:${view === 'full' ? 480 : 240}px;border-radius:8px;overflow:hidden;background:var(--surface2)"></div>
     <div style="text-align:center;padding:4px 0;color:var(--muted);cursor:pointer;font-size:0.78rem" title="${escHtml(t('map_taller'))}" onclick="_mapSizeToggle('${form.id}','${escHtml(section.dataKey || '')}')">${view === 'full' ? '▲' : `+ ${t('tbl_more')} ▼`}</div><!-- канонны радок «яшчэ» Table-продка: preview↔full -->

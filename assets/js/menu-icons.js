@@ -31,6 +31,10 @@ window.TTZOP_MENU_ICONS = {
   fileXls:'<path d="M4.2 2.6h4L11.6 6v7.4H4.2Z" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/><path d="M8 2.8V6h3.2" stroke="currentColor" stroke-width="1.3"/><path d="M5.9 8.8l3 3M8.9 8.8l-3 3" stroke="currentColor" stroke-width="1.25" stroke-linecap="round"/>',
   fileCsv:'<path d="M4.2 2.6h4L11.6 6v7.4H4.2Z" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/><path d="M8 2.8V6h3.2" stroke="currentColor" stroke-width="1.3"/><path d="M6.2 9.4v1.9M8 9.4v1.9M9.8 9.4v1.9" stroke="currentColor" stroke-width="1.25" stroke-linecap="round"/>',
   link:'<path d="M6.5 9.5 9.5 6.5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/><path d="M7.4 4.9 8.6 3.7a2.4 2.4 0 0 1 3.4 3.4l-1.2 1.2M8.6 11.1 7.4 12.3a2.4 2.4 0 0 1-3.4-3.4l1.2-1.2" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>',
+  // ── кантролі (пошук/стоп/геаметка): былі эмодзі 🔍⏹📍 у лэйблах кнопак ──
+  search:'<circle cx="7.2" cy="7.2" r="4.2" stroke="currentColor" stroke-width="1.5"/><path d="M10.4 10.4l3 3" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>',
+  stop:'<rect x="4" y="4" width="8" height="8" rx="1.4" stroke="currentColor" stroke-width="1.5"/>',
+  pin:'<path d="M8 13.6s4.2-4.3 4.2-7a4.2 4.2 0 1 0-8.4 0c0 2.7 4.2 7 4.2 7Z" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/><circle cx="8" cy="6.5" r="1.5" stroke="currentColor" stroke-width="1.3"/>',
   // ── тыпы Секцый (для аўта-Даведкі ў ⓘ; эмодзі тут даюць той жа контур на Тэсле) ──
   secFlat:'<rect x="2.6" y="3" width="10.8" height="10" rx="1.4" stroke="currentColor" stroke-width="1.4"/><path d="M4.8 6h6.4M4.8 8.2h6.4M4.8 10.4h3.6" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/>',
   secTable:'<rect x="2.2" y="3.2" width="11.6" height="9.6" rx="1.3" stroke="currentColor" stroke-width="1.4"/><path d="M2.2 6.4h11.6M6.6 6.4v6.4M10.2 6.4v6.4" stroke="currentColor" stroke-width="1.2"/>',
