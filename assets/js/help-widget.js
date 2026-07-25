@@ -5,6 +5,7 @@
 //
 // TTZOP_HELP.block({
 //   label,        // слова «Даведка» (загаловак-прэфікс)
+//   html,         // неабавязковы гатовы HTML пасля абзацаў (не эскейпіцца — для згенераваных блокаў)
 //   title,        // назва тэмы
 //   body,         // масіў абзацаў
 //   open,         // ці разгорнута па змаўчанні (дэфолт — згорнута)
@@ -34,6 +35,9 @@
     cfg = cfg || {}; ensureStyle();
     var e = cfg.esc || esc;
     var body = (cfg.body || []).map(function (p) { return '<p>' + e(p) + '</p>'; }).join('');
+    // cfg.html — ГАТОВЫ HTML пасля абзацаў (аўта-блокі «Што ўнутры»/«Што можна зрабіць» у панэлі:
+    // іх нельга эскейпіць, бо гэта іконкі і спісы, згенераваныя са структуры вузла)
+    if (cfg.html) body += cfg.html;
     var vars = '--twh-accent:' + (cfg.accent || '#f97316') + ';--twh-border:' + (cfg.border || '#2a2f45');
     var head = (cfg.label ? e(cfg.label) + ' · ' : '') + e(cfg.title || '');
     return '<details class="twh" style="' + vars + '"' + (cfg.open ? ' open' : '') +
