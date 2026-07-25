@@ -5723,6 +5723,13 @@ function _nodeTableChartFilterToggle(formId, dataKey, val) {
   const next = had ? rest : [...rest, { val, op: '=', join: 'or' }]; // OR: серыі складаюцца, не перасякаюцца
   if (next.length) { next[0] = { ...next[0], join: 'and' }; map[gk] = next; } // першая ўмова — заўжды 'and' (канон стэка)
   else delete map[gk]; // ніводнай серыі не выбрана = паказваем усе (як пусты фільтр)
+  // 🔻 РАДОК ФІЛЬТРА АДКРЫВАЕЦЦА САМ (заўвага карыстальніка 2026-07-25): таблетка ставіць умову слупка,
+  // і карыстальнік мусіць БАЧЫЦЬ, адкуль звужэнне — быццам ён сам націснуў 🔻 у ⋯. Калі выбар зняты і
+  // іншыя слупкі пустыя — радок хаваем назад (не пакідаем пустога кантролю)
+  if (!s._tableColFilterOpen) s._tableColFilterOpen = new Map();
+  const anyCond = Object.values(map).some(list => (list || []).some(c => (c.val || '').trim()));
+  s._tableColFilterOpen.set(vk, anyCond);
+  if (anyCond) _tblExpandIfCollapsed(s, vk, _tblFindSection(formId, dataKey)); // згорнутая табліца — раскрыць, інакш радок нябачны
   s._renderFn?.();
 }
 
