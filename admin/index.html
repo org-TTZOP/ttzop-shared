@@ -10990,7 +10990,7 @@ FORM_SCHEMAS.intake = Object.assign({ sections: [
     columns: [{ key: 'name', label: 'ik_offer_name' }, { key: 'price', label: 'ik_offer_price', align: 'right' }] },
   { type: 'flat', id: 'ik-gen', title: 'ik_gen_title', blocks: [
     { key: '_gen', type: 'custom', render: (form) => `<div style="font-size:0.85rem;color:var(--muted);line-height:1.5;margin-bottom:10px">${escHtml(t('ik_gen_hint'))}</div>
-      <button class="btn-save" style="box-shadow:none;display:inline-flex;align-items:center;gap:6px" onclick="_intakeGenerate()">${_mIco('translate')}${escHtml(t('ik_generate'))}</button>
+      <button id="ik-gen-btn" class="btn-save" style="box-shadow:none;display:inline-flex;align-items:center;gap:6px" onclick="_intakeGenerate()">${_mIco('translate')}${escHtml(t('ik_generate'))}</button>
       <span id="ik-gen-status" style="margin-left:10px;font-size:0.85rem;color:var(--muted)"></span>` },
   ] },
 ] }, { _noName: true });
@@ -11032,6 +11032,7 @@ async function _intakeGenerate() {
   if (!Object.values(intake).some(v => Array.isArray(v) ? v.length : (v || '').trim())) { showAlert(t('ik_gen_empty')); return; }
   showConfirm(t('ik_gen_confirm'), async () => {
     const st = document.getElementById('ik-gen-status'); if (st) { st.style.color = 'var(--muted)'; st.textContent = t('loading'); }
+    const btn = document.getElementById('ik-gen-btn'); if (btn) btn.disabled = true; // ⚡ анты-дубль: адзінка AI не мусіць спаліцца двойчы
     try {
       const r = await fetch(API, { method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ action: 'intake_fill', repo: REPO, password, token: authToken, intake, generate: true }) });
@@ -11044,6 +11045,7 @@ async function _intakeGenerate() {
         st.textContent = t('ik_gen_done').replace('{n}', (d.filled || 0) + (d.touched || 0)).replace('{free}', d.free ?? '—').replace('{credits}', d.credits ?? 0); }
       await loadSettings(); nodeReloadSection(); // тэксты пісаў сервер → перачытаць налады
     } catch (e) { if (st) { st.style.color = 'var(--error)'; st.textContent = t('err_connection'); } }
+    finally { if (btn) btn.disabled = false; }
   }, { label: t('ik_generate'), danger: false });
 }
 let deliveryState = {
