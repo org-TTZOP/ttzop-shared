@@ -11302,7 +11302,9 @@ async function _expPDFFile(pl, onErr) {
   if (!await _pdfLibLoad()) { onErr?.(); return; }
   const f64 = await _pdfFontLoad();
   const { jsPDF } = window.jspdf;
-  const doc = new jsPDF({ unit: 'pt', format: 'a4' });
+  // compress: сціскаць патокі (убудаваны шрыфт+карцінкі графікаў давалі файл на мегабайты);
+  // putOnlyUsedFonts: не цягнуць у файл нявыкарыстаныя базавыя шрыфты jsPDF
+  const doc = new jsPDF({ unit: 'pt', format: 'a4', compress: true, putOnlyUsedFonts: true });
   let font = 'helvetica';
   if (f64) { doc.addFileToVFS('DejaVuSans.ttf', f64); doc.addFont('DejaVuSans.ttf', 'DejaVu', 'normal'); font = 'DejaVu'; }
   const m = _expDisp(pl), M = 40, pw = doc.internal.pageSize.getWidth();
