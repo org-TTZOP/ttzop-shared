@@ -5256,7 +5256,18 @@ function _nodeTableSectionHtml(form, section, s, mover = '') {
   // 🔻 Фільтр і 📊 Графік — у ⋯-меню (эканомім месца на загалоўку). Фільтр: toggle радка-фільтра; паўторны клік — закрыць+ачысціць
   const filterItem = _isFilterable ? `<button class="node-overflow-item" title="${t('tbl_filter')}" onclick="_nodeTableFilterRowToggle('${escHtml(fid)}','${escHtml(dk)}');nodeCloseOverflow('${menuId}')" style="${filterRowOpen ? 'color:var(--accent)' : ''}">${_icoFilter(filterRowOpen)}</button>` : '';
   const chartItem = _hasChart ? `<button class="node-overflow-item" title="${t('tbl_chart')}" onclick="_nodeTableChartToggle('${escHtml(fid)}','${escHtml(dk)}');nodeCloseOverflow('${menuId}')" style="${chartOpen ? 'color:var(--accent)' : ''}">📊</button>` : '';
-  const cntHtml = total ? `<span style="font-size:0.72rem;color:var(--muted);font-weight:400">(${total})</span>` : '';
+  // columnsFn: дынамічныя калонкі (напр. Даведка — колькасць залежыць ад CONTENT_TYPES).
+  // 🔢 Аўта-дэтэкцыя лічбавых слупкоў + фільтр/сартыроўка — агульныя хэлперы (_tblNumericCols/
+  // _tblProcessRows; іх жа ўжывае 🖨 Друк, каб экспартаваць РОЎНА бачнае). Лічым ДА загалоўка,
+  // бо лік у назве секцыі паказвае адфільтраваную колькасць
+  const columns = section.columnsFn ? section.columnsFn(form, s) : (section.columns || []);
+  const _colRight = _tblNumericCols(columns, rows);
+  const { filteredRows, sortedRows } = _tblProcessRows(rows, columns, _isFilterable ? colFilters : {}, sortState, section.keepOrder, _colRight);
+  const visTotal = sortedRows.length;
+  // Лік у загалоўку: пры актыўным фільтры — «21 з 273» (бачыш, што паказана НЕ ўсё; той жа сэнс, што
+  // подпіс «адфільтравана N з M» у дакуменце). Без фільтра — просты «(273)»
+  const cntHtml = total
+    ? `<span style="font-size:0.72rem;color:var(--muted);font-weight:400">(${visTotal !== total ? t('tbl_n_of_m').replace('{n}', visTotal).replace('{m}', total) : total})</span>` : '';
   const headerExtra = section.headerExtra ? section.headerExtra(form, s) : ''; // дадатковыя кантролі ў загалоўку (напр. плоскасць 2D-зрэзу)
   const menuExtra = section.menuExtra ? section.menuExtra(form, s, menuId) : ''; // дадатковыя пункты ⋯-меню секцыі (ААП: любая секцыя — напр. ракурс куба)
   // ▼▼/▶▶ справа (парытэт з вузламі hasExpandAll): ▼▼ = адкрыць адразу да порцыі (15, далей клікамі «+N яшчэ»),
@@ -5283,14 +5294,7 @@ function _nodeTableSectionHtml(form, section, s, mover = '') {
   if (!total && !section.dataFn) return `<div class="form-section-table">${titleRow}${footer}</div>`;
   if (view === 'collapsed') return `<div class="form-section-table">${titleRow}${footer}</div>`;
   if (!total && !section.emptyHeader) return `<div class="form-section-table">${titleRow}${footer}</div>`; // dataFn-секцыя без радкоў = «загружаецца» → толькі назва; emptyHeader:true → усё роўна паказаць каркас з загалоўкам калонак
-  // columnsFn: дынамічныя калонкі (напр. Даведка — колькасць залежыць ад CONTENT_TYPES)
-  const columns = section.columnsFn ? section.columnsFn(form, s) : (section.columns || []);
-  // 🔢 Аўта-дэтэкцыя лічбавых слупкоў + фільтр/сартыроўка — вылучаны ў агульныя хэлперы
-  // (_tblNumericCols/_tblProcessRows): іх жа ўжывае 🖨 Друк, каб экспартаваць РОЎНА бачнае
-  const _colRight = _tblNumericCols(columns, rows);
   const _alignSt = c => _colRight[c.key] ? ';text-align:right' : ''; // дадаём апошнім → перакрывае text-align:left
-  const { filteredRows, sortedRows } = _tblProcessRows(rows, columns, _isFilterable ? colFilters : {}, sortState, section.keepOrder, _colRight);
-  const visTotal = sortedRows.length;
   // Колькі радкоў бачна: 'preview' = 3; лік = порцыі (15/30/…); 'full' — толькі яўны defaultView (Даведка) / легасі
   const shownN = view === 'full' ? visTotal : Math.min(typeof view === 'number' ? view : _TBL_PREVIEW, visTotal);
   const visible = sortedRows.slice(0, shownN);
