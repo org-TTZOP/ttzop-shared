@@ -5231,6 +5231,7 @@ function _tblNumericCols(columns, rows) {
 // «як бачыш» = адзін код). Фільтр: радок праходзіць умовы КОЖНАЙ актыўнай калонкі (між калонкамі І);
 // унутры калонкі OR-групы па join='or' (і>|); умова {term,op}: '' substring; '=','>','<','>=','<='.
 function _tblProcessRows(rows, columns, colFilters, sortState, keepOrder, colRight) {
+  if (!Array.isArray(rows)) return { filteredRows: [], sortedRows: [] }; // гард: не-масіў (Мапа і інш.) больш не кідае
   let filteredRows = rows;
   const activeCols = Object.keys(colFilters || {}).filter(ck => (colFilters[ck] || []).some(r => (r.val || '').trim()));
   if (activeCols.length) filteredRows = rows.filter(row => activeCols.every(ck => {
@@ -5269,7 +5270,11 @@ function _weekdayLabels() { // лакалізаваныя назвы дзён т
 }
 function _nodeTableSectionHtml(form, section, s, mover = '') {
   // dataFn: дынамічная крыніца радкоў (замяняе form.fields[dataKey])
-  const rows = section.dataFn ? (section.dataFn(form, s) || []) : (form.fields?.[section.dataKey] || []);
+  // ⚠️ НАРМАЛІЗАЦЫЯ: dataKey некаторых секцый трымае НЕ масіў (Мапа — {lat,lng,zoom}); раней гэта было
+  // бяскрыўдна (бралі толькі .length), але з разлікам фільтра/сартыроўкі да загалоўка `[...rows]` кідаў
+  // «filteredRows is not iterable» і валіў boot панэлі (рэгрэс v4.815, злоўлены жыўцом)
+  const _rawRows = section.dataFn ? (section.dataFn(form, s) || []) : (form.fields?.[section.dataKey] || []);
+  const rows = Array.isArray(_rawRows) ? _rawRows : [];
   const total = rows.length;
   // dataFn/bodyFn/timeline-секцыі заўсёды рэндэраваць (нават пустыя — цела не з радкоў: loading-стан, дыялог чата)
   if (!total && !section.addable && !section.changeTypes && !section.onAdd && !section.dataFn && !section.timeline && !section.bodyFn) return '';
