@@ -1605,7 +1605,7 @@ FORM_SCHEMAS.appointmentDetails = Object.assign({
 const _structSelf = { // нельга кіраваць САМІМ вузлом (перамясціць/выдаліць/дублікат)
   canSelect: false, showActiveDot: false, canActive: false, showCurrentDot: false, canMakeCurrent: false, // ааП: яўна false
   canLayout: false, hasExpandAll: false,
-  canMoveOrder: false, canDuplicate: false, hasDesign: false,
+  canMoveOrder: false, canDuplicate: false,
   canRename: false, canRelocate: false, canDelete: false, hasTrash: false
 };
 const _struct = { // + нельга кіраваць ДЗЕЦЬМІ (дадаваць/сартаваць/фільтраваць/абнаўляць)
@@ -1626,7 +1626,7 @@ const CONTENT_TYPES = {
     alwaysOpen: false, canSelect: true,
     showActiveDot: f => !f._sys, canActive: f => !f.fields?._locked && !f._sys, // сістэмны каркас (_sys) не мае тогла/кропкі «Актыўны» — пераключаць яго няма сэнсу
     showCurrentDot: f => !!f.fields?._current, showLockIcon: f => !!f.fields?._locked, // 🔒 глабальна
-    canMoveOrder: true, canDuplicate: true, hasDesign: true,
+    canMoveOrder: true, canDuplicate: true,
     canRename: f => !f.fields?._locked, canRelocate: f => !f.fields?._locked, canDelete: f => !f.fields?._locked, canView: true,
     canBeLocked: true, // 🔒 тогл адмінскага замка ў ⋯ (мультыюзер Этап 1; пры з'яўленні правоў — гейт canLock)
     canMakeCurrent: f => f.active !== false, // нельга зрабіць бягучай схаваную запісь (locked не блакуе — можна мяняць бягучую)
@@ -1645,7 +1645,7 @@ const CONTENT_TYPES = {
   // ─── ROOT-КАНТЭЙНЕРЫ: кіруюць дзецьмі, але не сабой ─────────────────────────
   root:          { // нашчадак ПРОДАКФПФ; кіруе дзецьмі, але не сабой (ааП)
     canSelect: false, showActiveDot: false, canActive: false, showCurrentDot: false, canMakeCurrent: false,
-    canMoveOrder: false, canDuplicate: false, hasDesign: false,
+    canMoveOrder: false, canDuplicate: false,
     canRename: false, canRelocate: false, canDelete: false, hasTrash: false,
     alwaysOpen: true, hasRefresh: (f, s) => !!s._loadAction, hasAutoRefresh: (f, s) => !!s._loadAction,
     // ← ад ПРОДАКФПФ: canLayout ✓  hasExpandAll ✓  canAddFolder ✓  canAddItem ✓  canAddForm ✓  canSort ✓  hasFilter ✓
@@ -1655,7 +1655,7 @@ const CONTENT_TYPES = {
     canSelect: false, showActiveDot: false, canActive: false,
     showCurrentDot: false, canMakeCurrent: false,
     canRename: false, canRelocate: false, canDelete: false,
-    canDuplicate: false, hasDesign: false,
+    canDuplicate: false,
     hasTrash: false, alwaysOpen: true,
     // ← hasDescription ад ПРОДАКФПФ ✓ (📝 у ⋯ Формы-0)
     // [Б1] — толькі +📁 і +Заказ (уручную); форму/файл не дадаюць
@@ -1664,7 +1664,7 @@ const CONTENT_TYPES = {
   },
   'privacy-root':  { // нашчадак ПРОДАКФПФ; ТОЛЬКІ абмежаванні (ааП)
     canSelect: false, canRename: false, canRelocate: false, canDelete: false,
-    canDuplicate: false, hasDesign: false,
+    canDuplicate: false,
     // ← hasDescription ад ПРОДАКФПФ ✓ (📝 у ⋯ Формы-0)
     showActiveDot: false, canActive: false, showCurrentDot: false, canMakeCurrent: false,
     canMoveOrder: false, canAddItem: false, canAddForm: false,
@@ -1673,7 +1673,7 @@ const CONTENT_TYPES = {
   },
   'langs-root':    { // нашчадак ПРОДАКФПФ; ТОЛЬКІ абмежаванні (ааП)
     canSelect: false, canRename: false, canRelocate: false, canDelete: false,
-    canDuplicate: false, hasDesign: false, hasDescription: false,
+    canDuplicate: false, hasDescription: false,
     showActiveDot: false, canActive: false, showCurrentDot: false, canMakeCurrent: false,
     canMoveOrder: false, canAddItem: false,
     hasTrash: false, alwaysOpen: true,
@@ -1682,7 +1682,7 @@ const CONTENT_TYPES = {
   'clients-root':  { // нашчадак ПРОДАКФПФ; ТОЛЬКІ адрозненні (ааП)
     // [А] — сістэмны корань: нельга кіраваць ім самім
     canSelect: false, showActiveDot: false, showCurrentDot: false,
-    canMoveOrder: false, canDuplicate: false, hasDesign: false,
+    canMoveOrder: false, canDuplicate: false,
     canRename: false, canRelocate: false, canDelete: false,
     hasTrash: false,
     // ← hasDescription ад ПРОДАКФПФ ✓ (📝 у ⋯ Формы-0)
@@ -1699,7 +1699,7 @@ const CONTENT_TYPES = {
     canMoveOrder: false, canRename: false, canRelocate: false,
     canDelete: false, canDuplicate: false, hasTrash: false, showActiveDot: false, canActive: false,       // дата-група не мае статусу актыўнасці
     showCurrentDot: false, canMakeCurrent: false, // паняцця «Бягучая дата» няма
-    // ← ад ПРОДАКФПФ: canSelect ✓  hasDescription ✓  hasDesign ✓
+    // ← ад ПРОДАКФПФ: canSelect ✓  hasDescription ✓
     // [Б1] — структура аўтаматычная
     canAddFolder: false, canAddItem: false, canAddForm: false,
     // ← ад ПРОДАКФПФ: canSort ✓  hasFilter ✓  canLayout ✓  hasExpandAll ✓  hasRefresh ✓  hasAutoRefresh ✓
@@ -1708,7 +1708,7 @@ const CONTENT_TYPES = {
     canBeLocked: false, // _locked тут ставіцца АЎТАМАТАМ (версію прыняў кліент) — ручны тогл забаронены (юрыдычная незваротнасць)
     canSelect: false, // showCurrentDot ✓ ад ПРОДАКФПФ — кропка паказваецца на бягучай версіі
     canLayout: false, hasExpandAll: false,
-    canMoveOrder: false, canDuplicate: false, hasDesign: false,
+    canMoveOrder: false, canDuplicate: false,
     canRename: false, canRelocate: false, hasTrash: false,
     canAddFolder: false, canAddItem: false, canAddForm: false, canSort: false,
     // ← ад ПРОДАКФПФ: hasFilter ✓ (пошук унутр тэксту версіі)  canMakeCurrent ✓ (f.active !== false — ужо ў regular)
@@ -1720,7 +1720,7 @@ const CONTENT_TYPES = {
   lang: { // нашчадак ПРОДАКФПФ; ТОЛЬКІ адрозненні: ліст без дзяцей + Бягучую (асноўную) нельга кранаць
     canAddFolder: false, canAddItem: false, canAddForm: false,
     canSort: false, hasFilter: false, hasExpandAll: false,
-    canLayout: false, hasDesign: false, hasTrash: false, canDuplicate: false,
+    canLayout: false, hasTrash: false, canDuplicate: false,
     canActive: (f, s) => !f.fields?._current && (f.active === false || s?.data?.nodes?.filter(n => n.formSchema === 'lang').length > 1), // нельга дэактываваць бягучую або адзіную мову
     canDelete: (f, s) => !f.fields?._current && s?.data?.nodes?.filter(n => n.formSchema === 'lang').length > 1, // нельга выдаліць бягучую або апошнюю мову
     deleteWithChildren: true
@@ -1732,8 +1732,7 @@ const CONTENT_TYPES = {
     showActiveDot: false, canActive: false,            // статус — кастомны мультызначны (demo/active/paused/…)
     showCurrentDot: false, canMakeCurrent: false,      // паняцця «Бягучы кліент» няма
     canRename: false,                                  // імя — у профілі, не ў назве папкі
-    canRelocate: false, canDuplicate: false,           // кліентаў не перамяшчаюць і не дублікуюць
-    hasDesign: false, hasDescription: false,
+    canRelocate: false, canDuplicate: false,           // кліентаў не перамяшчаюць і не дублікуюць hasDescription: false,
     // [Б1] — структура дзяцей кліента фіксавана
     canAddFolder: false, canAddItem: false, canAddForm: false,
     canSort: false, canLayout: false,
@@ -1742,7 +1741,7 @@ const CONTENT_TYPES = {
   },
   'client-sub': { // службовыя папкі ўнутры кліента (Заказы, ПП); нашчадак ПРОДАКФПФ (ааП)
     canSelect: false, showActiveDot: false, canActive: false, showCurrentDot: false, canMakeCurrent: false,
-    canMoveOrder: false, canDuplicate: false, hasDesign: false, hasDescription: false,
+    canMoveOrder: false, canDuplicate: false, hasDescription: false,
     canRename: false, canRelocate: false, canDelete: false, hasTrash: false,
     canAddFolder: false, canAddItem: false, canAddForm: false,
     // ← ад ПРОДАКФПФ: canLayout ✓  hasExpandAll ✓
@@ -1758,13 +1757,13 @@ CONTENT_TYPES['orders-order'] = { // нашчадак ПРОДАКФПФ; ТОЛ
   // [Б1] — структура дзяцей заказу фіксавана (не дадаём уручную), але фільтр дазволены: у заказе можа быць шмат форм-паслуг
   canAddFolder: false, canAddItem: false, canAddForm: false, // D1-вытворнае дрэва (перабудоўваецца з базы — змена не персістуецца)
   canSort: false, canLayout: false,
-  // ← ад ПРОДАКФПФ: hasFilter ✓ (фільтр форм-паслуг у заказе)  canSelect ✓  canDelete ✓  canDuplicate ✓  hasDescription ✓  hasDesign ✓
+  // ← ад ПРОДАКФПФ: hasFilter ✓ (фільтр форм-паслуг у заказе)  canSelect ✓  canDelete ✓  canDuplicate ✓  hasDescription ✓
   //                  hasInfo ✓  canMoveOrder ✓  hasExpandAll ✓  hasTrash ✓  hasRefresh ✓  hasAutoRefresh ✓
 };
 // Запіс на час (Фаза B): корань РМ, Папка-дзень і форма-запіс (па ўзоры orders-root / orders-date / orderDetails)
 CONTENT_TYPES['appt-root'] = { // Форма-0 «Запісы»: сістэмны корань
   canSelect: false, showActiveDot: false, showCurrentDot: false,
-  canMoveOrder: false, canDuplicate: false, hasDesign: false, // сістэмны корань/хост РМ (каркас, не карыстальніцкі вузел)
+  canMoveOrder: false, canDuplicate: false, // сістэмны корань/хост РМ (каркас, не карыстальніцкі вузел)
   canRename: false, canRelocate: false, canDelete: false, // сістэмны корань/хост РМ (каркас, не карыстальніцкі вузел)
   hasTrash: false, canMakeCurrent: false, canActive: false, // сістэмны корань/хост РМ (каркас, не карыстальніцкі вузел)
   alwaysOpen: true, canAddItem: false, canAddFolder: false, // сістэмны корань/хост РМ (каркас, не карыстальніцкі вузел)
@@ -1794,7 +1793,7 @@ CONTENT_TYPES['appointmentDetails'] = { // форма-запіс: фіксава
   // ← ад ПРОДАКФПФ (праз form): canSelect ✓  canDelete ✓  hasDescription ✓  hasExpandAll ✓  hasTrash ✓
 };
 CONTENT_TYPES['section']               = { // ФІКСАВАНАЯ секцыя (Загаловак): структура нязменная, дзяцей не дадаць
-  canSelect: false, canDuplicate: false, hasDesign: false, hasDescription: false, // без ✓/⧉/⚙/📝
+  canSelect: false, canDuplicate: false, hasDescription: false, // без ✓/⧉/⚙/📝
   canRename: false, canRelocate: false, canDelete: false, hasTrash: false, // структурна фіксавана
   canAddFolder: false, canAddForm: false, canAddItem: false, canSort: false, // нельга кіраваць структурай; item абыходзіць логіку sub-state
   // секцыі статычныя — ↻ не патрэбна
@@ -1802,13 +1801,13 @@ CONTENT_TYPES['section']               = { // ФІКСАВАНАЯ секцыя 
 // КАЛЕКЦЫЯ-секцыя (Паслугі/FAQ/Галерэя/Перавагі/…) — АДЗІН тып: самавузел фіксаваны, але КІРУЕ дзецьмі (Група Б1 ад regular — ааП-парытэт).
 // Галерэя НЕ асобная: файл-блок універсальны, грузіцца ў любую калекцыю (+📎). Кнопка +🗒 сама хаваецца там, дзе няма формы-схемы (меню гейтуе па _formSchema).
 CONTENT_TYPES['section-collection']    = { // +📂 Папка / +🗒 Форма (калі ёсць схема) / +📎 Файл / ⇅ сорт — усё ад regular; фіксаваны толькі самавузел-секцыя
-  canSelect: false, canDuplicate: false, hasDesign: false, hasDescription: false, // sections.json плоскі (зняць у К3d-матрошцы)
+  canSelect: false, canDuplicate: false, hasDescription: false, // sections.json плоскі (зняць у К3d-матрошцы)
   // canRename ✓ ад ПРОДАКФПФ (разблакавана пасля К3c: калекцыя засталася адна — Каталог; назва → sections.{key}_name, пустая = аўтамоўная)
   canRelocate: false, canDelete: false, hasTrash: false, // саму секцыю не выдаліць/перасунуць у інш. папку
   showCurrentDot: false, canMakeCurrent: false };
 CONTENT_TYPES['sections-host']         = { // Form-0 «Каталог»; нашчадак ПРОДАКФПФ (ааП)
   canSelect: false, showActiveDot: false, canActive: false, showCurrentDot: false, canMakeCurrent: false,
-  canMoveOrder: false, canDuplicate: false, hasDesign: false, // сістэмны корань/хост РМ (каркас, не карыстальніцкі вузел)
+  canMoveOrder: false, canDuplicate: false, // сістэмны корань/хост РМ (каркас, не карыстальніцкі вузел)
   canRename: false, canRelocate: false, canDelete: false, hasTrash: false, // сістэмны корань/хост РМ (каркас, не карыстальніцкі вузел)
   // canAddFolder ✓ ад ПРОДАКФПФ («свабода Форме-0»: топ-папкі «Тавары/Паслугі/Падпіскі» стварае карыстальнік)
   canAddForm: false, // канон-граматыка: «Форму НЕ кладуць у Форму» — пазіцыі жывуць у папках-катэгорыях (+🗒 там; сайт групуе па папках)
@@ -1818,7 +1817,7 @@ CONTENT_TYPES['sections-host']         = { // Form-0 «Каталог»; наш�
 // 🧱 Старонка сайта (Фаза 2a дынамічных секцый): Форма-0 хост — сістэмны корань (як sections-host)
 CONTENT_TYPES['sitepage-root']         = {
   canSelect: false, showActiveDot: false, canActive: false, showCurrentDot: false, canMakeCurrent: false,
-  canMoveOrder: false, canDuplicate: false, hasDesign: false, // сістэмны корань/хост РМ (каркас, не карыстальніцкі вузел)
+  canMoveOrder: false, canDuplicate: false, // сістэмны корань/хост РМ (каркас, не карыстальніцкі вузел)
   canRename: false, canRelocate: false, canDelete: false, hasTrash: false, // сістэмны корань/хост РМ (каркас, не карыстальніцкі вузел)
   canAddFolder: false, canAddItem: false, canAddForm: false, // сістэмны корань/хост РМ (каркас, не карыстальніцкі вузел)
   alwaysOpen: true, canBeLocked: false }; // сістэмны корань/хост РМ (каркас, не карыстальніцкі вузел)
@@ -1826,7 +1825,7 @@ CONTENT_TYPES['sitepage-list']         = { // Папка-0 «Секцыі ста
   canSelect: false, showActiveDot: false, canActive: false, showCurrentDot: false, canMakeCurrent: false,
   canMoveOrder: false, canDuplicate: false, // sections.json плоскі (зняць у К3d-матрошцы)
   canRename: false, // name НЕ персістуецца (вузлы перабудоўваюцца з sections.json кожную загрузку) — зняць толькі разам з персістам
-  canRelocate: false, canDelete: false, hasDesign: false, hasDescription: false, // sections.json плоскі (зняць у К3d-матрошцы)
+  canRelocate: false, canDelete: false, hasDescription: false, // sections.json плоскі (зняць у К3d-матрошцы)
   // canAddFolder ✓ (🪆 К3d v4.586: +📂 раздзел старонкі — сайт рэндэрыць дрэва рэкурсіўна)
   canAddItem: false,   // файл сам па сабе не з'яўляецца секцыяй сайта (верхні ўзровень = паласы; фота — у раздзел-Папку/экзэмпляр)
   hasInfo: true, canBeLocked: false }; // sections.json плоскі (зняць у К3d-матрошцы)
@@ -1834,19 +1833,16 @@ CONTENT_TYPES['sitepage-posts']        = { // Папка-0 «Артыкулы» 
   canSelect: false, showActiveDot: false, canActive: false, showCurrentDot: false, canMakeCurrent: false,
   canMoveOrder: false, canDuplicate: false, // sections.json плоскі (зняць у К3d-матрошцы)
   canRename: false, // name НЕ персістуецца (папка перабудоўваецца з sections.json) — зняць толькі разам з персістам
-  canRelocate: false, canDelete: false, // sections.json плоскі (зняць у К3d-матрошцы)
-  hasDesign: false, hasDescription: false,
+  canRelocate: false, canDelete: false, // sections.json плоскі (зняць у К3d-матрошцы) hasDescription: false,
   canAddFolder: false, canAddItem: false, // сайт не групуе посты і не паказвае файлы-сіроты (вокладка — поле паста)
   canBeLocked: false }; // sections.json плоскі (зняць у К3d-матрошцы)
 CONTENT_TYPES['sitePost']              = { // пост: назва = загаловак (canRename ✓ ад ПРОДАКФПФ); ● = паказ на сайце (hidden персістуецца)
-  showCurrentDot: false, canMakeCurrent: false, canRelocate: false, // адна Папка-0 — пераносіць няма куды
-  hasDesign: false, hasDescription: false,
+  showCurrentDot: false, canMakeCurrent: false, canRelocate: false, // адна Папка-0 — пераносіць няма куды hasDescription: false,
   canBeLocked: false }; // палі перабудоўваюцца з sections.json — замок не персістыўся б
 CONTENT_TYPES['siteSection']           = { // форма-экзэмпляр секцыі сайта; нашчадак ПРОДАКФПФ (ааП — толькі абмежаванні)
   // canRename ✓ ад ПРОДАКФПФ (ааП-аўдыт v4.575: nodeSetName люструе ў fields.title праз nameField — забарона зазлішняя)
   showCurrentDot: false, canMakeCurrent: false, // паняцця «Бягучая секцыя» няма
-  // canRelocate ✓ (🪆 К3d v4.586: экзэмпляр пераносіцца ў раздзел-Папку — было «пераносіць няма куды» пры плоскім спісе)
-  hasDesign: false, hasDescription: false,   // description не праецыруецца ў спіс сайта — не падманваць
+  // canRelocate ✓ (🪆 К3d v4.586: экзэмпляр пераносіцца ў раздзел-Папку — было «пераносіць няма куды» пры плоскім спісе) hasDescription: false,   // description не праецыруецца ў спіс сайта — не падманваць
   canAddFolder: true, // канон-выключэнне «Форма трымае Папкі-0»: экзэмпляр можа завесці Папку з файламі/укладзенымі формамі (фота ў любой секцыі — генерычна, без асобнай Галерэі)
   canBeLocked: false };    // палі перабудоўваюцца з sections.json пры кожнай загрузцы — замок не персістыўся б
 // 🧩 К2 «Тыпы секцый сайта»: Форма = Тып (сістэмныя ⚙️📄 з SITE_VIEW_TYPES + дублі юзера); прызнак [Тып] на экзэмплярах Структуры
@@ -1857,111 +1853,111 @@ CONTENT_TYPES['sitepage-folder']       = { // 🪆 раздзел-Папка с�
 CONTENT_TYPES['sectiontypes-list']     = { // Папка-0 «Тыпы»: +🗒 новы тып / +📂 групы / пераназванне — ад ПРОДАКФПФ
   canSelect: false, showActiveDot: false, canActive: false, showCurrentDot: false, canMakeCurrent: false,
   // canRename ✓ ад ПРОДАКФПФ (аўдыт v4.558: галіна цалкам персістуецца ў sectionTypesTree — забарона была асірацелай)
-  canMoveOrder: false, canDuplicate: false, canRelocate: false, canDelete: false, hasDesign: false, hasDescription: false, // sections.json плоскі (зняць у К3d-матрошцы)
+  canMoveOrder: false, canDuplicate: false, canRelocate: false, canDelete: false, hasDescription: false, // sections.json плоскі (зняць у К3d-матрошцы)
   canBeLocked: false }; // sections.json плоскі (зняць у К3d-матрошцы)
 CONTENT_TYPES['sectionType']           = { // Форма-Тып: ● (паказ на сайце) і ○ (бягучае) не маюць сэнсу — тып прызначаецца пікерам у Структуры
   showActiveDot: false, canActive: false, showCurrentDot: false, canMakeCurrent: false,
   // 🧩 ПРАФАБ: тып можа несці ўласнае паддрэва-нарыхтоўку (Папкі/файлы/укладзеныя тыпы) — выбар тыпу
   // ў Структуры штампуе КОПІЮ ў экзэмпляр (_typePrefabStamp). Сістэмны ⚙️📄 тып — уласнасць кода, без прафаба
   canAddFolder: f => !_nodeSysContent(f), // канон-выключэнне «Форма трымае Папкі-0» (прафаб; толькі не-сістэмныя)
-  hasDesign: false };
+};
 CONTENT_TYPES['general-security-root'] = { // Form-0 «Бяспека»; нашчадак ПРОДАКФПФ (ааП)
   canSelect: false, showActiveDot: false, canActive: false, showCurrentDot: false, canMakeCurrent: false,
-  canMoveOrder: false, canDuplicate: false, hasDesign: false, hasDescription: false, // сістэмны корань/хост РМ (каркас, не карыстальніцкі вузел)
+  canMoveOrder: false, canDuplicate: false, hasDescription: false, // сістэмны корань/хост РМ (каркас, не карыстальніцкі вузел)
   canRename: false, canRelocate: false, canDelete: false, hasTrash: false, // сістэмны корань/хост РМ (каркас, не карыстальніцкі вузел)
   canAddFolder: false, canAddItem: false, canAddForm: false, canSort: false, hasFilter: false, // сістэмны корань/хост РМ (каркас, не карыстальніцкі вузел)
   alwaysOpen: true, // ← ад ПРОДАКФПФ: canLayout ✓  hasExpandAll ✓
 };
 CONTENT_TYPES['general-contact-root']  = { // нашчадак ПРОДАКФПФ; +📁 = новы кантакт (ааП)
   canSelect: false, showActiveDot: false, canActive: false, showCurrentDot: false, canMakeCurrent: false,
-  canMoveOrder: false, canDuplicate: false, hasDesign: false, hasDescription: false, // сістэмны корань/хост РМ (каркас, не карыстальніцкі вузел)
+  canMoveOrder: false, canDuplicate: false, hasDescription: false, // сістэмны корань/хост РМ (каркас, не карыстальніцкі вузел)
   canRename: false, canRelocate: false, canDelete: false, hasTrash: false, // сістэмны корань/хост РМ (каркас, не карыстальніцкі вузел)
   canAddItem: false, canAddForm: false, // сістэмны корань/хост РМ (каркас, не карыстальніцкі вузел)
   alwaysOpen: true, // ← ад ПРОДАКФПФ: canAddFolder ✓  canLayout ✓  hasExpandAll ✓
 };
 CONTENT_TYPES['contact-folder']        = { // +📁/✎/↕/✕ з regular; +📞/+✉️ праз ⋯
   canSelect: false, showActiveDot: false, canActive: false, showCurrentDot: false, canMakeCurrent: false,
-  canDuplicate: false, hasDesign: false, // структура кампаніі: фіксаваны каркас sysKey
+  canDuplicate: false, // структура кампаніі: фіксаваны каркас sysKey
   canAddItem: false, canAddForm: false, hasTrash: false, // структура кампаніі: фіксаваны каркас sysKey
    };
 CONTENT_TYPES['general-contact-lang']  = { // моўная падпапка кантактаў; нашчадак ПРОДАКФПФ (ааП)
   canSelect: false, showActiveDot: false, canActive: false, showCurrentDot: false, canMakeCurrent: false,
-  canMoveOrder: false, canDuplicate: false, hasDesign: false, hasDescription: false, // структура кампаніі: фіксаваны каркас sysKey
+  canMoveOrder: false, canDuplicate: false, hasDescription: false, // структура кампаніі: фіксаваны каркас sysKey
   canRename: false, canRelocate: false, canDelete: false, hasTrash: false, // структура кампаніі: фіксаваны каркас sysKey
   canAddFolder: false, canAddItem: false, canAddForm: false, // структура кампаніі: фіксаваны каркас sysKey
   // ← ад ПРОДАКФПФ: canLayout ✓  hasExpandAll ✓
 };
 CONTENT_TYPES['general-banking-root']  = { // нашчадак ПРОДАКФПФ; +🗒 = новы банк (ааП)
   canSelect: false, showActiveDot: false, canActive: false, showCurrentDot: false, canMakeCurrent: false,
-  canMoveOrder: false, canDuplicate: false, hasDesign: false, hasDescription: false, // сістэмны корань/хост РМ (каркас, не карыстальніцкі вузел)
+  canMoveOrder: false, canDuplicate: false, hasDescription: false, // сістэмны корань/хост РМ (каркас, не карыстальніцкі вузел)
   canRename: false, canRelocate: false, canDelete: false, hasTrash: false, // сістэмны корань/хост РМ (каркас, не карыстальніцкі вузел)
   canAddFolder: false, canAddItem: false, // сістэмны корань/хост РМ (каркас, не карыстальніцкі вузел)
   alwaysOpen: true, // ← ад ПРОДАКФПФ: canAddForm ✓  canLayout ✓  hasExpandAll ✓
 };
 CONTENT_TYPES['company-root']          = { // Form-0 «Кампанія»; нашчадак ПРОДАКФПФ (ааП)
   canSelect: false, showActiveDot: false, canActive: false, showCurrentDot: false, canMakeCurrent: false,
-  canMoveOrder: false, canDuplicate: false, hasDesign: false, hasDescription: false, // сістэмны корань/хост РМ (каркас, не карыстальніцкі вузел)
+  canMoveOrder: false, canDuplicate: false, hasDescription: false, // сістэмны корань/хост РМ (каркас, не карыстальніцкі вузел)
   canRename: false, canRelocate: false, canDelete: false, hasTrash: false, // сістэмны корань/хост РМ (каркас, не карыстальніцкі вузел)
   canAddForm: false, // канон-граматыка «Форму не кладуць у Форму»; canAddFolder/canAddItem ✓ (ааП-аўдыт v4.581: свае Папкі-0/файлы ў офісе)
   alwaysOpen: true, // ← ад ПРОДАКФПФ: canLayout ✓  hasExpandAll ✓
 };
 CONTENT_TYPES['company-banks']         = { // нашчадак ПРОДАКФПФ; ↕+🗒+📂+📎 дазволена (ааП-аўдыт v4.581: canAddFolder/canAddItem зняты — companyTree персістуе ўсё)
   canSelect: false, showActiveDot: false, canActive: false, showCurrentDot: false, canMakeCurrent: false,
-  canDuplicate: false, hasDesign: false, hasDescription: false, // структура кампаніі: фіксаваны каркас sysKey
+  canDuplicate: false, hasDescription: false, // структура кампаніі: фіксаваны каркас sysKey
   canRename: false, canRelocate: false, canDelete: false, hasTrash: false, // структура кампаніі: фіксаваны каркас sysKey
   // ← ад ПРОДАКФПФ: canMoveOrder ✓  canAddForm ✓  canLayout ✓  hasExpandAll ✓
 };
 CONTENT_TYPES['company-resources']     = { // Папка «Рэсурсы» ў філіяле; нашчадак ПРОДАКФПФ; ↕+🗒+📂+📎 дазволена (ааП-аўдыт v4.581)
   canSelect: false, showActiveDot: false, canActive: false, showCurrentDot: false, canMakeCurrent: false,
-  canDuplicate: false, hasDesign: false, hasDescription: false, // структура кампаніі: фіксаваны каркас sysKey
+  canDuplicate: false, hasDescription: false, // структура кампаніі: фіксаваны каркас sysKey
   canRename: false, canRelocate: false, canDelete: false, hasTrash: false, // структура кампаніі: фіксаваны каркас sysKey
   // ← ад ПРОДАКФПФ: canMoveOrder ✓  canAddForm ✓  canLayout ✓  hasExpandAll ✓
 };
 CONTENT_TYPES['resourceStructure'] = { canSelect: false, showCurrentDot: false, canMakeCurrent: false }; // рэсурс: можна схаваць (canActive ад ПРОДАКФПФ); «Бягучага» няма; canRename ✓ — nodeSetName люструе ў resourceName (nameField, ааП-аўдыт v4.575)
 CONTENT_TYPES['company-branches']      = { // нашчадак ПРОДАКФПФ; РЭКУРСІЯ Ф/П/ПФФ; +📂+📎 (ааП-аўдыт v4.581)
   canSelect: false, showActiveDot: false, canActive: false, showCurrentDot: false, canMakeCurrent: false,
-  canDuplicate: false, hasDesign: false, hasDescription: false, // структура кампаніі: фіксаваны каркас sysKey
+  canDuplicate: false, hasDescription: false, // структура кампаніі: фіксаваны каркас sysKey
   canRename: false, canRelocate: false, hasTrash: false, // структура кампаніі: фіксаваны каркас sysKey
   // ← ад ПРОДАКФПФ: canMoveOrder ✓  canAddForm ✓  canDelete ✓  canLayout ✓  hasExpandAll ✓
 };
 CONTENT_TYPES['company-logos']         = { // Папка-0 «Лагатыпы»: трымае ФАЙЛЫ (не формы) → canAddForm:false; +📎 (canAddItem) ад ПРОДАКФПФ
   canSelect: false, showActiveDot: false, canActive: false, showCurrentDot: false, canMakeCurrent: false,
-  canDuplicate: false, hasDesign: false, hasDescription: false, // структура кампаніі: фіксаваны каркас sysKey
+  canDuplicate: false, hasDescription: false, // структура кампаніі: фіксаваны каркас sysKey
   canRename: false, canRelocate: false, canDelete: false, hasTrash: false, // структура кампаніі: фіксаваны каркас sysKey
   canAddForm: false, // canAddForm:false бо _nodeCfg fallback даў бы companyStructure; canAddFolder ✓ (ааП-аўдыт v4.581: арганізацыя файлаў — справа карыстальніка)
   // ← ад ПРОДАКФПФ: canAddItem ✓ (+📎 файлы)  canMoveOrder ✓  canLayout ✓  hasExpandAll ✓  hasFilter ✓  canSort ✓
 };
 CONTENT_TYPES['theme-root']            = { // нашчадак ПРОДАКФПФ; статычная структура (ааП)
   canSelect: false, showActiveDot: false, canActive: false, showCurrentDot: false, canMakeCurrent: false,
-  canMoveOrder: false, canDuplicate: false, hasDesign: false, // сістэмны корань/хост РМ (каркас, не карыстальніцкі вузел)
+  canMoveOrder: false, canDuplicate: false, // сістэмны корань/хост РМ (каркас, не карыстальніцкі вузел)
   canRename: false, canRelocate: false, canDelete: false, hasTrash: false, // сістэмны корань/хост РМ (каркас, не карыстальніцкі вузел)
   canAddFolder: false, canAddItem: false, canAddForm: false, canSort: false, hasFilter: false, // сістэмны корань/хост РМ (каркас, не карыстальніцкі вузел)
   alwaysOpen: true, // ← ад ПРОДАКФПФ: canLayout ✓  hasExpandAll ✓  hasDescription ✓ (📝 у ⋯ Формы-0)
 };
 CONTENT_TYPES['themes-list']           = { // нашчадак ПРОДАКФПФ; +📁/+🗒/пераназванне дазволена (ааП)
   canSelect: false, showActiveDot: false, canActive: false, showCurrentDot: false, canMakeCurrent: false,
-  canMoveOrder: false, canDuplicate: false, hasDesign: false, hasDescription: false, // каркас Выгляду (пары палітра×паводзіны, сід з кода)
+  canMoveOrder: false, canDuplicate: false, hasDescription: false, // каркас Выгляду (пары палітра×паводзіны, сід з кода)
   // canRename ✓ ад ПРОДАКФПФ (аўдыт v4.558: дрэва персістуецца ў themeTree разам з name — забарона была асірацелай)
   canRelocate: false, canDelete: false, hasTrash: false, // каркас Выгляду (пары палітра×паводзіны, сід з кода)
   alwaysOpen: true, // ← ад ПРОДАКФПФ: canAddFolder ✓  canAddForm ✓  canLayout ✓  hasExpandAll ✓
 };
 CONTENT_TYPES['users-root']            = { // РМ Карыстальнікі: вытворнае дрэва з D1 (user_list) — структура фіксаваная (ааП)
   canSelect: false, showActiveDot: false, canActive: false, showCurrentDot: false, canMakeCurrent: false,
-  canMoveOrder: false, canDuplicate: false, hasDesign: false, // сістэмны корань/хост РМ (каркас, не карыстальніцкі вузел)
+  canMoveOrder: false, canDuplicate: false, // сістэмны корань/хост РМ (каркас, не карыстальніцкі вузел)
   canRename: false, canRelocate: false, canDelete: false, hasTrash: false, canBeLocked: false, // не персістыцца (API-дрэва)
   canAddFolder: false, canAddItem: false, canAddForm: false, canSort: false, hasFilter: false, // сістэмны корань/хост РМ (каркас, не карыстальніцкі вузел)
   alwaysOpen: true, hasDescription: false
 };
 CONTENT_TYPES['user-photos']           = { // Папка-0 «Фота» ў форме карыстальніка: толькі файлы (R2), спіс персістыцца ў D1 users.photos
   canSelect: false, showActiveDot: false, canActive: false, showCurrentDot: false, canMakeCurrent: false,
-  canMoveOrder: false, canDuplicate: false, hasDesign: false, hasDescription: false, // D1-вытворнае дрэва (перабудоўваецца з базы — змена не персістуецца)
+  canMoveOrder: false, canDuplicate: false, hasDescription: false, // D1-вытворнае дрэва (перабудоўваецца з базы — змена не персістуецца)
   canRename: false, canRelocate: false, canDelete: false, hasTrash: false, canBeLocked: false, // D1-вытворнае дрэва (перабудоўваецца з базы — змена не персістуецца)
   canAddFolder: false, canAddForm: false, // не персістуецца: спіс файлаў жыве ў D1 users.photos (плоскі) — падпапка/форма зніклі б пасля F5
   hasFilter: false, canSort: false
 };
 CONTENT_TYPES['users-list']            = { // Папка-0 спіса карыстальнікаў: +👤 толькі праз _nodeMenuExtra (invite-мадал)
   canSelect: false, showActiveDot: false, canActive: false, showCurrentDot: false, canMakeCurrent: false,
-  canMoveOrder: false, canDuplicate: false, hasDesign: false, hasDescription: false, // D1-вытворнае дрэва (перабудоўваецца з базы — змена не персістуецца)
+  canMoveOrder: false, canDuplicate: false, hasDescription: false, // D1-вытворнае дрэва (перабудоўваецца з базы — змена не персістуецца)
   canRename: false, canRelocate: false, canDelete: false, hasTrash: false, canBeLocked: false, // D1-вытворнае дрэва (перабудоўваецца з базы — змена не персістуецца)
   canAddFolder: false, canAddItem: false, canAddForm: false, // D1-вытворнае дрэва (перабудоўваецца з базы — змена не персістуецца)
   alwaysOpen: true
@@ -1971,32 +1967,32 @@ CONTENT_TYPES['userDetails']           = { // форма-карыстальні�
   canSelect: false, canMoveOrder: false, canRename: false, canRelocate: false, canDelete: false, // ✕ праз _nodeMenuExtra (user_delete, як phoneEntry)
   canActive: f => !f.fields?._isOwner && f.fields?._status !== 'invited', // Актыўны↔Неактыўны тогл; owner заўжды актыўны; invited — яшчэ без пароля
   showCurrentDot: false, canMakeCurrent: false,
-  canDuplicate: false, hasDesign: false, hasTrash: false, canBeLocked: false, // D1-вытворнае дрэва (users — не персістуецца)
+  canDuplicate: false, hasTrash: false, canBeLocked: false, // D1-вытворнае дрэва (users — не персістуецца)
   // ← ад ПРОДАКФПФ: showActiveDot ✓ (зялёная кропка = статус карыстальніка)
 };
 CONTENT_TYPES['auditJournal']          = { // Форма-0 «Журнал дзеянняў»: вытворны read-only лог з D1 (audit_list) — не персістуецца, структура фіксаваная (ааП, як userDetails)
   canSelect: false, showActiveDot: false, canActive: false, showCurrentDot: false, canMakeCurrent: false,
-  canMoveOrder: false, canDuplicate: false, hasDesign: false, hasDescription: false, // D1-вытворнае (audit_log толькі чытаецца)
+  canMoveOrder: false, canDuplicate: false, hasDescription: false, // D1-вытворнае (audit_log толькі чытаецца)
   canRename: false, canRelocate: false, canDelete: false, hasTrash: false, canBeLocked: false, // D1-вытворнае (audit_log толькі чытаецца)
   // ← ад ПРОДАКФПФ: hasRefresh ✓ (перачытаць лог) hasExpandAll ✓
 };
 CONTENT_TYPES['email-routing-root']    = { // нашчадак ПРОДАКФПФ; +🗒 = новы маршрут (ааП)
   canSelect: false, showActiveDot: false, canActive: false, showCurrentDot: false, canMakeCurrent: false,
-  canMoveOrder: false, canDuplicate: false, hasDesign: false, hasDescription: false, // сістэмны корань/хост РМ (каркас, не карыстальніцкі вузел)
+  canMoveOrder: false, canDuplicate: false, hasDescription: false, // сістэмны корань/хост РМ (каркас, не карыстальніцкі вузел)
   canRename: false, canRelocate: false, canDelete: false, hasTrash: false, // сістэмны корань/хост РМ (каркас, не карыстальніцкі вузел)
   canAddFolder: false, canAddItem: false, // сістэмны корань/хост РМ (каркас, не карыстальніцкі вузел)
   alwaysOpen: true, // ← ад ПРОДАКФПФ: canAddForm ✓  canLayout ✓  hasExpandAll ✓
 };
 CONTENT_TYPES['monitor-root']          = { // нашчадак ПРОДАКФПФ; read-only + ↻ (ааП)
   canSelect: false, showActiveDot: false, canActive: false, showCurrentDot: false, canMakeCurrent: false,
-  canMoveOrder: false, canDuplicate: false, hasDesign: false, // сістэмны корань/хост РМ (каркас, не карыстальніцкі вузел)
+  canMoveOrder: false, canDuplicate: false, // сістэмны корань/хост РМ (каркас, не карыстальніцкі вузел)
   canRename: false, canRelocate: false, canDelete: false, hasTrash: false, // сістэмны корань/хост РМ (каркас, не карыстальніцкі вузел)
   canAddFolder: false, canAddItem: false, canAddForm: false, // сістэмны корань/хост РМ (каркас, не карыстальніцкі вузел)
   alwaysOpen: true, // ← ад ПРОДАКФПФ: canLayout ✓  hasExpandAll ✓  hasRefresh ✓  hasAutoRefresh ✓  hasDescription ✓ (📝 у ⋯)
 };
 CONTENT_TYPES['monitor-folder']        = { // нашчадак ПРОДАКФПФ; сістэмныя дата-папкі (ааП)
   canSelect: false, showActiveDot: false, canActive: false, showCurrentDot: false, canMakeCurrent: false,
-  canDuplicate: false, hasDesign: false, hasDescription: false, // D1-вытворнае дрэва (перабудоўваецца з базы — змена не персістуецца)
+  canDuplicate: false, hasDescription: false, // D1-вытворнае дрэва (перабудоўваецца з базы — змена не персістуецца)
   canRename: false, canRelocate: false, canDelete: false, hasTrash: false, // D1-вытворнае дрэва (перабудоўваецца з базы — змена не персістуецца)
   canAddFolder: false, canAddItem: false, canAddForm: false, // D1-вытворнае дрэва (перабудоўваецца з базы — змена не персістуецца)
   // ← ад ПРОДАКФПФ: canLayout ✓  hasExpandAll ✓  canMoveOrder ✓ (парадак → localStorage)
@@ -2008,10 +2004,10 @@ const _formFixed = { canSelect: false, canMoveOrder: false, canRename: false, ca
 CONTENT_TYPES['companyStructure']  = { canSelect: false, showCurrentDot: false, canMakeCurrent: false, canRename: false, canAddFolder: true }; // canAddFolder — канон-выключэнне: Форма трымае Папкі-0 (свая папка ў офісе/філіяле) // галіна: можна схаваць (canActive ад ПРОДАКФПФ ✓); «Бягучай» галіны няма; назва = поле companyName, не node.name
 // 🚚 Дастаўка (C2b): Прастора РМ трымае адну фіксаваную Форму-0 канфігу (build з settings) — нічога не дадаём/выдаляем
 CONTENT_TYPES['delivery-root']     = { canSelect: false, showActiveDot: false, canActive: false, showCurrentDot: false, canMakeCurrent: false,
-  canMoveOrder: false, canDuplicate: false, hasDesign: false, hasDescription: false, canRename: false, canRelocate: false, canDelete: false, hasTrash: false, // сістэмны корань/хост РМ (каркас, не карыстальніцкі вузел)
+  canMoveOrder: false, canDuplicate: false, hasDescription: false, canRename: false, canRelocate: false, canDelete: false, hasTrash: false, // сістэмны корань/хост РМ (каркас, не карыстальніцкі вузел)
   canAddFolder: false, canAddItem: false, canAddForm: false, alwaysOpen: true }; // сістэмны корань/хост РМ (каркас, не карыстальніцкі вузел)
 CONTENT_TYPES['delivery']          = { canSelect: false, showActiveDot: false, canActive: false, showCurrentDot: false, canMakeCurrent: false,
-  canMoveOrder: false, canDuplicate: false, canRename: false, canRelocate: false, canDelete: false, hasDescription: false, hasDesign: false }; // адзіная фіксаваная форма-канфіг (секцыі рэдагуюцца)
+  canMoveOrder: false, canDuplicate: false, canRename: false, canRelocate: false, canDelete: false, hasDescription: false, }; // адзіная фіксаваная форма-канфіг (секцыі рэдагуюцца)
 CONTENT_TYPES['bankStructure']     = { canSelect: false, canRename: false }; // банк: назва = поле bankName; ○ Бягучы (canMakeCurrent ад ПРОДАКФПФ, C3-1) = банк, чые рэквізіты ідуць у settings.banking (email/чат/кабінет) — не залежыць ад парадку ў дрэве
 CONTENT_TYPES['privacyVer']        = { // тэкст версіі: усе кнопкі статусу — на ПАПЦЫ-версіі (privacy-version), не тут
   showActiveDot: false, canActive: false, showCurrentDot: false, canMakeCurrent: false, // ааП: на форме толькі тэкст
@@ -2026,7 +2022,7 @@ CONTENT_TYPES['phoneEntry']        = { ..._formFixed }; // тэлефон: то�
 CONTENT_TYPES['emailEntry']        = { ..._formFixed }; // email: ●+✕ праз _nodeMenuExtra (кастомныя дзеянні)
 CONTENT_TYPES['emailRoute']        = { // нашчадак ПРОДАКФПФ; ↕+✕ дазволена (ааП)
   canSelect: false, showActiveDot: false, canActive: false, showCurrentDot: false, canMakeCurrent: false,
-  canDuplicate: false, hasDesign: false, // без кропак → ⓘ пусты
+  canDuplicate: false, // без кропак → ⓘ пусты
   canRename: false, canRelocate: false, hasTrash: false, // D1-вытворнае дрэва (перабудоўваецца з базы — змена не персістуецца)
   canAddFolder: false, canAddItem: false, canAddForm: false, canSort: false, hasFilter: false, // D1-вытворнае дрэва (перабудоўваецца з базы — змена не персістуецца)
   // ← ад ПРОДАКФПФ: canMoveOrder ✓  canDelete ✓  canLayout ✓  hasExpandAll ✓
@@ -2046,7 +2042,7 @@ CONTENT_TYPES['orderDetails'] = { // нашчадак CONTENT_TYPES['form'] → 
   // ↻ на форме дэталяў не мае сэнсу (↻ жыве на корані РМ)
   canRename: false,      // загаловак формы = cartSummary (вытворны), node.name нябачны
   // ← ад ПРОДАКФПФ (праз form): canSelect ✓  canDuplicate ✓  canDelete ✓
-  //   hasDescription ✓  hasDesign ✓  hasExpandAll ✓  hasTrash ✓
+  //   hasDescription ✓  hasExpandAll ✓  hasTrash ✓
 };
 CONTENT_TYPES['clientDetails']     = { // нашчадак ПРОДАКФПФ; ТОЛЬКІ абмежаванні (ааП)
   // [А] — форма кліента: нельга перамяшчаць/выдаляць/перайменоўваць саму форму
@@ -2085,8 +2081,7 @@ CONTENT_TYPES['services'] = { // нашчадак CONTENT_TYPES['form'] → ПР
   canAddFolder: true, canAddItem: true, // канон-выключэнне «Форма трымае Папкі-0»: фота/дакументы пазіцыі = ФайлБлокі ў Папках (аўта-Папка «📸 Фота» праз _seedFolders; слайдэр карткі бярэ актыўныя выявы паддрэва)
   // ● (canActive/showActiveDot) ✓ ад ПРОДАКФПФ — ааП-аўдыт 2026-07-17: забарона састарэла з увядзеннем
   // _newInactive (новая пазіцыя НеАктыўная → менавіта ● уключае паказ на сайце; Чарнавік ● ужо меў)
-  showCurrentDot: false, canMakeCurrent: false,   // паняцця «Бягучая паслуга» няма
-  hasDesign: false,                               // дызайн паслугі не рэдагуецца тут
+  showCurrentDot: false, canMakeCurrent: false,   // паняцця «Бягучая паслуга» няма                               // дызайн паслугі не рэдагуецца тут
   // canRename ✓ ад ПРОДАКФПФ (ааП-аўдыт v4.575: была асірацелая забарона «назва ў полі» — цяпер nodeSetName сам люструе ў fields.name)
   // ↻ на форме паслугі не мае сэнсу (↻ жыве на корані раздзела)
   // ← ад ПРОДАКФПФ (праз form): canSelect ✓  canDelete ✓  canDuplicate ✓
@@ -2094,8 +2089,7 @@ CONTENT_TYPES['services'] = { // нашчадак CONTENT_TYPES['form'] → ПР
 };
 
 // элементы секцый (faq/advantage/testimonial/howWeWork/promotion/priceItem) — ТОЛЬКІ абмежаванні
-const _secItemType = { showActiveDot: false, canActive: false, showCurrentDot: false, canMakeCurrent: false,
-  hasDesign: false };
+const _secItemType = { showActiveDot: false, canActive: false, showCurrentDot: false, canMakeCurrent: false, };
 ['faq','advantage','testimonial','howWeWork','promotion','priceItem'].forEach(k => CONTENT_TYPES[k] = _secItemType);
 
 // 🔒 canBeLocked:false там, дзе дрэва — ВЫТВОРНАЯ праекцыя (D1/сінтэз пры кожнай зборцы) і fields._locked
@@ -2107,8 +2101,7 @@ const _secItemType = { showActiveDot: false, canActive: false, showCurrentDot: f
 // [здольнасць, t-ключ, іконка як на кнопках UI (радок або функцыя для svg)]
 const _CAP_INFO = [
   ['canActive', 'lang_active', () => _activeDotHtml(true)], ['canAddFolder', 'folder_add', () => _mIco('addFolder')], ['canAddItem', 'btn_add', () => _mIco('addFile')],
-  ['canAddForm', 'btn_add_form', () => _mIco('addForm')], ['canDuplicate', 'btn_duplicate', () => _mIco('dup')], ['hasDesign', 'files_design', () => _mIco('design')],
-  ['canSort', 'node_sort_az', () => _mIco('sort')], ['hasFilter', 'node_filter', () => _icoFilter(false)], ['canRename', 'node_rename', () => _mIco('rename')],
+  ['canAddForm', 'btn_add_form', () => _mIco('addForm')], ['canDuplicate', 'btn_duplicate', () => _mIco('dup')], ['canSort', 'node_sort_az', () => _mIco('sort')], ['hasFilter', 'node_filter', () => _icoFilter(false)], ['canRename', 'node_rename', () => _mIco('rename')],
   ['canRelocate', 'folder_move_to', () => _mIco('move')], ['canMoveOrder', 'btn_up', '▲▼'], ['canSelect', 'node_select', '✓'],
   ['canLayout', 'node_layout_side', () => _icoLayoutSide()], ['hasExpandAll', 'tree_expand_all', '▼▼'], ['hasInfo', 'info_btn', 'ⓘ'],
   ['hasRefresh', 'btn_refresh', '↻'], ['hasAutoRefresh', 'btn_auto', '☑'], ['canDelete', 'folder_delete', () => _mIco('del')]
@@ -2140,7 +2133,7 @@ const _SYS_CAPS = new Set(['canDelete', 'canRelocate', 'canDuplicate']); // canB
 const _SYSC_CAPS = new Set(['canDelete', 'canRelocate', 'canRename', 'canBeLocked']);
 function _nodeSysContent(node) { return !!node?._sysContent; }
 // ЭТАП 4-3: мутуючыя caps — глушацца ў супрацоўніка з правам view на бягучы РМ (люстэрка сервернага гейта)
-const _MUT_CAPS = new Set(['canRename', 'canDelete', 'canRelocate', 'canDuplicate', 'canActive', 'canAddFolder', 'canAddItem', 'canAddForm', 'canMoveOrder', 'canBeLocked', 'canMakeCurrent', 'canLayout', 'hasTrash', 'hasDesign']);
+const _MUT_CAPS = new Set(['canRename', 'canDelete', 'canRelocate', 'canDuplicate', 'canActive', 'canAddFolder', 'canAddItem', 'canAddForm', 'canMoveOrder', 'canBeLocked', 'canMakeCurrent', 'canLayout', 'hasTrash']);
 function _nodeSys(node) { return !!(node?._sys || node?.fields?._sys); }
 function _ncap(node, s, cap) {
   if (!node) return false;
@@ -2429,7 +2422,8 @@ async function previewPrivacyVersion(version) {
   const win = window.open(url, '_blank');
   if (win) win.addEventListener('load', () => URL.revokeObjectURL(url), { once: true });
 }
-async function _privacyRecount(version) {
+async function _privacyRecount(version) { // ⚠️ перазапісвае зафіксаваны лік прынятых → пытаем
+  if (!await new Promise(res => showConfirm(t('confirm_recount'), () => res(true), { label: t('btn_confirm'), danger: false }, () => res(false)))) return;
   try {
     const count = await countClientsForVersion(version);
     await saveLockVersion(version, count);
@@ -3843,6 +3837,9 @@ function nodeSetFacet(key, val) {
 }
 // ── ШАБЛОН: СОРТЫРОЎКА ДРЭВА па выбраным полі (недэструктыўная, як у табліцах) ──
 // Радок-спіс ніжэй загалоўка Папкі/Формы: выбар поля дзяцей наступнага ўзроўню + напрамак ▲▼. Стан у s._treeSort (pid→{key,dir}) / s._treeSortOpen (Set).
+// ⚙️ ці ёсць у вузла дзеці ЎВОГУЛЕ (папкі/формы/файлы) — гейт для «Фільтра» і «Сартаваць»: без дзяцей
+// абедзве кнопкі малявалі пусты кантроль і не рабілі нічога (аўдыт ⋯-меню 2026-07-25)
+function _nodeHasAnyKids(node, s) { return !!(node && (s?.data?.nodes || []).some(n => n.parentId === node.id)); }
 function _nodeHasSortableKids(node, s) { return !!(node && s.data?.nodes?.some(n => n.parentId === node.id && (n.type === 'folder' || n.type === 'form'))); }
 function _treeSortFields(parentId, s) { // палі для сартыроўкі дзяцей: Назва + Дата + scalar-палі схемы дзіцячых Форм
   const kids = (s.data?.nodes || []).filter(n => n.parentId === parentId && (n.type === 'folder' || n.type === 'form'));
@@ -4326,7 +4323,7 @@ function _nodeMenuItemsHtml(node, mid, s) {
   const delClick     = nt === 'folder' ? `nodeDeleteFolder('${node.id}')` : `nodeDeleteItemById('${node.id}')`;
   const delIco       = _mIco('del', true); // адзіная іконка выдалення; plain → чырвоны ад .danger, не ад схемы
   const g1 = [
-    cap('canActive') ? `<button class="node-overflow-item" title="${t(node.active!==false?'lang_hidden':'lang_active')}" onclick="${activeClick};nodeCloseOverflow('${mid}')">${_activeDotHtml(node.active === false)}</button>` : '',
+    cap('canActive') ? `<button class="node-overflow-item" title="${t(node.active!==false?'act_hide':'act_show')}" onclick="${activeClick};nodeCloseOverflow('${mid}')">${_activeDotHtml(node.active === false)}</button>` : '',
     cap('canAddFolder') ? `<button class="node-overflow-item" title="${t('folder_add_sub')}" onclick="nodeAddFolder('${node.id}');nodeCloseOverflow('${mid}')">${_mIco('addFolder')}</button>` : '',
     (cap('canAddForm') && _nodeCfg(s, node, '_formSchema')) ? `<button class="node-overflow-item" title="${t('btn_add_form')}" onclick="nodeAddForm('${node.id}');nodeCloseOverflow('${mid}')">${_mIco('addForm')}</button>` : '', // +🗒 толькі калі ёсць эфектыўная форма-схема (каскад ад продка); без яе nodeAddForm мёртвы (напр. Галерэя) — сіметрычна з коранем меню
     cap('canAddItem') ? `<button class="node-overflow-item" title="+📎" onclick="nodeFileUpload('${node.id}');nodeCloseOverflow('${mid}')">${_mIco('addFile')}</button>` : '',
@@ -4335,15 +4332,14 @@ function _nodeMenuItemsHtml(node, mid, s) {
   ].filter(Boolean).join('');
   const g2 = [
     cap('canDuplicate') ? `<button class="node-overflow-item" title="${t('btn_duplicate')}" onclick="${dupClick};nodeCloseOverflow('${mid}')">${_mIco('dup')}</button>` : '',
-    cap('hasDesign') ? `<button class="node-overflow-item" title="${t('files_design')}" onclick="nodeToggleDesign();nodeCloseOverflow('${mid}')">${_mIco('design')}</button>` : '',
-    cap('canSort') ? `<button class="node-overflow-item${s._treeSortOpen?.has(node.id)?' active':''}" title="${t('node_sort_az')}" onclick="nodeToggleSort('${node.id}');nodeCloseOverflow('${mid}')">${_mIco('sort', s._treeSortOpen?.has(node.id))}</button>` : '',
+    (cap('canSort') && _nodeHasSortableKids(node, s)) ? `<button class="node-overflow-item${s._treeSortOpen?.has(node.id)?' active':''}" title="${t('node_sort_az')}" onclick="nodeToggleSort('${node.id}');nodeCloseOverflow('${mid}')">${_mIco('sort', s._treeSortOpen?.has(node.id))}</button>` : '',
     // Размяшчэнне дзяцей — на ЛЮБЫМ кантэйнеры з >1 дзіцем: 💾 Запомніць (кліенцкі дэфолт) · ↩ Аднавіць (да снімка, калі ёсць) · ↺ Па змаўчанні (завадскі)
     _nodeArrangeShow(node, s) ? `<button class="node-overflow-item" title="${t('layout_remember')}" onclick="_nodeArrangeRemember('${node.id}');nodeCloseOverflow('${mid}')">${_mIco('arrange')}</button>` : '',
     (_nodeArrangeShow(node, s) && _nodeHasArrangeSnapshot(node)) ? `<button class="node-overflow-item" title="${t('layout_restore')}" onclick="_nodeArrangeRestore('${node.id}');nodeCloseOverflow('${mid}')">${_mIco('restore')}</button>` : '',
     _nodeArrangeShow(node, s) ? `<button class="node-overflow-item" title="${t('layout_reset')}" onclick="_nodeArrangeDefault('${node.id}');nodeCloseOverflow('${mid}')">${_mIco('reset')}</button>` : ''
   ].filter(Boolean).join('');
   const g3 = [
-    cap('hasFilter') ? `<button class="node-overflow-item${filterOn?' active':''}" title="${t('node_filter')}" onclick="nodeToggleFolderFilter('${node.id}');nodeCloseOverflow('${mid}')">${_icoFilter(filterOn)}</button>`
+    (cap('hasFilter') && _nodeHasAnyKids(node, s)) ? `<button class="node-overflow-item${filterOn?' active':''}" title="${t('node_filter')}" onclick="nodeToggleFolderFilter('${node.id}');nodeCloseOverflow('${mid}')">${_icoFilter(filterOn)}</button>`
       : (_formHasRichtext(node, s) ? `<button class="node-overflow-item" title="${t('node_filter')}" onclick="nodeFindInText('${node.id}');nodeCloseOverflow('${mid}')">${_icoFilter(false)}</button>` : ''), // форма з richtext: 🔍 пошук у тэксце (як усе фільтры, у ⋯)
     (cap('canMakeCurrent') && !node.fields?._current) ? `<button class="node-overflow-item" title="${t('btn_make_current')}" onclick="nodeMakeCurrent('${node.id}');nodeCloseOverflow('${mid}')">${_currentDotHtml(true)}</button>` : '',
     cap('canBeLocked') ? `<button class="node-overflow-item" title="${t(node.fields?._locked ? 'node_unlock' : 'node_lock')}" onclick="nodeToggleLock('${node.id}');nodeCloseOverflow('${mid}')" style="${node.fields?._locked ? 'color:var(--accent)' : 'opacity:0.6'}">${_mIco('lock', true)}</button>` : '', // іконка = ДЗЕЯННЕ (замкнёны аб'ект → адкрыты замок «адамкнуць», акцэнт); СТАН паказвае іконка пры назве
@@ -4623,7 +4619,10 @@ function _nodeArrangeShow(node, s) {
   return false;
 }
 // ↺ размясціць дзяцей па змаўчанні: free-layout форма → дэфолт схемы (_layoutReset); папка → парадак стварэння (createdAt), пер-тып
-function _nodeArrangeDefault(nodeId) {
+function _nodeArrangeDefault(nodeId) { // ⚠️ сцірае ручное размяшчэнне → пытаем
+  showConfirm(t('confirm_layout_default'), () => _nodeArrangeDefaultDo(nodeId), { label: t('layout_reset'), danger: false });
+}
+function _nodeArrangeDefaultDo(nodeId) {
   const s = currentNodeState, node = s?.data?.nodes?.find(n => n.id === nodeId); if (!node) return;
   if (node.type === 'form') { _layoutReset(nodeId); return; } // DRY: тая ж логіка скіду _layout
   if (node.type === 'folder') {
@@ -4643,7 +4642,10 @@ function _nodeArrangeRemember(nodeId) {
   nodeSave(); nodeRender(); // перарэндэр — каб зʼявілася кнопка ↩ Аднавіць
 }
 // ↩ Аднавіць размяшчэнне — да апошняга запомненага снімка; няма снімка → завадскі дэфолт (_nodeArrangeDefault)
-function _nodeArrangeRestore(nodeId) {
+function _nodeArrangeRestore(nodeId) { // ⚠️ перазапісвае бягучае размяшчэнне снімком → пытаем
+  showConfirm(t('confirm_layout_restore'), () => _nodeArrangeRestoreDo(nodeId), { label: t('layout_restore'), danger: false });
+}
+function _nodeArrangeRestoreDo(nodeId) {
   const s = currentNodeState, node = s?.data?.nodes?.find(n => n.id === nodeId); if (!node) return;
   if (node.type === 'form') {
     const saved = node.fields?._layoutSaved;
@@ -4977,6 +4979,11 @@ function _paletteReset(formId, sectionId) {
   const s = currentNodeState, form = s?.data?.nodes?.find(n => n.id === formId); if (!form) return;
   if (_nodeLockGuard(form)) return; // 🔒 форма
   if (_secLockedByKey(form, s, sectionId)) { showAlert(t('node_locked_msg')); return; } // 🔒 секцыя
+  // ⚠️ скід ГУБІЦЬ кастомную палітру → пытаем (аўдыт ⋯-меню 2026-07-25: разбуральнае без пытання)
+  showConfirm(t('confirm_palette_reset'), () => _paletteResetDo(formId, sectionId), { label: t('theme_reset_colors'), danger: false });
+}
+function _paletteResetDo(formId, sectionId) {
+  const s = currentNodeState, form = s?.data?.nodes?.find(n => n.id === formId); if (!form) return;
   const sec = (FORM_SCHEMAS[form.formSchema]?.sections || []).find(x => (x.id || '') === sectionId);
   const slots = sec?.slots || THEME_SLOTS, dv = _themeBaseVals(form.fields?.base || 'steel');
   slots.forEach(sl => { if (dv[sl.key]) form.fields[sl.key] = dv[sl.key]; });
@@ -6999,7 +7006,10 @@ function nodeToggleRootLayout() {
 function nodeToggleFormActive(id) { nodeToggleActive(id); }
 function nodeToggleFolderActive(id) { nodeToggleActive(id); }
 // ШАБЛОН: зрабіць вузел «Бягучым» — здымае _current з братоў, выстаўляе на гэты вузел
-function nodeMakeCurrent(id) {
+function nodeMakeCurrent(id) { // ⚠️ пераключае «бягучую» (тэма/палітыка/схема) → пытаем: для Палітыкі гэта юрыдычна значна
+  showConfirm(t('confirm_make_current'), () => nodeMakeCurrentDo(id), { label: t('btn_make_current'), danger: false });
+}
+function nodeMakeCurrentDo(id) {
   const s = currentNodeState;
   const node = s.data?.nodes?.find(n => n.id === id);
   if (!node) return;
@@ -7013,9 +7023,6 @@ function nodeMakeCurrent(id) {
   nodeSave(); nodeRender();
 }
 
-function nodeToggleDesign() {
-  currentNodeState?._designFn?.();
-}
 
 function _icoLayoutSide() {
   return `<svg viewBox="0 0 12 12" width="13" height="13" fill="currentColor" style="pointer-events:none;display:block"><rect x="1" y="1" width="4" height="10" rx="1"/><rect x="7" y="1" width="4" height="10" rx="1"/></svg>`;
@@ -7196,8 +7203,7 @@ CONTENT_TYPES['pvScheme'] = { // Форма-прэсэт схемы: тольк�
   showCurrentDot: f => !!f.fields?._current, // ○ бягучая схема
   canRename: false, canDelete: false, canDuplicate: false, canMoveOrder: false, canRelocate: false, // прэсэт з кода (назва/склад/парадак фіксаваныя)
   canActive: false, showActiveDot: false, // няма «актыўнай» — толькі «бягучая» (○)
-  canAddFolder: false, canAddForm: false, canAddItem: false, canSort: false, hasFilter: false, // ліставая форма-прэсэт (без дзяцей)
-  hasDesign: false, hasDescription: false, hasTrash: false, canBeLocked: false, canLayout: false, // прэсэт з кода — не рэдагуецца/не блакуецца
+  canAddFolder: false, canAddForm: false, canAddItem: false, canSort: false, hasFilter: false, // ліставая форма-прэсэт (без дзяцей) hasDescription: false, hasTrash: false, canBeLocked: false, canLayout: false, // прэсэт з кода — не рэдагуецца/не блакуецца
 };
 function _pvBuildNodes() { // хук _buildFn: будуем дрэва з код-каталога (нічога ў settings; «бягучая» — у KV пер-userId)
   const host = { id: 'pv-host', type: 'form', formSchema: 'sectionsHost', parentId: null, order: 0, name: t('pv_title'), fields: {} };
@@ -8341,9 +8347,10 @@ function _nodeRootMenuHtml(s, menuId, leftMenu = false) {
   const addNote = (s._localOnly && cap('canAddItem')) ? `<button class="node-overflow-item" title="+📝" onclick="nodeAddTextNote(null);nodeCloseOverflow('${menuId}')">+📝</button>` : '';
   const addItem = (!s._localOnly && !s._formSchema && cap('canAddItem')) ? `<button class="node-overflow-item" title="${t('btn_add')}" onclick="nodeAddItemInFolder(null);nodeCloseOverflow('${menuId}')">+📎</button>` : '';
   const addForm = (s._formSchema && cap('canAddForm')) ? `<button class="node-overflow-item" title="${t('btn_add_form')}" onclick="nodeAddForm(null);nodeCloseOverflow('${menuId}')">+🗒</button>` : '';
-  const sortBtn = (!s._localOnly && cap('canSort')) ? `<button class="node-overflow-item${s._treeSortOpen?.has(null)?' active':''}" title="${t('node_sort_az')}" onclick="nodeToggleSort(null);nodeCloseOverflow('${menuId}')">⇅</button>` : '';
+  const _rootKids = (s.data?.nodes || []).some(n => (n.parentId ?? null) === (s._rootParentId ?? null));
+  const sortBtn = (!s._localOnly && cap('canSort') && _rootKids) ? `<button class="node-overflow-item${s._treeSortOpen?.has(null)?' active':''}" title="${t('node_sort_az')}" onclick="nodeToggleSort(null);nodeCloseOverflow('${menuId}')">⇅</button>` : '';
   const rootFilterActive = s._folderFilters?.[null] !== undefined;
-  const filterBtn = cap('hasFilter') ? `<button class="node-overflow-item${rootFilterActive?' active':''}" title="${t('node_filter')}" onclick="nodeToggleFolderFilter(null);nodeCloseOverflow('${menuId}')">${_icoFilter(rootFilterActive)}</button>` : '';
+  const filterBtn = (cap('hasFilter') && _rootKids) ? `<button class="node-overflow-item${rootFilterActive?' active':''}" title="${t('node_filter')}" onclick="nodeToggleFolderFilter(null);nodeCloseOverflow('${menuId}')">${_icoFilter(rootFilterActive)}</button>` : '';
   // 📤 Падзяліцца УСІМ РМ (усе вузлы верхняга ўзроўню з паддрэвамі) — файл; cap hasPrint ад _rootType (дэфолт regular=true)
   const printBtn = cap('hasPrint') ? `<button class="node-overflow-item" title="${t('node_share')}" onclick="_rootShare();nodeCloseOverflow('${menuId}')">${_mIco('share')}</button>` : '';
   const items = `${addFolder}${addNote}${addItem}${addForm}${sortBtn}${filterBtn}${printBtn}${s._rootMenuExtraHtml ? s._rootMenuExtraHtml(menuId) : ''}`;
@@ -13410,7 +13417,7 @@ FORM_SCHEMAS.themeHost = { sections: [
 ], _noName: true, _freeLayout: false }; // хост: секцыі не рухаюцца; нармальны шлях рэндэру паважае visible
 CONTENT_TYPES['themeHost'] = { // Form-0 хост (як theme-root): статычны каркас, ніводнай структурнай кнопкі (ааП: толькі абмежаванні)
   canSelect: false, showActiveDot: false, canActive: false, showCurrentDot: false, canMakeCurrent: false,
-  canMoveOrder: false, canDuplicate: false, hasDesign: false, canRename: false, canRelocate: false, // каркас Выгляду (пары палітра×паводзіны, сід з кода)
+  canMoveOrder: false, canDuplicate: false, canRename: false, canRelocate: false, // каркас Выгляду (пары палітра×паводзіны, сід з кода)
   canDelete: false, hasTrash: false, canBeLocked: false }; // каркас Выгляду (пары палітра×паводзіны, сід з кода)
 // Фаза C-part4: ○ «Бягучая» прыбраны з палітраў/паводзін — актыўны выбар праз выпадальнікі ў секцыі «Прагляд»
 CONTENT_TYPES['theme']       = { showCurrentDot: false, canMakeCurrent: false }; // актыўнасць праз выпадальнік Прагляд, не ○
@@ -14102,7 +14109,7 @@ function _myActorLabel() { return (currentUser?.displayName || currentUser?.emai
 // ════════════════════════════════════════
 CONTENT_TYPES['chats-root'] = { // РМ Чаты: вытворнае дрэва з D1 (chat_peers/chat_list) — структура фіксаваная (ааП, як users-root)
   canSelect: false, showActiveDot: false, canActive: false, showCurrentDot: false, canMakeCurrent: false,
-  canMoveOrder: false, canDuplicate: false, hasDesign: false, hasDescription: false, // сістэмны корань/хост РМ (каркас, не карыстальніцкі вузел)
+  canMoveOrder: false, canDuplicate: false, hasDescription: false, // сістэмны корань/хост РМ (каркас, не карыстальніцкі вузел)
   canRename: false, canRelocate: false, canDelete: false, hasTrash: false, canBeLocked: false, // сістэмны корань/хост РМ (каркас, не карыстальніцкі вузел)
   canAddFolder: false, canAddItem: false, canAddForm: false, // сістэмны корань/хост РМ (каркас, не карыстальніцкі вузел)
   alwaysOpen: true
@@ -14112,7 +14119,7 @@ CONTENT_TYPES['chats-list'] = CONTENT_TYPES['chats-root']; // Папка-0 сп�
 CONTENT_TYPES['chatDetails'] = { // форма-чатнік: дыялог унутры; вузел некіравальны (вытворны з D1)
   canSelect: false, canMoveOrder: false, canRename: false, canRelocate: false, canDelete: false, // D1-вытворнае дрэва (перабудоўваецца з базы — змена не персістуецца)
   canActive: false, showActiveDot: false, showCurrentDot: false, canMakeCurrent: false,
-  canDuplicate: false, hasDesign: false, hasTrash: false, canBeLocked: false, // D1-вытворнае дрэва (перабудоўваецца з базы — змена не персістуецца)
+  canDuplicate: false, hasTrash: false, canBeLocked: false, // D1-вытворнае дрэва (перабудоўваецца з базы — змена не персістуецца)
   hasDescription: false // апісанне не персістыцца (дрэва перабудоўваецца з D1) — кнопкі няма, каб не губляць уведзенае
 };
 FORM_SCHEMAS.chatDetails = { _noName: true, sections: [
