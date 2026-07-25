@@ -7023,7 +7023,12 @@ function _iconSchemeApply(id, save) {
 async function _iconSchemeLoad() {
   try {
     const r = await fetch(API, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'panel_prefs_get', repo: REPO, password }) });
-    if (r.ok) { const id = (await r.json())?.prefs?.iconScheme; if (ICON_SCHEME_IDS.includes(id) && id !== _iconScheme) _iconSchemeApply(id, false); }
+    if (!r.ok) return;
+    const prefs = (await r.json())?.prefs || {};
+    if (ICON_SCHEME_IDS.includes(prefs.iconScheme) && prefs.iconScheme !== _iconScheme) _iconSchemeApply(prefs.iconScheme, false);
+    // ☰ Іконкі ↔ іконкі+назвы: выбар таксама ЗА СУПРАЦОЎНІКАМ, не за прыладай — інакш на другой прыладзе
+    // (Тэсла) сайдбар знаходзіўся ў дэфолце і назвы РМ не паказваў, хоць на кампутары яны былі ўключаны
+    if (typeof prefs.navExpanded === 'boolean') _navExpandedSet(prefs.navExpanded, false);
   } catch {}
 }
 // іконка ⋯-меню: клас mi-<id> бярэ колер актыўнай схемы; plain=true (кнопкі-стан: замок/выдаліць/актыўны сорт) → без колеру схемы, каб пераважыў стан (акцэнт/чырвоны)
@@ -14152,7 +14157,10 @@ FORM_SCHEMAS.currency = Object.assign({
         { key: 'overrideVal', label: 'rates_override',  type: 'input', align: 'right', inputId: row => 'rate-override-' + row.code, inputValue: row => row.overrideVal, inputPlaceholder: row => row.auto || '', sortable: false },
         { key: 'effective',   label: 'rates_effective', type: 'html',  align: 'right', render: (v) => v ? `<span style="color:var(--accent)">${escHtml(v)}</span>` : '—', sortable: false }
       ],
-      footerHtml: () => {
+      footerHtml: (form, s) => {
+        // «Загрузка...» толькі калі РЭАЛЬНА грузім: згорнутая табліца дадзеных яшчэ не прасіла
+        // (onExpand), і вечны надпіс пад закрытай секцыяй падманваў — быццам нешта завісла
+        if (!_ratesData && !_ratesLoading) return '';
         if (!_ratesData || _ratesLoading) return `<div style="padding:8px 0;font-size:0.85rem;color:var(--muted)">${t('loading')}</div>`;
         const { updatedAt } = _ratesData;
         const base = settings.currency?.code || 'EUR';
@@ -14707,11 +14715,10 @@ const AUTOSAVE_PAGES = new Set(['general', 'sections', 'sitepage', 'theme']); //
 
 // Высоўная панэль РМ на вузкім экране (бургер ☰)
 function _toggleSidebar(force) {
-  // шырокі экран: ☰ згортвае/разгортвае панэль (іконкі ↔ іконкі+назвы), выбар помніцца ў localStorage
+  // шырокі экран: ☰ згортвае/разгортвае панэль (іконкі ↔ іконкі+назвы)
   if (window.innerWidth > 760 && force === undefined) {
     const lay = document.querySelector('.layout'); if (!lay) return;
-    const exp = lay.classList.toggle('nav-expanded');
-    try { localStorage.setItem('ttzop_nav_expanded', exp ? '1' : '0'); } catch {}
+    _navExpandedSet(!lay.classList.contains('nav-expanded'), true);
     return;
   }
   // вузкі экран: высоўны drawer (як раней)
@@ -14722,9 +14729,22 @@ function _toggleSidebar(force) {
   sb.classList.toggle('open', open);
   if (bd) bd.classList.toggle('show', open);
 }
-// аднавіць пашыраны стан панэлі пры старце (толькі шырокі экран)
+// ☰ адзіны сетэр стану сайдбара (клас + localStorage + серверныя прэфы пер-супрацоўніка).
+// save=false — прымяненне прыйшло З сервера (не пішам назад), як у _iconSchemeApply.
+function _navExpandedSet(exp, save) {
+  const lay = document.querySelector('.layout'); if (!lay) return;
+  lay.classList.toggle('nav-expanded', !!exp);
+  try { localStorage.setItem('ttzop_nav_expanded', exp ? '1' : '0'); } catch {} // хуткае прымяненне да адказу сервера
+  if (save) fetch(API, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'panel_prefs_set', repo: REPO, password, prefs: { navExpanded: !!exp } }) }).catch(() => {});
+}
+// аднавіць стан панэлі пры старце (толькі шырокі экран). Няма яўнага выбару → назвы РМ паказваем
+// на ШЫРОКІМ экране (≥1280px: Тэсла на ўвесь экран, вялікі манітор); вузкія застаюцца icon-only
 function _restoreNavExpanded() {
-  try { if (localStorage.getItem('ttzop_nav_expanded') === '1' && window.innerWidth > 760) document.querySelector('.layout')?.classList.add('nav-expanded'); } catch {}
+  if (window.innerWidth <= 760) return;
+  let saved = null;
+  try { saved = localStorage.getItem('ttzop_nav_expanded'); } catch {}
+  const exp = saved === null ? window.innerWidth >= 1280 : saved === '1';
+  document.querySelector('.layout')?.classList.toggle('nav-expanded', exp);
 }
 _restoreNavExpanded();
 
