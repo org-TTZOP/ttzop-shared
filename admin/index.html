@@ -10933,7 +10933,9 @@ function _repParamsBodyHtml(form) {
     <span style="flex-basis:100%;height:0"></span>
     ${b('⬇', 'XLSX', `_repExportXLSX('${form.id}')`, !has)}
     ${b('⬇', 'CSV', `_repExportCSV('${form.id}')`, !has)}
-    ${b('🖨', 'PDF', `_repExportPDF('${form.id}')`, !has)}
+    ${b('⬇', 'PDF', `_repExportPDFFile('${form.id}')`, !has)}
+    ${b('👁', t('share_view'), `_repExportPDF('${form.id}')`, !has)}<!-- тая ж пара, што ў «Падзяліцца»: ⬇ пампуе файл, 👁 адкрывае дакумент -->
+
     ${b('📌', t('rep_archive_btn'), `_repArchive('${form.id}')`, !has || !!f._archInfo)}
     <span id="rep-status-${form.id}" style="font-size:0.8rem;color:var(--muted)"></span>
   </div>`;
@@ -11350,7 +11352,12 @@ async function _expPDFFile(pl, onErr) {
 // тонкія абгорткі РМ Справаздач (кнопкі трымаюць formId; ядро — payload-функцыі вышэй)
 function _repExportCSV(formId) { const f = reportsState.data?.nodes?.find(n => n.id === formId)?.fields; if (f?._payload) _expCSV(f._payload); }
 function _repExportXLSX(formId) { const f = reportsState.data?.nodes?.find(n => n.id === formId)?.fields; if (f?._payload) _expXLSX(f._payload, () => _repStatus(formId, t('err'), true)); }
-function _repExportPDF(formId) { const f = reportsState.data?.nodes?.find(n => n.id === formId)?.fields; if (f?._payload) _expPDF(f._payload); }
+function _repExportPDF(formId) { const f = reportsState.data?.nodes?.find(n => n.id === formId)?.fields; if (f?._payload) _expPDF(f._payload); } // 👁 прагляд дакумента
+function _repExportPDFFile(formId) { // ⬇ рэальны файл (бібліятэка+шрыфт ленава → статус-падказка замест мёртвага кліку)
+  const f = reportsState.data?.nodes?.find(n => n.id === formId)?.fields; if (!f?._payload) return;
+  _repStatus(formId, t('loading'));
+  _expPDFFile(f._payload, () => _repStatus(formId, t('err'), true)).finally(() => _repStatus(formId, ''));
+}
 
 // ── 🖨 ДРУК ЛЮБОГА ВУЗЛА (ПРОДАКФПФ, cap hasPrint): паддрэва вузла (дзеці, БЕЗ бацькоў) →
 // той жа payload → тыя ж экспарцёры. Table-секцыі ідуць «як бачыш»: бягучы пер-калонкавы фільтр
