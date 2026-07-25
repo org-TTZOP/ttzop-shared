@@ -740,6 +740,50 @@ const _monChartSchema = valLabel => ({ _noName: true, sections: [
 function _monitorTopChartHtml() {
   return _nodeTableSectionHtml({ id: 'mch-all', fields: {} }, FORM_SCHEMAS.monitorChart.sections[0], monitorState);
 }
+// ⚠️ БЛОК МУСІЦЬ ЖЫЦЬ ВЫШЭЙ за FORM_SCHEMAS: `monitorClient` кліча `_alertsSection()` пры РАЗБОРЫ файла,
+// а `const` каталогі ніжэй дадуць TDZ-ReferenceError і заб'юць увесь скрыпт (злоўлена жыўцом 2026-07-25:
+// node --check і пошук дублікатаў гэтага НЕ бачаць — толькі жывая праверка).
+// ═══ 🚨 ЖУРНАЛ АЛЕРТАЎ — АДЗІН дэскрыптар секцыі на ДВА выгляды (узор _trLedger) ═══
+// site='' → глабальны (усе паддамены, калонка «Сайт» бачная); site=паддамен → зрэз карткі (калонка схаваная).
+// Дадзеныя ленава ў form.fields._alerts праз dataFn — той жа канон, што выпіс перакладаў.
+const _AL_KINDS = { limit: 'al_k_limit', sentinel: 'al_k_sentinel', llm: 'al_k_llm', email: 'al_k_email', crash: 'al_k_crash', payment: 'al_k_payment' };
+const _AL_SEV = { info: 'al_s_info', warn: 'al_s_warn', crit: 'al_s_crit' };
+const _alertsInflight = new Set();
+function _alertsSection(withSite) { // withSite=false → картка паддамена (сайт і так відны ў назве формы)
+  return { type: 'table', title: 'alerts_title', dataKey: '_alerts', dataFn: (form, s) => _alertsData(form), emptyHeader: true,
+    headerExtra: (form, s) => _alertsSummaryHtml(form),
+    columns: [
+      { key: 'at',   label: 'col_datetime', type: 'datetime' },
+      { key: 'sev',  label: 'al_col_sev',   type: 'select', labelMap: _AL_SEV, classMap: { crit: 'nfb-red', warn: 'nfb-new', info: '' } },
+      { key: 'kind', label: 'al_col_kind',  type: 'select', labelMap: _AL_KINDS },
+      ...(withSite ? [{ key: 'site_id', label: 'al_col_site', type: 'text' }] : []),
+      { key: 'msg',  label: 'al_col_msg',   type: 'text' },
+    ] };
+}
+function _alertsData(form) { // ленавая загрузка: site з формы (пуста = глабальны выгляд)
+  const site = String(form.fields?.subdomain || '').replace(/\.ttzop\.com$/, '');
+  const key = site || '*';
+  if (form.fields._alerts === undefined && !_alertsInflight.has(key)) { _alertsInflight.add(key); _alertsLoad(site, key, form); }
+  return Array.isArray(form.fields._alerts) ? form.fields._alerts : [];
+}
+async function _alertsLoad(site, key, form) {
+  try {
+    const res = await fetch(API, { method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'alerts_list', repo: REPO, password, ...(site ? { site } : {}) }) });
+    const d = res.ok ? await res.json() : null;
+    form.fields._alerts = Array.isArray(d?.alerts) ? d.alerts : [];
+    form.fields._alertsCrit48 = d?.crit48 ?? 0;
+    if (currentNodeState === monitorState) renderNodeEditor(monitorState);
+  } catch { form.fields._alerts = []; } finally { _alertsInflight.delete(key); }
+}
+function _alertsSummaryHtml(form) { // зводка ў загалоўку: крытычных за 48 гадзін
+  const n = +form.fields?._alertsCrit48 || 0;
+  return `<span style="font-size:0.75rem;color:${n ? '#ef4444' : 'var(--muted)'};font-weight:400">${escHtml(t('alerts_summary').replace('{n}', n))}</span>`;
+}
+// 🚨 глабальны журнал у целе Формы-0 Маніторынга (як «Папаўненні API»): віртуальная форма al-all
+function _monitorAlertsHtml() {
+  return _nodeTableSectionHtml({ id: 'al-all', fields: monitorState._alAll || (monitorState._alAll = {}) }, _alertsSection(true), monitorState);
+}
 // 💰 КАНОННАЯ Table-секцыя «Папаўненні API» (наш баланс Anthropic) у целе Формы-0 Маніторынгу:
 // рэестр-onAdd (як аплаты ў заказе) — ➕ у ⋯ адкрывае мадал сумы; зводка балансу праз headerExtra.
 const _API_TOPUP_SECTION = { type: 'table', title: 'api_topups_title', dataKey: '_apiTopups', addable: true, emptyHeader: true,
@@ -12428,47 +12472,6 @@ FORM_SCHEMAS.monitorClient._noName = true; // email = загаловак рад�
 // 🌐 Дадзеныя каноннай Table-секцыі выпіса: ленавы фетч у form.fields._trLedger, вяртае бягучыя радкі
 // (пуста → канонны Table-продак усё роўна малюе загаловак калонак). Радкі: {at,kind,d,ref}.
 const _trLedgerInflight = new Set();
-// ═══ 🚨 ЖУРНАЛ АЛЕРТАЎ — АДЗІН дэскрыптар секцыі на ДВА выгляды (узор _trLedger) ═══
-// site='' → глабальны (усе паддамены, калонка «Сайт» бачная); site=паддамен → зрэз карткі (калонка схаваная).
-// Дадзеныя ленава ў form.fields._alerts праз dataFn — той жа канон, што выпіс перакладаў.
-const _AL_KINDS = { limit: 'al_k_limit', sentinel: 'al_k_sentinel', llm: 'al_k_llm', email: 'al_k_email', crash: 'al_k_crash', payment: 'al_k_payment' };
-const _AL_SEV = { info: 'al_s_info', warn: 'al_s_warn', crit: 'al_s_crit' };
-const _alertsInflight = new Set();
-function _alertsSection(withSite) { // withSite=false → картка паддамена (сайт і так відны ў назве формы)
-  return { type: 'table', title: 'alerts_title', dataKey: '_alerts', dataFn: (form, s) => _alertsData(form), emptyHeader: true,
-    headerExtra: (form, s) => _alertsSummaryHtml(form),
-    columns: [
-      { key: 'at',   label: 'col_datetime', type: 'datetime' },
-      { key: 'sev',  label: 'al_col_sev',   type: 'select', labelMap: _AL_SEV, classMap: { crit: 'nfb-red', warn: 'nfb-new', info: '' } },
-      { key: 'kind', label: 'al_col_kind',  type: 'select', labelMap: _AL_KINDS },
-      ...(withSite ? [{ key: 'site_id', label: 'al_col_site', type: 'text' }] : []),
-      { key: 'msg',  label: 'al_col_msg',   type: 'text' },
-    ] };
-}
-function _alertsData(form) { // ленавая загрузка: site з формы (пуста = глабальны выгляд)
-  const site = String(form.fields?.subdomain || '').replace(/\.ttzop\.com$/, '');
-  const key = site || '*';
-  if (form.fields._alerts === undefined && !_alertsInflight.has(key)) { _alertsInflight.add(key); _alertsLoad(site, key, form); }
-  return Array.isArray(form.fields._alerts) ? form.fields._alerts : [];
-}
-async function _alertsLoad(site, key, form) {
-  try {
-    const res = await fetch(API, { method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action: 'alerts_list', repo: REPO, password, ...(site ? { site } : {}) }) });
-    const d = res.ok ? await res.json() : null;
-    form.fields._alerts = Array.isArray(d?.alerts) ? d.alerts : [];
-    form.fields._alertsCrit48 = d?.crit48 ?? 0;
-    if (currentNodeState === monitorState) renderNodeEditor(monitorState);
-  } catch { form.fields._alerts = []; } finally { _alertsInflight.delete(key); }
-}
-function _alertsSummaryHtml(form) { // зводка ў загалоўку: крытычных за 48 гадзін
-  const n = +form.fields?._alertsCrit48 || 0;
-  return `<span style="font-size:0.75rem;color:${n ? '#ef4444' : 'var(--muted)'};font-weight:400">${escHtml(t('alerts_summary').replace('{n}', n))}</span>`;
-}
-// 🚨 глабальны журнал у целе Формы-0 Маніторынга (як «Папаўненні API»): віртуальная форма al-all
-function _monitorAlertsHtml() {
-  return _nodeTableSectionHtml({ id: 'al-all', fields: monitorState._alAll || (monitorState._alAll = {}) }, _alertsSection(true), monitorState);
-}
 function _trLedgerData(form) {
   const sub = String(form.fields?.subdomain || '').replace(/\.ttzop\.com$/, '');
   if (sub && form.fields._trLedger === undefined && !_trLedgerInflight.has(sub)) {
