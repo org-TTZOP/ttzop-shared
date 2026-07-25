@@ -5404,8 +5404,7 @@ function _nodeTableCycleView(formId, dataKey) {
     const dv = _tblDefaultView(sec);
     next = sec.skipPreview ? _TBL_PORTION : (dv === 'collapsed' ? 'preview' : dv);
   } else next = 'collapsed';
-  s._tableView.set(key, next);
-  if (next !== 'collapsed') sec.onExpand?.(); // хук пры разгортванні
+  _tblViewSet(s, formId, dataKey, next, sec); // адзіны ўладальнік стану (ён і кліча onExpand)
   s._renderFn?.();
 }
 
@@ -5423,9 +5422,9 @@ function _tblFindSection(formId, dataKey) {
 function _tblExpandIfCollapsed(s, key, sec) {
   if (!s._tableView) s._tableView = new Map();
   const cur = s._tableView.get(key);
-  if (!cur || cur === 'collapsed') {
-    s._tableView.set(key, sec?.skipPreview ? _TBL_PORTION : 'preview'); // skipPreview: адразу порцыя (канон 3/15)
-    sec?.onExpand?.(); // загрузіць дадзеныя калі яшчэ не загружаны
+  if (!cur || cur === 'collapsed') { // skipPreview: адразу порцыя (канон 3/15); onExpand — унутры сетэра
+    const [fid, dk] = String(key).split('::');
+    _tblViewSet(s, fid, dk, sec?.skipPreview ? _TBL_PORTION : 'preview', sec);
   }
 }
 
@@ -5808,21 +5807,11 @@ function _svgBarChart(rows, cfg) {
   </div>`;
 }
 
-// Toggle схаваць↔паказаць для collapsible flat-секцый; пры разгортванні выклікае sec.onExpand() калі ёсць
+// Toggle схаваць↔паказаць для collapsible flat-секцый — праз той жа адзіны сетэр (onExpand у ім)
 function _nodeSectionToggleView(formId, sectionId) {
-  const s = currentNodeState;
-  if (!s._tableView) s._tableView = new Map();
-  const key = formId + '::' + sectionId;
-  const cur = s._tableView.get(key) || 'preview';
-  const next = cur === 'collapsed' ? 'preview' : 'collapsed';
-  s._tableView.set(key, next);
-  if (next === 'preview') {
-    const form = s?.data?.nodes?.find(n => n.id === formId);
-    const schemaKey = form?.formSchema || s?._formSchema;
-    const schema = schemaKey ? FORM_SCHEMAS[schemaKey] : null;
-    schema?.sections?.find(x => x.id === sectionId)?.onExpand?.();
-  }
-  s._renderFn?.();
+  const s = currentNodeState; if (!s) return;
+  const cur = s._tableView?.get(formId + '::' + sectionId) || 'preview';
+  _tblSetView(formId, sectionId, cur === 'collapsed' ? 'preview' : 'collapsed');
 }
 
 function _nodeTableAddRow(formId, dataKey) {
@@ -7266,7 +7255,7 @@ function _tblFullViewAll(s, expand) { // ▼▼/▲▲: трохстанавыя
   (s.data?.nodes || []).filter(n => n.type === 'form').forEach(f => {
     const schema = FORM_SCHEMAS[f.formSchema || s._formSchema];
     (!Array.isArray(schema) && schema?.sections || []).forEach(sec => {
-      if (sec.cycleFull || sec.type === 'map') (s._tableView = s._tableView || new Map()).set(f.id + '::' + (sec.dataKey || sec.id || ''), expand ? 'full' : 'collapsed');
+      if (sec.cycleFull || sec.type === 'map') _tblViewSet(s, f.id, sec.dataKey || sec.id || '', expand ? 'full' : 'collapsed', sec); // праз адзіны сетэр (ленавыя целы таксама дагружаюцца)
     });
   });
 }
@@ -12192,13 +12181,21 @@ function _mapBodyHtml(form, section, s) { // цела Секцыі Мапа (р�
 }
 function _mapSizeToggle(fid, dk) { // «болей/менш» цела мапы: preview↔full (перарэндэр перамантуе Leaflet карэктна)
   const s = currentNodeState; if (!s?._tableView) return;
-  const vk = fid + '::' + dk;
-  s._tableView.set(vk, (s._tableView.get(vk) || 'preview') === 'full' ? 'preview' : 'full');
-  s._renderFn?.();
+  _tblSetView(fid, dk, (s._tableView.get(fid + '::' + dk) || 'preview') === 'full' ? 'preview' : 'full'); // праз адзіны сетэр
 }
-function _tblSetView(fid, dk, view) { // прамы стан выгляду секцыі (▼▼/▶▶ у загалоўку cycleFull-секцый)
-  const s = currentNodeState; if (!s) return;
+// ⚙️ АДЗІНЫ ЎЛАДАЛЬНІК СТАНУ ВЫГЛЯДУ СЕКЦЫІ (ААП): усе шляхі адкрыцця/згортвання ідуць сюда —
+// ▼▼/▶▶ у загалоўку, левы дыскложур (_nodeTableCycleView), «+N яшчэ»/«згарнуць», чарт-тогл
+// (_tblExpandIfCollapsed), ▼▼ вузла (_tblFullViewAll). Тут І ТОЛЬКІ ТУТ жыве правіла
+// «адкрыццё цягне ленавыя даныя» (onExpand) — раней кожны шлях вырашаў сам, і ▼▼ у загалоўку
+// мяняў толькі выгляд кнопкі, а цела заставалася пустым (заўвага карыстальніка 2026-07-25).
+function _tblViewSet(s, fid, dk, view, sec) { // без рэндэру — для батчаў (▼▼ вузла ставіць N секцый)
+  if (!s) return;
   (s._tableView = s._tableView || new Map()).set(fid + '::' + dk, view);
+  if (view !== 'collapsed') (sec || _tblFindSection(fid, dk))?.onExpand?.();
+}
+function _tblSetView(fid, dk, view) { // + перарэндэр (адзіночны клік карыстальніка)
+  const s = currentNodeState; if (!s) return;
+  _tblViewSet(s, fid, dk, view);
   s._renderFn?.();
 }
 // 🗺️ спасылка «Адкрыць у Google Maps» па каардынатах + сінхранізацыя кнопкі з бягучай меткай
