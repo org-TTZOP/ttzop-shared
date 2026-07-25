@@ -12727,7 +12727,8 @@ async function _monitorLoadDashboard() {
                  until: d ? `${d}.${m}.${y}` : c.until||'', daysLeft:c.daysLeft??null,
                  orderId:c.orderId||'', clientId:c.clientId||'', _self: c.self ? true : undefined, // ⭐ уласны сайт платформы
                  // 🌐 расход перакладаў гэтага паддамена (для бэйджа + выпіса)
-                 trFree:c.trFree??0, trMax:c.trMax??5, trCredits:c.trCredits??0 } });
+                 trFree:c.trFree??0, trMax:c.trMax??5, trCredits:c.trCredits??0,
+                 alerts48:c.alerts48??0 } });  // 🚨 крытычных за 48 гадз (чып ⚠N у назве)
     });
     monitorState.data.nodes = newNodes;
     monitorState._trSpend = dash?.trSpend || null; // 🌐 месячны расход AI-перакладаў (чып на «Аглядзе»)
