@@ -14605,7 +14605,15 @@ async function refreshExchangeRates() {
     fetch(API, { method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ action: 'append_rates_history', repo: REPO, password }) })
       .then(() => { if (_ratesHistData !== null) { _ratesHistData = null; loadRatesHistory(); } });
-  } catch (e) { showAlert(t('err') + ': ' + e.message); _ratesData = { rates: {}, overrides: prevOverrides, updatedAt: '' }; }
+  } catch (e) {
+    // ⚠️ ЗБОЙ АБНАЎЛЕННЯ ≠ «курсаў няма»: раней тут стаялі ПУСТЫЯ rates → табліцы Курсаў і Гісторыі
+    // абнулялася на экране (жывы кейс 2026-07-25: ECB-запіс упаў на бюджэце KV). Цяпер падаем на
+    // ЧЫТАННЕ збераганага (loadExchangeRates) — карыстальнік бачыць апошнія вядомыя курсы
+    showAlert(t('err') + ': ' + e.message);
+    _ratesData = null; _ratesLoading = false;
+    await loadExchangeRates(); // read-only шлях (не залежыць ад запісу)
+    return;
+  }
   _ratesLoading = false;
   renderLanguages();
 }
