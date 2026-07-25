@@ -12330,7 +12330,7 @@ function _mapBodyHtml(form, section, s) { // цела Секцыі Мапа (р�
   const coords = hasCoords ? escHtml(m.lat + ', ' + m.lng) : '—';
   // 🗺️ Адкрыць у Google Maps — margin-left:auto → выраўнаваць па праваму краю мапы; схавана без каардынат (href+бачнасць абнаўляюцца праз _gmapLink пры перацягванні маркера).
   // На слабай прыладзе (Tesla-Atom і да т.п.) кнопкі няма зусім: цяжкі сайт Google Maps ламае/тармозіць такі браўзер (_perfWeak).
-  const gmapBtn = _perfWeak() ? '' : `<a id="${cid}-gmap" href="${hasCoords ? _gmapUrl(m.lat, m.lng) : '#'}" target="_blank" rel="noopener" class="btn-search" style="margin-left:auto;text-decoration:none;display:${hasCoords ? 'inline-block' : 'none'}">${t('map_open_google')}</a>`;
+  const gmapBtn = _perfWeak() ? '' : `<a id="${cid}-gmap" href="${hasCoords ? _gmapUrl(m.lat, m.lng) : '#'}" target="_blank" rel="noopener" class="btn-search" style="margin-left:auto;text-decoration:none;display:${hasCoords ? 'inline-block' : 'none'}">${_mIco('link')}${t('map_open_google')}</a>`;
   const _mapRO = _secLocked(form, section); // 🔒 залочаная форма/секцыя — без радкоў пошуку/геапазіцыі (мапа толькі глядзецца)
   return `${_mapRO ? '' : `<div class="map-geo-row" style="margin-bottom:6px"><button class="btn-search" style="display:inline-flex;align-items:center;gap:5px" onclick="_geoMyLocation('${form.id}','${section.dataKey}')">${_mIco('pin')}${t('map_my_location')}</button></div>
     <div class="map-search-row" style="margin-bottom:8px;display:flex;gap:6px">
