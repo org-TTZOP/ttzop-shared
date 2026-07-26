@@ -5307,6 +5307,11 @@ function _tblNumericCols(columns, rows) {
 // Пер-калонкавы фільтр + сартыроўка Table-секцыі — АДЗІН хэлпер для рэндэру і 🖨 Друку (стан
 // «як бачыш» = адзін код). Фільтр: радок праходзіць умовы КОЖНАЙ актыўнай калонкі (між калонкамі І);
 // унутры калонкі OR-групы па join='or' (і>|); умова {term,op}: '' substring; '=','>','<','>=','<='.
+// 🔢 «ЧЫЙ ПАРАДАК» — адзін рэзалв на ЎСЕ Table-секцыі. Продак гістарычна ПЕРАВАРОЧВАЎ радкі
+// (журнальная звычка: у сховішчы новае ў канцы → на экране зверху). Але секцыя з **`dataFn`** сама
+// вырашае парадак (воркер сартуе DESC, каталогі — па сэнсе), і reverse ламаў яго: у Дынаміцы/Алертах/
+// Бэкапах зверху аказвалася САМАЕ СТАРОЕ (заўвага карыстальніка 26.07). Правіла: dataFn ⇒ keepOrder.
+const _tblKeepOrder = sec => !!(sec?.keepOrder || sec?.dataFn);
 function _tblProcessRows(rows, columns, colFilters, sortState, keepOrder, colRight) {
   if (!Array.isArray(rows)) return { filteredRows: [], sortedRows: [] }; // гард: не-масіў (Мапа і інш.) больш не кідае
   let filteredRows = rows;
@@ -5402,7 +5407,7 @@ function _nodeTableSectionHtml(form, section, s, mover = '') {
   const columns = section.columnsFn ? section.columnsFn(form, s) : (section.columns || []);
   const _colRight = _tblNumericCols(columns, rows);
   // згорнутай секцыі патрэбны толькі ЛІК (сартаваць няма чаго паказваць) → не паліць CPU на вялікіх табліцах
-  const { filteredRows, sortedRows } = _tblProcessRows(rows, columns, _isFilterable ? colFilters : {}, view === 'collapsed' ? null : sortState, section.keepOrder, _colRight);
+  const { filteredRows, sortedRows } = _tblProcessRows(rows, columns, _isFilterable ? colFilters : {}, view === 'collapsed' ? null : sortState, _tblKeepOrder(section), _colRight);
   const visTotal = sortedRows.length;
   // Лік у загалоўку: пры актыўным фільтры — «21 з 273» (бачыш, што паказана НЕ ўсё; той жа сэнс, што
   // подпіс «адфільтравана N з M» у дакуменце). Без фільтра — просты «(273)»
@@ -5525,7 +5530,7 @@ function _nodeTableSectionHtml(form, section, s, mover = '') {
   // сябе, інакш пасля выбару адной валюты/паказчыка астатнія таблеткі знікалі б і другую не дадаць)
   const _gk = section.chart?.groupKey;
   const pillRows = (chartOpen && _gk && (colFilters[_gk] || []).some(r => (r.val || '').trim()))
-    ? _tblProcessRows(rows, columns, Object.fromEntries(Object.entries(_isFilterable ? colFilters : {}).filter(([k]) => k !== _gk)), sortState, section.keepOrder, _colRight).sortedRows
+    ? _tblProcessRows(rows, columns, Object.fromEntries(Object.entries(_isFilterable ? colFilters : {}).filter(([k]) => k !== _gk)), sortState, _tblKeepOrder(section), _colRight).sortedRows
     : sortedRows;
   const chartHtml = (chartOpen && view !== 'collapsed')
     ? _nodeTableChartHtml(sortedRows, section, form, s, pillRows) : '';
@@ -11392,7 +11397,7 @@ function _repPayloadSeen(form, s) {
     const sec = _repTableSection(tb), raw = tb.rows || [], cols = sec.columns || [];
     const vk = form.id + '::' + sec.dataKey;
     const numeric = _tblNumericCols(cols, raw);
-    const { sortedRows } = _tblProcessRows(raw, cols, _colFilterMap(s, vk), s._tableSort?.get(vk), sec.keepOrder, numeric);
+    const { sortedRows } = _tblProcessRows(raw, cols, _colFilterMap(s, vk), s._tableSort?.get(vk), _tblKeepOrder(sec), numeric);
     const base = _expChart(tb), chSt = base ? _chartStateOf(s, vk, base) : null; // пілюлі-серыі + рэжым графіка выніку
     return { ...tb, rows: sortedRows,
       ...(base ? { chart: { ...base, mode: chSt.mode } } : {}), // серыі ўжо звужаны фільтрам слупка (таблетка = яго ўмова)
@@ -11810,7 +11815,7 @@ function _printTableOf(form, sec, s, titlePrefix) {
   const vk = form.id + '::' + (sec.dataKey || sec.id);
   const numeric = _tblNumericCols(cols, raw);
   // «на момант націску»: бягучы фільтр+сартыроўка гэтай секцыі — той жа код, што экран
-  const { sortedRows } = _tblProcessRows(raw, cols, _colFilterMap(s, vk), s._tableSort?.get(vk), sec.keepOrder, numeric);
+  const { sortedRows } = _tblProcessRows(raw, cols, _colFilterMap(s, vk), s._tableSort?.get(vk), _tblKeepOrder(sec), numeric);
   const outCols = cols.map(c => ({ key: c.key, labelText: c.title !== undefined ? c.title : t(c.label || ''), type: c.type,
     labelMap: c.labelMap, ml: c.ml,
     // аўта-Σ: яўныя totals секцыі АБО лічбавы слупок (акрамя дат) — «аўтаматычныя вынікі»
