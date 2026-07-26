@@ -12991,6 +12991,9 @@ async function _monitorLoadDashboard() {
 const _METRIC_SERIES = [
   { form: 'mch-gh',  code: 'REST core/h', v: d => d.github?.core?.used,          l: d => d.github?.core?.limit },
   { form: 'mch-gh',  code: 'GraphQL/h',   v: d => d.github?.graphql?.used,       l: d => d.github?.graphql?.limit },
+  // 📧 пошта: % ад НАШАЙ дзённай мяжы і ад месячнага ліміту правайдэра (даныя — блок resend у здымку)
+  { form: 'mch-mail', code: 'mail/day',   v: d => d.resend?.dayUsed,             l: d => d.resend?.dayMax || 90 },
+  { form: 'mch-mail', code: 'mail/mo',    v: d => d.resend?.monthUsed,           l: d => d.resend?.provider?.month || 3000 },
   { form: 'mch-cf',  code: 'KV read',     v: d => d.cloudflare?.kv?.reads,       l: () => 100000 },
   { form: 'mch-cf',  code: 'KV write',    v: d => d.cloudflare?.kv?.writes,      l: () => 1000 },
   { form: 'mch-cf',  code: 'KV delete',   v: d => d.cloudflare?.kv?.deletes,     l: () => 1000 },
@@ -13006,7 +13009,7 @@ const _METRIC_SERIES = [
   { form: 'mch-inv', code: 'sites',  abs: true, v: d => d.sites?.total },
   { form: 'mch-inv', code: 'active', abs: true, v: d => d.sites?.active },
 ];
-const _MON_CHART_FOLDERS = { 'mch-gh': 'mf-gh', 'mch-cf': 'mf-cf', 'mch-d1': 'mf-d1', 'mch-r2': 'mf-r2', 'mch-inv': 'mf-inv' };
+const _MON_CHART_FOLDERS = { 'mch-gh': 'mf-gh', 'mch-cf': 'mf-cf', 'mch-d1': 'mf-d1', 'mch-r2': 'mf-r2', 'mch-inv': 'mf-inv', 'mch-mail': 'mf-mail' };
 // Радкі табліцы/дыяграмы формы «Дынаміка» (dataFn схемы): {day, metric, pct} — навейшыя зверху.
 // 'mch-all' (агульная секцыя Формы-0) = усе %-серыі разам (без abs-Інвентара — ламаў бы %-шкалу)
 function _monitorHistoryRows(formId) {
