@@ -818,6 +818,9 @@ const _DEPLOY_SECTION = { type: 'table', title: 'dep_title', dataKey: '_deploy',
         const behind = _depBehind(row);
         return `<span style="color:${behind ? '#ef4444' : 'inherit'}">${escHtml(v)}${behind ? ' ← ' + escHtml(t('dep_behind')) : ''}</span>`;
       } },
+    // 🕐 калі шаблон лёг у гэтую ступень: дата апошняга каміта рэпа-мэты (воркер; Pages не аддае
+    // last-modified). Тып 'datetime' = той жа фармат, што ў Алертах/Бэкапах — агульны ключ col_datetime.
+    { key: 'at', label: 'col_datetime', type: 'datetime' },
     // 🚀 Дзеянне ЖЫВЕ Ў РАДКУ (рашэнне карыстальніка 26.07): кнопка стаіць побач з версіяй, якую
     // абнаўляе, і мадалка кажа канкрэтна «сайт · з якой → на якую». У ⋯ гэтага НЕ дублюем — два
     // шляхі да аднаго дзеяння разышліся б (ААП). Кнопка з'яўляецца ТОЛЬКІ там, дзе ёсць што абнаўляць.
