@@ -726,12 +726,16 @@ const _monChartSchema = valLabel => ({ _noName: true, sections: [
     onExpand: () => _monitorLoadHistory(),
     dataFn: form => _monitorHistoryRows(form.id),
     footerHtml: () => monitorState._histLoaded ? '' : `<div style="padding:6px 0;font-size:0.85rem;color:var(--muted)">${t('loading')}</div>`,
+    // ДЗВЕ калонкі: рэальнае значэнне І % ад ліміту. Так табліца не можа разысціся з графікам у любым
+    // яго рэжыме, і выгрузка «як бачыш» нясе абедзве лічбы (замест «следаваць рэжыму» — прасцей і паўней)
     columns: [
       { key: 'day',    label: 'mon_col_day' },
       { key: 'metric', label: 'mon_col_metric' },
+      { key: 'val',    label: 'mon_col_val', align: 'right' },
       { key: 'pct',    label: valLabel, align: 'right' }
     ],
-    chart: { xKey: 'day', yKey: 'pct', groupKey: 'metric', height: 220, yDigits: 1, yLabel: valLabel }, // yLabel → подпіс восі (% ад ліміту / значэнне)
+    // valKey/limKey — рэжым 'val' малюе рэальныя лічбы, 'pct' дзеліць на ліміт з таго ж радка
+    chart: { xKey: 'day', valKey: 'val', limKey: 'lim', groupKey: 'metric', height: 220, yDigits: 0, defaultMode: 'pct' },
     // доўгі націск на пілюлі агульнай дыяграмы (mch-all) → форма «Дынаміка» той папкі, дзе жыве серыя
     pillTarget: (g, form) => form.id === 'mch-all' ? (_METRIC_SERIES.find(x => x.code === g)?.form || '') : '' }
 ] });
@@ -5798,12 +5802,22 @@ function _nodeTableChartFilterToggle(formId, dataKey, val) {
   s._renderFn?.();
 }
 
-// абс ↔ % пераключальнік нармалізацыі
-function _nodeTableChartNormToggle(formId, dataKey) {
+// 🎚 РЭЖЫМ ГРАФІКА — АДЗІН механізм Table-продка на ЎСЕ графікі (Маніторынг, курсы, адчоты):
+//   'val' — рэальныя лічбы паказчыка;  'pct' — адносны выгляд.
+// ⚠️ Сэнс 'pct' вызначае САМ РАДОК, а не куток: ёсць ліміт (`cfg.limKey`) → % АД ЛІМІТУ (100% = мяжа);
+// ліміту няма (курсы) → % ЗМЕНЫ ад першай кропкі. Так адзін тумблер абслугоўвае і тое, і тое, і
+// нідзе не патрэбны пер-РМ код. Дэфолт — з канфігу (`chart.defaultMode`): рэсурсы з лімітам стартуюць
+// у 'pct' (аперацыйнае пытанне «колькі з'елі»), курсы — у 'val'.
+function _chartModeOf(s, viewKey, cfg) {
+  const m = s?._chartMode?.get(viewKey);
+  return m || cfg?.defaultMode || 'val';
+}
+function _nodeTableChartModeToggle(formId, dataKey) {
   const s = currentNodeState;
-  if (!s._chartNorm) s._chartNorm = new Map();
+  if (!s._chartMode) s._chartMode = new Map();
   const key = formId + '::' + dataKey;
-  s._chartNorm.set(key, !s._chartNorm.get(key));
+  const cur = s._chartMode.get(key) || _tblFindSection(formId, dataKey)?.chart?.defaultMode || 'val';
+  s._chartMode.set(key, cur === 'pct' ? 'val' : 'pct');
   s._renderFn?.();
 }
 
@@ -5814,20 +5828,22 @@ function _nodeTableChartHtml(rows, section, form, s, pillRows) {
   const cfg = section.chart;
   const fid = form.id, dk = section.dataKey || section.id || '';
   const viewKey = fid + '::' + dk;
-  if (!s._chartNorm) s._chartNorm = new Map();
-  const norm = !!s._chartNorm.get(viewKey);
+  const mode = _chartModeOf(s, viewKey, cfg);
+  // ці ёсць у бачных радках ліміт — ад гэтага залежыць і сэнс 'pct', і надпіс на кнопцы
+  const hasLim = !!(cfg?.limKey && rows.some(r => parseFloat(r[cfg.limKey]) > 0));
   let pillsHtml = '', chartRows = rows, colorMap = {};
   if (cfg?.groupKey) {
     // спіс таблетак — з pillRows (без фільтра ўласнага слупка), выбар — з ТАГО ЖА фільтра слупка
     const allGroups = [...new Set((pillRows || rows).map(r => String(r[cfg.groupKey] ?? '')))].filter(Boolean).sort();
     const selected = _chartPillSet(s, viewKey, cfg.groupKey);
-    // Кнопка абс/% (толькі калі больш за адну групу)
-    const normBtn = allGroups.length > 1
-      ? `<button onclick="event.stopPropagation();_nodeTableChartNormToggle('${escHtml(fid)}','${escHtml(dk)}')"
+    // Кнопка рэжыму: рэальныя лічбы ↔ % (ад ліміту або змены — залежыць ад даных)
+    const pctLbl = hasLim ? t('chart_mode_pct') : t('chart_mode_chg');
+    const isPct = mode === 'pct';
+    const normBtn = `<button onclick="event.stopPropagation();_nodeTableChartModeToggle('${escHtml(fid)}','${escHtml(dk)}')"
           style="padding:2px 10px;border-radius:12px;font-size:0.78rem;cursor:pointer;margin-left:auto;
-          border:1px solid ${norm ? 'var(--accent)' : 'var(--border)'};
-          background:${norm ? 'var(--accent)' : 'var(--bg)'};color:${norm ? '#fff' : 'var(--muted)'}"
-          title="${escHtml(t('chart_norm_title'))}">${norm ? t('chart_norm_on') : t('chart_norm_off')}</button>` : '';
+          border:1px solid ${isPct ? 'var(--accent)' : 'var(--border)'};
+          background:${isPct ? 'var(--accent)' : 'var(--bg)'};color:${isPct ? '#fff' : 'var(--muted)'}"
+          title="${escHtml(t('chart_mode_title'))}">${isPct ? pctLbl : t('chart_mode_val')}</button>`;
     pillsHtml = `<div style="display:flex;flex-wrap:wrap;gap:4px;padding:4px 0 8px;align-items:center">${
       allGroups.map((g, gi) => {
         const color = _CHART_COLORS[gi % _CHART_COLORS.length];
@@ -5846,9 +5862,9 @@ function _nodeTableChartHtml(rows, section, form, s, pillRows) {
     Object.assign(cfg, { _colorMap: colorMap });
   }
   if (!chartRows.length) return pillsHtml + `<div style="padding:6px 0;font-size:0.82rem;color:var(--muted)">—</div>`;
-  if (section.chartFn) return pillsHtml + section.chartFn(chartRows, form, s, colorMap, norm);
+  if (section.chartFn) return pillsHtml + section.chartFn(chartRows, form, s, colorMap, mode === 'pct');
   if (!cfg) return pillsHtml;
-  const chartCfg = { ...cfg, normalize: norm };
+  const chartCfg = { ...cfg, mode, _selCount: _chartPillSet(s, viewKey, cfg.groupKey || '').size };
   return pillsHtml + (cfg.type === 'bar' ? _svgBarChart(chartRows, chartCfg) : _svgLineChart(chartRows, chartCfg));
 }
 
@@ -5857,12 +5873,24 @@ function _nodeTableChartHtml(rows, section, form, s, pillRows) {
 // 🏷 ПОДПІС ВОСІ Y — адзін механізм на ЎСЕ графікі. Без яго рэжым «% змен» (нармалізацыя да першай
 // кропки) чытаўся як «% ад ліміту»: карыстальнік убачыў +401% і слушна спытаў, як расход можа быць
 // большым за 100% дзённага ліміту. Абодва рэжымы паказвалі «%» без пазнакі — віна інтэрфейсу.
-function _chartAxisNote(cfg) {
-  const txt = cfg.normalize ? t('chart_axis_norm') : (cfg.yLabel ? t('chart_axis_of').replace('{v}', t(cfg.yLabel)) : '');
-  return txt ? `<div style="padding:2px 0 0 54px;font-size:0.72rem;color:var(--muted)">${escHtml(txt)}</div>` : '';
+function _chartAxisNote(cfg, limits) {
+  const mode = cfg.mode || (cfg.normalize ? 'pct' : 'val');
+  if (mode !== 'pct') return _chartNoteWrap(t('chart_axis_val'));
+  const withLim = (limits || []).filter(([, l]) => l > 0);
+  if (!withLim.length) return _chartNoteWrap(t('chart_axis_norm')); // няма лімітаў (курсы) → % змены
+  // «100% = рэальная лічба»: адна серыя → канкрэтна, некалькі → пералік (да 3), бо адной лічбы няма
+  const fmt = ([g, l]) => `${g} = ${l.toLocaleString()}`;
+  const txt = withLim.length === 1
+    ? t('chart_axis_limit_one').replace('{v}', fmt(withLim[0]))
+    : t('chart_axis_limit_many').replace('{v}', withLim.slice(0, 3).map(fmt).join(' · ') + (withLim.length > 3 ? ' …' : ''));
+  return _chartNoteWrap(txt);
 }
+const _chartNoteWrap = txt => txt ? `<div style="padding:2px 0 0 54px;font-size:0.72rem;color:var(--muted)">${escHtml(txt)}</div>` : '';
 function _svgLineChart(rows, cfg) {
-  const { xKey = 'x', yKey = 'y', groupKey, height = 200, normalize = false, yDigits = 4 } = cfg; // yDigits — дакладнасць восі Y (курсы 4, % лімітаў 1)
+  const { xKey = 'x', groupKey, height = 200, yDigits = 4 } = cfg; // yDigits — дакладнасць восі Y (курсы 4, % лімітаў 1)
+  const mode = cfg.mode || (cfg.normalize ? 'pct' : 'val'); // legacy: cfg.normalize == рэжым 'pct' без лімітаў
+  const yKey = cfg.valKey || cfg.yKey || 'y'; // valKey — рэальнае значэнне (Маніторынг), yKey — легасі
+  const limKey = cfg.limKey || '';
   const groups = new Map();
   for (const row of rows) {
     const g = groupKey ? String(row[groupKey] ?? '') : '';
@@ -5875,18 +5903,27 @@ function _svgLineChart(rows, cfg) {
   // Агульны графік гэтага не паказваў, бо там 20+ дзён ад іншых метрык — тое ж правіла мусіць працаваць
   // і для агульнага, і для пер-папкавых графікаў (адзін рэндэрар — адны паводзіны).
   if (!xVals.length) return `<div style="padding:6px 0;font-size:0.82rem;color:var(--muted)">—</div>`;
-  // Нармалізацыя: кожная серыя → % змены ад першай кропкі
-  const normMap = new Map(); // groupKey → { normFn(v) }
-  if (normalize) {
-    for (const [g, pts] of groups) {
-      const sorted = pts.filter(r => !isNaN(parseFloat(r[yKey]))).sort((a, b) => String(a[xKey]).localeCompare(String(b[xKey])));
-      const first = sorted.length ? parseFloat(sorted[0][yKey]) : null;
-      normMap.set(g, v => first ? ((parseFloat(v) - first) / first * 100) : 0);
-    }
+  // 🎚 Значэнне кропкі паводле рэжыму. 'pct' + ліміт → % АД ЛІМІТУ; 'pct' без ліміту → % ЗМЕНЫ ад
+  // першай кропкі (курсы). Ліміт бяром з САМОГА радка (пер-дзённы: GitHub мяняе свае мяжы, і нашы
+  // таксама мяняліся) — таму пер-серыйны, а не адзін на графік.
+  const limMap = new Map(); // серыя → апошні вядомы ліміт (для подпісу «100% = …»)
+  const normMap = new Map(); // серыя → % змены ад першай кропкі (калі ліміту няма)
+  for (const [g, pts] of groups) {
+    const sorted = pts.filter(r => !isNaN(parseFloat(r[yKey]))).sort((a, b) => String(a[xKey]).localeCompare(String(b[xKey])));
+    const lims = limKey ? sorted.map(r => parseFloat(r[limKey])).filter(v => v > 0) : [];
+    if (lims.length) limMap.set(g, lims[lims.length - 1]); // «ліміт сёння» = апошні ў дыяпазоне
+    const first = sorted.length ? parseFloat(sorted[0][yKey]) : null;
+    normMap.set(g, v => first ? ((parseFloat(v) - first) / first * 100) : 0);
   }
-  const getValue = (g, v) => normalize && normMap.has(g) ? normMap.get(g)(v) : parseFloat(v);
+  const getValue = (g, v, row) => {
+    const raw = parseFloat(v);
+    if (mode !== 'pct') return raw;
+    const lim = (limKey && row && parseFloat(row[limKey]) > 0) ? parseFloat(row[limKey]) : limMap.get(g);
+    if (lim > 0) return raw / lim * 100;                 // % ад ліміту
+    return normMap.has(g) ? normMap.get(g)(v) : raw;     // без ліміту → % змены
+  };
   // Дыяпазон Y па нармалізаваных значэннях
-  const yNums = [...groups.entries()].flatMap(([g, pts]) => pts.map(r => getValue(g, r[yKey])).filter(v => !isNaN(v)));
+  const yNums = [...groups.entries()].flatMap(([g, pts]) => pts.map(r => getValue(g, r[yKey], r)).filter(v => !isNaN(v)));
   if (!yNums.length) return `<div style="padding:6px 0;font-size:0.82rem;color:var(--muted)">—</div>`;
   let yMin = Math.min(...yNums), yMax = Math.max(...yNums);
   if (yMin === yMax) { // усе значэнні аднакавыя (напр. адна кропка) — інакш яна лягла б на самую вось
@@ -5902,7 +5939,7 @@ function _svgLineChart(rows, cfg) {
   const sortedGroups = [...groups.entries()].sort(([a], [b]) => a.localeCompare(b));
   const _getColor = (g, i) => cfg._colorMap?.[g] ?? _CHART_COLORS[i % _CHART_COLORS.length];
   // Нулявая лінія (у % рэжыме — заўсёды 0%)
-  const zeroLine = normalize && yMin < 0 && yMax > 0
+  const zeroLine = mode === 'pct' && !limMap.size && yMin < 0 && yMax > 0
     ? `<line x1="${pL}" y1="${yp(0).toFixed(1)}" x2="${W-pR}" y2="${yp(0).toFixed(1)}" stroke="currentColor" opacity="0.25" stroke-width="1" stroke-dasharray="3,3"/>` : '';
   // Гарызантальная сетка (5 ліній)
   // Адаптыўная дакладнасць восі Y: малы дыяпазон пры базавым yDigits даваў аднолькавыя подпісы («0.1» двойчы) —
@@ -5910,7 +5947,9 @@ function _svgLineChart(rows, cfg) {
   const tickVals = Array.from({length: 5}, (_, i) => yMin + yRange * i / 4);
   let yDig = yDigits;
   while (yDig < 6 && new Set(tickVals.map(v => v.toFixed(yDig))).size < tickVals.length) yDig++;
-  const fmtY = v => normalize ? (v >= 0 ? '+' : '') + v.toFixed(2) + '%' : v.toFixed(yDig);
+  const anyLim = limMap.size > 0;
+  // у 'pct' з лімітам — «27.3%»; у 'pct' без ліміту (курсы) — «+12.5%» (змена); у 'val' — рэальная лічба
+  const fmtY = v => mode === 'pct' ? (anyLim ? v.toFixed(1) + '%' : (v >= 0 ? '+' : '') + v.toFixed(2) + '%') : v.toFixed(yDig);
   const grid = Array.from({length: 5}, (_, i) => {
     const t2 = i / 4, yv = yMin + yRange * t2, yc = yp(yv).toFixed(1);
     return `<line x1="${pL}" y1="${yc}" x2="${W-pR}" y2="${yc}" stroke="currentColor" opacity="0.08" stroke-width="1"/>
@@ -5926,9 +5965,14 @@ function _svgLineChart(rows, cfg) {
     const color = _getColor(g, gi);
     const sorted = pts.filter(r => !isNaN(parseFloat(r[yKey]))).sort((a, b) => String(a[xKey]).localeCompare(String(b[xKey])));
     if (sorted.length < 2) return '';
-    const d = sorted.map(r => { const xi = xVals.indexOf(String(r[xKey])); return `${xi ? 'L' : 'M'}${xp(xi).toFixed(1)},${yp(getValue(g, r[yKey])).toFixed(1)}`; }).join('');
+    const d = sorted.map(r => { const xi = xVals.indexOf(String(r[xKey])); return `${xi ? 'L' : 'M'}${xp(xi).toFixed(1)},${yp(getValue(g, r[yKey], r)).toFixed(1)}`; }).join('');
     return `<path d="${d}" fill="none" stroke="${color}" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>`;
   }).join('');
+  // ➖ ПУНКТІР 100% = МЯЖА ЛІМІТУ. Малюем толькі ў рэжыме % ад ліміту І калі 100 трапляе ў бачную
+  // шкалу (яна аўтападганяецца: калі ўсе серыі ў зоне 0–3%, лінія на 100 была б па-за полем).
+  const limitLine = (mode === 'pct' && limMap.size && yMin <= 100 && yMax >= 100)
+    ? `<line x1="${pL}" y1="${yp(100).toFixed(1)}" x2="${W-pR}" y2="${yp(100).toFixed(1)}" stroke="var(--error,#ef4444)" opacity="0.55" stroke-width="1" stroke-dasharray="5,4"/>
+       <text x="${W-pR-2}" y="${(yp(100)-3).toFixed(1)}" text-anchor="end" font-size="9" fill="var(--error,#ef4444)" opacity="0.8">100%</text>` : '';
   // 🔹 АДНА КРОПКА — ТАКСАМА ДАНЫЯ. Серыя з адным значэннем не малюе лініі (`sorted.length < 2` вышэй),
   // а звычайныя кропкі з'яўляюцца толькі на кароткіх дыяпазонах (≤10 дзён) — таму НОВАЯ метрыка была
   // нябачнай на графіку, пакуль не набярэ два дні гісторыі (жывы кейс 26.07: серыі пошты 100%, а полі
@@ -5939,14 +5983,14 @@ function _svgLineChart(rows, cfg) {
     if (sorted.length !== 1) return '';
     const xi = xVals.indexOf(String(sorted[0][xKey]));
     if (xi < 0) return '';
-    return `<circle cx="${xp(xi).toFixed(1)}" cy="${yp(getValue(g, sorted[0][yKey])).toFixed(1)}" r="4" fill="${color}" stroke="var(--bg,#fff)" stroke-width="1"/>`;
+    return `<circle cx="${xp(xi).toFixed(1)}" cy="${yp(getValue(g, sorted[0][yKey], sorted[0])).toFixed(1)}" r="4" fill="${color}" stroke="var(--bg,#fff)" stroke-width="1"/>`;
   }).join('');
   // Кропкі — калі радкоў мала (≤10 на серыю)
   const dots = xVals.length <= 10 ? sortedGroups.map(([g, pts], gi) => {
     const color = _getColor(g, gi);
     return pts.filter(r => !isNaN(parseFloat(r[yKey]))).map(r => {
       const xi = xVals.indexOf(String(r[xKey]));
-      return `<circle cx="${xp(xi).toFixed(1)}" cy="${yp(getValue(g, r[yKey])).toFixed(1)}" r="3" fill="${color}"/>`;
+      return `<circle cx="${xp(xi).toFixed(1)}" cy="${yp(getValue(g, r[yKey], r)).toFixed(1)}" r="3" fill="${color}"/>`;
     }).join('');
   }).join('') : '';
   // Легенда НЕ патрэбна — групы маюць каляровыя пілюлі над графікам
@@ -5955,8 +5999,8 @@ function _svgLineChart(rows, cfg) {
       ${grid}${zeroLine}
       <line x1="${pL}" y1="${pT}" x2="${pL}" y2="${pT+gH}" stroke="currentColor" opacity="0.15" stroke-width="1"/>
       <line x1="${pL}" y1="${pT+gH}" x2="${W-pR}" y2="${pT+gH}" stroke="currentColor" opacity="0.15" stroke-width="1"/>
-      ${xLabels}${lines}${dots}${singles}
-    </svg>${_chartAxisNote(cfg)}${cfg.legend ? _chartLegendHtml(sortedGroups.map(([g], gi) => [g, _getColor(g, gi)])) : ''}
+      ${xLabels}${limitLine}${lines}${dots}${singles}
+    </svg>${_chartAxisNote(cfg, [...limMap.entries()])}${cfg.legend ? _chartLegendHtml(sortedGroups.map(([g], gi) => [g, _getColor(g, gi)])) : ''}
   </div>`;
 }
 // Легенда серый — для ДАКУМЕНТА (у панэлі ролю легенды граюць каляровыя пілюлі-фільтры над графікам,
@@ -11326,9 +11370,9 @@ function _repPayloadSeen(form, s) {
     const vk = form.id + '::' + sec.dataKey;
     const numeric = _tblNumericCols(cols, raw);
     const { sortedRows } = _tblProcessRows(raw, cols, _colFilterMap(s, vk), s._tableSort?.get(vk), sec.keepOrder, numeric);
-    const base = _expChart(tb), chSt = base ? _chartStateOf(s, vk) : null; // пілюлі-серыі + абс/% графіка выніку
+    const base = _expChart(tb), chSt = base ? _chartStateOf(s, vk, base) : null; // пілюлі-серыі + рэжым графіка выніку
     return { ...tb, rows: sortedRows,
-      ...(base ? { chart: { ...base, normalize: chSt.normalize } } : {}), // серыі ўжо звужаны фільтрам слупка (таблетка = яго ўмова)
+      ...(base ? { chart: { ...base, mode: chSt.mode } } : {}), // серыі ўжо звужаны фільтрам слупка (таблетка = яго ўмова)
       ...(sortedRows.length !== raw.length ? { filtered: { n: sortedRows.length, m: raw.length } } : {}) };
   });
   return { ...pl, tables };
@@ -11484,7 +11528,7 @@ const _expChart = tb => tb.chart || _REP_CHARTS[tb.id] || null; // адзіны 
 // СТАН ГРАФІКА НА ЭКРАНЕ — частка «як бачыш». Выбраныя серыі тут БОЛЬШ НЕ ПАТРЭБНЫ: таблетка = ўмова
 // фільтра слупка-групы, значыць радкі payload ужо звужаны (гл. _nodeTableChartFilterToggle). Застаўся
 // толькі перамыкач абс/% — ён свой асобны стан, у радках не адбіваецца.
-function _chartStateOf(s, viewKey) { return { normalize: !!s?._chartNorm?.get(viewKey) }; }
+function _chartStateOf(s, viewKey, cfg) { return { mode: _chartModeOf(s, viewKey, cfg) }; } // рэжым графіка → у payload дакумента
 // радкі для графіка: xCut (абрэзка datetime да даты) + агрэгацыя па x[×групе] — сырыя радкі даюць
 // зігзаг (некалькі заказаў у адзін дзень), таму сумуем/лічым ПЕРАД рэндэрам
 function _chartRows(tb, cfg) {
@@ -11509,7 +11553,7 @@ function _repChartHtml(tb) {
   if (new Set(rows.map(r => String(r[cfg.xKey]))).size < 2) return ''; // адна кропка — графіка няма сэнсу
   // max-width ≈ viewBox (560): без яго svg з width:100% у шырокім целе дакумента цэнтруецца
   // (preserveAspectRatio) і малюнак вісіць пасярод пустых палёў
-  return `<div style="color:#222;max-width:640px;margin:6px 0 2px">${_svgLineChart(rows, { ...cfg, normalize: !!cfg.normalize, legend: true, height: cfg.height || 200 })}</div>`;
+  return `<div style="color:#222;max-width:640px;margin:6px 0 2px">${_svgLineChart(rows, { ...cfg, legend: true, height: cfg.height || 200 })}</div>`;
 }
 function _repColText(c, v) { // значэнне ячэйкі → чытэльны тэкст (адзіны рэзалв для CSV/XLSX/PDF)
   if (v === undefined || v === null || v === '') return '';
@@ -11753,10 +11797,10 @@ function _printTableOf(form, sec, s, titlePrefix) {
   // (толькі калі яго восі рэальна ёсць у выпісаных слупках — інакш чарт быў бы пусты)
   const keys = new Set(outCols.map(c => c.key));
   const ch = sec.chart && keys.has(sec.chart.xKey) && keys.has(sec.chart.yKey) ? sec.chart : null;
-  const chSt = ch ? _chartStateOf(s, vk) : null; // выбраныя пілюлі-серыі + абс/% на момант націску
+  const chSt = ch ? _chartStateOf(s, vk, ch) : null; // выбраныя пілюлі-серыі + рэжым на момант націску
   return { titleText: secTitle ? `${titlePrefix} — ${secTitle}` : titlePrefix, columns: outCols,
-    ...(ch ? { chart: { xKey: ch.xKey, yKey: ch.yKey, groupKey: ch.groupKey, height: ch.height, yDigits: ch.yDigits,
-      _colorMap: ch._colorMap, normalize: chSt.normalize } } : {}), // _colorMap — каб колеры серый у дакуменце супалі з экранам
+    ...(ch ? { chart: { xKey: ch.xKey, yKey: ch.yKey, valKey: ch.valKey, limKey: ch.limKey, groupKey: ch.groupKey, height: ch.height, yDigits: ch.yDigits,
+      _colorMap: ch._colorMap, mode: chSt.mode } } : {}), // _colorMap — каб колеры серый у дакуменце супалі з экранам
     rows: sortedRows.map(r => { const o = {}; outCols.forEach(c => { let v = r[c.key]; if (c.ml) v = _mlGet(v, _settingsLang()); o[c.key] = v; }); return o; }) };
 }
 // Flat-секцыя → радкі Параметр/Значэнне (select праз labelMap, ml па бягучай мове кантэнту)
@@ -13058,7 +13102,9 @@ function _monitorHistoryRows(formId) {
       const lim = s.abs ? null : s.l(d);
       const pct = s.abs ? v : (lim ? Math.round(v / lim * 10000) / 100 : null); // % ад ліміту, 2 знакі
       if (pct == null) continue;
-      rows.push({ day: d.day, metric: s.code, pct });
+      // 🔢 `val`+`lim` — для рэжыму «рэальныя лічбы» і подпісу «100% = …». Раней клалі толькі `pct`,
+      // таму рэальнае значэнне губілася; гісторыя ад гэтага не пацярпела — здымкі трымаюць сыры stats.
+      rows.push({ day: d.day, metric: s.code, pct, val: v, lim: lim ?? null });
     }
   }
   return rows.sort((a, b) => b.day.localeCompare(a.day) || a.metric.localeCompare(b.metric));
