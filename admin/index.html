@@ -806,6 +806,7 @@ const _DEPLOY_LABELS = { staging: 'dep_staging', main: 'dep_main', shared: 'dep_
 const _DEPLOY_SECTION = { type: 'table', title: 'dep_title', dataKey: '_deploy', emptyHeader: true,
   dataFn: (form, s) => _deployRows(),
   headerExtra: (form, s) => _deploySummaryHtml(),
+  refreshFn: () => _deployReload(true), // ↻ БлокАбнавіць (канон): перачытаць ЖЫВЫЯ версіі, мінаючы кэш воркера
   columns: [
     { key: 'label',   label: 'dep_col_target', type: 'text' },
     { key: 'host',    label: 'dep_col_host',   type: 'text' },
@@ -818,12 +819,43 @@ const _DEPLOY_SECTION = { type: 'table', title: 'dep_title', dataKey: '_deploy',
     // абнаўляе, і мадалка кажа канкрэтна «сайт · з якой → на якую». У ⋯ гэтага НЕ дублюем — два
     // шляхі да аднаго дзеяння разышліся б (ААП). Кнопка з'яўляецца ТОЛЬКІ там, дзе ёсць што абнаўляць.
     { key: 'act', label: 'dep_col_act', type: 'html', render: (v, row) => {
+        // выкат ідзе → замест кнопкі стан «ідзе…»: дзеянне асінхроннае (GitHub Actions ~1-2 хв), і
+        // маўклівая старая табліца збівала з толку (заўвага карыстальніка 26.07)
+        if (_depBusyRow(row)) return `<span style="font-size:0.72rem;color:var(--accent)">${escHtml(t('dep_running'))}</span>`;
         if (!_depBehind(row)) return '';
         return `<button class="btn-small" onclick="_deployRowUpdate('${escHtml(String(row.key))}','${escHtml(String(row.site || ''))}')" style="padding:2px 8px;font-size:0.72rem;white-space:nowrap">${escHtml(t('dep_upd'))}</button>`;
       } },
   ] };
 // «ці адстае гэты радок» — адзін рэзалв на калонку версіі і на кнопку (не могуць разысціся)
 function _depBehind(row) { return row.key !== 'staging' && row.state === 'ok' && !!row.version && !!row.refVer && row.version !== row.refVer; }
+// ⏳ выкат у працэсе: маркер жыве ў стэйце (не ў даных воркера) — сервер пра «ідзе» не ведае,
+// GitHub Actions асінхронныя. Знікае сам, калі версія зраўнялася або выйшаў час чакання.
+const _DEP_WAIT_MS = 6 * 60 * 1000, _DEP_POLL_MS = 20000;
+function _depBusyRow(row) {
+  const b = monitorState._depBusy;
+  if (!b || Date.now() - b.at > _DEP_WAIT_MS) return false;
+  return b.all ? row.key !== 'staging' : (row.key === b.key && String(row.site || '') === b.site);
+}
+async function _deployReload(fresh) { // перачытаць ЖЫВЫЯ версіі ступеняў (лёгкі экшн, не ўвесь дашборд)
+  try {
+    const res = await fetch(API, { method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'deploy_targets', fresh: !!fresh, repo: REPO, password }) });
+    const d = res.ok ? await res.json() : null;
+    if (Array.isArray(d?.rows)) monitorState._deploy = d.rows;
+  } catch {}
+  if (currentNodeState === monitorState) renderNodeEditor(monitorState);
+}
+function _depPoll() { // палінг да зраўнання версій: інакш «Абноўлена» ёсць, а табліца хвіліну старая
+  const b = monitorState._depBusy;
+  if (!b) return;
+  setTimeout(async () => {
+    if (monitorState._depBusy !== b) return; // новы выкат перабіў гэты — стары палінг сціхае
+    await _deployReload(true);
+    const done = !_deployRows().some(r => _depBehind(r)); // усе ступені зраўняліся
+    if (done || Date.now() - b.at > _DEP_WAIT_MS) { monitorState._depBusy = null; if (currentNodeState === monitorState) renderNodeEditor(monitorState); return; }
+    _depPoll();
+  }, _DEP_POLL_MS);
+}
 function _verMax(list) { // 'v4.862' > 'v4.9': параўнанне пакампанентна, не радкамі (люстэрка воркернага)
   const num = v => String(v || '').replace(/^v/, '').split('.').map(x => parseInt(x) || 0);
   return list.filter(Boolean).sort((a, b) => { const A = num(a), B = num(b); for (let i = 0; i < Math.max(A.length, B.length); i++) if ((A[i] || 0) !== (B[i] || 0)) return (B[i] || 0) - (A[i] || 0); return 0; })[0] || '';
@@ -844,22 +876,28 @@ function _deployRowUpdate(key, site) {
   if (!row || !_depBehind(row)) return;
   const rep = s => s.replace('{h}', row.host || site).replace('{a}', row.version).replace('{b}', row.refVer);
   const msg = rep(t(key === 'shared' ? 'dep_upd_confirm_all' : 'dep_upd_confirm'));
-  _deployRelease(key === 'shared' ? 'clients' : 'sites', key === 'shared' ? null : [site], msg);
+  _deployRelease(key === 'shared' ? 'clients' : 'sites', key === 'shared' ? null : [site], msg,
+    key === 'shared' ? { all: true } : { key, site });
 }
-async function _deployRelease(mode, sites, msg) { // пацверджанне абавязковае: дзеянне зачапае жывыя сайты
+async function _deployRelease(mode, sites, msg, busy) { // пацверджанне абавязковае: дзеянне зачапае жывыя сайты
   showConfirm(msg, async () => {
     try {
       const res = await fetch(API, { method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ action: 'deploy_dispatch', mode, ...(sites ? { sites } : {}), repo: REPO, password }) });
       const d = await res.json().catch(() => ({}));
       if (!res.ok || d.error) { showAlert(_srvErrText(res, d, t('dep_err'))); return; }
-      showAlert(t('dep_started')); // GitHub Actions ~1-2 хв; версіі падцягнуцца пры наступным ↻
+      // ⏳ табліца адразу кажа «выкат ідзе…» і сама перачытваецца да зраўнання версій — раней пасля
+      // «Абноўлена» яна хвіліну паказвала старое, і выглядала, быццам нічога не адбылося
+      if (busy) { monitorState._depBusy = { ...busy, at: Date.now() }; if (currentNodeState === monitorState) renderNodeEditor(monitorState); _depPoll(); }
+      showAlert(t('dep_started'));
     } catch (e) { showAlert(t('err_connection')); }
   }, { label: t('dep_rel_btn'), danger: false });
 }
 function _deploySummaryHtml() {
   const rows = _deployRows();
   if (!rows.length) return '';
+  if (rows.some(r => _depBusyRow(r))) // пакуль ідзе выкат, «адстае N» чытаецца як «нічога не адбылося»
+    return `<span style="font-size:0.75rem;color:var(--accent);font-weight:400">${escHtml(t('dep_running'))}</span>`;
   const st = _deployRefVer();
   const behind = rows.filter(x => x.key !== 'staging' && x.version && st && x.version !== st).length;
   const down = rows.filter(x => x.key !== 'main' && !x.version).length; // 'main' пакуль можа не існаваць — гэта не праблема
