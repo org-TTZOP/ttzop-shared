@@ -799,7 +799,11 @@ const _BACKUP_SECTION = { type: 'table', title: 'bak_title', dataKey: '_backups'
   headerExtra: (form, s) => _backupSummaryHtml(form),
   columns: [
     { key: 'day',      label: 'bak_col_day',    type: 'text' },
-    { key: '_sites',   label: 'bak_col_sites',  type: 'html' }, // покрыццё «забэкапілася / з даными»
+    // ⚠️ тып 'html' ЭСКЕЙПІЦЬ значэнне без `render` (правільны дэфолт: чужы HTML у табліцу не пускаем) —
+    // таму разметка тут, а ў даных толькі лічбы. Чырвона, калі хоць адзін сайт з данымі не забэкапіўся.
+    { key: 'sitesOk',  label: 'bak_col_sites',  type: 'html', align: 'right',
+      render: (v, row) => (v == null) ? '—'
+        : `<span style="color:${v < row.sitesWithData ? '#ef4444' : 'inherit'}">${v}/${row.sitesWithData}</span>` },
     { key: 'd1Rows',   label: 'bak_col_d1',     type: 'number', align: 'right' },
     { key: 'kvKeys',   label: 'bak_col_kv',     type: 'number', align: 'right' },
     { key: 'r2Files',  label: 'bak_col_r2',     type: 'number', align: 'right' },
@@ -816,10 +820,7 @@ async function _backupLoad(form) {
     const res = await fetch(API, { method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ action: 'backup_list', repo: REPO, password, limit: 60 }) });
     const d = res.ok ? await res.json() : null;
-    // покрыццё сайтаў — чырвоным, калі забэкапілася менш, чым маюць даныя («бэкапу няма» для кагосьці)
-    form.fields._backups = (Array.isArray(d?.rows) ? d.rows : []).map(r => ({ ...r,
-      _sites: (r.sitesOk == null) ? '—'
-        : `<span style="color:${r.sitesOk < r.sitesWithData ? '#ef4444' : 'inherit'}">${r.sitesOk}/${r.sitesWithData}</span>` }));
+    form.fields._backups = Array.isArray(d?.rows) ? d.rows : []; // лічбы як ёсць — колер малюе render слупка
     if (currentNodeState === monitorState) renderNodeEditor(monitorState);
   } catch { form.fields._backups = []; } finally { _bakInflight = false; }
 }
