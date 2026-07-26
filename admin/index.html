@@ -12902,10 +12902,10 @@ function _monitorSaveFolderOrder() {
     .filter(n => n.type === 'folder' && n.parentId === 'mon-host')
     .sort((a, b) => (a.order||0) - (b.order||0))
     .map(n => n.id);
-  localStorage.setItem('monitor-folder-order', JSON.stringify(order));
+  localStorage.setItem('monitor-folder-order-v2', JSON.stringify(order));
 }
 function _monitorApplyFolderOrder(folders) {
-  const saved = JSON.parse(localStorage.getItem('monitor-folder-order') || 'null');
+  const saved = JSON.parse(localStorage.getItem('monitor-folder-order-v2') || 'null');
   if (!saved) return folders;
   return folders
     .sort((a, b) => { const ai = saved.indexOf(a.id); const bi = saved.indexOf(b.id); return (ai<0?99:ai)-(bi<0?99:bi); })
@@ -12922,12 +12922,12 @@ function loadMonitor() {
   // ШАБЛОН: РМ → Форма-0 «Маніторынг» → Папкі-0 (Агляд/Інвентар/GitHub/CF/D1/R2), парадак з localStorage
   const folders = _monitorApplyFolderOrder([
     { id:'mf-overview', type:'folder', contentType:'monitor-folder', parentId:'mon-host', order:0, name:t('dash_subdomains'),       active:true, infoNodes:[] },
-    { id:'mf-inv',      type:'folder', contentType:'monitor-folder', parentId:'mon-host', order:1, name:t('mon_inventory'),          active:true, infoNodes:[] },
-    { id:'mf-gh',       type:'folder', contentType:'monitor-folder', parentId:'mon-host', order:2, name:'GitHub Rate Limits',       active:true, infoNodes:[] },
-    { id:'mf-cf',       type:'folder', contentType:'monitor-folder', parentId:'mon-host', order:3, name:'Cloudflare',               active:true, infoNodes:[] },
-    { id:'mf-d1',       type:'folder', contentType:'monitor-folder', parentId:'mon-host', order:4, name:'D1 ttzop-db',             active:true, infoNodes:[] },
-    { id:'mf-r2',       type:'folder', contentType:'monitor-folder', parentId:'mon-host', order:5, name:'R2 ttzop-media',          active:true, infoNodes:[] },
-    { id:'mf-mail',     type:'folder', contentType:'monitor-folder', parentId:'mon-host', order:6, name:t('mon_mail_folder'),        active:true, infoNodes:[] }, // 📧 ліміты пошты: нашы мяжы + расход + адсечкі
+    { id:'mf-mail',     type:'folder', contentType:'monitor-folder', parentId:'mon-host', order:1, name:t('mon_mail_folder'),        active:true, infoNodes:[] }, // 📧 ліміты пошты — адразу пасля Паддаменаў (аперацыйны паказчык)
+    { id:'mf-inv',      type:'folder', contentType:'monitor-folder', parentId:'mon-host', order:2, name:t('mon_inventory'),          active:true, infoNodes:[] },
+    { id:'mf-gh',       type:'folder', contentType:'monitor-folder', parentId:'mon-host', order:3, name:'GitHub Rate Limits',       active:true, infoNodes:[] },
+    { id:'mf-cf',       type:'folder', contentType:'monitor-folder', parentId:'mon-host', order:4, name:'Cloudflare',               active:true, infoNodes:[] },
+    { id:'mf-d1',       type:'folder', contentType:'monitor-folder', parentId:'mon-host', order:5, name:'D1 ttzop-db',             active:true, infoNodes:[] },
+    { id:'mf-r2',       type:'folder', contentType:'monitor-folder', parentId:'mon-host', order:6, name:'R2 ttzop-media',          active:true, infoNodes:[] },
   ]);
   // 📈 форма «Дынаміка» ў кожнай Папцы-0 рэсурсаў: дыяграма % ад лімітаў з гісторыі здымкаў (order 99 = унізе)
   const chartForms = Object.entries(_MON_CHART_FOLDERS).map(([fid, pid]) => ({
