@@ -5863,7 +5863,11 @@ function _svgLineChart(rows, cfg) {
     groups.get(g).push(row);
   }
   const xVals = [...new Set(rows.map(r => String(r[xKey])))].sort();
-  if (!xVals.length || xVals.length < 2) return `<div style="padding:6px 0;font-size:0.82rem;color:var(--muted)">—</div>`;
+  // ⚠️ Раней тут быў ранні выхад пры `xVals.length < 2` → у Папцы з СВЕЖАЙ метрыкай (адзін здымак)
+  // графіка не было ЗУСІМ, толькі «—». Адзін дзень — таксама даныя: малюем сетку і кропку па цэнтры.
+  // Агульны графік гэтага не паказваў, бо там 20+ дзён ад іншых метрык — тое ж правіла мусіць працаваць
+  // і для агульнага, і для пер-папкавых графікаў (адзін рэндэрар — адны паводзіны).
+  if (!xVals.length) return `<div style="padding:6px 0;font-size:0.82rem;color:var(--muted)">—</div>`;
   // Нармалізацыя: кожная серыя → % змены ад першай кропкі
   const normMap = new Map(); // groupKey → { normFn(v) }
   if (normalize) {
@@ -5877,10 +5881,15 @@ function _svgLineChart(rows, cfg) {
   // Дыяпазон Y па нармалізаваных значэннях
   const yNums = [...groups.entries()].flatMap(([g, pts]) => pts.map(r => getValue(g, r[yKey])).filter(v => !isNaN(v)));
   if (!yNums.length) return `<div style="padding:6px 0;font-size:0.82rem;color:var(--muted)">—</div>`;
-  const yMin = Math.min(...yNums), yMax = Math.max(...yNums), yRange = yMax - yMin || 1;
+  let yMin = Math.min(...yNums), yMax = Math.max(...yNums);
+  if (yMin === yMax) { // усе значэнні аднакавыя (напр. адна кропка) — інакш яна лягла б на самую вось
+    const pad = Math.abs(yMin) * 0.1 || 1;
+    yMin -= pad; yMax += pad;
+  }
+  const yRange = yMax - yMin || 1;
   const W = 560, H = height, pL = 54, pR = 12, pT = 14, pB = 48;
   const gW = W - pL - pR, gH = H - pT - pB;
-  const xp = i => pL + (i / Math.max(xVals.length - 1, 1)) * gW;
+  const xp = i => xVals.length === 1 ? pL + gW / 2 : pL + (i / (xVals.length - 1)) * gW; // адзін дзень — па цэнтры
   const yp = v => pT + gH - ((v - yMin) / yRange) * gH;
   // Сартоўка груп па назве = той самы парадак, што і ў пілюлях
   const sortedGroups = [...groups.entries()].sort(([a], [b]) => a.localeCompare(b));
