@@ -11103,7 +11103,9 @@ async function _intakeGenerate() {
         return;
       }
       if (st) { st.style.color = 'var(--success)';
-        st.textContent = t('ik_gen_done').replace('{n}', (d.filled || 0) + (d.touched || 0)).replace('{free}', d.free ?? '—').replace('{credits}', d.credits ?? 0); }
+        // 💰 nothing:true — усе мэты ўжо запоўнены, адзінка AI НЕ спісана (сервер не клікаў мадэль)
+        st.textContent = d.nothing ? t('ik_gen_nothing')
+          : t('ik_gen_done').replace('{n}', (d.filled || 0) + (d.touched || 0)).replace('{free}', d.free ?? '—').replace('{credits}', d.credits ?? 0); }
       await loadSettings(); nodeReloadSection(); // тэксты пісаў сервер → перачытаць налады
     } catch (e) { if (st) { st.style.color = 'var(--error)'; st.textContent = t('err_connection'); } }
     finally { if (btn) btn.disabled = false; }
