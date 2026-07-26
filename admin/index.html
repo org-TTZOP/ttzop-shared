@@ -786,12 +786,80 @@ function _alertsSummaryHtml(form) { // зводка ў загалоўку: кр�
   return `<span style="font-size:0.75rem;color:${n ? '#ef4444' : 'var(--muted)'};font-weight:400">${escHtml(t('alerts_summary').replace('{n}', n))}</span>`;
 }
 // 🚨 глабальны журнал у целе Формы-0 Маніторынга (як «Папаўненні API»): віртуальная форма al-all
+function _monitorDeployHtml() {
+  return _nodeTableSectionHtml({ id: 'dep-all', fields: monitorState._depAll || (monitorState._depAll = {}) }, _DEPLOY_SECTION, monitorState);
+}
 function _monitorAlertsHtml() {
   return _nodeTableSectionHtml({ id: 'al-all', fields: monitorState._alAll || (monitorState._alAll = {}) }, _alertsSection(true), monitorState);
 }
 // 🗄️ спіс здымкаў — віртуальная форма bak-all (той жа шлях, што al-all)
 function _monitorBackupsHtml() {
   return _nodeTableSectionHtml({ id: 'bak-all', fields: monitorState._bakAll || (monitorState._bakAll = {}) }, _BACKUP_SECTION, monitorState);
+}
+// 🚀 ДЭПЛОЙ: якая версія дзе жыве. push абнаўляе ТОЛЬКІ staging (з 26.07), выкат на кліентаў — свядомы
+// RELEASE, і галоўная рызыка такой схемы — ЗАБЫЦЬ прамоўшн. Таму разыходжанне версій відаць адразу
+// чырвоным. Версіі збірае ВОРКЕР (`deployTargets` у get_dashboard): Pages не аддае CORS на
+// `/admin/version.js`, значыць з браўзера чужы хост не прачытаць.
+// ⚠️ Staging бывае НЕ АДЗІН (`ttzop-test` + `ttzop-test1…9`) — спіс мэтаў воркер чытае з самога
+// воркфлоў, таму радкоў можа быць колькі заўгодна; эталон для параўнання = НАЙНОЎШАЯ staging-версія.
+const _DEPLOY_LABELS = { staging: 'dep_staging', main: 'dep_main', shared: 'dep_shared', legacy: 'dep_legacy' };
+const _DEPLOY_SECTION = { type: 'table', title: 'dep_title', dataKey: '_deploy', emptyHeader: true,
+  dataFn: (form, s) => _deployRows(),
+  headerExtra: (form, s) => _deploySummaryHtml(),
+  menuExtra: (form, s, menuId) => _deployMenuHtml(menuId), // 🚀 RELEASE — канонны ⋯ секцыі, не намаляваная кнопка
+  columns: [
+    { key: 'label',   label: 'dep_col_target', type: 'text' },
+    { key: 'host',    label: 'dep_col_host',   type: 'text' },
+    { key: 'version', label: 'dep_col_ver',    type: 'html', render: (v, row) => {
+        if (!v) return `<span style="color:var(--muted)">${escHtml(t('dep_state_' + (row.state === 'none' ? 'none' : 'down')))}</span>`;
+        const behind = row.key !== 'staging' && row.refVer && v !== row.refVer;
+        return `<span style="color:${behind ? '#ef4444' : 'inherit'}">${escHtml(v)}${behind ? ' ← ' + escHtml(t('dep_behind')) : ''}</span>`;
+      } },
+  ] };
+function _verMax(list) { // 'v4.862' > 'v4.9': параўнанне пакампанентна, не радкамі (люстэрка воркернага)
+  const num = v => String(v || '').replace(/^v/, '').split('.').map(x => parseInt(x) || 0);
+  return list.filter(Boolean).sort((a, b) => { const A = num(a), B = num(b); for (let i = 0; i < Math.max(A.length, B.length); i++) if ((A[i] || 0) !== (B[i] || 0)) return (B[i] || 0) - (A[i] || 0); return 0; })[0] || '';
+}
+function _deployRefVer() { return _verMax((monitorState._deploy || []).filter(x => x.key === 'staging').map(x => x.version)); }
+function _deployRows() { // радкі з дашборда (воркер збірае версіі); эталонная версія едзе ў кожны радок для параўнання
+  const list = monitorState._deploy || [];
+  const refVer = _deployRefVer();
+  const many = list.filter(x => x.key === 'staging').length > 1; // некалькі staging → у назве відаць ЯКІ
+  return list.map(x => ({ ...x, label: t(_DEPLOY_LABELS[x.key] || x.key) + ((many && x.key === 'staging') || x.key === 'legacy' ? ` · ${x.site || ''}` : ''), refVer }));
+}
+function _deployMenuHtml(menuId) { // выкат на кліентаў + на канкрэтную ступень (мэты — з воркфлоў, воркер правярае)
+  const rows = monitorState._deploy || [];
+  if (!rows.length) return '';
+  const btn = (title, js) => `<button class="node-overflow-item" title="${escHtml(title)}" onclick="${js};nodeCloseOverflow('${menuId}')">${_mIco('deploy')}</button>`;
+  let html = btn(t('dep_rel_clients'), `_deployRelease('clients')`);
+  // на канкрэтную ступень (галоўны сайт, дадатковы staging) — толькі калі мэта РЭАЛЬНА ёсць у воркфлоў
+  rows.filter(r => r.key !== 'shared' && !r.missing && r.site).forEach(r => {
+    html += btn(t('dep_rel_site').replace('{s}', r.site), `_deployRelease('sites', ${JSON.stringify([r.site]).replace(/"/g, '&quot;')})`);
+  });
+  return html;
+}
+async function _deployRelease(mode, sites) { // пацверджанне абавязковае: дзеянне зачапае ЎСЕ кліенцкія сайты
+  const ref = _deployRefVer();
+  const msg = mode === 'clients' ? t('dep_confirm_clients').replace('{v}', ref || '?') : t('dep_confirm_site').replace('{s}', (sites || []).join(', ')).replace('{v}', ref || '?');
+  showConfirm(msg, async () => {
+    try {
+      const res = await fetch(API, { method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'deploy_dispatch', mode, ...(sites ? { sites } : {}), repo: REPO, password }) });
+      const d = await res.json().catch(() => ({}));
+      if (!res.ok || d.error) { showAlert(_srvErrText(res, d, t('dep_err'))); return; }
+      showAlert(t('dep_started')); // GitHub Actions ~1-2 хв; версіі падцягнуцца пры наступным ↻
+    } catch (e) { showAlert(t('err_connection')); }
+  }, { label: t('dep_rel_btn'), danger: false });
+}
+function _deploySummaryHtml() {
+  const rows = _deployRows();
+  if (!rows.length) return '';
+  const st = _deployRefVer();
+  const behind = rows.filter(x => x.key !== 'staging' && x.version && st && x.version !== st).length;
+  const down = rows.filter(x => x.key !== 'main' && !x.version).length; // 'main' пакуль можа не існаваць — гэта не праблема
+  const bad = behind || down;
+  return `<span style="font-size:0.75rem;color:${bad ? '#ef4444' : 'var(--muted)'};font-weight:400">${
+    escHtml(behind ? t('dep_sum_behind').replace('{n}', behind) : (down ? t('dep_sum_down') : t('dep_sum_ok').replace('{v}', st)))}</span>`;
 }
 // 🗄️ БЭКАПЫ: КАНОННАЯ Table-секцыя ў целе Формы-0 Маніторынга (той жа дэскрыптар-узор, што алерты:
 // ленавы dataFn + emptyHeader + зводка ў headerExtra). ➕ у ⋯ = «зрабіць здымак зараз» (рэестр-onAdd,
@@ -12885,7 +12953,7 @@ let monitorState = {
   _rootName: () => t('nav_monitor'),
   _autoRefreshEnabled: false, _lastRefresh: null, _autoRefreshMs: 300000, // 5 хвілін
   _formSchema: 'monitorStat', // caps праз CONTENT_TYPES['monitorStat/Client']
-  _formBodyHtml: () => _monitorAlertsHtml() + _monitorBackupsHtml() + _monitorApiBalanceHtml() + _monitorTopChartHtml(), // 🚨 Алерты + 🗄️ Бэкапы + 💰 Папаўненні API + 📈 «Дынаміка лімітаў» у целе Формы-0 (вышэй за Папкі-0)
+  _formBodyHtml: () => _monitorDeployHtml() + _monitorAlertsHtml() + _monitorBackupsHtml() + _monitorApiBalanceHtml() + _monitorTopChartHtml(), // 🚨 Алерты + 🗄️ Бэкапы + 💰 Папаўненні API + 📈 «Дынаміка лімітаў» у целе Формы-0 (вышэй за Папкі-0)
   _loadFn: async () => loadMonitor(),
   _onFolderExpand: folder => {
     if (folder.id === 'mf-overview') {
@@ -13075,6 +13143,7 @@ async function _monitorLoadDashboard() {
                  _phantom: c.phantom ? true : undefined, // 👻 заказ без даных сайта
                  alerts48:c.alerts48??0 } });  // 🚨 крытычных за 48 гадз (чып ⚠N у назве)
     });
+    monitorState._deploy = dash?.deployTargets || [];   // 🚀 ступені выкату (версіі збірае воркер)
     monitorState._mailGlobal = dash?.mailGlobal || null; // 🌍 глабальны расход пошты (толькі рэпам платформы)
     monitorState.data.nodes = newNodes;
     monitorState._trSpend = dash?.trSpend || null; // 🌐 месячны расход AI-перакладаў (чып на «Аглядзе»)
