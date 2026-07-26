@@ -834,7 +834,9 @@ const _DEP_WAIT_MS = 6 * 60 * 1000, _DEP_POLL_MS = 20000;
 function _depBusyRow(row) {
   const b = monitorState._depBusy;
   if (!b || Date.now() - b.at > _DEP_WAIT_MS) return false;
-  return b.all ? row.key !== 'staging' : (row.key === b.key && String(row.site || '') === b.site);
+  // ⚠️ пры выкаце «на ўсіх» стан вешаем толькі на ЖЫВЫЯ ступені: радок недаступнай/няствораной мэты
+  // (ttzop.com пакуль 530) з надпісам «выкат ідзе» брахаў бы — туда нічога не едзе
+  return b.all ? (row.key !== 'staging' && row.state === 'ok') : (row.key === b.key && String(row.site || '') === b.site);
 }
 async function _deployReload(fresh) { // перачытаць ЖЫВЫЯ версіі ступеняў (лёгкі экшн, не ўвесь дашборд)
   try {
