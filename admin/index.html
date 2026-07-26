@@ -12790,21 +12790,21 @@ let monitorState = {
     if (folder.id === 'mf-overview') {
       if (!monitorState._dashLoaded) _monitorLoadDashboard(); // лена; пінг запусціцца ўнутры
       else pingMonitorSites();
-    } else if (['mf-gh','mf-cf','mf-d1','mf-r2','mf-inv'].includes(folder.id)) {
+    } else if (['mf-gh','mf-cf','mf-d1','mf-r2','mf-inv','mf-mail'].includes(folder.id)) {
       if (!monitorState._statsLoaded) _monitorLoadStats(); // усе сістэмныя метрыкі — адзін get_system_stats
       if (!monitorState._histLoaded) _monitorLoadHistory(); // 📈 гісторыя лімітаў для формаў «Дынаміка»
     }
   },
   _folderEmptyHtml: f => {
     const loading = (f.id === 'mf-overview') ? !monitorState._dashLoaded
-      : ['mf-gh','mf-cf','mf-d1','mf-r2','mf-inv'].includes(f.id) ? !monitorState._statsLoaded : false;
+      : ['mf-gh','mf-cf','mf-d1','mf-r2','mf-inv','mf-mail'].includes(f.id) ? !monitorState._statsLoaded : false;
     return loading ? `<div style="padding:4px 0;font-size:0.8rem;color:var(--muted)">···</div>`
       : `<div style="padding:4px 0;font-size:0.8rem;color:var(--muted)">${t('folder_empty')}</div>`;
   },
   _onMove: () => _monitorSaveFolderOrder(),
   // Хендлер мэтавай перазагрузкі для ↻ БлокаАбнавіць (корміць _nodeRefreshToolbarHtml): перазагружае ТОЛЬКІ сваю групу
   _nodeRefreshFn: node => node.type !== 'folder' ? '' :
-    (['mf-gh','mf-cf','mf-d1','mf-r2','mf-inv'].includes(node.id) // усе сістэмныя метрыкі — get_system_stats
+    (['mf-gh','mf-cf','mf-d1','mf-r2','mf-inv','mf-mail'].includes(node.id) // усе сістэмныя метрыкі — get_system_stats
       ? `monitorState._statsLoaded=false;_monitorLoadStats()`
       : node.id === 'mf-overview'
         ? `monitorState._dashLoaded=false;_monitorLoadDashboard()` : ''),
@@ -12927,6 +12927,7 @@ function loadMonitor() {
     { id:'mf-cf',       type:'folder', contentType:'monitor-folder', parentId:'mon-host', order:3, name:'Cloudflare',               active:true, infoNodes:[] },
     { id:'mf-d1',       type:'folder', contentType:'monitor-folder', parentId:'mon-host', order:4, name:'D1 ttzop-db',             active:true, infoNodes:[] },
     { id:'mf-r2',       type:'folder', contentType:'monitor-folder', parentId:'mon-host', order:5, name:'R2 ttzop-media',          active:true, infoNodes:[] },
+    { id:'mf-mail',     type:'folder', contentType:'monitor-folder', parentId:'mon-host', order:6, name:t('mon_mail_folder'),        active:true, infoNodes:[] }, // 📧 ліміты пошты: нашы мяжы + расход + адсечкі
   ]);
   // 📈 форма «Дынаміка» ў кожнай Папцы-0 рэсурсаў: дыяграма % ад лімітаў з гісторыі здымкаў (order 99 = унізе)
   const chartForms = Object.entries(_MON_CHART_FOLDERS).map(([fid, pid]) => ({
@@ -13056,7 +13057,7 @@ async function _monitorLoadStats() {
     const stats = res.ok ? await res.json() : null;
     if (stats) monitorState._liveStats = stats; // жывыя лічбы → «сёння» ў табліцы гісторыі (супадзенне з карткамі)
     const resetHm = ts => { const d = new Date(ts*1000); return `${t('stats_reset_at')} ${d.getHours().toString().padStart(2,'0')}:${d.getMinutes().toString().padStart(2,'0')}`; };
-    const statFolders = ['mf-gh','mf-cf','mf-d1','mf-r2','mf-inv'];
+    const statFolders = ['mf-gh','mf-cf','mf-d1','mf-r2','mf-inv','mf-mail'];
     const keep = (monitorState.data?.nodes || []).filter(n => !statFolders.includes(n.parentId) || _MON_CHART_FOLDERS[n.id]); // формы «Дынаміка» перажываюць rebuild
     const newNodes = [...keep];
     if (stats?.github) {
@@ -13066,6 +13067,26 @@ async function _monitorLoadStats() {
         newNodes.push({ id:`mf-gh-${i}`, type:'form', formSchema:'monitorStat', parentId:'mf-gh', order:i, name,
           fields:{ used:r.used, limit:r.limit, note:`${resetHm(r.reset)} · ${t('stats_limit')} ${r.limit.toLocaleString()}${period}` } });
       });
+    }
+    // 📧 ПОШТА (Resend): нашы мяжы vs правайдэр + што адсеклі. Тыя ж monitorStat-радкі, што ў CF/D1 —
+    // не bespoke: лічба+ліміт+нота, прагрэс і колер бярэ сама схема.
+    const rs = stats?.resend;
+    if (rs) {
+      const p = rs.provider || {};
+      const rows = [
+        [t('mon_mail_day'),      rs.dayUsed,   rs.dayMax,  `${t('stats_limit')} ${rs.dayMax}${t('stats_per_day')} · ${t('mon_mail_provider')} ${p.day}${t('stats_per_day')}`],
+        [t('mon_mail_month'),    rs.monthUsed, p.month,    `${t('stats_limit')} ${p.month}${t('mon_mail_per_month')} (${p.plan})`],
+        [t('mon_mail_reserve'),  Math.max(0, rs.dayUsed - (rs.dayMax - rs.reserve)), rs.reserve, t('mon_mail_reserve_note').replace('{n}', rs.reserve)],
+        [t('mon_mail_skipinfo'), rs.skipInfo,  0,          t('mon_mail_skipinfo_note')],
+        [t('mon_mail_skipcap'),  rs.skipCap,   0,          t('mon_mail_skipcap_note')],
+        [t('mon_mail_perclient'), 0, 0, `${t('mon_mail_perclient_note').replace('{c}', rs.perClient).replace('{p}', rs.perPlatform)} · ${t('mon_mail_rate')}: ${p.rate}`],
+      ];
+      rows.forEach(([name, used, limit, note], i) => newNodes.push({ id:`mf-mail-${i}`, type:'form', formSchema:'monitorStat',
+        parentId:'mf-mail', order:i, name, fields:{ used, limit, note } }));
+      // стан каналу: апошні збой з журнала алертаў (чырвоны, калі crit)
+      if (rs.lastFail) newNodes.push({ id:'mf-mail-fail', type:'form', formSchema:'monitorStat', parentId:'mf-mail', order:9,
+        name: t('mon_mail_channel'), fields:{ used: rs.lastFail.sev === 'crit' ? 1 : 0, limit: 1,
+          note: `${fmtDateTime(rs.lastFail.at)} · ${rs.lastFail.msg}` } });
     }
     const cf = stats?.cloudflare;
     if (cf?.kv) {
