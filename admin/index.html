@@ -13110,6 +13110,8 @@ const _METRIC_SERIES = [
   { form: 'mch-d1',  code: 'rows read',   v: d => d.cloudflare?.d1?.reads,       l: () => 5000000, per: 'stats_per_day' },
   { form: 'mch-d1',  code: 'rows write',  v: d => d.cloudflare?.d1?.writes,      l: () => 100000,  per: 'stats_per_day' },
   { form: 'mch-d1',  code: 'store 5GB',   v: d => d.cloudflare?.d1?.bytes,       l: () => 5 * 1024 * 1024 * 1024,  unit: 'b' },
+  // 🗄️ жорсткая стэля АДНОЙ базы D1: за ёй не даплата, а немагчымасць пісаць (лечыцца шардзінгам)
+  { form: 'mch-d1',  code: 'db cap 10GB', v: d => d.cloudflare?.d1?.bytes,       l: () => 10 * 1024 * 1024 * 1024, unit: 'b' },
   { form: 'mch-r2',  code: 'A/mo',        v: d => d.cloudflare?.r2?.classA,      l: () => 1000000,  per: 'mon_mail_per_month' },
   { form: 'mch-r2',  code: 'B/mo',        v: d => d.cloudflare?.r2?.classB,      l: () => 10000000, per: 'mon_mail_per_month' },
   { form: 'mch-r2',  code: 'store 10GB',  v: d => d.cloudflare?.r2?.bytes,       l: () => 10 * 1024 * 1024 * 1024, unit: 'b' },
@@ -13249,18 +13251,29 @@ async function _monitorLoadStats() {
 }
 
 // HEAD-запыт з браўзера да кожнага субдамена: зялёная кропка = адказвае, чырвоная = не
+// 🛰️ Пінг сайтаў з БРАЎЗЕРА — порцыямі і толькі бачных. Было: HEAD на КОЖНЫ паддамен разам, на
+// кожнае адкрыццё Маніторынга. На 1000 сайтаў гэта 1000 адначасовых запросаў з панэлі: браўзер
+// ставіць іх у чаргу па 6 на хост, укладка вісне, а карыстальнік бачыць «панэль тармозіць».
+// Цяпер: ліміт `_PING_MAX` на прагон + ратацыя (наступны прагон бярэ наступную порцыю) + партыі
+// па `_PING_BATCH` паралельна. Астатнія паддамены пінгуюцца з часам ці па ↻ канкрэтнай карткі.
+const _PING_MAX = 24, _PING_BATCH = 6;
 async function pingMonitorSites() {
   const nodes = monitorState.data?.nodes || [];
-  const clientNodes = nodes.filter(n => n.formSchema === 'monitorClient' && n.fields?.subdomain);
-  if (!clientNodes.length) return;
-  await Promise.all(clientNodes.map(async node => {
-    try {
-      await fetch(`https://${node.fields.subdomain}`, { method: 'HEAD', mode: 'no-cors', signal: AbortSignal.timeout(5000) });
-      node.fields.online = true; // opaque response = сайт адказвае
-    } catch {
-      node.fields.online = false;
-    }
-  }));
+  const all = nodes.filter(n => n.formSchema === 'monitorClient' && n.fields?.subdomain && !n.fields?._phantom); // фантомы не пінгуем — сайта няма
+  if (!all.length) return;
+  const start = monitorState._pingCursor || 0;
+  const slice = all.length <= _PING_MAX ? all : [...all.slice(start), ...all.slice(0, start)].slice(0, _PING_MAX);
+  monitorState._pingCursor = all.length <= _PING_MAX ? 0 : (start + _PING_MAX) % all.length;
+  for (let i = 0; i < slice.length; i += _PING_BATCH) { // партыямі, каб не забіваць чаргу браўзера
+    await Promise.all(slice.slice(i, i + _PING_BATCH).map(async node => {
+      try {
+        await fetch(`https://${node.fields.subdomain}`, { method: 'HEAD', mode: 'no-cors', signal: AbortSignal.timeout(5000) });
+        node.fields.online = true; // opaque response = сайт адказвае
+      } catch {
+        node.fields.online = false;
+      }
+    }));
+  }
   if (currentNodeState === monitorState) renderNodeEditor(monitorState);
 }
 
