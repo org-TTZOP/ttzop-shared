@@ -12974,7 +12974,7 @@ async function _monitorLoadDashboard() {
                  _phantom: c.phantom ? true : undefined, // 👻 заказ без даных сайта
                  alerts48:c.alerts48??0 } });  // 🚨 крытычных за 48 гадз (чып ⚠N у назве)
     });
-    monitorState._mailGlobal = d.mailGlobal || null; // 🌍 глабальны расход пошты (толькі рэпам платформы)
+    monitorState._mailGlobal = dash?.mailGlobal || null; // 🌍 глабальны расход пошты (толькі рэпам платформы)
     monitorState.data.nodes = newNodes;
     monitorState._trSpend = dash?.trSpend || null; // 🌐 месячны расход AI-перакладаў (чып на «Аглядзе»)
     monitorState._apiBalance = dash?.apiBalance || null; // 💰 баланс нашага праплачанага API (чып + зводка табліцы)
