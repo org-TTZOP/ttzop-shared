@@ -5823,7 +5823,7 @@ function _nodeTableChartModeToggle(formId, dataKey) {
 
 const _CHART_COLORS = ['#f97316','#3b82f6','#22c55e','#a855f7','#ef4444','#14b8a6','#eab308','#ec4899'];
 // Диспетчар графікаў: пілюлі выбару груп + кнопка абс/% + рэндэр SVG
-function _nodeTableChartHtml(rows, section, form, s, pillRows) {
+function _nodeTableChartHtml(rows, section, form, s, pillRows) { // rows/pillRows можа звужаць рэжым 'pct'
   if (!rows.length) return `<div style="padding:6px 0;font-size:0.82rem;color:var(--muted)">—</div>`;
   const cfg = section.chart;
   const fid = form.id, dk = section.dataKey || section.id || '';
@@ -5831,6 +5831,15 @@ function _nodeTableChartHtml(rows, section, form, s, pillRows) {
   const mode = _chartModeOf(s, viewKey, cfg);
   // ці ёсць у бачных радках ліміт — ад гэтага залежыць і сэнс 'pct', і надпіс на кнопцы
   const hasLim = !!(cfg?.limKey && rows.some(r => parseFloat(r[cfg.limKey]) > 0));
+  // 🎚 «% ад ліміту» паказвае ТОЛЬКІ тое, у чаго ліміт ёсць: інакш у адным полі змяшаліся б % ад мяжы
+  // і % змены (серыі без ліміту), і чытаць гэта было б немагчыма. Складнікі без мяжы (напр. KV write/
+  // delete/list паасобку — мяжа ў іх агульная, на суме) відаць у рэжыме «лічбы».
+  if (mode === 'pct' && hasLim) {
+    const withLim = r => parseFloat(r[cfg.limKey]) > 0;
+    rows = rows.filter(withLim);
+    if (pillRows) pillRows = pillRows.filter(withLim);
+    if (!rows.length) return `<div style="padding:6px 0;font-size:0.82rem;color:var(--muted)">—</div>`;
+  }
   let pillsHtml = '', chartRows = rows, colorMap = {};
   if (cfg?.groupKey) {
     // спіс таблетак — з pillRows (без фільтра ўласнага слупка), выбар — з ТАГО ЖА фільтра слупка
@@ -5877,7 +5886,7 @@ function _nodeTableChartHtml(rows, section, form, s, pillRows) {
 // 🏷 ПОДПІС ВОСІ Y — адзін механізм на ЎСЕ графікі. Без яго рэжым «% змен» (нармалізацыя да першай
 // кропки) чытаўся як «% ад ліміту»: карыстальнік убачыў +401% і слушна спытаў, як расход можа быць
 // большым за 100% дзённага ліміту. Абодва рэжымы паказвалі «%» без пазнакі — віна інтэрфейсу.
-function _chartAxisNote(cfg, limits) {
+function _chartAxisNote(cfg, limits, over) {
   const mode = cfg.mode || (cfg.normalize ? 'pct' : 'val');
   if (mode !== 'pct') return _chartNoteWrap(t('chart_axis_val'));
   const withLim = (limits || []).filter(([, l]) => l > 0);
@@ -5887,7 +5896,9 @@ function _chartAxisNote(cfg, limits) {
   const txt = withLim.length === 1
     ? t('chart_axis_limit_one').replace('{v}', fmt(withLim[0]))
     : t('chart_axis_limit_many').replace('{v}', withLim.slice(0, 3).map(fmt).join(' · ') + (withLim.length > 3 ? ' …' : ''));
-  return _chartNoteWrap(txt);
+  // >100% бывае: правайдэр лічыць і АДБІТЫЯ спробы (пасля мяжы `put` выконваецца і падае з памылкай,
+  // але ў аналітыку трапляе). Падказка з'яўляецца толькі калі перабор рэальна ёсць — інакш шум.
+  return _chartNoteWrap(txt + (over ? ' · ' + t('chart_axis_over') : ''));
 }
 const _chartNoteWrap = txt => txt ? `<div style="padding:2px 0 0 54px;font-size:0.72rem;color:var(--muted)">${escHtml(txt)}</div>` : '';
 function _svgLineChart(rows, cfg) {
@@ -6004,7 +6015,7 @@ function _svgLineChart(rows, cfg) {
       <line x1="${pL}" y1="${pT}" x2="${pL}" y2="${pT+gH}" stroke="currentColor" opacity="0.15" stroke-width="1"/>
       <line x1="${pL}" y1="${pT+gH}" x2="${W-pR}" y2="${pT+gH}" stroke="currentColor" opacity="0.15" stroke-width="1"/>
       ${xLabels}${limitLine}${lines}${dots}${singles}
-    </svg>${_chartAxisNote(cfg, [...limMap.entries()])}${cfg.legend ? _chartLegendHtml(sortedGroups.map(([g], gi) => [g, _getColor(g, gi)])) : ''}
+    </svg>${_chartAxisNote(cfg, [...limMap.entries()], yMax > 100)}${cfg.legend ? _chartLegendHtml(sortedGroups.map(([g], gi) => [g, _getColor(g, gi)])) : ''}
   </div>`;
 }
 // Легенда серый — для ДАКУМЕНТА (у панэлі ролю легенды граюць каляровыя пілюлі-фільтры над графікам,
@@ -13081,9 +13092,14 @@ const _METRIC_SERIES = [
   { form: 'mch-mail', code: 'mail/day',   v: d => d.resend?.dayUsed,             l: d => d.resend?.dayMax || 90,   per: 'stats_per_day' },
   { form: 'mch-mail', code: 'mail/mo',    v: d => d.resend?.monthUsed,           l: d => d.resend?.provider?.month || 3000, per: 'mon_mail_per_month' },
   { form: 'mch-cf',  code: 'KV read',     v: d => d.cloudflare?.kv?.reads,       l: () => 100000, per: 'stats_per_day' },
-  { form: 'mch-cf',  code: 'KV write',    v: d => d.cloudflare?.kv?.writes,      l: () => 1000,   per: 'stats_per_day' },
-  { form: 'mch-cf',  code: 'KV delete',   v: d => d.cloudflare?.kv?.deletes,     l: () => 1000,   per: 'stats_per_day' },
-  { form: 'mch-cf',  code: 'KV list',     v: d => d.cloudflare?.kv?.lists,       l: () => 1000,   per: 'stats_per_day' },
+  // ⚠️ Ліміт free-tier 1000/дзень — на СУМУ write+delete+list, а не на кожны паасобку (як у картцы
+  // «KV Writes / Deletes / Lists»). Раней кожная з трох мела «свой» ліміт 1000, і графік прыхарошваў:
+  // 25.07 «writes 134%» насамрэч было 170% ад рэальнай мяжы. Мяжа — на суме; тры складнікі жывуць
+  // БЕЗ лімітаў (толькі рэжым «лічбы» — дыягностыка, хто менавіта пiша).
+  { form: 'mch-cf',  code: 'KV mut',      v: d => (d.cloudflare?.kv?.writes || 0) + (d.cloudflare?.kv?.deletes || 0) + (d.cloudflare?.kv?.lists || 0), l: () => 1000, per: 'stats_per_day' },
+  { form: 'mch-cf',  code: 'KV write',    v: d => d.cloudflare?.kv?.writes,      abs: true },
+  { form: 'mch-cf',  code: 'KV delete',   v: d => d.cloudflare?.kv?.deletes,     abs: true },
+  { form: 'mch-cf',  code: 'KV list',     v: d => d.cloudflare?.kv?.lists,       abs: true },
   { form: 'mch-cf',  code: 'api req',     v: d => d.cloudflare?.workers?.requests, l: () => 100000, per: 'stats_per_day' },
   { form: 'mch-cf',  code: 'router req',  v: d => d.cloudflare?.router?.requests,  l: () => 100000, per: 'stats_per_day' },
   { form: 'mch-d1',  code: 'rows read',   v: d => d.cloudflare?.d1?.reads,       l: () => 5000000, per: 'stats_per_day' },
