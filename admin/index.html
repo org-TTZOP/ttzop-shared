@@ -808,6 +808,9 @@ const _DEPLOY_SECTION = { type: 'table', title: 'dep_title', dataKey: '_deploy',
   headerExtra: (form, s) => _deploySummaryHtml(),
   refreshFn: () => _deployReload(true), // ↻ БлокАбнавіць (канон): перачытаць ЖЫВЫЯ версіі, мінаючы кэш воркера
   columns: [
+    // ○/● БЯГУЧАЯ — тая ступень, З ЯКОЙ мы зашлі ў панэль (адрас у радку браўзера). Кропка — КАНОННАЯ
+    // `_currentDotHtml` (тая ж, што ў дрэве), не свой малюнак; слупок першы, як «Бягучая» ў інших РМ.
+    { key: 'cur', label: 'dep_col_cur', type: 'html', render: (v, row) => _currentDotHtml(_depIsCurrent(row)) },
     { key: 'label',   label: 'dep_col_target', type: 'text' },
     { key: 'host',    label: 'dep_col_host',   type: 'text' },
     { key: 'version', label: 'dep_col_ver',    type: 'html', render: (v, row) => {
@@ -826,6 +829,13 @@ const _DEPLOY_SECTION = { type: 'table', title: 'dep_title', dataKey: '_deploy',
         return `<button class="btn-small" onclick="_deployRowUpdate('${escHtml(String(row.key))}','${escHtml(String(row.site || ''))}')" style="padding:2px 8px;font-size:0.72rem;white-space:nowrap">${escHtml(t('dep_upd'))}</button>`;
       } },
   ] };
+// ○ «Бягучая» ступень = адкуль ОТКРЫТА гэтая панэль. Паводзіны як у канона «Актыўная ≠ Бягучая»:
+// параўноўваем ХОСТ (менавіта адрас уваходу), fallback — імя рэпа (REPO), калі хост нетыповы.
+function _depIsCurrent(row) {
+  const h = String(location.hostname || '').toLowerCase();
+  if (row.host && String(row.host).toLowerCase() === h) return true;
+  return !!row.site && row.site === REPO && !(monitorState._deploy || []).some(r => String(r.host || '').toLowerCase() === h);
+}
 // «ці адстае гэты радок» — адзін рэзалв на калонку версіі і на кнопку (не могуць разысціся)
 function _depBehind(row) { return row.key !== 'staging' && row.state === 'ok' && !!row.version && !!row.refVer && row.version !== row.refVer; }
 // ⏳ выкат у працэсе: маркер жыве ў стэйце (не ў даных воркера) — сервер пра «ідзе» не ведае,
