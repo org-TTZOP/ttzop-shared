@@ -731,7 +731,7 @@ const _monChartSchema = valLabel => ({ _noName: true, sections: [
       { key: 'metric', label: 'mon_col_metric' },
       { key: 'pct',    label: valLabel, align: 'right' }
     ],
-    chart: { xKey: 'day', yKey: 'pct', groupKey: 'metric', height: 220, yDigits: 1 },
+    chart: { xKey: 'day', yKey: 'pct', groupKey: 'metric', height: 220, yDigits: 1, yLabel: valLabel }, // yLabel → подпіс восі (% ад ліміту / значэнне)
     // доўгі націск на пілюлі агульнай дыяграмы (mch-all) → форма «Дынаміка» той папкі, дзе жыве серыя
     pillTarget: (g, form) => form.id === 'mch-all' ? (_METRIC_SERIES.find(x => x.code === g)?.form || '') : '' }
 ] });
@@ -5827,7 +5827,7 @@ function _nodeTableChartHtml(rows, section, form, s, pillRows) {
           style="padding:2px 10px;border-radius:12px;font-size:0.78rem;cursor:pointer;margin-left:auto;
           border:1px solid ${norm ? 'var(--accent)' : 'var(--border)'};
           background:${norm ? 'var(--accent)' : 'var(--bg)'};color:${norm ? '#fff' : 'var(--muted)'}"
-          title="Нармалізаваць да % ад першай кропкі">${norm ? '% змен' : 'абс'}</button>` : '';
+          title="${escHtml(t('chart_norm_title'))}">${norm ? t('chart_norm_on') : t('chart_norm_off')}</button>` : '';
     pillsHtml = `<div style="display:flex;flex-wrap:wrap;gap:4px;padding:4px 0 8px;align-items:center">${
       allGroups.map((g, gi) => {
         const color = _CHART_COLORS[gi % _CHART_COLORS.length];
@@ -5854,6 +5854,13 @@ function _nodeTableChartHtml(rows, section, form, s, pillRows) {
 
 // Лінейны SVG-графік: xKey, yKey, groupKey (неабавязк.), height
 // Выкарыстоўвае currentColor → аўтаматычна адаптуецца да светлай/цёмнай тэмы
+// 🏷 ПОДПІС ВОСІ Y — адзін механізм на ЎСЕ графікі. Без яго рэжым «% змен» (нармалізацыя да першай
+// кропки) чытаўся як «% ад ліміту»: карыстальнік убачыў +401% і слушна спытаў, як расход можа быць
+// большым за 100% дзённага ліміту. Абодва рэжымы паказвалі «%» без пазнакі — віна інтэрфейсу.
+function _chartAxisNote(cfg) {
+  const txt = cfg.normalize ? t('chart_axis_norm') : (cfg.yLabel ? t('chart_axis_of').replace('{v}', t(cfg.yLabel)) : '');
+  return txt ? `<div style="padding:2px 0 0 54px;font-size:0.72rem;color:var(--muted)">${escHtml(txt)}</div>` : '';
+}
 function _svgLineChart(rows, cfg) {
   const { xKey = 'x', yKey = 'y', groupKey, height = 200, normalize = false, yDigits = 4 } = cfg; // yDigits — дакладнасць восі Y (курсы 4, % лімітаў 1)
   const groups = new Map();
@@ -5949,7 +5956,7 @@ function _svgLineChart(rows, cfg) {
       <line x1="${pL}" y1="${pT}" x2="${pL}" y2="${pT+gH}" stroke="currentColor" opacity="0.15" stroke-width="1"/>
       <line x1="${pL}" y1="${pT+gH}" x2="${W-pR}" y2="${pT+gH}" stroke="currentColor" opacity="0.15" stroke-width="1"/>
       ${xLabels}${lines}${dots}${singles}
-    </svg>${cfg.legend ? _chartLegendHtml(sortedGroups.map(([g], gi) => [g, _getColor(g, gi)])) : ''}
+    </svg>${_chartAxisNote(cfg)}${cfg.legend ? _chartLegendHtml(sortedGroups.map(([g], gi) => [g, _getColor(g, gi)])) : ''}
   </div>`;
 }
 // Легенда серый — для ДАКУМЕНТА (у панэлі ролю легенды граюць каляровыя пілюлі-фільтры над графікам,
