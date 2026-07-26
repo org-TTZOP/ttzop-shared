@@ -5913,6 +5913,18 @@ function _svgLineChart(rows, cfg) {
     const d = sorted.map(r => { const xi = xVals.indexOf(String(r[xKey])); return `${xi ? 'L' : 'M'}${xp(xi).toFixed(1)},${yp(getValue(g, r[yKey])).toFixed(1)}`; }).join('');
     return `<path d="${d}" fill="none" stroke="${color}" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>`;
   }).join('');
+  // 🔹 АДНА КРОПКА — ТАКСАМА ДАНЫЯ. Серыя з адным значэннем не малюе лініі (`sorted.length < 2` вышэй),
+  // а звычайныя кропкі з'яўляюцца толькі на кароткіх дыяпазонах (≤10 дзён) — таму НОВАЯ метрыка была
+  // нябачнай на графіку, пакуль не набярэ два дні гісторыі (жывы кейс 26.07: серыі пошты 100%, а полі
+  // пустое). Малюем такія кропкі ЗАЎСЁДЫ і трохі буйней, каб адзінкавае значэнне чыталася.
+  const singles = sortedGroups.map(([g, pts], gi) => {
+    const color = _getColor(g, gi);
+    const sorted = pts.filter(r => !isNaN(parseFloat(r[yKey])));
+    if (sorted.length !== 1) return '';
+    const xi = xVals.indexOf(String(sorted[0][xKey]));
+    if (xi < 0) return '';
+    return `<circle cx="${xp(xi).toFixed(1)}" cy="${yp(getValue(g, sorted[0][yKey])).toFixed(1)}" r="4" fill="${color}" stroke="var(--bg,#fff)" stroke-width="1"/>`;
+  }).join('');
   // Кропкі — калі радкоў мала (≤10 на серыю)
   const dots = xVals.length <= 10 ? sortedGroups.map(([g, pts], gi) => {
     const color = _getColor(g, gi);
@@ -5927,7 +5939,7 @@ function _svgLineChart(rows, cfg) {
       ${grid}${zeroLine}
       <line x1="${pL}" y1="${pT}" x2="${pL}" y2="${pT+gH}" stroke="currentColor" opacity="0.15" stroke-width="1"/>
       <line x1="${pL}" y1="${pT+gH}" x2="${W-pR}" y2="${pT+gH}" stroke="currentColor" opacity="0.15" stroke-width="1"/>
-      ${xLabels}${lines}${dots}
+      ${xLabels}${lines}${dots}${singles}
     </svg>${cfg.legend ? _chartLegendHtml(sortedGroups.map(([g], gi) => [g, _getColor(g, gi)])) : ''}
   </div>`;
 }
