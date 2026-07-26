@@ -5849,11 +5849,15 @@ function _nodeTableChartHtml(rows, section, form, s, pillRows) {
         const color = _CHART_COLORS[gi % _CHART_COLORS.length];
         const active = selected.has(g) || selected.size === 0;
         const tgt = section.pillTarget ? (section.pillTarget(g, form, s) || '') : ''; // хук схемы: доўгі націск → перайсці да вузла-крыніцы серыі
+        // 🏷 другі радок пілюлі — ЛІМІТ серыі ў рэальных лічбах (з `limTxt` радка; серыі без ліміту —
+        // адзін радок, як раней). Так «100% = колькі» відаць адразу на кожнай серыі, без навядзення.
+        const limTxt = (cfg.limKey && (pillRows || rows).find(r => String(r[cfg.groupKey] ?? '') === g && r.limTxt)?.limTxt) || '';
         return `<button onclick="event.stopPropagation();_nodeTableChartFilterToggle('${escHtml(fid)}','${escHtml(dk)}','${escHtml(g)}')"
           ${tgt ? `data-ptgt="${escHtml(tgt)}" title="${escHtml(t('pill_goto_hint'))}"` : ''}
-          style="padding:2px 8px;border-radius:12px;font-size:0.78rem;cursor:pointer;user-select:none;-webkit-user-select:none;
-          border:2px solid ${color};background:${active ? color : 'var(--bg)'};
-          color:${active ? '#fff' : 'var(--fg)'};opacity:${active?1:0.35}">${escHtml(g)}</button>`;
+          style="padding:${limTxt ? '3px 9px' : '2px 8px'};border-radius:12px;font-size:0.78rem;cursor:pointer;user-select:none;-webkit-user-select:none;
+          line-height:1.15;text-align:center;border:2px solid ${color};background:${active ? color : 'var(--bg)'};
+          color:${active ? '#fff' : 'var(--fg)'};opacity:${active?1:0.35}">${escHtml(g)}${
+            limTxt ? `<br><span style="font-size:0.68rem;opacity:0.85">${escHtml(limTxt)}</span>` : ''}</button>`;
       }).join('')
     }${normBtn}</div>`;
     // colorMap: фіксаваны колер кожнай групы (па ўсіх allGroups, не па адфільтраваных)
@@ -6359,6 +6363,14 @@ function fmtDate(value) {
     case 'D MMMM YYYY': { const dt = new Date(`${p.y}-${p.mo}-${p.d}T00:00:00`); return isNaN(dt) ? `${p.d}.${p.mo}.${p.y}` : dt.toLocaleDateString(_cdateLocale(), { day: 'numeric', month: 'long', year: 'numeric' }); }
     default: return `${p.d}.${p.mo}.${p.y}`; // DD.MM.YYYY
   }
+}
+// Байты для ЛІМІТАЎ: існуючы _fmtBytes спыняецца на MB, а сховішчы мераюцца ў GB/TB
+function _fmtBytesBig(n) {
+  if (!n) return '';
+  const u = ['B', 'KB', 'MB', 'GB', 'TB'];
+  let i = 0, v = n;
+  while (v >= 1024 && i < u.length - 1) { v /= 1024; i++; }
+  return (v >= 10 ? Math.round(v) : Math.round(v * 10) / 10) + ' ' + u[i];
 }
 function _fmtBytes(n) {
   if (!n) return '';
@@ -13060,24 +13072,26 @@ async function _monitorLoadDashboard() {
 // 📈 ГІСТОРЫЯ ЛІМІТАЎ: серыі дыяграм «Дынаміка» — форма-дыяграма (mch-*) → метрыкі з дзённага
 // здымка metrics_history. Шкала = % ад free-tier ліміту (GH — ліміт з самога здымка; Інвентар —
 // абсалютныя лічбы, abs:true). Коды серый — тэхнічныя ідэнтыфікатары (як коды валют у Курсах), не UI-тэкст.
+// `per` — перыяд ліміту (для подпісу на пілюлі: «1 000/дзень»); `unit:'b'` — байты (чытальны фармат).
+// Без `per` подпіс — толькі лічба (напр. сховішча = усяго, не за перыяд).
 const _METRIC_SERIES = [
-  { form: 'mch-gh',  code: 'REST core/h', v: d => d.github?.core?.used,          l: d => d.github?.core?.limit },
-  { form: 'mch-gh',  code: 'GraphQL/h',   v: d => d.github?.graphql?.used,       l: d => d.github?.graphql?.limit },
+  { form: 'mch-gh',  code: 'REST core/h', v: d => d.github?.core?.used,          l: d => d.github?.core?.limit,    per: 'stats_per_hour' },
+  { form: 'mch-gh',  code: 'GraphQL/h',   v: d => d.github?.graphql?.used,       l: d => d.github?.graphql?.limit, per: 'stats_per_hour' },
   // 📧 пошта: % ад НАШАЙ дзённай мяжы і ад месячнага ліміту правайдэра (даныя — блок resend у здымку)
-  { form: 'mch-mail', code: 'mail/day',   v: d => d.resend?.dayUsed,             l: d => d.resend?.dayMax || 90 },
-  { form: 'mch-mail', code: 'mail/mo',    v: d => d.resend?.monthUsed,           l: d => d.resend?.provider?.month || 3000 },
-  { form: 'mch-cf',  code: 'KV read',     v: d => d.cloudflare?.kv?.reads,       l: () => 100000 },
-  { form: 'mch-cf',  code: 'KV write',    v: d => d.cloudflare?.kv?.writes,      l: () => 1000 },
-  { form: 'mch-cf',  code: 'KV delete',   v: d => d.cloudflare?.kv?.deletes,     l: () => 1000 },
-  { form: 'mch-cf',  code: 'KV list',     v: d => d.cloudflare?.kv?.lists,       l: () => 1000 },
-  { form: 'mch-cf',  code: 'api req',     v: d => d.cloudflare?.workers?.requests, l: () => 100000 },
-  { form: 'mch-cf',  code: 'router req',  v: d => d.cloudflare?.router?.requests,  l: () => 100000 },
-  { form: 'mch-d1',  code: 'rows read',   v: d => d.cloudflare?.d1?.reads,       l: () => 5000000 },
-  { form: 'mch-d1',  code: 'rows write',  v: d => d.cloudflare?.d1?.writes,      l: () => 100000 },
-  { form: 'mch-d1',  code: 'store 5GB',   v: d => d.cloudflare?.d1?.bytes,       l: () => 5 * 1024 * 1024 * 1024 },
-  { form: 'mch-r2',  code: 'A/mo',        v: d => d.cloudflare?.r2?.classA,      l: () => 1000000 },
-  { form: 'mch-r2',  code: 'B/mo',        v: d => d.cloudflare?.r2?.classB,      l: () => 10000000 },
-  { form: 'mch-r2',  code: 'store 10GB',  v: d => d.cloudflare?.r2?.bytes,       l: () => 10 * 1024 * 1024 * 1024 },
+  { form: 'mch-mail', code: 'mail/day',   v: d => d.resend?.dayUsed,             l: d => d.resend?.dayMax || 90,   per: 'stats_per_day' },
+  { form: 'mch-mail', code: 'mail/mo',    v: d => d.resend?.monthUsed,           l: d => d.resend?.provider?.month || 3000, per: 'mon_mail_per_month' },
+  { form: 'mch-cf',  code: 'KV read',     v: d => d.cloudflare?.kv?.reads,       l: () => 100000, per: 'stats_per_day' },
+  { form: 'mch-cf',  code: 'KV write',    v: d => d.cloudflare?.kv?.writes,      l: () => 1000,   per: 'stats_per_day' },
+  { form: 'mch-cf',  code: 'KV delete',   v: d => d.cloudflare?.kv?.deletes,     l: () => 1000,   per: 'stats_per_day' },
+  { form: 'mch-cf',  code: 'KV list',     v: d => d.cloudflare?.kv?.lists,       l: () => 1000,   per: 'stats_per_day' },
+  { form: 'mch-cf',  code: 'api req',     v: d => d.cloudflare?.workers?.requests, l: () => 100000, per: 'stats_per_day' },
+  { form: 'mch-cf',  code: 'router req',  v: d => d.cloudflare?.router?.requests,  l: () => 100000, per: 'stats_per_day' },
+  { form: 'mch-d1',  code: 'rows read',   v: d => d.cloudflare?.d1?.reads,       l: () => 5000000, per: 'stats_per_day' },
+  { form: 'mch-d1',  code: 'rows write',  v: d => d.cloudflare?.d1?.writes,      l: () => 100000,  per: 'stats_per_day' },
+  { form: 'mch-d1',  code: 'store 5GB',   v: d => d.cloudflare?.d1?.bytes,       l: () => 5 * 1024 * 1024 * 1024,  unit: 'b' },
+  { form: 'mch-r2',  code: 'A/mo',        v: d => d.cloudflare?.r2?.classA,      l: () => 1000000,  per: 'mon_mail_per_month' },
+  { form: 'mch-r2',  code: 'B/mo',        v: d => d.cloudflare?.r2?.classB,      l: () => 10000000, per: 'mon_mail_per_month' },
+  { form: 'mch-r2',  code: 'store 10GB',  v: d => d.cloudflare?.r2?.bytes,       l: () => 10 * 1024 * 1024 * 1024, unit: 'b' },
   { form: 'mch-inv', code: 'sites',  abs: true, v: d => d.sites?.total },
   { form: 'mch-inv', code: 'active', abs: true, v: d => d.sites?.active },
 ];
@@ -13104,7 +13118,10 @@ function _monitorHistoryRows(formId) {
       if (pct == null) continue;
       // 🔢 `val`+`lim` — для рэжыму «рэальныя лічбы» і подпісу «100% = …». Раней клалі толькі `pct`,
       // таму рэальнае значэнне губілася; гісторыя ад гэтага не пацярпела — здымкі трымаюць сыры stats.
-      rows.push({ day: d.day, metric: s.code, pct, val: v, lim: lim ?? null });
+      // limTxt — гатовы подпіс ліміту («1 000/дзень», «10 GB»): рэндэр пілюль універсальны і пра
+      // каталог метрык не ведае (ААП: сэнс дае крыніца даных, выгляд — Table-продак)
+      const limTxt = lim ? (s.unit === 'b' ? _fmtBytesBig(lim) : lim.toLocaleString() + (s.per ? t(s.per) : '')) : '';
+      rows.push({ day: d.day, metric: s.code, pct, val: v, lim: lim ?? null, limTxt });
     }
   }
   return rows.sort((a, b) => b.day.localeCompare(a.day) || a.metric.localeCompare(b.metric));
