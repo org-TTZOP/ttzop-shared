@@ -12852,6 +12852,10 @@ let monitorState = {
       const ff = form.fields || {}, trFree = Math.max(0, (+ff.trMax || 5) - (+ff.trFree || 0)), trCred = +ff.trCredits || 0;
       const trBadge = `<span style="font-size:0.72rem;color:${trFree <= 0 && trCred <= 0 ? '#ef4444' : 'var(--muted)'};margin-left:6px;white-space:nowrap" title="${escHtml(t('tr_client_badge_title'))}">🌐${trFree}+${trCred}</span>`;
       const star = form.fields?._self ? `<span title="${escHtml(t('mon_self_site'))}">⭐ </span>` : ''; // ⭐ уласны сайт платформы
+      // 🌍 дзённы расход пошты ЎСЁЙ платформы — толькі на ⭐-радку (гэта не пер-сайтавая лічба):
+      // пер-сайтавыя квоты нічога не значаць, калі агульны ліміт правайдэра вычарпаны
+      const mg = form.fields?._self ? monitorState._mailGlobal : null;
+      const mgBadge = mg && mg.max ? `<span style="font-size:0.72rem;color:${mg.used >= mg.max ? '#ef4444' : (mg.used >= mg.max - 20 ? '#f59e0b' : 'var(--muted)')};margin-left:6px;white-space:nowrap" title="${escHtml(t('mail_global_title'))}">🌍${mg.used}/${mg.max}</span>` : '';
       // 👻 фантом: заказ ёсць, а даных сайта няма (не створаны / знесены міма teardown). Паказваем
       // яўна — маўклівы прапуск такіх радкоў і рабіў спіс паддаменаў недаверлівым
       const ghost = form.fields?._phantom ? `<span style="opacity:0.5;margin-left:6px;font-size:0.72rem;white-space:nowrap" title="${escHtml(t('mon_phantom'))}">👻 ${escHtml(t('mon_phantom_lbl'))}</span>` : '';
@@ -12862,7 +12866,7 @@ let monitorState = {
       // 🚨 чып крытычных алертаў за 48 гадзін (lік з get_dashboard, адзін групавы запыт) — «што гарыць зараз»
       const al48 = +(form.fields?.alerts48) || 0;
       const alBadge = al48 ? `<span style="font-size:0.72rem;color:#ef4444;margin-left:6px;white-space:nowrap" title="${escHtml(t('alerts_badge_title'))}">⚠${al48}</span>` : '';
-      return `${star}${pingDot}<span style="color:${col}">${escHtml(_nodeName(form)||'—')}</span>${ghost}${stBadge}${trBadge}${mailBadge}${alBadge}`;
+      return `${star}${pingDot}<span style="color:${col}">${escHtml(_nodeName(form)||'—')}</span>${ghost}${stBadge}${trBadge}${mailBadge}${mgBadge}${alBadge}`;
     }
     return escHtml(_nodeName(form)||'—');
   },
@@ -12969,6 +12973,7 @@ async function _monitorLoadDashboard() {
                  _phantom: c.phantom ? true : undefined, // 👻 заказ без даных сайта
                  alerts48:c.alerts48??0 } });  // 🚨 крытычных за 48 гадз (чып ⚠N у назве)
     });
+    monitorState._mailGlobal = d.mailGlobal || null; // 🌍 глабальны расход пошты (толькі рэпам платформы)
     monitorState.data.nodes = newNodes;
     monitorState._trSpend = dash?.trSpend || null; // 🌐 месячны расход AI-перакладаў (чып на «Аглядзе»)
     monitorState._apiBalance = dash?.apiBalance || null; // 💰 баланс нашага праплачанага API (чып + зводка табліцы)
