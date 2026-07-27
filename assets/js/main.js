@@ -135,6 +135,9 @@ function _applyPriceConversion() {
 
 const UI_T = {
   be: {
+    tax_block_no: 'Мы пакуль не прадаём у гэту краіну', tax_block_b2b: 'У гэту краіну прадаём толькі фірмам — увядзіце падатковы нумар',
+    form_country: 'Краіна', form_taxnum: 'Падатковы нумар (для фірмаў)', form_taxnum_hint: 'Ёсць нумар — рахунак без ПДВ (reverse charge)',
+    tax_checking: 'правяраем…', tax_lvl_verified: '✓ пацверджана ў рэестры', tax_lvl_declared: 'запісана з вашых слоў', tax_lvl_invalid: '✗ рэестр кажа: нумар нядзейсны',
     book_title: "Запіс на {name}", book_date: "Дата", book_time: "Час", book_loading: "Шукаем вольны час…", book_none: "На гэты дзень вольнага часу няма", book_confirm: "Запісацца на {d} а {t}?", book_done: "Гатова! Вы запісаны на {d} а {t}. Дэталі — у кабінеце.", book_taken: "Гэты час толькі што занялі. Выберыце іншы.", book_login: "Каб запісацца, увайдзіце ў кабінет", book_err: "Не атрымалася. Паспрабуйце пазней", book_seats: "Месцаў:", book_full: "Месцаў не засталося — абярыце іншы час", grp_upto: "Група да {n} удзельнікаў", tr_err: "Не атрымалася перакласці. Паспрабуйце пазней.", tr_limit: "Ліміт AI-перакладаў на месяц вычарпаны ({max}/мес).", tr_nothing: "Няма чаго перакладаць: усе мовы запоўнены.", ed_tr_confirm: "Перакласці пустыя мовы старонкі з {from}? Засталося {n} з {max} у гэтым месяцы.", ed_tr_done: "Перакладзена палёў: {k}. Засталося {n}.", pe_title: "Рэдагаваць фота", pe_crop_free: "Без абрэзкі", pe_bright: "Яркасць", pe_sat: "Насычанасць", pe_rotate: "Паварот", pe_flip: "Люстэрка", pe_contrast: "Кантраст", pe_warm: "Цеплыня", pe_sharp: "Рэзкасць", pe_blur: "Размытасць", pe_vig: "Він'етка", pe_reset: "Скінуць", pe_skip: "Без правак", pe_skip_all: "Без правак для ўсіх", pe_done: "Гатова", pe_cancel: "Адмяніць", trpack_sub_label: "Паддамен вашага сайта (каму налічыць пераклады)", form_err_trpack: "Пазначце паддамен сайта для пакета перакладаў", dep_next: "Бліжэйшы выезд", dep_left: "вольных месцаў", tk_title: "Білет", tk_valid: "Сапраўдны", tk_cancelled: "Ануляваны", tk_past: "Мінулы", tk_notfound: "Білет не знойдзены", tk_seats: "Месцаў", route_teaser: "Маршрут ({n}) · ~{t}", route_plan: "План маршруту", route_stop: "Прыпынак", route_transfer: "🚶 Пераезд ~{t}", route_gmaps: "Адкрыць маршрут у Google Maps", unit_h: "гадз", unit_min: "хв", show_more:'Паказаць яшчэ', show_less:'Скрыць', view_toggle:'Карткі / Спіс',
     hours_your_tz: 'у вашым поясе:', sched_dayoff: 'выходны', sched_everyday: 'Штодня',
     cart_title: 'Кошык: {n} паслуг(і)', cart_clear: 'Ачысціць', cart_order: 'Аформіць заказ →', cart_remove: 'Выдаліць', cart_subtotal: 'Сума', cart_delivery: 'Дастаўка', cart_total: 'Разам', cart_empty: 'Кошык пусты', cab_chat: 'Чат', cab_logout: 'Выйсці', cab_cabinet: 'Кабінет', cart_address: 'Адрас дастаўкі', cart_addr_none: 'Дадаць адрас у кабінеце', cab_logout_confirm: 'Выйсці з кабінета? Наступны ўваход — толькі праз новы код на email.',
@@ -179,6 +182,9 @@ const UI_T = {
     subdomain_free: '✅ {subdomain}.ttzop.com — вольны!', subdomain_check_err: 'Памылка праверкі',
   },
   en: {
+    tax_block_no: "We don't sell to this country yet", tax_block_b2b: 'We sell to this country to companies only — enter a tax number',
+    form_country: 'Country', form_taxnum: 'Tax number (for companies)', form_taxnum_hint: 'With a number the invoice is issued without VAT (reverse charge)',
+    tax_checking: 'checking…', tax_lvl_verified: '✓ confirmed in the registry', tax_lvl_declared: 'recorded as you entered it', tax_lvl_invalid: '✗ the registry says this number is not valid',
     book_title: "Book {name}", book_date: "Date", book_time: "Time", book_loading: "Looking for free time…", book_none: "No free time on this day", book_confirm: "Book {d} at {t}?", book_done: "Done! You are booked for {d} at {t}. Details are in your account.", book_taken: "That time was just taken. Please pick another.", book_login: "Sign in to your account to book", book_err: "Something went wrong. Please try later", book_seats: "Seats:", book_full: "No seats left — pick another time", grp_upto: "Group up to {n}", tr_err: "Translation failed. Try later.", tr_limit: "Monthly AI translation limit reached ({max}/mo).", tr_nothing: "Nothing to translate: all languages are filled.", ed_tr_confirm: "Translate the page's empty languages from {from}? {n} of {max} left this month.", ed_tr_done: "Fields translated: {k}. {n} left.", pe_title: "Edit photo", pe_crop_free: "No crop", pe_bright: "Brightness", pe_sat: "Saturation", pe_rotate: "Rotate", pe_flip: "Mirror", pe_contrast: "Contrast", pe_warm: "Warmth", pe_sharp: "Sharpness", pe_blur: "Blur", pe_vig: "Vignette", pe_reset: "Reset", pe_skip: "No edits", pe_skip_all: "No edits for all", pe_done: "Done", pe_cancel: "Cancel", trpack_sub_label: "Your site's subdomain (who receives the translations)", form_err_trpack: "Enter the site subdomain for the translation pack", dep_next: "Next departure", dep_left: "seats left", tk_title: "Ticket", tk_valid: "Valid", tk_cancelled: "Cancelled", tk_past: "Past", tk_notfound: "Ticket not found", tk_seats: "Seats", route_teaser: "Route ({n}) · ~{t}", route_plan: "Route plan", route_stop: "Stop", route_transfer: "🚶 Transfer ~{t}", route_gmaps: "Open the route in Google Maps", unit_h: "h", unit_min: "min", show_more:'Show more', show_less:'Hide', view_toggle:'Cards / List',
     hours_your_tz: 'your time:', sched_dayoff: 'day off', sched_everyday: 'Every day',
     cart_title: 'Cart: {n} item(s)', cart_clear: 'Clear', cart_order: 'Place order →', cart_remove: 'Remove', cart_subtotal: 'Subtotal', cart_delivery: 'Delivery', cart_total: 'Total', cart_empty: 'Cart is empty', cab_chat: 'Chat', cab_logout: 'Log out', cab_cabinet: 'Account', cart_address: 'Delivery address', cart_addr_none: 'Add an address in your account', cab_logout_confirm: 'Log out? Next time you\'ll need a new email code to sign in.',
@@ -223,6 +229,9 @@ const UI_T = {
     subdomain_free: '✅ {subdomain}.ttzop.com — available!', subdomain_check_err: 'Check error',
   },
   uk: {
+    tax_block_no: 'Ми поки не продаємо в цю країну', tax_block_b2b: 'У цю країну продаємо тільки фірмам — введіть податковий номер',
+    form_country: 'Країна', form_taxnum: 'Податковий номер (для фірм)', form_taxnum_hint: 'Є номер — рахунок без ПДВ (reverse charge)',
+    tax_checking: 'перевіряємо…', tax_lvl_verified: '✓ підтверджено в реєстрі', tax_lvl_declared: 'записано з ваших слів', tax_lvl_invalid: '✗ реєстр каже: номер недійсний',
     book_title: "Запис на {name}", book_date: "Дата", book_time: "Час", book_loading: "Шукаємо вільний час…", book_none: "На цей день вільного часу немає", book_confirm: "Записатися на {d} о {t}?", book_done: "Готово! Вас записано на {d} о {t}. Деталі — в кабінеті.", book_taken: "Цей час щойно зайняли. Оберіть інший.", book_login: "Щоб записатися, увійдіть до кабінету", book_err: "Не вдалося. Спробуйте пізніше", book_seats: "Місць:", book_full: "Місць не залишилося — оберіть інший час", grp_upto: "Група до {n} учасників", tr_err: "Не вдалося перекласти. Спробуйте пізніше.", tr_limit: "Ліміт AI-перекладів на місяць вичерпано ({max}/міс).", tr_nothing: "Немає чого перекладати: всі мови заповнені.", ed_tr_confirm: "Перекласти порожні мови сторінки з {from}? Залишилося {n} з {max} цього місяця.", ed_tr_done: "Перекладено полів: {k}. Залишилося {n}.", pe_title: "Редагувати фото", pe_crop_free: "Без обрізання", pe_bright: "Яскравість", pe_sat: "Насиченість", pe_rotate: "Поворот", pe_flip: "Дзеркало", pe_contrast: "Контраст", pe_warm: "Теплота", pe_sharp: "Різкість", pe_blur: "Розмиття", pe_vig: "Він'єтка", pe_reset: "Скинути", pe_skip: "Без правок", pe_skip_all: "Без правок для всіх", pe_done: "Готово", pe_cancel: "Скасувати", trpack_sub_label: "Піддомен вашого сайту (кому нарахувати переклади)", form_err_trpack: "Вкажіть піддомен сайту для пакета перекладів", dep_next: "Найближчий виїзд", dep_left: "вільних місць", tk_title: "Квиток", tk_valid: "Дійсний", tk_cancelled: "Скасований", tk_past: "Минулий", tk_notfound: "Квиток не знайдено", tk_seats: "Місць", route_teaser: "Маршрут ({n}) · ~{t}", route_plan: "План маршруту", route_stop: "Зупинка", route_transfer: "🚶 Переїзд ~{t}", route_gmaps: "Відкрити маршрут у Google Maps", unit_h: "год", unit_min: "хв", show_more:'Показати ще', show_less:'Сховати', view_toggle:'Картки / Список',
     hours_your_tz: 'у вашому поясі:', sched_dayoff: 'вихідний', sched_everyday: 'Щодня',
     cart_title: 'Кошик: {n} послуг(и)', cart_clear: 'Очистити', cart_order: 'Оформити замовлення →', cart_remove: 'Видалити', cart_subtotal: 'Сума', cart_delivery: 'Доставка', cart_total: 'Разом', cart_empty: 'Кошик порожній', cab_chat: 'Чат', cab_logout: 'Вийти', cab_cabinet: 'Кабінет', cart_address: 'Адреса доставки', cart_addr_none: 'Додати адресу в кабінеті', cab_logout_confirm: 'Вийти з кабінету? Наступний вхід — лише через новий код на email.',
@@ -267,6 +276,9 @@ const UI_T = {
     subdomain_free: '✅ {subdomain}.ttzop.com — вільний!', subdomain_check_err: 'Помилка перевірки',
   },
   ru: {
+    tax_block_no: 'Мы пока не продаём в эту страну', tax_block_b2b: 'В эту страну продаём только фирмам — введите налоговый номер',
+    form_country: 'Страна', form_taxnum: 'Налоговый номер (для фирм)', form_taxnum_hint: 'Есть номер — счёт без НДС (reverse charge)',
+    tax_checking: 'проверяем…', tax_lvl_verified: '✓ подтверждено в реестре', tax_lvl_declared: 'записано с ваших слов', tax_lvl_invalid: '✗ реестр говорит: номер недействителен',
     book_title: "Запись на {name}", book_date: "Дата", book_time: "Время", book_loading: "Ищем свободное время…", book_none: "На этот день свободного времени нет", book_confirm: "Записаться на {d} в {t}?", book_done: "Готово! Вы записаны на {d} в {t}. Детали — в кабинете.", book_taken: "Это время только что заняли. Выберите другое.", book_login: "Чтобы записаться, войдите в кабинет", book_err: "Не получилось. Попробуйте позже", book_seats: "Мест:", book_full: "Мест не осталось — выберите другое время", grp_upto: "Группа до {n} участников", tr_err: "Не удалось перевести. Попробуйте позже.", tr_limit: "Лимит AI-переводов на месяц исчерпан ({max}/мес).", tr_nothing: "Нечего переводить: все языки заполнены.", ed_tr_confirm: "Перевести пустые языки страницы с {from}? Осталось {n} из {max} в этом месяце.", ed_tr_done: "Переведено полей: {k}. Осталось {n}.", pe_title: "Редактировать фото", pe_crop_free: "Без обрезки", pe_bright: "Яркость", pe_sat: "Насыщенность", pe_rotate: "Поворот", pe_flip: "Зеркало", pe_contrast: "Контраст", pe_warm: "Теплота", pe_sharp: "Резкость", pe_blur: "Размытие", pe_vig: "Виньетка", pe_reset: "Сбросить", pe_skip: "Без правок", pe_skip_all: "Без правок для всех", pe_done: "Готово", pe_cancel: "Отменить", trpack_sub_label: "Поддомен вашего сайта (кому начислить переводы)", form_err_trpack: "Укажите поддомен сайта для пакета переводов", dep_next: "Ближайший выезд", dep_left: "свободных мест", tk_title: "Билет", tk_valid: "Действителен", tk_cancelled: "Аннулирован", tk_past: "Прошедший", tk_notfound: "Билет не найден", tk_seats: "Мест", route_teaser: "Маршрут ({n}) · ~{t}", route_plan: "План маршрута", route_stop: "Остановка", route_transfer: "🚶 Переезд ~{t}", route_gmaps: "Открыть маршрут в Google Maps", unit_h: "ч", unit_min: "мин", show_more:'Показать ещё', show_less:'Скрыть', view_toggle:'Карточки / Список',
     hours_your_tz: 'в вашем поясе:', sched_dayoff: 'выходной', sched_everyday: 'Ежедневно',
     cart_title: 'Корзина: {n} услуг(и)', cart_clear: 'Очистить', cart_order: 'Оформить заказ →', cart_remove: 'Удалить', cart_subtotal: 'Сумма', cart_delivery: 'Доставка', cart_total: 'Итого', cart_empty: 'Корзина пуста', cab_chat: 'Чат', cab_logout: 'Выйти', cab_cabinet: 'Кабинет', cart_address: 'Адрес доставки', cart_addr_none: 'Добавить адрес в кабинете', cab_logout_confirm: 'Выйти из кабинета? Следующий вход — только через новый код на email.',
@@ -311,6 +323,9 @@ const UI_T = {
     subdomain_free: '✅ {subdomain}.ttzop.com — свободен!', subdomain_check_err: 'Ошибка проверки',
   },
   pl: {
+    tax_block_no: 'Do tego kraju na razie nie sprzedajemy', tax_block_b2b: 'Do tego kraju sprzedajemy tylko firmom — podaj numer podatkowy',
+    form_country: 'Kraj', form_taxnum: 'Numer podatkowy (dla firm)', form_taxnum_hint: 'Z numerem faktura bez VAT (odwrotne obciążenie)',
+    tax_checking: 'sprawdzamy…', tax_lvl_verified: '✓ potwierdzony w rejestrze', tax_lvl_declared: 'zapisany zgodnie z podaniem', tax_lvl_invalid: '✗ rejestr: numer nieprawidłowy',
     book_title: "Rezerwacja: {name}", book_date: "Data", book_time: "Godzina", book_loading: "Szukamy wolnych terminów…", book_none: "Brak wolnych terminów tego dnia", book_confirm: "Zarezerwować {d} o {t}?", book_done: "Gotowe! Rezerwacja na {d} o {t}. Szczegóły w panelu klienta.", book_taken: "Ten termin właśnie zajęto. Wybierz inny.", book_login: "Zaloguj się, aby zarezerwować", book_err: "Nie udało się. Spróbuj później", book_seats: "Miejsca:", book_full: "Brak miejsc — wybierz inny czas", grp_upto: "Grupa do {n} osób", tr_err: "Tłumaczenie nie powiodło się. Spróbuj później.", tr_limit: "Miesięczny limit tłumaczeń AI wyczerpany ({max}/mies.).", tr_nothing: "Nie ma czego tłumaczyć: wszystkie języki wypełnione.", ed_tr_confirm: "Przetłumaczyć puste języki strony z {from}? Pozostało {n} z {max} w tym miesiącu.", ed_tr_done: "Przetłumaczone pola: {k}. Pozostało {n}.", pe_title: "Edytuj zdjęcie", pe_crop_free: "Bez kadrowania", pe_bright: "Jasność", pe_sat: "Nasycenie", pe_rotate: "Obróć", pe_flip: "Lustro", pe_contrast: "Kontrast", pe_warm: "Ciepło", pe_sharp: "Ostrość", pe_blur: "Rozmycie", pe_vig: "Winieta", pe_reset: "Resetuj", pe_skip: "Bez zmian", pe_skip_all: "Bez zmian dla wszystkich", pe_done: "Gotowe", pe_cancel: "Anuluj", trpack_sub_label: "Subdomena Twojej strony (kto otrzyma tłumaczenia)", form_err_trpack: "Podaj subdomenę strony dla pakietu tłumaczeń", dep_next: "Najbliższy termin", dep_left: "wolnych miejsc", tk_title: "Bilet", tk_valid: "Ważny", tk_cancelled: "Anulowany", tk_past: "Miniony", tk_notfound: "Nie znaleziono biletu", tk_seats: "Miejsca", route_teaser: "Trasa ({n}) · ~{t}", route_plan: "Plan trasy", route_stop: "Przystanek", route_transfer: "🚶 Przejazd ~{t}", route_gmaps: "Otwórz trasę w Google Maps", unit_h: "godz.", unit_min: "min", show_more:'Pokaż więcej', show_less:'Ukryj', view_toggle:'Karty / Lista',
     hours_your_tz: 'u Ciebie:', sched_dayoff: 'wolne', sched_everyday: 'Codziennie',
     cart_title: 'Koszyk: {n} usług(i)', cart_clear: 'Wyczyść', cart_order: 'Złóż zamówienie →', cart_remove: 'Usuń', cart_subtotal: 'Suma', cart_delivery: 'Dostawa', cart_total: 'Razem', cart_empty: 'Koszyk jest pusty', cab_chat: 'Czat', cab_logout: 'Wyloguj', cab_cabinet: 'Konto', cart_address: 'Adres dostawy', cart_addr_none: 'Dodaj adres w koncie', cab_logout_confirm: 'Wylogować się? Następne logowanie będzie wymagać nowego kodu e-mail.',
@@ -355,6 +370,9 @@ const UI_T = {
     subdomain_free: '✅ {subdomain}.ttzop.com — wolny!', subdomain_check_err: 'Błąd sprawdzania',
   },
   de: {
+    tax_block_no: 'In dieses Land verkaufen wir derzeit nicht', tax_block_b2b: 'In dieses Land verkaufen wir nur an Firmen — Steuernummer eingeben',
+    form_country: 'Land', form_taxnum: 'Steuernummer (für Firmen)', form_taxnum_hint: 'Mit Nummer: Rechnung ohne MwSt. (Reverse Charge)',
+    tax_checking: 'wird geprüft…', tax_lvl_verified: '✓ im Register bestätigt', tax_lvl_declared: 'wie angegeben erfasst', tax_lvl_invalid: '✗ Register: Nummer ungültig',
     book_title: "Termin: {name}", book_date: "Datum", book_time: "Uhrzeit", book_loading: "Freie Zeiten werden gesucht…", book_none: "An diesem Tag sind keine Termine frei", book_confirm: "Termin am {d} um {t} buchen?", book_done: "Fertig! Ihr Termin: {d} um {t}. Details im Kundenkonto.", book_taken: "Dieser Termin wurde gerade vergeben. Bitte wählen Sie einen anderen.", book_login: "Zum Buchen bitte im Kundenkonto anmelden", book_err: "Hat nicht geklappt. Bitte später versuchen", book_seats: "Plätze:", book_full: "Keine Plätze mehr — wählen Sie eine andere Zeit", grp_upto: "Gruppe bis {n} Teilnehmer", tr_err: "Übersetzung fehlgeschlagen. Später versuchen.", tr_limit: "Monatslimit für KI-Übersetzungen erreicht ({max}/Mon.).", tr_nothing: "Nichts zu übersetzen: alle Sprachen sind gefüllt.", ed_tr_confirm: "Leere Sprachen der Seite aus {from} übersetzen? {n} von {max} diesen Monat übrig.", ed_tr_done: "Übersetzte Felder: {k}. {n} übrig.", pe_title: "Foto bearbeiten", pe_crop_free: "Ohne Zuschnitt", pe_bright: "Helligkeit", pe_sat: "Sättigung", pe_rotate: "Drehen", pe_flip: "Spiegeln", pe_contrast: "Kontrast", pe_warm: "Wärme", pe_sharp: "Schärfe", pe_blur: "Weichzeichnen", pe_vig: "Vignette", pe_reset: "Zurücksetzen", pe_skip: "Ohne Änderungen", pe_skip_all: "Ohne Änderungen für alle", pe_done: "Fertig", pe_cancel: "Abbrechen", trpack_sub_label: "Subdomain Ihrer Website (wem die Übersetzungen gutgeschrieben werden)", form_err_trpack: "Geben Sie die Subdomain für das Übersetzungspaket an", dep_next: "Nächster Termin", dep_left: "freie Plätze", tk_title: "Ticket", tk_valid: "Gültig", tk_cancelled: "Storniert", tk_past: "Abgelaufen", tk_notfound: "Ticket nicht gefunden", tk_seats: "Plätze", route_teaser: "Route ({n}) · ~{t}", route_plan: "Routenplan", route_stop: "Halt", route_transfer: "🚶 Weiterfahrt ~{t}", route_gmaps: "Route in Google Maps öffnen", unit_h: "Std.", unit_min: "Min.", show_more:'Mehr anzeigen', show_less:'Ausblenden', view_toggle:'Karten / Liste',
     hours_your_tz: 'bei Ihnen:', sched_dayoff: 'geschlossen', sched_everyday: 'Täglich',
     cart_title: 'Warenkorb: {n} Leistung(en)', cart_clear: 'Leeren', cart_order: 'Bestellen →', cart_remove: 'Entfernen', cart_subtotal: 'Zwischensumme', cart_delivery: 'Lieferung', cart_total: 'Gesamt', cart_empty: 'Warenkorb ist leer', cab_chat: 'Chat', cab_logout: 'Abmelden', cab_cabinet: 'Konto', cart_address: 'Lieferadresse', cart_addr_none: 'Adresse im Konto hinzufügen', cab_logout_confirm: 'Abmelden? Für die nächste Anmeldung benötigen Sie einen neuen E-Mail-Code.',
@@ -399,6 +417,9 @@ const UI_T = {
     subdomain_free: '✅ {subdomain}.ttzop.com — verfügbar!', subdomain_check_err: 'Prüffehler',
   },
   fr: {
+    tax_block_no: 'Nous ne vendons pas encore dans ce pays', tax_block_b2b: 'Dans ce pays, nous vendons uniquement aux entreprises — saisissez un numéro fiscal',
+    form_country: 'Pays', form_taxnum: 'Numéro fiscal (pour les entreprises)', form_taxnum_hint: 'Avec un numéro : facture sans TVA (autoliquidation)',
+    tax_checking: 'vérification…', tax_lvl_verified: '✓ confirmé au registre', tax_lvl_declared: 'enregistré tel que saisi', tax_lvl_invalid: '✗ registre : numéro non valide',
     book_title: "Réserver : {name}", book_date: "Date", book_time: "Heure", book_loading: "Recherche de créneaux…", book_none: "Aucun créneau libre ce jour-là", book_confirm: "Réserver le {d} à {t} ?", book_done: "C'est fait ! Rendez-vous le {d} à {t}. Détails dans votre espace client.", book_taken: "Ce créneau vient d'être pris. Choisissez-en un autre.", book_login: "Connectez-vous à votre espace pour réserver", book_err: "Échec. Réessayez plus tard", book_seats: "Places :", book_full: "Plus de places — choisissez un autre horaire", grp_upto: "Groupe jusqu’à {n}", tr_err: "La traduction a échoué. Réessayez plus tard.", tr_limit: "Limite mensuelle de traductions IA atteinte ({max}/mois).", tr_nothing: "Rien à traduire : toutes les langues sont remplies.", ed_tr_confirm: "Traduire les langues vides de la page depuis {from} ? Il reste {n} sur {max} ce mois-ci.", ed_tr_done: "Champs traduits : {k}. Il reste {n}.", pe_title: "Modifier la photo", pe_crop_free: "Sans recadrage", pe_bright: "Luminosité", pe_sat: "Saturation", pe_rotate: "Pivoter", pe_flip: "Miroir", pe_contrast: "Contraste", pe_warm: "Chaleur", pe_sharp: "Netteté", pe_blur: "Flou", pe_vig: "Vignettage", pe_reset: "Réinitialiser", pe_skip: "Sans retouches", pe_skip_all: "Sans retouches pour toutes", pe_done: "Terminé", pe_cancel: "Annuler", trpack_sub_label: "Sous-domaine de votre site (qui reçoit les traductions)", form_err_trpack: "Indiquez le sous-domaine du site pour le pack de traductions", dep_next: "Prochain départ", dep_left: "places libres", tk_title: "Billet", tk_valid: "Valide", tk_cancelled: "Annulé", tk_past: "Passé", tk_notfound: "Billet introuvable", tk_seats: "Places", route_teaser: "Itinéraire ({n}) · ~{t}", route_plan: "Plan de l’itinéraire", route_stop: "Étape", route_transfer: "🚶 Trajet ~{t}", route_gmaps: "Ouvrir l’itinéraire dans Google Maps", unit_h: "h", unit_min: "min", show_more:'Afficher plus', show_less:'Masquer', view_toggle:'Cartes / Liste',
     hours_your_tz: 'chez vous :', sched_dayoff: 'fermé', sched_everyday: 'Tous les jours',
     cart_title: 'Panier : {n} service(s)', cart_clear: 'Vider', cart_order: 'Passer la commande →', cart_remove: 'Supprimer', cart_subtotal: 'Sous-total', cart_delivery: 'Livraison', cart_total: 'Total', cart_empty: 'Le panier est vide', cab_chat: 'Chat', cab_logout: 'Se déconnecter', cab_cabinet: 'Compte', cart_address: 'Adresse de livraison', cart_addr_none: 'Ajouter une adresse dans le compte', cab_logout_confirm: 'Se déconnecter ? La prochaine connexion nécessitera un nouveau code par e-mail.',
@@ -443,6 +464,9 @@ const UI_T = {
     subdomain_free: '✅ {subdomain}.ttzop.com — disponible!', subdomain_check_err: 'Erreur de vérification',
   },
   es: {
+    tax_block_no: 'Todavía no vendemos a este país', tax_block_b2b: 'A este país vendemos solo a empresas — introduzca un número fiscal',
+    form_country: 'País', form_taxnum: 'Número fiscal (para empresas)', form_taxnum_hint: 'Con número: factura sin IVA (inversión del sujeto pasivo)',
+    tax_checking: 'comprobando…', tax_lvl_verified: '✓ confirmado en el registro', tax_lvl_declared: 'registrado según lo indicado', tax_lvl_invalid: '✗ registro: número no válido',
     book_title: "Reservar: {name}", book_date: "Fecha", book_time: "Hora", book_loading: "Buscando horas libres…", book_none: "No hay horas libres ese día", book_confirm: "¿Reservar el {d} a las {t}?", book_done: "¡Listo! Cita el {d} a las {t}. Detalles en tu cuenta.", book_taken: "Esa hora acaba de ocuparse. Elige otra.", book_login: "Inicia sesión para reservar", book_err: "No se pudo. Inténtalo más tarde", book_seats: "Plazas:", book_full: "No quedan plazas — elija otra hora", grp_upto: "Grupo de hasta {n}", tr_err: "No se pudo traducir. Inténtelo más tarde.", tr_limit: "Límite mensual de traducciones IA agotado ({max}/mes).", tr_nothing: "Nada que traducir: todos los idiomas están completos.", ed_tr_confirm: "¿Traducir los idiomas vacíos de la página desde {from}? Quedan {n} de {max} este mes.", ed_tr_done: "Campos traducidos: {k}. Quedan {n}.", pe_title: "Editar la foto", pe_crop_free: "Sin recorte", pe_bright: "Brillo", pe_sat: "Saturación", pe_rotate: "Girar", pe_flip: "Espejo", pe_contrast: "Contraste", pe_warm: "Calidez", pe_sharp: "Nitidez", pe_blur: "Desenfoque", pe_vig: "Viñeta", pe_reset: "Restablecer", pe_skip: "Sin cambios", pe_skip_all: "Sin cambios para todas", pe_done: "Listo", pe_cancel: "Cancelar", trpack_sub_label: "Subdominio de su sitio (quién recibe las traducciones)", form_err_trpack: "Indique el subdominio del sitio para el pack de traducciones", dep_next: "Próxima salida", dep_left: "plazas libres", tk_title: "Entrada", tk_valid: "Válida", tk_cancelled: "Anulada", tk_past: "Pasada", tk_notfound: "Entrada no encontrada", tk_seats: "Plazas", route_teaser: "Ruta ({n}) · ~{t}", route_plan: "Plan de la ruta", route_stop: "Parada", route_transfer: "🚶 Traslado ~{t}", route_gmaps: "Abrir la ruta en Google Maps", unit_h: "h", unit_min: "min", show_more:'Mostrar más', show_less:'Ocultar', view_toggle:'Tarjetas / Lista',
     hours_your_tz: 'en tu zona:', sched_dayoff: 'cerrado', sched_everyday: 'Todos los días',
     cart_title: 'Carrito: {n} servicio(s)', cart_clear: 'Vaciar', cart_order: 'Realizar pedido →', cart_remove: 'Eliminar', cart_subtotal: 'Subtotal', cart_delivery: 'Envío', cart_total: 'Total', cart_empty: 'El carrito está vacío', cab_chat: 'Chat', cab_logout: 'Cerrar sesión', cab_cabinet: 'Cuenta', cart_address: 'Dirección de entrega', cart_addr_none: 'Añadir dirección en tu cuenta', cab_logout_confirm: '¿Cerrar sesión? La próxima vez necesitarás un nuevo código por correo.',
@@ -487,6 +511,9 @@ const UI_T = {
     subdomain_free: '✅ {subdomain}.ttzop.com — disponible!', subdomain_check_err: 'Error de verificación',
   },
   it: {
+    tax_block_no: 'Non vendiamo ancora in questo paese', tax_block_b2b: 'In questo paese vendiamo solo ad aziende — inserisci il numero fiscale',
+    form_country: 'Paese', form_taxnum: 'Numero fiscale (per aziende)', form_taxnum_hint: 'Con numero: fattura senza IVA (inversione contabile)',
+    tax_checking: 'verifica…', tax_lvl_verified: '✓ confermato nel registro', tax_lvl_declared: 'registrato come indicato', tax_lvl_invalid: '✗ registro: numero non valido',
     book_title: "Prenota: {name}", book_date: "Data", book_time: "Ora", book_loading: "Cerchiamo orari liberi…", book_none: "Nessun orario libero in questo giorno", book_confirm: "Prenotare il {d} alle {t}?", book_done: "Fatto! Appuntamento il {d} alle {t}. Dettagli nell'area clienti.", book_taken: "Questo orario è appena stato preso. Scegline un altro.", book_login: "Accedi all'area clienti per prenotare", book_err: "Non è riuscito. Riprova più tardi", book_seats: "Posti:", book_full: "Posti esauriti — scegli un altro orario", grp_upto: "Gruppo fino a {n}", tr_err: "Traduzione non riuscita. Riprova più tardi.", tr_limit: "Limite mensile di traduzioni IA esaurito ({max}/mese).", tr_nothing: "Niente da tradurre: tutte le lingue sono compilate.", ed_tr_confirm: "Tradurre le lingue vuote della pagina da {from}? Restano {n} di {max} questo mese.", ed_tr_done: "Campi tradotti: {k}. Restano {n}.", pe_title: "Modifica foto", pe_crop_free: "Senza ritaglio", pe_bright: "Luminosità", pe_sat: "Saturazione", pe_rotate: "Ruota", pe_flip: "Specchio", pe_contrast: "Contrasto", pe_warm: "Calore", pe_sharp: "Nitidezza", pe_blur: "Sfocatura", pe_vig: "Vignettatura", pe_reset: "Reimposta", pe_skip: "Senza modifiche", pe_skip_all: "Senza modifiche per tutte", pe_done: "Fatto", pe_cancel: "Annulla", trpack_sub_label: "Sottodominio del tuo sito (chi riceve le traduzioni)", form_err_trpack: "Indica il sottodominio del sito per il pacchetto di traduzioni", dep_next: "Prossima partenza", dep_left: "posti liberi", tk_title: "Biglietto", tk_valid: "Valido", tk_cancelled: "Annullato", tk_past: "Passato", tk_notfound: "Biglietto non trovato", tk_seats: "Posti", route_teaser: "Percorso ({n}) · ~{t}", route_plan: "Piano del percorso", route_stop: "Tappa", route_transfer: "🚶 Trasferimento ~{t}", route_gmaps: "Apri il percorso in Google Maps", unit_h: "h", unit_min: "min", show_more:'Mostra altro', show_less:'Nascondi', view_toggle:'Schede / Elenco',
     hours_your_tz: 'da te:', sched_dayoff: 'chiuso', sched_everyday: 'Ogni giorno',
     cart_title: 'Carrello: {n} servizio/i', cart_clear: 'Svuota', cart_order: 'Effettua ordine →', cart_remove: 'Rimuovi', cart_subtotal: 'Subtotale', cart_delivery: 'Consegna', cart_total: 'Totale', cart_empty: 'Il carrello è vuoto', cab_chat: 'Chat', cab_logout: 'Esci', cab_cabinet: 'Account', cart_address: 'Indirizzo di consegna', cart_addr_none: 'Aggiungi un indirizzo nel tuo account', cab_logout_confirm: 'Uscire? Al prossimo accesso servirà un nuovo codice via e-mail.',
@@ -531,6 +558,9 @@ const UI_T = {
     subdomain_free: '✅ {subdomain}.ttzop.com — disponibile!', subdomain_check_err: 'Errore di verifica',
   },
   pt: {
+    tax_block_no: 'Ainda não vendemos para este país', tax_block_b2b: 'Para este país vendemos apenas a empresas — indique o número fiscal',
+    form_country: 'País', form_taxnum: 'Número fiscal (para empresas)', form_taxnum_hint: 'Com número: fatura sem IVA (autoliquidação)',
+    tax_checking: 'verificando…', tax_lvl_verified: '✓ confirmado no registo', tax_lvl_declared: 'registado conforme indicado', tax_lvl_invalid: '✗ registo: número inválido',
     book_title: "Marcar: {name}", book_date: "Data", book_time: "Hora", book_loading: "A procurar horários livres…", book_none: "Não há horários livres neste dia", book_confirm: "Marcar {d} às {t}?", book_done: "Pronto! Marcação em {d} às {t}. Detalhes na sua conta.", book_taken: "Esse horário acabou de ser ocupado. Escolha outro.", book_login: "Entre na sua conta para marcar", book_err: "Não foi possível. Tente mais tarde", book_seats: "Lugares:", book_full: "Sem lugares — escolha outro horário", grp_upto: "Grupo até {n}", tr_err: "Falha na tradução. Tente mais tarde.", tr_limit: "Limite mensal de traduções IA esgotado ({max}/mês).", tr_nothing: "Nada para traduzir: todos os idiomas preenchidos.", ed_tr_confirm: "Traduzir os idiomas vazios da página de {from}? Restam {n} de {max} neste mês.", ed_tr_done: "Campos traduzidos: {k}. Restam {n}.", pe_title: "Editar foto", pe_crop_free: "Sem corte", pe_bright: "Brilho", pe_sat: "Saturação", pe_rotate: "Girar", pe_flip: "Espelho", pe_contrast: "Contraste", pe_warm: "Calor", pe_sharp: "Nitidez", pe_blur: "Desfoque", pe_vig: "Vinheta", pe_reset: "Redefinir", pe_skip: "Sem edições", pe_skip_all: "Sem edições para todas", pe_done: "Concluído", pe_cancel: "Cancelar", trpack_sub_label: "Subdomínio do seu site (quem recebe as traduções)", form_err_trpack: "Informe o subdomínio do site para o pacote de traduções", dep_next: "Próxima partida", dep_left: "lugares livres", tk_title: "Bilhete", tk_valid: "Válido", tk_cancelled: "Cancelado", tk_past: "Passado", tk_notfound: "Bilhete não encontrado", tk_seats: "Lugares", route_teaser: "Roteiro ({n}) · ~{t}", route_plan: "Plano do roteiro", route_stop: "Parada", route_transfer: "🚶 Deslocamento ~{t}", route_gmaps: "Abrir o roteiro no Google Maps", unit_h: "h", unit_min: "min", show_more:'Mostrar mais', show_less:'Ocultar', view_toggle:'Cartões / Lista',
     hours_your_tz: 'no seu fuso:', sched_dayoff: 'fechado', sched_everyday: 'Todos os dias',
     cart_title: 'Carrinho: {n} serviço(s)', cart_clear: 'Limpar', cart_order: 'Fazer pedido →', cart_remove: 'Remover', cart_subtotal: 'Subtotal', cart_delivery: 'Entrega', cart_total: 'Total', cart_empty: 'O carrinho está vazio', cab_chat: 'Chat', cab_logout: 'Sair', cab_cabinet: 'Conta', cart_address: 'Endereço de entrega', cart_addr_none: 'Adicionar endereço na sua conta', cab_logout_confirm: 'Sair? No próximo acesso será necessário um novo código por e-mail.',
@@ -575,6 +605,9 @@ const UI_T = {
     subdomain_free: '✅ {subdomain}.ttzop.com — disponível!', subdomain_check_err: 'Erro de verificação',
   },
   zh: {
+    tax_block_no: '我们暂不向该国家/地区销售', tax_block_b2b: '该国家/地区仅向企业销售 — 请填写税号',
+    form_country: '国家/地区', form_taxnum: '税号（企业）', form_taxnum_hint: '填写税号则开具不含增值税发票（反向征收）',
+    tax_checking: '检查中…', tax_lvl_verified: '✓ 已在登记处确认', tax_lvl_declared: '按您填写的内容记录', tax_lvl_invalid: '✗ 登记处：该税号无效',
     book_title: "预约：{name}", book_date: "日期", book_time: "时间", book_loading: "正在查找空闲时间…", book_none: "当天没有空闲时间", book_confirm: "预约 {d} {t}？", book_done: "完成！已为您预约 {d} {t}。详情请见客户中心。", book_taken: "该时段刚被占用，请另选一个。", book_login: "请先登录客户中心再预约", book_err: "操作失败，请稍后再试", book_seats: "人数：", book_full: "名额已满 — 请选择其他时间", grp_upto: "团体最多 {n} 人", tr_err: "翻译失败，请稍后再试。", tr_limit: "本月 AI 翻译额度已用完（{max}/月）。", tr_nothing: "没有可翻译的内容：所有语言均已填写。", ed_tr_confirm: "从 {from} 翻译页面的空白语言？本月剩余 {n}/{max}。", ed_tr_done: "已翻译字段：{k}。剩余 {n}。", pe_title: "编辑照片", pe_crop_free: "不裁剪", pe_bright: "亮度", pe_sat: "饱和度", pe_rotate: "旋转", pe_flip: "镜像", pe_contrast: "对比度", pe_warm: "色温", pe_sharp: "锐度", pe_blur: "模糊", pe_vig: "暗角", pe_reset: "重置", pe_skip: "不修改", pe_skip_all: "全部不修改", pe_done: "完成", pe_cancel: "取消", trpack_sub_label: "您网站的子域名（翻译额度计入谁）", form_err_trpack: "请填写翻译套餐的目标站点子域名", dep_next: "最近班次", dep_left: "剩余名额", tk_title: "票", tk_valid: "有效", tk_cancelled: "已取消", tk_past: "已过期", tk_notfound: "未找到票", tk_seats: "座位", route_teaser: "路线（{n}）· 约{t}", route_plan: "路线计划", route_stop: "站点", route_transfer: "🚶 前往下一站 约{t}", route_gmaps: "在 Google 地图中打开路线", unit_h: "小时", unit_min: "分钟", show_more:'显示更多', show_less:'收起', view_toggle:'卡片 / 列表',
     hours_your_tz: '您的时间：', sched_dayoff: '休息', sched_everyday: '每天',
     cart_title: '购物车：{n} 项服务', cart_clear: '清空', cart_order: '下单 →', cart_remove: '删除', cart_subtotal: '小计', cart_delivery: '配送', cart_total: '合计', cart_empty: '购物车为空', cab_chat: '聊天', cab_logout: '退出', cab_cabinet: '我的账户', cart_address: '配送地址', cart_addr_none: '在账户中添加地址', cab_logout_confirm: '确定退出吗？下次登录需要新的邮箱验证码。',
@@ -619,6 +652,9 @@ const UI_T = {
     subdomain_free: '✅ {subdomain}.ttzop.com — 可用！', subdomain_check_err: '检查错误',
   },
   ar: {
+    tax_block_no: 'لا نبيع إلى هذه الدولة حالياً', tax_block_b2b: 'نبيع في هذه الدولة للشركات فقط — أدخل الرقم الضريبي',
+    form_country: 'الدولة', form_taxnum: 'الرقم الضريبي (للشركات)', form_taxnum_hint: 'مع الرقم تصدر الفاتورة بدون ضريبة القيمة المضافة',
+    tax_checking: 'جارٍ التحقق…', tax_lvl_verified: '✓ مؤكد في السجل', tax_lvl_declared: 'مسجل كما أدخلته', tax_lvl_invalid: '✗ السجل: الرقم غير صالح',
     book_title: "حجز: {name}", book_date: "التاريخ", book_time: "الوقت", book_loading: "جارٍ البحث عن أوقات متاحة…", book_none: "لا توجد أوقات متاحة في هذا اليوم", book_confirm: "الحجز في {d} الساعة {t}؟", book_done: "تم! حجزك في {d} الساعة {t}. التفاصيل في حسابك.", book_taken: "تم حجز هذا الوقت للتو. اختر وقتًا آخر.", book_login: "سجّل الدخول إلى حسابك للحجز", book_err: "لم ينجح. حاول لاحقًا", book_seats: "عدد الأماكن:", book_full: "لا أماكن متبقية — اختر وقتاً آخر", grp_upto: "مجموعة حتى {n}", tr_err: "فشلت الترجمة. حاول لاحقًا.", tr_limit: "استُنفد حد ترجمات AI الشهري ({max}/شهر).", tr_nothing: "لا شيء للترجمة: جميع اللغات معبأة.", ed_tr_confirm: "ترجمة اللغات الفارغة للصفحة من {from}؟ تبقى {n} من {max} هذا الشهر.", ed_tr_done: "الحقول المترجمة: {k}. تبقى {n}.", pe_title: "تحرير الصورة", pe_crop_free: "بدون قص", pe_bright: "السطوع", pe_sat: "التشبع", pe_rotate: "تدوير", pe_flip: "انعكاس", pe_contrast: "التباين", pe_warm: "الدفء", pe_sharp: "الحدة", pe_blur: "ضبابية", pe_vig: "تظليل الحواف", pe_reset: "إعادة تعيين", pe_skip: "بدون تعديل", pe_skip_all: "بدون تعديل للكل", pe_done: "تم", pe_cancel: "إلغاء", trpack_sub_label: "النطاق الفرعي لموقعك (من يستلم الترجمات)", form_err_trpack: "أدخل النطاق الفرعي للموقع لحزمة الترجمات", dep_next: "أقرب موعد", dep_left: "مقاعد متاحة", tk_title: "التذكرة", tk_valid: "صالحة", tk_cancelled: "ملغاة", tk_past: "منتهية", tk_notfound: "التذكرة غير موجودة", tk_seats: "المقاعد", route_teaser: "المسار ({n}) · ~{t}", route_plan: "خطة المسار", route_stop: "محطة", route_transfer: "🚶 انتقال ~{t}", route_gmaps: "افتح المسار في خرائط Google", unit_h: "س", unit_min: "د", show_more:'عرض المزيد', show_less:'إخفاء', view_toggle:'بطاقات / قائمة',
     hours_your_tz: 'بتوقيتك:', sched_dayoff: 'إجازة', sched_everyday: 'كل يوم',
     cart_title: 'السلة: {n} خدمة', cart_clear: 'إفراغ', cart_order: '← تقديم الطلب', cart_remove: 'حذف', cart_subtotal: 'المجموع الفرعي', cart_delivery: 'التوصيل', cart_total: 'الإجمالي', cart_empty: 'السلة فارغة', cab_chat: 'الدردشة', cab_logout: 'خروج', cab_cabinet: 'حسابي', cart_address: 'عنوان التوصيل', cart_addr_none: 'أضف عنوانًا في حسابك', cab_logout_confirm: 'تسجيل الخروج؟ ستحتاج إلى رمز بريد إلكتروني جديد للدخول مرة أخرى.',
@@ -663,6 +699,9 @@ const UI_T = {
     subdomain_free: '✅ {subdomain}.ttzop.com — متاح!', subdomain_check_err: 'خطأ في التحقق',
   },
   hu: {
+    tax_block_no: 'Ebbe az országba egyelőre nem értékesítünk', tax_block_b2b: 'Ebbe az országba csak cégeknek értékesítünk — adja meg az adószámot',
+    form_country: 'Ország', form_taxnum: 'Adószám (cégeknek)', form_taxnum_hint: 'Adószámmal a számla áfa nélkül készül (fordított adózás)',
+    tax_checking: 'ellenőrzés…', tax_lvl_verified: '✓ megerősítve a nyilvántartásban', tax_lvl_declared: 'az Ön megadása szerint rögzítve', tax_lvl_invalid: '✗ nyilvántartás: érvénytelen szám',
     book_title: "Időpont: {name}", book_date: "Dátum", book_time: "Időpont", book_loading: "Szabad időpontok keresése…", book_none: "Ezen a napon nincs szabad időpont", book_confirm: "Lefoglalja: {d} {t}?", book_done: "Kész! Időpontja: {d} {t}. Részletek a fiókjában.", book_taken: "Ezt az időpontot épp lefoglalták. Válasszon másikat.", book_login: "A foglaláshoz jelentkezzen be a fiókjába", book_err: "Nem sikerült. Próbálja később", book_seats: "Helyek:", book_full: "Nincs több hely — válasszon másik időpontot", grp_upto: "Csoport max. {n} fő", tr_err: "A fordítás nem sikerült. Próbáld később.", tr_limit: "A havi AI-fordítási keret elfogyott ({max}/hó).", tr_nothing: "Nincs mit fordítani: minden nyelv kitöltve.", ed_tr_confirm: "Lefordítsuk az oldal üres nyelveit erről: {from}? Maradt {n}/{max} ebben a hónapban.", ed_tr_done: "Lefordított mezők: {k}. Maradt {n}.", pe_title: "Fotó szerkesztése", pe_crop_free: "Vágás nélkül", pe_bright: "Fényerő", pe_sat: "Telítettség", pe_rotate: "Forgatás", pe_flip: "Tükrözés", pe_contrast: "Kontraszt", pe_warm: "Melegség", pe_sharp: "Élesség", pe_blur: "Elmosás", pe_vig: "Vignetta", pe_reset: "Visszaállítás", pe_skip: "Módosítás nélkül", pe_skip_all: "Mindnél módosítás nélkül", pe_done: "Kész", pe_cancel: "Mégse", trpack_sub_label: "Webhelyed aldomainje (ki kapja a fordításokat)", form_err_trpack: "Add meg a webhely aldomainjét a fordítási csomaghoz", dep_next: "Következő indulás", dep_left: "szabad helyek", tk_title: "Jegy", tk_valid: "Érvényes", tk_cancelled: "Törölve", tk_past: "Lejárt", tk_notfound: "A jegy nem található", tk_seats: "Helyek", route_teaser: "Útvonal ({n}) · ~{t}", route_plan: "Útvonalterv", route_stop: "Megálló", route_transfer: "🚶 Átutazás ~{t}", route_gmaps: "Útvonal megnyitása a Google Térképen", unit_h: "ó", unit_min: "perc", show_more:'Továbbiak', show_less:'Elrejtés', view_toggle:'Kártyák / Lista',
     hours_your_tz: 'nálad:', sched_dayoff: 'zárva', sched_everyday: 'Minden nap',
     cart_title: 'Kosár: {n} szolgáltatás', cart_clear: 'Ürítés', cart_order: 'Rendelés leadása →', cart_remove: 'Törlés', cart_subtotal: 'Részösszeg', cart_delivery: 'Szállítás', cart_total: 'Összesen', cart_empty: 'A kosár üres', cab_chat: 'Csevegés', cab_logout: 'Kijelentkezés', cab_cabinet: 'Fiók', cart_address: 'Szállítási cím', cart_addr_none: 'Adj hozzá címet a fiókban', cab_logout_confirm: 'Kijelentkezik? A következő belépéshez új e-mail kód szükséges.',
@@ -2610,6 +2649,20 @@ function showModal(step, privacyHtml = '') {
               style="width:100%;padding:10px 14px;background:#1e2335;border:1.5px solid #2a2f45;border-radius:8px;color:#e8eaf0;font-family:'Manrope',sans-serif;font-size:0.95rem" /><!-- прэфіл з сесіі Кабінета -->
 
           </div>
+          <div style="margin-bottom:16px"><!-- 🧾 краіна + падатковы нумар: вызначаюць B2B/B2C і выгляд фактуры -->
+            <label style="display:block;font-size:0.8rem;font-weight:600;color:#6b7280;text-transform:uppercase;letter-spacing:0.07em;margin-bottom:6px">${getUI().form_country}</label>
+            <select id="order-country-input" onchange="taxNumCheck()"
+              style="width:100%;padding:10px 14px;background:#1e2335;border:1.5px solid #2a2f45;border-radius:8px;color:#e8eaf0;font-family:'Manrope',sans-serif;font-size:0.95rem">
+              ${_taxCountryOptions(_orderCountryDefault())}
+            </select>
+          </div>
+          <div style="margin-bottom:16px">
+            <label style="display:block;font-size:0.8rem;font-weight:600;color:#6b7280;text-transform:uppercase;letter-spacing:0.07em;margin-bottom:6px">${getUI().form_taxnum}</label>
+            <input type="text" id="order-tax-input" placeholder="PL1234567890" onblur="taxNumCheck()"
+              style="width:100%;padding:10px 14px;background:#1e2335;border:1.5px solid #2a2f45;border-radius:8px;color:#e8eaf0;font-family:'Manrope',sans-serif;font-size:0.95rem" />
+            <div style="font-size:0.78rem;color:#6b7280;margin-top:5px">${getUI().form_taxnum_hint}</div>
+            <div id="order-tax-status" style="font-size:0.8rem;margin-top:5px;min-height:18px"></div>
+          </div>
           <div style="margin-bottom:16px">
             <label style="display:block;font-size:0.8rem;font-weight:600;color:#6b7280;text-transform:uppercase;letter-spacing:0.07em;margin-bottom:6px">${getUI().form_note}</label>
             <textarea id="order-note-input" placeholder="${getUI().form_note_ph}" rows="3"
@@ -2823,6 +2876,12 @@ async function sendOrderCode() {
     errEl.textContent = ui.form_err_email;
     return;
   }
+  // 🌍 палітыка краіны: не вядзём чалавека праз код на email, каб адмовіць у канцы (сервер адсячэ ў
+  // register_order у любым разе — тут толькі каб не марнаваць яго час і наш ліміт лістоў)
+  if (_taxBlock) {
+    errEl.textContent = ui[_taxBlock === 'country_blocked' ? 'tax_block_no' : 'tax_block_b2b'];
+    return;
+  }
   if (cartHasSubdomain()) {
     const sub = document.getElementById('order-subdomain-input')?.value.trim().toLowerCase();
     if (!sub) { errEl.textContent = ui.form_err_subdomain; return; }
@@ -2879,6 +2938,69 @@ async function sendOrderCode() {
   }
 }
 
+// ═══ 🧾 КРАІНА + ПАДАТКОВЫ НУМАР У ФОРМЕ ЗАКАЗУ (26.07) ═══
+// Адно поле вызначае падатковы лёс продажу: ёсць дзейсны нумар → B2B (рахунак без ПДВ,
+// reverse charge), няма → B2C (ПДВ па краіне пакупніка). Узровень праверкі вырашае СЕРВЕР.
+// ⚠️ Назвы краін НЕ хардкодзім і не заводзім 13 слоўнікаў — іх дае `Intl.DisplayNames` мовай
+// інтэрфейсу (канон «без хардкоду тэкстаў»). Тут — толькі коды: ЕС (дзе працуе VIES) + рынкі,
+// куды рэальна прадаём. Новая краіна = адзін код у спіс.
+const TAX_COUNTRIES = ['PL','DE','CZ','SK','LT','LV','EE','AT','BE','BG','HR','CY','DK','ES','FI','FR',
+  'GR','HU','IE','IT','LU','MT','NL','PT','RO','SE','SI','GB','NO','CH','US','CA','AU','NZ','UA','TR','AE'];
+// ⚠️ ЗЛОЎЛЕНА ЖЫЎЦОМ 26.07: `Intl.DisplayNames` МОЎЧКІ падае на en-US, калі ў зборцы браўзера няма
+// патрэбнай мовы (у headless Chromium `['be']` → `resolvedOptions().locale === 'en-US'`, вярнула
+// «Austria»). На настольным Chrome беларускія назвы ёсць, але будаваць пазнавальнасць на гэтым нельга
+// (памятаем пра слабыя прылады кліентаў). Таму ISO-код паказваем ЗАЎСЁДЫ: «Аўстрыя (AT)» —
+// нават калі назва з'едзе ў англійскую, чалавек знойдзе сваю краіну па коду.
+function _countryName(code) {
+  let n = code;
+  try { n = new Intl.DisplayNames([currentUiLang], { type: 'region' }).of(code) || code; } catch {}
+  return n === code ? code : `${n} (${code})`;
+}
+// Прэфіл краіны: рэгіён з лакалі браўзера (uk-UA → UA). Гэта здагадка, а не веданне — кліент
+// заўсёды можа змяніць; без прэфілу першы ў спісе браў бы на сябе ролю «па змаўчанні» несправядліва.
+function _orderCountryDefault() {
+  try {
+    const r = new Intl.Locale(navigator.language || '').region || '';
+    if (TAX_COUNTRIES.includes(r)) return r;
+  } catch {}
+  return '';
+}
+function _taxCountryOptions(sel) {
+  return `<option value=""${sel ? '' : ' selected'}>—</option>` + TAX_COUNTRIES.map(c => ({ c, n: _countryName(c) }))
+    .sort((a, b) => a.n.localeCompare(b.n, currentUiLang))
+    .map(o => `<option value="${o.c}"${o.c === sel ? ' selected' : ''}>${_escHtml(o.n)}</option>`).join('');
+}
+// Жывая праверка пры выхадзе з поля — толькі паказ. Продаж ніколі не блакуецца: нявызначанасць
+// рэестра = `declared`, а не адмова (гл. _taxResolve/_viesCheck у воркеры).
+let _taxCheckSeq = 0, _taxBlock = ''; // _taxBlock — апошні вердыкт палітыкі краіны (гард кнопкі)
+async function taxNumCheck() {
+  const numEl = document.getElementById('order-tax-input'), out = document.getElementById('order-tax-status');
+  const cc = document.getElementById('order-country-input')?.value || '';
+  if (!numEl || !out) return;
+  const num = numEl.value.trim();
+  if (!num) { out.textContent = ''; out.removeAttribute('data-lvl'); return; }
+  const seq = ++_taxCheckSeq;
+  out.textContent = getUI().tax_checking; out.style.color = '#6b7280';
+  try {
+    const r = await fetch(API_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'tax_check', repo: SITE_REPO, country: cc, number: num }) });
+    const d = await r.json();
+    if (seq !== _taxCheckSeq) return; // адказ на састарэлы ўвод — не перабіваем свежы
+    // 🌍 палітыка краіны прыходзіць тым жа адказам — паказваем ПЕРАД тым, як чалавек запоўніць усё
+    // і ўпрэцца ў адмову на апошнім кроку (сервер усё роўна адсячэ ў register_order)
+    _taxBlock = d.block || '';
+    if (_taxBlock) {
+      out.textContent = getUI()[_taxBlock === 'country_blocked' ? 'tax_block_no' : 'tax_block_b2b'];
+      out.style.color = '#ef4444';
+      return;
+    }
+    const map = { verified: ['tax_lvl_verified', '#22c55e'], declared: ['tax_lvl_declared', '#6b7280'], invalid: ['tax_lvl_invalid', '#ef4444'] };
+    const m = map[d.status] || null;
+    out.textContent = m ? (getUI()[m[0]] + (d.name ? ' — ' + d.name : '')) : '';
+    out.style.color = m ? m[1] : '#6b7280';
+  } catch { if (seq === _taxCheckSeq) out.textContent = ''; }
+}
+
 // рэгістрацыя заказу — агульная для двух шляхоў (пасля кода І для кабінет-сесіі); кідае Error пры няўдачы
 async function registerOrder() {
   const cartSummary = orderCart.map(i => `${i.name}${i.qty > 1 ? ' ×' + i.qty : ''}`).join(', ');
@@ -2897,6 +3019,9 @@ async function registerOrder() {
       ...(orderDelivery ? { deliveryAddress: orderDelivery } : {}), // C2a: выбраны адрас дастаўкі
       ...(orderDeliveryCost != null ? { deliveryCost: orderDeliveryCost, deliveryZone: orderDeliveryZone } : {}), // C2b: налічаны кошт+зона
       ...((desiredSubdomain || trPackSub) ? { desiredSubdomain: desiredSubdomain || trPackSub } : {}), // trpack: мэта едзе тым жа полем заказа
+      // 🧾 краіна+нумар як увёў кліент; УЗРОВЕНЬ праверкі вызначыць сервер (кліенту тут верыць нельга)
+      taxCountry: (document.getElementById('order-country-input')?.value || ''),
+      taxNumber: (document.getElementById('order-tax-input')?.value || '').trim(),
       ...(orderIntake ? { intake: orderIntake } : {}), // №3а: анкета «Свой сайт» (апцыянальная)
       ...(orderToken ? { orderToken } : {}),           // 🛡️ доказ валодання email: білет кода…
       ...(orderPortalToken ? { portalToken: orderPortalToken } : {}) // …або сесія кабінета

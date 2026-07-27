@@ -751,7 +751,10 @@ function _monitorTopChartHtml() {
 // ═══ 🚨 ЖУРНАЛ АЛЕРТАЎ — АДЗІН дэскрыптар секцыі на ДВА выгляды (узор _trLedger) ═══
 // site='' → глабальны (усе паддамены, калонка «Сайт» бачная); site=паддамен → зрэз карткі (калонка схаваная).
 // Дадзеныя ленава ў form.fields._alerts праз dataFn — той жа канон, што выпіс перакладаў.
-const _AL_KINDS = { limit: 'al_k_limit', sentinel: 'al_k_sentinel', llm: 'al_k_llm', email: 'al_k_email', crash: 'al_k_crash', payment: 'al_k_payment', backup: 'al_k_backup' }; // backup — збой дзённага здымка
+// ⚠️ mailkey — АСОБНЫ від, не 'email': дэдуп `_alertPush` ключуецца kind+site (не тэкстам), таму
+// канарэйку ключа заглушаў бы любы звычайны паштовы алерт за апошнія 12 гадз — менавіта тады, калі
+// яна і патрэбная (злоўлена жыва 27.07 на першым жа прагоне).
+const _AL_KINDS = { limit: 'al_k_limit', sentinel: 'al_k_sentinel', llm: 'al_k_llm', email: 'al_k_email', mailkey: 'al_k_mailkey', crash: 'al_k_crash', payment: 'al_k_payment', backup: 'al_k_backup' }; // backup — збой дзённага здымка
 const _AL_SEV = { info: 'al_s_info', warn: 'al_s_warn', crit: 'al_s_crit' };
 const _alertsInflight = new Set();
 function _alertsSection(withSite) { // withSite=false → картка паддамена (сайт і так відны ў назве формы)
@@ -866,7 +869,9 @@ function _depPoll() { // палінг да зраўнання версій: ін
   setTimeout(async () => {
     if (monitorState._depBusy !== b) return; // новы выкат перабіў гэты — стары палінг сціхае
     await _deployReload(true);
-    const done = !_deployRows().some(r => _depBehind(r)); // усе ступені зраўняліся
+    // ✅ «гатова» = зраўнялася МЭТА гэтага выкату, а не ўсе ступені: інакш пры адстаўшай суседняй
+    // ступені (напр. legacy, якую мы не выкатвалі) палінг круціўся б поўныя 6 хв дарма
+    const done = !_deployRows().some(r => _depBusyRow(r) && _depBehind(r));
     if (done || Date.now() - b.at > _DEP_WAIT_MS) { monitorState._depBusy = null; if (currentNodeState === monitorState) renderNodeEditor(monitorState); return; }
     _depPoll();
   }, _DEP_POLL_MS);
@@ -914,7 +919,10 @@ function _deploySummaryHtml() {
   if (rows.some(r => _depBusyRow(r))) // пакуль ідзе выкат, «адстае N» чытаецца як «нічога не адбылося»
     return `<span style="font-size:0.75rem;color:var(--accent);font-weight:400">${escHtml(t('dep_running'))}</span>`;
   const st = _deployRefVer();
-  const behind = rows.filter(x => x.key !== 'staging' && x.version && st && x.version !== st).length;
+  // ⚠️ «Ці адстае» — ТОЛЬКІ праз `_depBehind` (адзін рэзалв на колер версіі, кнопку ў радку і зводку).
+  // Тут была трэцяя інлайн-копія ўмовы: сёння яна давала той жа вынік, але гэта роўна той клас багаў,
+  // што двойчы ўкусіў 26.07 — рэндэр і хендлер чытаюць розныя крыніцы адных даных.
+  const behind = rows.filter(_depBehind).length;
   const down = rows.filter(x => x.key !== 'main' && !x.version).length; // 'main' пакуль можа не існаваць — гэта не праблема
   const bad = behind || down;
   return `<span style="font-size:0.75rem;color:${bad ? '#ef4444' : 'var(--muted)'};font-weight:400">${
@@ -1426,7 +1434,12 @@ FORM_SCHEMAS.orderDetails = Object.assign({
         { key: 'cartSummary',      type: 'text',     label: 'f_request',     readOnly: () => true },
         { key: 'deliveryAddress',  type: 'text',     label: 'f_delivery',    readOnly: () => true, visible: f => !!f.deliveryAddress }, // C2a: паказ толькі калі заказ з дастаўкай
         { key: 'deliveryCostStr',  type: 'text',     label: 'f_price',       readOnly: () => true, visible: f => !!f.deliveryCostStr }, // C2b: кошт+зона дастаўкі
-        { key: 'note',             type: 'textarea', label: 'f_note',        readOnly: () => true }
+        { key: 'note',             type: 'textarea', label: 'f_note',        readOnly: () => true },
+        // 🧾 ПАДАТКОВЫ ЗДЫМАК на момант продажу (26.07): паказваем толькі калі нумар быў — B2C-заказы
+        // не мусяць несці пустыя радкі. `taxLevelStr` нясе і ўзровень, і дату праверкі: «пацверджана
+        // ў рэестры 26.07.2026» ≠ «запісана са слоў кліента» — праз два гады гэта і будзе пытаннем.
+        { key: 'taxNumberStr',     type: 'text',     label: 'f_taxnum',      readOnly: () => true, visible: f => !!f.taxNumber },
+        { key: 'taxLevelStr',      type: 'text',     label: 'f_taxlevel',    readOnly: () => true, visible: f => !!f.taxNumber }
       ]
     },
     {
@@ -1644,7 +1657,13 @@ FORM_SCHEMAS.companyStructure = Object.assign({
     { type: 'flat', id: 'payment', title: 'payment_section', editable: true, visible: form => (form.parentId ?? null) === null,
       onEdit: (form, s) => _nodeFlatSectionEdit(form, s, 'payment'),
       blocks: [ { key: 'paymentInstructions', type: 'textarea', label: 'payment_instructions', readOnly: () => true, ml: true, settingsKey: 'paymentInstructions' },
-        { key: 'payDays', type: 'number', label: 'pay_days', readOnly: () => true, settingsKey: 'payDays' } ] },
+        { key: 'payDays', type: 'number', label: 'pay_days', readOnly: () => true, settingsKey: 'payDays' },
+        // 🧾 ПАДАТКОВЫЯ РЭКВІЗІТЫ ПРАДАЎЦА — без іх фактура не можа вырашыць, які надпіс ставіць:
+        // «reverse charge» законны толькі пры ТРАНСКАРДОННЫМ продажы фірме, а продаж у сваёй краіне
+        // = звычайны ПДВ. Значыць краіну прадаўца мусім ведаць — вывесці яе з адраса (вольны ml-тэкст)
+        // немагчыма. Нумар прадаўца на фактуры абавязковы для reverse charge.
+        { key: 'taxCountry', type: 'text', label: 'seller_tax_country', hint: 'seller_tax_country_hint', readOnly: () => true, settingsKey: 'taxCountry' },
+        { key: 'taxNumber', type: 'text', label: 'seller_tax_number', readOnly: () => true, settingsKey: 'taxNumber' } ] },
     // ГЛАБАЛЬНЫ ЧОРНЫ СПІС ПАДДАМЕНАЎ — толькі галоўны офіс платформы. Дзейнічае на ЎСЕ прапановы
     // (пер-пазіцыйны спіс у Каталогу застаецца і толькі ДАДАЕ забароны). settingsKey → settings.blockedSubs,
     // воркер чытае жывыя налады пры кожнай праверцы — ні кнопкі «сінхранізаваць», ні публікацыі не трэба.
@@ -1660,6 +1679,27 @@ FORM_SCHEMAS.companyStructure = Object.assign({
       columns: [
         { key: 'pattern', label: 'svc_bs_pattern', type: 'text' },
         { key: 'note',    label: 'f_note',         type: 'text' }
+      ] },
+    // 🌍 ПАЛІТЫКА КРАІН — куды прадаём і на якіх умовах. Тры станы, а не «можна/нельга»: замежная
+    // ФІРМА амаль усюды бяспечная (без ПДВ, без рэгістрацыі), а рызыка — толькі B2C па-за ЕС, дзе
+    // краіна можа патрабаваць рэгістрацыі ад нас. Краіна БЕЗ радка = прадаём усім (дэфолт не
+    // забараняльны: інакш першы ж кліент з нечаканай краіны атрымаў бы адмову без прычыны).
+    // ⚠️ Гэта толькі ЗАПІС рашэння — правярае яго СЕРВЕР (`_countryPolicy` у register_order/tax_check).
+    { type: 'table', id: 'country-policy', title: 'cpol_title', dataKey: '_countryPolicy', settingsKey: 'countryPolicy',
+      addable: true, rowEditable: true, rowDeletable: true, keepOrder: true,
+      visible: form => (form.parentId ?? null) === null,
+      onAdd: (form, s) => _accRowAdd(form, s, '_countryPolicy'),
+      rowSchema: [
+        { key: 'code', type: 'text', label: 'cpol_code', hint: 'cpol_code_hint' },
+        { key: 'mode', type: 'select', label: 'cpol_mode', options: [
+          { value: 'all', label: 'cpol_all' }, { value: 'b2b', label: 'cpol_b2b' }, { value: 'no', label: 'cpol_no' } ] },
+        { key: 'note', type: 'text', label: 'f_note' }
+      ],
+      columns: [
+        { key: 'code', label: 'cpol_code', type: 'text' },
+        { key: 'mode', label: 'cpol_mode', type: 'select',
+          labelMap: { all: 'cpol_all', b2b: 'cpol_b2b', no: 'cpol_no' } },
+        { key: 'note', label: 'f_note', type: 'text' }
       ] }
   ],
   // free-layout цяпер ДЭФОЛТ для ўсіх секцыйных форм (гл. _isFreeForm) — сцяг зняты; толькі дэфолтны парадак застаецца пер-схемай:
@@ -2250,7 +2290,14 @@ CONTENT_TYPES['clientDetails']     = { // нашчадак ПРОДАКФПФ; �
 };
 CONTENT_TYPES['monitorStat']       = { ..._formFixed }; // статыстыка: чытальная
 CONTENT_TYPES['monitorInventory']  = { ..._formFixed }; // інвентар сайтаў: чытальны
-CONTENT_TYPES['monitorClient']     = { canSelect: false, canMoveOrder: false, canRename: false, canRelocate: false, canActive: false, showActiveDot: false, showCurrentDot: false, canMakeCurrent: false, canBeLocked: false }; // як _formFixed, АЛЕ canDelete РАЗБЛАКАВАНЫ (наследуецца ад ПРОДАКФПФ) → канонны ✕ (g4); дзеянне — teardown праз monitorState._onDeleteItem
+// 👻 ФАНТОМ (заказ ёсць, даных сайта няма) застаецца ў спісе НАЗНАРОК — след падзеі каштоўнейшы за
+// чысценькі спіс (рашэнне карыстальніка 26.07): знікае толькі праз ✕ рукамі. Але дзеянні, што
+// патрабуюць ЖЫВОГА сайта, у яго меню — падман: ⧉ дублявала б радок-праекцыю (яго крыніца — дашборд),
+// 📤 дзялілася б спасылкай на неіснуючы сайт, ⏸/▶ — гл. `_nodeMenuExtra`. Гейт — cap-функцыямі
+// (canDuplicate/hasLink/hasPrint), а не ўмовай у рэндэры меню: меню адно на ўсю панэль.
+const _monPhantom = node => !!node?.fields?._phantom;
+CONTENT_TYPES['monitorClient']     = { canSelect: false, canMoveOrder: false, canRename: false, canRelocate: false, canActive: false, showActiveDot: false, showCurrentDot: false, canMakeCurrent: false, canBeLocked: false, // D1-вытворнае дрэва (праекцыя дашборда) — структура і актыўнасць не персістуюцца
+  canDuplicate: node => !_monPhantom(node), hasLink: node => !_monPhantom(node), hasPrint: node => !_monPhantom(node) }; // як _formFixed, АЛЕ canDelete РАЗБЛАКАВАНЫ (наследуецца ад ПРОДАКФПФ) → канонны ✕ (g4); дзеянне — teardown праз monitorState._onDeleteItem
 CONTENT_TYPES['monitorChart']      = { ..._formFixed }; // 📈 дынаміка лімітаў: чытальная
 CONTENT_TYPES['monitorChartAbs']   = { ..._formFixed };
 
@@ -6274,6 +6321,7 @@ function _normTime(v) {
 function _nfmReadVal(f, el) {
   if (f.type === 'multiselect' || el.dataset?.ms) return Array.from(el.querySelectorAll('input[type=checkbox]:checked')).map(c => c.value); // масіў абраных
   if (f.type === 'image' || el.dataset?.img) { const v = el.querySelector('[data-val]')?.value || ''; try { return v ? JSON.parse(v) : ''; } catch { return ''; } } // 📷 {url,thumbUrl} са схаванага input
+  if (f.type === 'checkbox') return !!el.checked; // адзінкавая птушка → bool
   return f.type === 'number' ? (el.value === '' ? '' : Math.max(0, parseFloat(el.value) || 0)) : f.type === 'time' ? _normTime(el.value) : el.value;
 }
 // перадзагрузка multiselect-кантэйнера ў мадале (адзначыць чэкбоксы па масіве значэнняў)
@@ -6467,6 +6515,8 @@ function _nfmApplySchema(schema) {
       ? `<div id="nfm-f-${f.key}" data-ms="1" style="padding:4px 0;max-height:240px;overflow-y:auto">${_nfmMultiBody(f, opts, optLabels, null)}</div>`
       : f.type === 'image' // 📷 генерычная выява ў мадале (R2): мініяцюра + загрузка + ✕; значэнне {url,thumbUrl} у схаваным input (JSON)
       ? `<div id="nfm-f-${f.key}" data-img="1" style="display:flex;align-items:center;gap:10px"><img data-thumb alt="" style="width:56px;height:56px;object-fit:cover;border-radius:8px;border:1px solid var(--border);display:none"><input type="hidden" data-val><button type="button" class="btn-search" onclick="_nfmImagePick('${f.key}')">📷</button><button type="button" data-clear class="node-btn-icon" style="display:none;padding:0 8px" onclick="_nfmImageSet('${f.key}','')">✕</button></div>`
+      : f.type === 'checkbox' // ПРОДАКФПФ: мадал умее адзінкавую птушку (табліцы ўжо ўмелі) — чытанне праз _nfmReadVal
+      ? `<input type="checkbox" id="nfm-f-${f.key}" style="width:18px;height:18px;accent-color:var(--accent);cursor:pointer"${f.default?.() ? ' checked' : ''}${f.onChange ? ` onchange="_nfmFieldChange('${f.key}',this.checked)"` : ''}>`
       : f.type === 'date'
       ? _dateFieldHtml('nfm-f-' + f.key, '', 'padding:9px 12px') // кастамнае поле даты (Варыянт B): рэгіянальны фармат
       : f.type === 'time'
@@ -6884,12 +6934,26 @@ function nodeAddTextNote(folderId) {
 // ШАБЛОН: дадаць ФАЙЛ у ЛЮБУЮ Папку-0 (генерычны R2 file_upload → бягучы стэйт). Універсальна для ўсіх РМ.
 let _fileUploadTarget = null;
 // агульны R2-загрузчык выяў (webp 1200 + thumb 400 → {url, thumbUrl}); ЗАЎСЁДЫ R2 (незалежна ад _localOnly). Выкарыстоўваюць handleNodeFiles і поле type:'image'
-async function _uploadImageToR2(file, prefix) {
+// opts.png — дадаткова захаваць PNG-копію (пошта: Outlook на Windows не ведае WebP). Уключаецца
+// сцягам `_altPng` на Папцы (як `_forceR2`), а не «для лагатыпаў» — механізм безыменны.
+async function _uploadImageToR2(file, prefix, opts) {
   const [fileData, thumbData] = await Promise.all([processImage(file, 1200), processImage(file, 400)]);
   const id = 'file_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 5);
-  const res = await fetch(API, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'file_upload', repo: REPO, password, prefix: prefix || 'file', id, data: fileData, contentType: 'image/webp', fileName: 'img.webp', thumbData }) });
+  const mt = _dataUriMime(fileData); // 🐛 НЕ 'image/webp' навобум: processImage ціха падае на JPEG там,
+  // дзе браўзер не ўмее кадаваць webp (Safari да нядаўняга часу). Файл ляжаў як .webp з webp-загалоўкам,
+  // а ўнутры быў JPEG: браўзеры нюхаюць байты і не заўважалі, а паштовы кліент верыў загалоўку і
+  // маляваў пусты квадрат замест лагатыпа. Тып бяром з самих дадзеных.
+  const res = await fetch(API, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'file_upload', repo: REPO, password, prefix: prefix || 'file', id, data: fileData, contentType: mt, fileName: 'img.' + mt.split('/')[1], thumbData }) });
   const json = await res.json(); if (!res.ok) throw new Error(json.error || t('err'));
-  return { url: json.url, thumbUrl: json.thumbUrl || null };
+  let pngUrl = null;
+  if (opts?.png) { // PNG-копія: збой не мусіць валіць загрузку — webp ужо ляжыць
+    try {
+      const pngData = await processImage(file, 512, 'image/png');
+      const r2 = await fetch(API, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'file_upload', repo: REPO, password, prefix: prefix || 'file', id: id + '_png', data: pngData, contentType: 'image/png', fileName: 'img.png' }) });
+      const j2 = await r2.json(); if (r2.ok) pngUrl = j2.url;
+    } catch (e) { console.warn('PNG-копія не зроблена', e); }
+  }
+  return { url: json.url, thumbUrl: json.thumbUrl || null, pngUrl, mimeType: mt };
 }
 function nodeFileUpload(folderId) {
   const _folder = currentNodeState?.data?.nodes?.find(n => n.id === folderId);
@@ -6923,6 +6987,7 @@ async function handleNodeFiles(files) {
   const tgt = _fileUploadTarget; if (!tgt?.s?.data || !files?.length) return;
   const s = tgt.s, pid = tgt.folderId, MAX = 10 * 1024 * 1024;
   const _folder = pid ? s.data.nodes.find(n => n.id === pid) : null;
+  const altPng = !!_nodeCfg(s, _folder, '_altPng'); // Папка можа патрабаваць PNG-копію (пошта)
   const forceR2 = !!_nodeCfg(s, _folder, '_forceR2'); // папка можа патрабаваць R2 нават у _localOnly-РМ (напр. лагатыпы ў Структуры кампаніі)
   const createdIds = []; // новыя file-вузлы → для upload-промпту
   // ✂️ фота-рэдактар перад загрузкай (заўсёды, «Без правак» — хуткі пропуск; «для ўсіх» пры некалькіх выявах)
@@ -6937,11 +7002,13 @@ async function handleNodeFiles(files) {
     }
     if (file.size > MAX) { showAlert(`${file.name}: ${t('file_too_big') || 'макс 10MB'}`); continue; }
     try {
-      let mimeType, fileName, url, thumbUrl = null;
+      let mimeType, fileName, url, thumbUrl = null, pngUrl = null;
       if (file.type.startsWith('image/')) {
-        mimeType = 'image/webp'; fileName = file.name.replace(/\.[^.]+$/, '') + '.webp';
-        if (s._localOnly && !forceR2) { url = await processImage(file, 1200); } // data URI для лакальнага прагляду (без API-выклікаў)
-        else ({ url, thumbUrl } = await _uploadImageToR2(file, s._section)); // агульны R2-загрузчык выяў
+        let _mt;
+        if (s._localOnly && !forceR2) { url = await processImage(file, 1200); _mt = _dataUriMime(url); } // data URI для лакальнага прагляду (без API-выклікаў)
+        else ({ url, thumbUrl, pngUrl, mimeType: _mt } = await _uploadImageToR2(file, s._section, { png: altPng })); // агульны R2-загрузчык выяў
+        mimeType = _mt || 'image/webp'; // фактычны тып (webp ці jpeg-фолбэк), не здагадка
+        fileName = file.name.replace(/\.[^.]+$/, '') + '.' + mimeType.split('/')[1];
       } else {
         const fileData = await new Promise((res, rej) => { const r = new FileReader(); r.onload = e => res(e.target.result); r.onerror = rej; r.readAsDataURL(file); });
         mimeType = file.type || 'application/octet-stream'; fileName = file.name;
@@ -6955,7 +7022,7 @@ async function handleNodeFiles(files) {
       }
       const id = 'file_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 5);
       const now = new Date().toISOString();
-      s.data.nodes.push({ id, type: 'file', parentId: pid, name: fileName, url, thumbUrl, mimeType, size: file.size, order: s.data.nodes.filter(n => n.type === 'file' && n.parentId === pid).length, createdAt: now, updatedAt: now });
+      s.data.nodes.push({ id, type: 'file', parentId: pid, name: fileName, url, thumbUrl, ...(pngUrl ? { pngUrl } : {}), mimeType, size: file.size, order: s.data.nodes.filter(n => n.type === 'file' && n.parentId === pid).length, createdAt: now, updatedAt: now });
       createdIds.push(id);
       if (pid) s.expanded.add(pid);
       s.expanded.add(id); // адразу разгортваем новы файл — карыстальнік бачыць змест
@@ -7983,14 +8050,14 @@ async function _nodeTranslateTree(folderId) {
   const chunksN = Math.ceil(keys.length / 60);
   let left = null, max = 5, credits0 = 0, byok = false;
   try { const r0 = await _trFetch({}, from, langs); left = r0.j.left; max = r0.j.max || 5; credits0 = r0.j.credits || 0; byok = !!r0.j.byok; _trLeftCache = byok ? '∞' : (left ?? 0) + credits0; } catch {}
-  if (!byok && (left ?? 0) + credits0 < chunksN) { showAlert(t('tr_limit').replace('{max}', max) + ' ' + t('tr_buy')); return; }
+  if (!byok && (left ?? 0) + credits0 < chunksN) { showAlert(t('tr_limit').replace('{max}', max) + ' ' + _trBuyMsg()); return; }
   const nShow = byok ? '∞' : `${left}${credits0 ? '+' + credits0 : ''}`;
   showConfirm(t('tr_tree_confirm').replace('{f}', forms.length).replace('{k}', keys.length).replace('{q}', chunksN).replace('{from}', _langLabel(from)).replace('{n}', nShow), async () => {
     let applied = 0, lastJ = null;
     for (let i = 0; i < keys.length; i += 60) {
       const part = {}; keys.slice(i, i + 60).forEach(k => { part[k] = texts[k]; });
       const { ok, j } = await _trFetch(part, from, langs);
-      if (!ok) { showAlert(j?.error === 'tr_limit' ? t('tr_limit').replace('{max}', j.max || max) + ' ' + t('tr_buy') : t('tr_err')); break; }
+      if (!ok) { _trBuySet(j?.buyHost); showAlert(j?.error === 'tr_limit' ? t('tr_limit').replace('{max}', j.max || max) + ' ' + _trBuyMsg() : t('tr_err')); break; }
       lastJ = j;
       Object.keys(part).forEach(k => {
         const tr = j.translations?.[k]; if (!tr) return;
@@ -8005,6 +8072,12 @@ async function _nodeTranslateTree(folderId) {
     showAlert(t('tr_done').replace('{k}', applied).replace('{n}', lastJ ? `${lastJ.left || 0}${lastJ.credits ? '+' + lastJ.credits : ''}` : '?').replace('{max}', max));
   }, { label: '🌐', danger: false });
 }
+// 🏪 Паведамленне «дзе дакупіць пакет»: адрас вітрыны платформы аддае ВОРКЕР (buyHost у адказе пра
+// ліміт) — панэль яго не ведае і не мусіць хардкодзіць. Сёння гэта ttzop-test, з'явіцца галоўны
+// ttzop — стане ім сам, без праўкі 13 моў. Чат згадваем ЗАЎСЁДЫ: ён працуе незалежна ад вітрыны.
+let _trBuyHost = localStorage.getItem('ttzop_buy_host') || '';
+function _trBuySet(h) { if (h && h !== _trBuyHost) { _trBuyHost = h; localStorage.setItem('ttzop_buy_host', h); } }
+function _trBuyMsg() { return (_trBuyHost ? t('tr_buy_host').replace('{host}', _trBuyHost) + ' ' : '') + _trBuyMsg(); }
 async function _nodeTranslate(id) {
   const s = currentNodeState, form = s?.data?.nodes?.find(n => n.id === id); if (!form) return;
   if (_nodeLockGuard(form)) return; // 🔒
@@ -8024,12 +8097,12 @@ async function _nodeTranslate(id) {
   if (!Object.keys(texts).length) { showAlert(t('tr_nothing')); return; }
   let left = null, max = 5, credits0 = 0, byok = false; // рэшта ліміту + крэдыты (танны запыт); byok = свой ключ → ∞
   try { const r0 = await _trFetch({}, from, langs); left = r0.j.left; max = r0.j.max || 5; credits0 = r0.j.credits || 0; byok = !!r0.j.byok; _trLeftCache = byok ? '∞' : (left ?? 0) + credits0; } catch {}
-  if (!byok && left === 0 && !credits0) { showAlert(t('tr_limit').replace('{max}', max) + ' ' + t('tr_buy')); return; }
+  if (!byok && left === 0 && !credits0) { showAlert(t('tr_limit').replace('{max}', max) + ' ' + _trBuyMsg()); return; }
   const nShow = byok ? '∞' : left == null ? '?' : `${left}${credits0 ? '+' + credits0 : ''}`; // «бясплатныя+крэдыты» / ∞ пры сваім ключы
   showConfirm(t('tr_confirm').replace('{from}', _langLabel(from)).replace('{langs}', langs.map(_langLabel).join(', ')).replace('{n}', nShow).replace('{max}', max), async () => {
     try {
       const { ok: trOk, j } = await _trFetch(texts, from, langs);
-      if (!trOk) { showAlert(j?.error === 'tr_limit' ? t('tr_limit').replace('{max}', j.max || max) + ' ' + t('tr_buy') : t('tr_err')); return; }
+      if (!trOk) { _trBuySet(j?.buyHost); showAlert(j?.error === 'tr_limit' ? t('tr_limit').replace('{max}', j.max || max) + ' ' + _trBuyMsg() : t('tr_err')); return; }
       let applied = 0;
       entries.forEach(e => {
         const tr = j.translations?.[e.key]; if (!tr) return;
@@ -10999,6 +11072,10 @@ function _buildOrderDetailsNode(folder, prof) {
       siteLanguages: Array.isArray(prof.siteLanguages) ? prof.siteLanguages : [], deliveryAddress: prof.deliveryAddress || '', // C2a: адрас дастаўкі
       deliveryCostStr: (prof.deliveryCost != null ? `${prof.deliveryCost} ${settings.delivery?.currency || ''}${prof.deliveryZone ? ' · ' + prof.deliveryZone : ''}` : ''), // C2b: кошт+зона дастаўкі (радок для дысплэю)
       cartSummary: prof.cartSummary || '', note: prof.note || '', _statusRows: prof.statusHistory || [], _paymentRows: prof.paymentHistory || [],
+      // 🧾 падатковы здымак заказу (гл. _taxResolve у воркеры): нумар + УЗРОВЕНЬ з датай праверкі
+      taxNumber: prof.taxNumber || '',
+      taxNumberStr: (prof.taxNumber || '') + (prof.taxName ? ' · ' + prof.taxName : '') + (prof.taxCountry ? ` (${prof.taxCountry})` : ''),
+      taxLevelStr: (prof.taxNumber ? (t('tax_lvl_' + (prof.taxStatus || 'declared')) + (prof.taxCheckedAt ? ' · ' + fmtDate(prof.taxCheckedAt.slice(0, 10)) : '')) : ''),
       _cartRows: (prof.cart || []).map(r => { const _id = r._id || ('r' + Math.random().toString(36).slice(2, 9)); const bk = _isBookableServiceId(r.id);
         return { ...r, _id, _bookable: bk, _scheduled: bk ? _scheduledLabel(orderId, _id) : '' }; }) } });
 }
@@ -11134,7 +11211,11 @@ function _orderTableAddPayment(form, s) {
     { key: 'amount',   type: 'number', label: 'f_amount' },
     { key: 'currency', type: 'select', label: 'f_currency', options: CURRENCIES.map(c => c.code), default: () => settings?.currency?.code || 'EUR' },
     { key: 'until',    type: 'date',   label: 'field_active_until' },
-    { key: 'note',     type: 'text',   label: 'f_note' }
+    { key: 'note',     type: 'text',   label: 'f_note' },
+    // 💳 Радок у рэестр і статус «Аплачана» былі ДВУМА асобнымі дзеяннямі, і забыты другі пакідаў
+    // заказ у «Чакае аплаты» — праз дні аўта-ануляванне забівала ўжо аплачаны заказ. Птушка робіць
+    // абодва адным крокам; выключана па змаўчанні, бо ўнёсак бывае частковы.
+    { key: 'markPaid', type: 'checkbox', label: 'f_mark_paid' }
   ], { _noName: true }));
   const modal = document.getElementById('node-form-modal');
   modal.dataset.mode = 'add';
@@ -11159,14 +11240,19 @@ async function _orderApplyPayment(form, fields) {
   }
   try {
     const res = await fetch(API, { method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action: 'admin_add_payment', repo: REPO, password, orderId, payment: entry }) });
+      body: JSON.stringify({ action: 'admin_add_payment', repo: REPO, password, orderId, payment: entry, markPaid: !!fields.markPaid }) });
     if (!res.ok) throw new Error('save failed');
   } catch { rows.pop(); }
+  // статус змяніў СЕРВЕР (адзіны выхад `_payConfirm`) — перачытваем, каб панэль не паказвала стары.
+  // ⚠️ Па-за try: збой перачытвання не мусіць выглядаць як «аплата не захавалася» (rows.pop).
+  if (fields.markPaid && currentNodeState === ordersState) { await nodeReloadSection(); return; }
   if (currentNodeState === ordersState) renderOrdersEditor();
 }
 
 // ─── END SECTIONS ──────────────────────────────────────────────────────────────
-function processImage(file, maxWidth) {
+// Тып з самога data-URI: адзіная праўда пра тое, ЧЫМ аказаўся файл пасля перакадавання.
+const _dataUriMime = d => (String(d || '').match(/^data:([a-z]+\/[a-z0-9.+-]+);/i) || [, 'image/webp'])[1];
+function processImage(file, maxWidth, mime) { // mime: дадатковы фармат (напр. 'image/png' для лагатыпаў у лістах)
   return new Promise((resolve, reject) => {
     createImageBitmap(file, { imageOrientation: 'from-image' }).then(bitmap => {
       const canvas = document.createElement('canvas');
@@ -11175,6 +11261,7 @@ function processImage(file, maxWidth) {
       canvas.width = w; canvas.height = h;
       canvas.getContext('2d').drawImage(bitmap, 0, 0, w, h);
       try {
+        if (mime) { resolve(canvas.toDataURL(mime)); return; } // яўны фармат — без webp-фолбэку
         const dataUrl = canvas.toDataURL('image/webp', 0.75);
         resolve(dataUrl.startsWith('data:image/webp') ? dataUrl : canvas.toDataURL('image/jpeg', 0.85));
       } catch(e) {
@@ -11392,6 +11479,7 @@ const REPORT_CATALOG = [
   { id: 'sales', icon: '💰', label: 'rep_t_sales' },
   { id: 'appts', icon: '📅', label: 'rep_t_appts' },
   { id: 'subs',  icon: '🔁', label: 'rep_t_subs'  },
+  { id: 'vatue', icon: '🇪🇺', label: 'rep_t_vatue' }, // 🧾 зводка транскардонных B2B-продажаў у ЕС (VAT-UE)
 ];
 // Узбагачэнне слупкоў ПАНЭЛЬНЫМ бокам (payload лёгкі: нясе толькі enrich-id) — статус/перыяд як бэджы.
 // Адно месца на ўсе рэндэры і экспарты; архіўны payload аўтаматычна атрымлівае той жа выгляд.
@@ -12404,6 +12492,38 @@ function _companyEnsureLogosFolder() {
     ['logo', 'logoDark', 'logoIcon'].forEach(k => { if (k in head.fields) { delete head.fields[k]; changed = true; } }); // старыя палі больш не чытаюцца
   }
   if (changed) _persistSettingsChange(0);
+  _logoPngBackfill(tree, folder); // ленавы перагон ужо загружаных лагатыпаў у PNG (для пошты)
+}
+// 🖼 PNG-КОПІЯ ДЛЯ ЎЖО ЗАГРУЖАНЫХ ЛАГАТЫПАЎ (ленавая міграцыя, як сесіі/rev/чарнавікі).
+// Новыя загрузкі PNG атрымліваюць адразу (сцяг `_altPng` на Папцы), а старыя ляжаць у WebP —
+// і шапка ліста была б пустой у Outlook на Windows. media.ttzop.com аддае CORS `*`, таму
+// перакадаваць можна прама тут праз canvas. Ціха: збой не мусіць нічога ламаць.
+async function _logoPngBackfill(tree, folder) {
+  if (!folder || !password) return;
+  const mine = tree.filter(n => n.type === 'file' && n.parentId === folder.id);
+  const need = mine.filter(n => n.url && !n.pngUrl && /\.(webp|avif)$/i.test(n.url));
+  // ⚠️ Самалячэнне разыходжання: PNG у дрэве ўжо ёсць, а ў праекцыі logoPng пусты (так здараецца,
+  // калі перагон прайшоў да таго, як праекцыя навучылася яго класці). Перагону тут рабіць няма чаго,
+  // але праекцыю трэба паправіць — інакш стан застаўся б заклінены назаўжды.
+  // pngUrl трэба пакласці і ў ВУЗЛЫ: праекцыя чытае companyState.data.nodes, а не дрэва.
+  const _sync = () => mine.forEach(n => { const nd = (companyState.data?.nodes || []).find(x => x.id === n.id); if (nd && n.pngUrl) nd.pngUrl = n.pngUrl; });
+  const stale = !need.length && mine.some(n => n.pngUrl) && !settings.company?.logoPng;
+  if (stale) { _sync(); _companyProjectSite(); _persistSettingsChange(0); return; }
+  if (!need.length) return;
+  let done = 0;
+  for (const node of need) {
+    try {
+      const blob = await (await fetch(node.url, { mode: 'cors' })).blob();
+      const pngData = await processImage(blob, 512, 'image/png'); // tainted canvas → выключэнне, зловіцца ніжэй
+      const res = await fetch(API, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'file_upload', repo: REPO, password, prefix: 'company', id: node.id + '_png', data: pngData, contentType: 'image/png', fileName: 'img.png' }) });
+      const json = await res.json();
+      if (res.ok && json.url) { node.pngUrl = json.url; done++; }
+    } catch (e) { console.warn('PNG-копія лагатыпа не зроблена', node.id, e); }
+  }
+  // ⚠️ Мала дапісаць pngUrl у дрэва: `_persistSettingsChange` захоўвае налады, але НЕ перабудоўвае
+  // праекцыю — `settings.company.logoPng` застаўся б пустым, і ліст не ўбачыў бы PNG (жывы кейс 27.07:
+  // файлы ў R2 ляжалі, дрэва захавана, а праекцыя пустая). Таму спярша праекцыя, потым захаванне.
+  if (done) { _sync(); _companyProjectSite(); _persistSettingsChange(0); }
 }
 // Нармалізацыя: легасі адзіночныя ml-палі (радок) → {мова:значэнне}. Галоўны офіс аднаўляе ўсе мовы з settings.i18n.
 function _companyMlNormalize() {
@@ -12450,9 +12570,9 @@ function _buildCompanyForms() {
   _companyEnsureLogosFolder(); // даміграцыя: дадаць Папку-0 «Лагатыпы» галоўнаму офісу
   const tree = settings.companyTree;
   const nodes = tree.map(n => { const _ct = n.contentType || _COMPANY_SYSKEY_CT[n.sysKey]; return n.type === 'folder' // нармалізацыя: легасі-папка без contentType → вывесці з sysKey (інакш _fcap/схемы/праекцыя банка яе не пазнаюць)
-    ? { id: n.id, type: 'folder', contentType: _ct, _formSchema: _COMPANY_FOLDER_SCHEMA[_ct], _uploadPrompt: _COMPANY_FOLDER_UPLOAD[_ct], _forceR2: _ct === 'company-logos' || undefined, _orderSaved: n._orderSaved, sysKey: n.sysKey || _COMPANY_FOLDER_SYSKEY[_ct], _sys: !!(n.sysKey || _COMPANY_FOLDER_SYSKEY[_ct]) || undefined, parentId: n.parentId ?? null, order: n.order || 0, name: n.name || '', fields: n.fields?._locked ? { _locked: true } : {}, infoNodes: [] }
+    ? { id: n.id, type: 'folder', contentType: _ct, _formSchema: _COMPANY_FOLDER_SCHEMA[_ct], _uploadPrompt: _COMPANY_FOLDER_UPLOAD[_ct], _forceR2: _ct === 'company-logos' || undefined, _altPng: _ct === 'company-logos' || undefined, _orderSaved: n._orderSaved, sysKey: n.sysKey || _COMPANY_FOLDER_SYSKEY[_ct], _sys: !!(n.sysKey || _COMPANY_FOLDER_SYSKEY[_ct]) || undefined, parentId: n.parentId ?? null, order: n.order || 0, name: n.name || '', fields: n.fields?._locked ? { _locked: true } : {}, infoNodes: [] }
     : n.type === 'file' // file-вузлы (лагатыпы) захоўваюцца ў companyTree разам з дрэвам
-    ? { id: n.id, type: 'file', parentId: n.parentId ?? null, order: n.order || 0, name: n.name || '', url: n.url || '', thumbUrl: n.thumbUrl || null, mimeType: n.mimeType || '', size: n.size || 0, variant: n.variant || '', description: n.description || '', createdAt: n.createdAt, updatedAt: n.updatedAt }
+    ? { id: n.id, type: 'file', parentId: n.parentId ?? null, order: n.order || 0, name: n.name || '', url: n.url || '', thumbUrl: n.thumbUrl || null, ...(n.pngUrl ? { pngUrl: n.pngUrl } : {}), mimeType: n.mimeType || '', size: n.size || 0, variant: n.variant || '', description: n.description || '', createdAt: n.createdAt, updatedAt: n.updatedAt }
     : { id: n.id, type: 'form', formSchema: n.formSchema, parentId: n.parentId ?? null, order: n.order || 0, name: n.name || '', fields: n.fields || {} }; });
   // company Form-0 (галоўны офіс) → сховішча company-tree; settingsKey-блокі секцый (напр. Web3Forms) — з settings (крыніца ісціны)
   const head0 = nodes.find(n => n.type === 'form' && n.formSchema === 'companyStructure' && (n.parentId ?? null) === null);
@@ -12473,7 +12593,7 @@ function _companyTreeFromNodes() {
     .map(n => n.type === 'folder'
       ? { id: n.id, type: 'folder', contentType: n.contentType, sysKey: n.sysKey, parentId: n.parentId ?? null, order: n.order || 0, name: n.name || '', ...(n._orderSaved ? { _orderSaved: n._orderSaved } : {}), ...(n.fields?._locked ? { fields: { _locked: true } } : {}) }
       : n.type === 'file' // лагатыпы (файлы) → застаюцца ў дрэве кампаніі
-      ? { id: n.id, type: 'file', parentId: n.parentId ?? null, order: n.order || 0, name: n.name || '', url: n.url || '', thumbUrl: n.thumbUrl || null, mimeType: n.mimeType || '', size: n.size || 0, variant: n.variant || '', description: n.description || '', createdAt: n.createdAt, updatedAt: n.updatedAt }
+      ? { id: n.id, type: 'file', parentId: n.parentId ?? null, order: n.order || 0, name: n.name || '', url: n.url || '', thumbUrl: n.thumbUrl || null, ...(n.pngUrl ? { pngUrl: n.pngUrl } : {}), mimeType: n.mimeType || '', size: n.size || 0, variant: n.variant || '', description: n.description || '', createdAt: n.createdAt, updatedAt: n.updatedAt }
       : { id: n.id, type: 'form', formSchema: n.formSchema, parentId: n.parentId ?? null, order: n.order || 0, name: n.name || '', fields: n.fields || {} });
 }
 // Праекцыя для сайта (галоўны офіс → settings.company + сумяшчальнасць мапы/тэлефона)
@@ -12491,10 +12611,12 @@ function _companyProjectSite() {
   const logoFolder = nodes.find(n => n.type === 'folder' && n.contentType === 'company-logos' && n.parentId === head.id);
   const logoFiles = logoFolder ? nodes.filter(n => n.type === 'file' && n.parentId === logoFolder.id && n.url) : [];
   const _byVar = v => (logoFiles.find(n => n.variant === v) || {}).url || '';
+  const _pngByVar = v => (logoFiles.find(n => n.variant === v) || {}).pngUrl || ''; // PNG-копія — для пошты
   const _lOrig = _byVar('original'), _lMid = _byVar('medium'), _lIcon = _byVar('icon');
   const _lPick = (...a) => a.find(Boolean) || '';
   settings.company = { name: f.companyName || {}, shortOfficial: f.shortOfficial || {}, shortName: f.shortName || {}, address: f.address || {}, hours: hoursMl, map: f.map || {}, // тры ўзроўні назвы (поўная/кароткая афіц./подпіс)
     logo: _lPick(_lOrig, _lMid, _lIcon), logoDark: _lPick(_lOrig, _lMid, _lIcon), logoIcon: _lPick(_lIcon, _lMid, _lOrig), // няма асобнага «цёмнага» варыянту — застаўка бярэ асноўны
+    logoPng: _lPick(_pngByVar('icon'), _pngByVar('medium'), _pngByVar('original')), // шапка ліста: Outlook не ведае WebP
     timezone: f.timezone || '', schedule: Array.isArray(f._schedule) ? f._schedule : [],
     phones: (f._phones || []).map(p => ({ label: p.label || '', value: p.value || '', note: p.note || '' })),
     emails: (f._emails || []).map(e => ({ label: e.label || '', address: e.address || '', note: e.note || '' })) };
@@ -12949,13 +13071,13 @@ async function _trLedgerLoad(sub, form) {
     const d = res.ok ? await res.json() : null;
     form.fields._trLedger = (Array.isArray(d?.ledger) ? d.ledger : [])
       .map(r => ({ at: r.at, kind: (+r.d > 0 ? 'grant' : 'spend'), d: r.d, ref: r.ref || r.src || '' }));
-    if (d) { form.fields.trFree = d.free ?? form.fields.trFree; form.fields.trMax = d.max ?? form.fields.trMax; form.fields.trCredits = d.credits ?? form.fields.trCredits; } // абнавіць зводку+бэйдж
+    if (d) { form.fields.trUsed = d.used ?? form.fields.trUsed; form.fields.trMax = d.max ?? form.fields.trMax; form.fields.trCredits = d.credits ?? form.fields.trCredits; } // абнавіць зводку+бэйдж
     if (currentNodeState === monitorState) renderNodeEditor(monitorState);
   } catch { form.fields._trLedger = []; } finally { _trLedgerInflight.delete(sub); }
 }
 // Зводка астатку ў загалоўку Table-секцыі (headerExtra): «Бясплатных N/5 · крэдытаў X»
 function _trLedgerSummaryHtml(form) {
-  const f = form.fields || {}, free = Math.max(0, (+f.trMax || 5) - (+f.trFree || 0));
+  const f = form.fields || {}, free = Math.max(0, (+f.trMax || 5) - (+f.trUsed || 0)); // trUsed = спалена, астатак лічым тут
   return `<span style="font-size:0.75rem;color:var(--muted);font-weight:400">${escHtml(t('tr_ledger_summary').replace('{free}', free).replace('{max}', f.trMax || 5).replace('{credits}', f.trCredits || 0))}</span>`;
 }
 
@@ -13042,7 +13164,7 @@ let monitorState = {
       const goto = orderId ? `<button class="node-overflow-item" title="${t('monitor_goto_order')}" onclick="monitorGoToOrder('${escHtml(orderId)}');nodeCloseOverflow('${mid}')">📋→</button>` : '';
       // ⏸ Прыпыніць / ▶ Аднавіць доступ да сайта (даменнае дзеянне без канон-cap, як goto → тут яму месца)
       const paused = node.fields?.status === 'paused';
-      const pauseBtn = (orderId && clientId) ? (paused
+      const pauseBtn = (orderId && clientId && !node.fields?._phantom) ? (paused
         ? `<button class="node-overflow-item" title="${t('monitor_resume_site')}" onclick="monitorResumeSite('${escHtml(clientId)}','${escHtml(orderId)}');nodeCloseOverflow('${mid}')">▶</button>`
         : `<button class="node-overflow-item" title="${t('monitor_pause_site')}" onclick="monitorPauseSite('${escHtml(clientId)}','${escHtml(orderId)}','${escHtml(String(node.fields?.subdomain||'').replace(/\\.ttzop\\.com$/,''))}');nodeCloseOverflow('${mid}')">⏸</button>`) : '';
       return goto + pauseBtn;
@@ -13071,14 +13193,16 @@ let monitorState = {
       // Кропка пінгу: undefined=яшчэ правяраем (шэры), true=сайт жывы (зялёны), false=сайт недасяжны (чырвоны)
       const online = form.fields?.online;
       const pingCol = online === undefined ? 'var(--muted)' : online ? '#22c55e' : '#ef4444';
-      const pingDot = `<span style="display:inline-block;width:7px;height:7px;border-radius:50%;background:${pingCol};margin-right:5px;flex-shrink:0;vertical-align:middle" title="${online === undefined ? '…' : online ? '✓ online' : '✗ offline'}"></span>`;
+      // 👻 фантом НЕ пінгуецца (pingMonitorSites яго прапускае) → шэрая кропка вечна чытаецца як «зараз
+      // праверым» і хлусіць. Няма сайта — няма індыкатара; 👻 «няма даных» побач кажа ўсё сам.
+      const pingDot = form.fields?._phantom ? '' : `<span style="display:inline-block;width:7px;height:7px;border-radius:50%;background:${pingCol};margin-right:5px;flex-shrink:0;vertical-align:middle" title="${online === undefined ? t('mon_ping_wait') : online ? '✓ online' : '✗ offline'}"></span>`;
       // 🏷️ бэдж статусу на РАДКУ (жывая заўвага 2026-07-10): стан сайта бачны без разгортвання формы
       const chipCol = col !== 'var(--fg)' ? col : 'var(--muted)';
       const stLblRaw = t('order_' + status), stLbl = stLblRaw === 'order_' + status ? status : stLblRaw; // невядомы статус → як ёсць (t() вяртае ключ)
       const stBadge = status ? `<span style="font-size:0.72rem;color:${chipCol};border:1px solid currentColor;border-radius:10px;padding:0 7px;margin-left:8px;white-space:nowrap;opacity:0.9">${escHtml(stLbl)}</span>` : '';
       // 🌐 бэйдж расходу перакладаў: засталося бясплатных за месяц + купленых крэдытаў (чырвоны пры 0)
-      const ff = form.fields || {}, trFree = Math.max(0, (+ff.trMax || 5) - (+ff.trFree || 0)), trCred = +ff.trCredits || 0;
-      const trBadge = `<span style="font-size:0.72rem;color:${trFree <= 0 && trCred <= 0 ? '#ef4444' : 'var(--muted)'};margin-left:6px;white-space:nowrap" title="${escHtml(t('tr_client_badge_title'))}">🌐${trFree}+${trCred}</span>`;
+      const ff = form.fields || {}, trLeft = Math.max(0, (+ff.trMax || 5) - (+ff.trUsed || 0)), trCred = +ff.trCredits || 0;
+      const trBadge = `<span style="font-size:0.72rem;color:${trLeft <= 0 && trCred <= 0 ? '#ef4444' : 'var(--muted)'};margin-left:6px;white-space:nowrap" title="${escHtml(t('tr_client_badge_title'))}">🌐${trLeft}+${trCred}</span>`;
       const star = form.fields?._self ? `<span title="${escHtml(t('mon_self_site'))}">⭐ </span>` : ''; // ⭐ уласны сайт платформы
       // 🌍 дзённы расход пошты ЎСЁЙ платформы — толькі на ⭐-радку (гэта не пер-сайтавая лічба):
       // пер-сайтавыя квоты нічога не значаць, калі агульны ліміт правайдэра вычарпаны
@@ -13197,12 +13321,16 @@ async function _monitorLoadDashboard() {
                  until: d ? `${d}.${m}.${y}` : c.until||'', daysLeft:c.daysLeft??null,
                  orderId:c.orderId||'', clientId:c.clientId||'', _self: c.self ? true : undefined, // ⭐ уласны сайт платформы
                  // 🌐 расход перакладаў гэтага паддамена (для бэйджа + выпіса)
-                 trFree:c.trFree??0, trMax:c.trMax??5, trCredits:c.trCredits??0,
+                 trUsed:c.trUsed??0, trMax:c.trMax??5, trCredits:c.trCredits??0,
                  mailToday:c.mailToday??0, mailMax:c.mailMax??0, // 📧 дзённая квота лістоў (бэйдж 📧N/M)
                  _phantom: c.phantom ? true : undefined, // 👻 заказ без даных сайта
                  alerts48:c.alerts48??0 } });  // 🚨 крытычных за 48 гадз (чып ⚠N у назве)
     });
     monitorState._deploy = dash?.deployTargets || [];   // 🚀 ступені выкату (версіі збірае воркер)
+    // 💨 Дашборд аддае ступені ТОЛЬКІ з кэша воркера (збор версій — 14 хостаў + GitHub API, ~0.9с з
+    // 1.37с адказу). Пуста → дацягваем ленава адным лёгкім запытам. `[]` ад воркера = «платформа, не
+    // загружана», `null` = «не платформа» (пытацца няма чаго — экшн платформа-only).
+    if (Array.isArray(dash?.deployTargets) && !dash.deployTargets.length) _deployReload(false);
     monitorState._mailGlobal = dash?.mailGlobal || null; // 🌍 глабальны расход пошты (толькі рэпам платформы)
     monitorState.data.nodes = newNodes;
     monitorState._trSpend = dash?.trSpend || null; // 🌐 месячны расход AI-перакладаў (чып на «Аглядзе»)
@@ -13224,6 +13352,11 @@ const _METRIC_SERIES = [
   // 📧 пошта: % ад НАШАЙ дзённай мяжы і ад месячнага ліміту правайдэра (даныя — блок resend у здымку)
   { form: 'mch-mail', code: 'mail/day',   v: d => d.resend?.dayUsed,             l: d => d.resend?.dayMax || 90,   per: 'stats_per_day' },
   { form: 'mch-mail', code: 'mail/mo',    v: d => d.resend?.monthUsed,           l: d => d.resend?.provider?.month || 3000, per: 'mon_mail_per_month' },
+  // 📮 ПЕР-КАНАЛЬНЫЯ серыі: пілюлі Resend і Brevo побач — у дынаміцы відаць, хто вязе пошту і калі
+  // спрацавала пераключэнне. Мяжа — уласная мяжа канала (100 у Resend, 300 у Brevo), не агульная.
+  // ⚠️ Гісторыя да 27.07 такіх даных не мае (пустыя кропкі) — лічнікі з'явіліся разам з ланцугом.
+  { form: 'mch-mail', detail: true, code: 'mail/resend', v: d => d.resend?.providers?.find(p => p.id === 'resend')?.dayUsed, l: d => d.resend?.providers?.find(p => p.id === 'resend')?.limits?.day || 100, per: 'stats_per_day' },
+  { form: 'mch-mail', detail: true, code: 'mail/brevo',  v: d => d.resend?.providers?.find(p => p.id === 'brevo')?.dayUsed,  l: d => d.resend?.providers?.find(p => p.id === 'brevo')?.limits?.day || 300, per: 'stats_per_day' },
   { form: 'mch-cf',  code: 'KV read',     v: d => d.cloudflare?.kv?.reads,       l: () => 100000, per: 'stats_per_day' },
   // ⚠️ Ліміт free-tier 1000/дзень — на СУМУ write+delete+list, а не на кожны паасобку (як у картцы
   // «KV Writes / Deletes / Lists»). Раней кожная з трох мела «свой» ліміт 1000, і графік прыхарошваў:
@@ -13261,7 +13394,9 @@ function _monitorHistoryRows(formId) {
   }
   const rows = [];
   for (const s of _METRIC_SERIES) {
-    if (formId === 'mch-all' ? s.abs : s.form !== formId) continue;
+    // `detail` — падрабязнасць (складнікі таго, што ў агульнай серыі ўжо палічана разам): на агульным
+    // графіку яны дублявалі б сумарны радок і рабілі б яго нечытэльным. Жывуць у сваёй Папцы.
+    if (formId === 'mch-all' ? (s.abs || s.detail) : s.form !== formId) continue;
     for (const d of days) {
       const v = s.v(d); if (v == null) continue;
       const lim = s.abs ? null : s.l(d);
@@ -13329,6 +13464,25 @@ async function _monitorLoadStats() {
       ];
       rows.forEach(([name, used, limit, note], i) => newNodes.push({ id:`mf-mail-${i}`, type:'form', formSchema:'monitorStat',
         parentId:'mf-mail', order:i, name, fields:{ used, limit, note } }));
+      // ⛓ КАНАЛЫ: радок на кожнага правайдэра з `_MAIL_PROVIDERS` — хто вязе пошту зараз, хто ў дауне.
+      // Без гэтага ланцуг працаваў бы «моўчкі», і падзенне асноўнага канала было б нябачным.
+      // ⚠️ Лічба радка — РАСХОД канала за дзень супраць ЯГО ўласнай мяжы (у Resend і Brevo яны розныя),
+      // а стан канала (актыўны/запасны/даун/не настроены) і адмовы — у ноце. Так відаць і размеркаванне
+      // паміж каналамі, і хто «сыпецца». Радкі генеруюцца з `providers` → новы правайдэр з'явіцца сам.
+      (rs.providers || []).forEach((pv, i) => {
+        const st = !pv.ready ? t('mon_mail_ch_off')
+          : pv.downUntil ? t('mon_mail_ch_down').replace('{t}', fmtDateTime(pv.downUntil))
+          : (rs.active === pv.id ? t('mon_mail_ch_active') : t('mon_mail_ch_ready'));
+        // 🐤 «правераны {дата}» — вынік канарэйкі ключа. Паказваем ЗАЎСЁДЫ, калі канал настроены:
+        // пустое поле = ключ не правяраўся ніводнага разу, і гэта таксама сігнал (мёртвы рэзерв
+        // выяўляўся выпадкова — жывы кейс 27.07), а не проста адсутнасць навін.
+        const chk = pv.ready ? ` · ${pv.checkedAt ? t('mon_mail_ch_checked').replace('{t}', fmtDateTime(pv.checkedAt)) : t('mon_mail_ch_unchecked')}` : '';
+        const extra = `${t('mon_mail_ch_month')}: ${pv.monthUsed || 0}` + (pv.failToday ? ` · ${t('mon_mail_ch_fail')}: ${pv.failToday}` : '') + chk;
+        newNodes.push({ id:`mf-mail-p${i}`, type:'form', formSchema:'monitorStat', parentId:'mf-mail', order:6 + i,
+          name:`${t('mon_mail_ch')}: ${pv.label}`, // ⚠️ НЕ mon_mail_channel: той радок пра апошні збой,
+          // і тры аднолькавыя загалоўкі запар зліваліся — карыстальнік не бачыў радкоў каналаў
+          fields:{ used: pv.dayUsed || 0, limit: pv.limits?.day || 0, note: `${st} · ${extra}` } });
+      });
       // стан каналу: апошні збой з журнала алертаў (чырвоны, калі crit)
       if (rs.lastFail) newNodes.push({ id:'mf-mail-fail', type:'form', formSchema:'monitorStat', parentId:'mf-mail', order:9,
         name: t('mon_mail_channel'), fields:{ used: rs.lastFail.sev === 'crit' ? 1 : 0, limit: 1,
