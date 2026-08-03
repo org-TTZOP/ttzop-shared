@@ -4107,13 +4107,13 @@ async function _clientsFolderExpand(folder) {
     const [details, privacy, subs] = await Promise.all([
       orders.length
         ? apiCall('get_order_details', { orders: orders.map(o => ({ clientId: cid, orderId: o.id })) })
-          .then(r => r.ok ? r.json() : { details: [] }).then(j => j.details || [])
+          .then(j => j?.details || [])
         : Promise.resolve([]),
       apiCall('read', { file: `content/clients/${cid}/privacy.json` })
-        .then(r => r.ok ? r.json() : []).catch(() => []),
+        .then(j => Array.isArray(j) ? j : []).catch(() => []),
       // 🔁 S1: падпіскі кліента (D1) → Table-секцыя «Падпіскі»
       apiCall('subs_list', { clientId: cid })
-        .then(r => r.ok ? r.json() : { subscriptions: [] }).then(j => j.subscriptions || []).catch(() => [])
+        .then(j => j?.subscriptions || []).catch(() => [])
     ]);
     if (s.data !== dataAtStart) return; // раздзел перазагружаны пакуль чакалі
     const det2 = s.data.nodes.find(n => n.id === `${cid}-details`);
@@ -15091,8 +15091,7 @@ async function _monitorLoadHistory() {
   if (monitorState._histLoading || monitorState._histLoaded) return;
   monitorState._histLoading = true;
   try {
-    const call = snap => apiCall('metrics_history', { ...(snap ? { snap: true } : {}) })
-      .then(r => r.ok ? r.json() : null);
+    const call = snap => apiCall('metrics_history', { ...(snap ? { snap: true } : {}) });
     let data = await call(false);
     if (data && !(data.days || []).length) data = await call(true); // першы раз — адразу зрабіць кропку
     monitorState._history = data?.days || [];
@@ -16532,8 +16531,8 @@ async function loadChatsEditor() {
       apiCall('chat_peers', {}),
       apiCall('chat_list', {})
     ]);
-    if (pr.ok) { const pj = await pr.json(); peers = pj.peers || []; chatsState._stdReplies = Array.isArray(pj.replies) ? pj.replies : []; }
-    if (cr.ok) chats = (await cr.json()).chats || [];
+    if (pr) { peers = pr.peers || []; chatsState._stdReplies = Array.isArray(pr.replies) ? pr.replies : []; }
+    if (cr) chats = cr.chats || [];
   } catch {}
   const byPeer = Object.fromEntries(chats.map(c => [c.peerId, c]));
   const nodes = [ // канон Ф/П/ПФФ: Формы-0 (Чаты + Стандартныя адказы) → Папкі-0 (Супрацоўнікі / Наведвальнікі)
