@@ -30,6 +30,17 @@ window.TTZOP_MENU_ICONS = {
   filePdf:'<path d="M4.2 2.6h4L11.6 6v7.4H4.2Z" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/><path d="M8 2.8V6h3.2" stroke="currentColor" stroke-width="1.3"/><path d="M5.9 8.6v3.2M5.9 8.6h1.1a.85.85 0 0 1 0 1.7H5.9M8.9 11.8V8.6h.7a1.6 1.6 0 0 1 0 3.2Z" stroke="currentColor" stroke-width="1.15" stroke-linecap="round" stroke-linejoin="round"/>',
   fileXls:'<path d="M4.2 2.6h4L11.6 6v7.4H4.2Z" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/><path d="M8 2.8V6h3.2" stroke="currentColor" stroke-width="1.3"/><path d="M5.9 8.8l3 3M8.9 8.8l-3 3" stroke="currentColor" stroke-width="1.25" stroke-linecap="round"/>',
   fileCsv:'<path d="M4.2 2.6h4L11.6 6v7.4H4.2Z" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/><path d="M8 2.8V6h3.2" stroke="currentColor" stroke-width="1.3"/><path d="M6.2 9.4v1.9M8 9.4v1.9M9.8 9.4v1.9" stroke="currentColor" stroke-width="1.25" stroke-linecap="round"/>',
+  // JSON — той жа аркуш, што ў PDF/Excel/CSV, але з фігурнымі дужкамі: CSV-іконка ў ролі JSON
+  // блытала («два аднолькавыя аркушы»), а фармат стаў стандартнай пліткай «Падзяліцца»
+  fileJson:'<path d="M4.2 2.6h4L11.6 6v7.4H4.2Z" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/><path d="M8 2.8V6h3.2" stroke="currentColor" stroke-width="1.3"/><path d="M7.1 9.1c-.7 0-.7.6-.7 1.1s0 1.1-.7 1.1M8.9 9.1c.7 0 .7.6.7 1.1s0 1.1.7 1.1" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" fill="none"/>',
+  // 📋 устаўка з буфера — аркуш на планшэце; парная да `copy`, якая ўжо ёсць у наборы
+  paste:'<rect x="4" y="3.4" width="8" height="10.2" rx="1.4" stroke="currentColor" stroke-width="1.4"/><path d="M6.3 3.4V2.6h3.4v0.8" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/><path d="M6.4 8h3.2M6.4 10.4h3.2" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/>',
+  // ⛶ вялікае акно ↔ назад: рамка + чатыры стрэлкі. Пара робіцца ЛЮСТЭРКАМ адной геаметрыі —
+  // разгарнуць = ад цэнтра ў вуглы, згарнуць = з вуглоў у цэнтр (глядач бачыць той самы аб'єкт у
+  // двух станах). Быў сімвал «⛶» тэкстам: у частцы шрыфтоў ён бляклы і чытаецца як брак гліфа.
+  expand:'<rect x="1.9" y="1.9" width="12.2" height="12.2" rx="1.7" stroke="currentColor" stroke-width="1.15" opacity=".5"/><path d="M7.2 7.2 4.5 4.5M4.5 4.5h2.1M4.5 4.5v2.1M8.8 7.2l2.7-2.7M11.5 4.5H9.4M11.5 4.5v2.1M7.2 8.8 4.5 11.5M4.5 11.5h2.1M4.5 11.5V9.4M8.8 8.8l2.7 2.7M11.5 11.5H9.4M11.5 11.5V9.4" stroke="currentColor" stroke-width="1.35" stroke-linecap="round" stroke-linejoin="round"/>',
+  // ⚠️ у «згарнуць» галоўкі стрэлак глядзяць у цэнтр і на 17px злипаліся ў пляму — трымаем зазор
+  collapse:'<rect x="1.9" y="1.9" width="12.2" height="12.2" rx="1.7" stroke="currentColor" stroke-width="1.15" opacity=".5"/><path d="M4.4 4.4 6.9 6.9M6.9 6.9H5M6.9 6.9V5M11.6 4.4 9.1 6.9M9.1 6.9h1.9M9.1 6.9V5M4.4 11.6 6.9 9.1M6.9 9.1H5M6.9 9.1v1.9M11.6 11.6 9.1 9.1M9.1 9.1h1.9M9.1 9.1v1.9" stroke="currentColor" stroke-width="1.35" stroke-linecap="round" stroke-linejoin="round"/>',
   link:'<path d="M6.5 9.5 9.5 6.5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/><path d="M7.4 4.9 8.6 3.7a2.4 2.4 0 0 1 3.4 3.4l-1.2 1.2M8.6 11.1 7.4 12.3a2.4 2.4 0 0 1-3.4-3.4l1.2-1.2" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>',
   // ── кантролі (пошук/стоп/геаметка): былі эмодзі 🔍⏹📍 у лэйблах кнопак ──
   search:'<circle cx="7.2" cy="7.2" r="4.2" stroke="currentColor" stroke-width="1.5"/><path d="M10.4 10.4l3 3" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>',
@@ -58,7 +69,14 @@ window.TTZOP_MENU_ICONS = {
   navReports:'<path d="M2.6 13.4V2.6" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/><path d="M2.6 13.4h10.8" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/><path d="M4.6 10.6l2.6-3 2.2 1.8 3-4" stroke="currentColor" stroke-width="1.45" stroke-linecap="round" stroke-linejoin="round"/>',
   navLanguages:'<circle cx="8" cy="8" r="5.4" stroke="currentColor" stroke-width="1.4"/><path d="M2.6 8h10.8" stroke="currentColor" stroke-width="1.2"/><path d="M8 2.6c2.2 1.8 2.2 9 0 10.8M8 2.6c-2.2 1.8-2.2 9 0 10.8" stroke="currentColor" stroke-width="1.2"/>',
   navTheme:'<path d="M8 2.4a5.6 5.6 0 0 0 0 11.2q1.3 0 1.3-1.1t-.9-1.2q-.9-.1-.9-1t1.1-.9h1.9a3.1 3.1 0 0 0 3.1-3.1Q13.6 2.4 8 2.4Z" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/><circle cx="5.6" cy="6.4" r="0.95" fill="currentColor"/><circle cx="8.6" cy="5.2" r="0.95" fill="currentColor"/>',
+  // 🎲 Релакс — кубік: адзін контур + тры кропкі (на 16px больш не чытаецца)
+  navRelax:'<rect x="2.8" y="2.8" width="10.4" height="10.4" rx="2.2" stroke="currentColor" stroke-width="1.4"/><circle cx="5.9" cy="5.9" r="1.05" fill="currentColor"/><circle cx="8" cy="8" r="1.05" fill="currentColor"/><circle cx="10.1" cy="10.1" r="1.05" fill="currentColor"/>',
   navPanelview:'<rect x="1.9" y="3" width="12.2" height="8.2" rx="1.5" stroke="currentColor" stroke-width="1.4"/><path d="M6 13.4h4M8 11.2v2.2" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/><path d="M4.4 5.4h3.4" stroke="currentColor" stroke-width="1.25" stroke-linecap="round"/>',
+  // 🔄 Абнаўленне — ПРОСТАЯ круглая стрэлка (рашэнне карыстальніка 27.07: двухстрэлкавы sync
+  // выглядаў цяжка). Геаметрыя тая ж, што ў `reset` — свядома: карыстальнік хоча роўна тую кнопку,
+  // якую бачыць у ⋯-меню. `reset` пры гэтым НЕ чапаем — у яго свой запіс і свой сэнс (скід да
+  // дэфолту), проста малюнак блізкі. Асобны id патрэбны, каб схема іконак кіравала імі паасобку.
+  refresh:'<path d="M12.4 8a4.4 4.4 0 1 1-1.3-3.1" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><path d="M12.5 3.3v2.3h-2.3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>',
   navUsers:'<circle cx="8" cy="5.6" r="2.6" stroke="currentColor" stroke-width="1.4"/><path d="M3.4 13.4q0-3.6 4.6-3.6t4.6 3.6" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>',
   navChats:'<path d="M13.4 7.9q0 3.3-5.4 3.3l-3.6 2 1-2.5Q2.6 9.6 2.6 7.9 2.6 4 8 4t5.4 3.9Z" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/><path d="M5.8 7.8h4.4" stroke="currentColor" stroke-width="1.25" stroke-linecap="round"/>',
 };

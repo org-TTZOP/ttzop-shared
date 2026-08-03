@@ -361,10 +361,28 @@ html[data-d-stamp="on"] #hero { position: relative; }
 [data-edm] { cursor: pointer; border-radius: 5px; min-height: 1.2em; }
 [data-edm]:hover { box-shadow: 0 0 0 1px #f97316; background: rgba(249,115,22,.07); }
 [data-edm]:empty::before { content: attr(data-ph); opacity: .45; font-style: italic; }
+/* ✍️ РЭЗУЛЬТАТ РЭДАКТАРА НА АПУБЛІКАВАНАЙ СТАРОНЦЫ.
+   ⚠️ Выраўноўванне і водступ Quill — гэта КЛАСЫ (`ql-align-*`, `ql-indent-*`), а `quill.snow.css`
+   грузіцца толькі ў edit-рэжыме. Без гэтых правіл уладальнік ставіў бы тэкст па цэнтры, бачыў гэта
+   ў рэдактары, а наведвальнік — не (менавіта таму Чарнавік раней і не мел гэтых кнопак).
+   Значэнні — як у Quill: водступ = 3em на ўзровень, 8 узроўняў. */
+.ql-align-center { text-align: center; }
+.ql-align-right { text-align: right; }
+.ql-align-justify { text-align: justify; }
+.ql-indent-1 { padding-left: 3em; } .ql-indent-2 { padding-left: 6em; }
+.ql-indent-3 { padding-left: 9em; } .ql-indent-4 { padding-left: 12em; }
+.ql-indent-5 { padding-left: 15em; } .ql-indent-6 { padding-left: 18em; }
+.ql-indent-7 { padding-left: 21em; } .ql-indent-8 { padding-left: 24em; }
+/* 📊 табліца з рэдактара: без рамак яна чытаецца як звычайны тэкст (гэтак жа зроблена ў панэлі) */
+[data-edm] table, .about-text table, .ds-sec table { border-collapse: collapse; width: 100%; margin: 8px 0; }
+[data-edm] table td, .about-text table td, .ds-sec table td { border: 1px solid var(--border-color,#0003); padding: 6px 9px; vertical-align: top; }
+/* цытата і лінія — з ⌄-спісу рэдактара; натыўны выгляд браўзера тут занадта блёкла-нейтральны */
+.about-text blockquote, .ds-sec blockquote { margin: 8px 0; padding: 4px 0 4px 14px; border-left: 3px solid var(--accent,#f97316); opacity: .9; }
+.about-text hr, .ds-sec hr { border: none; border-top: 1px solid var(--border-color,#0003); margin: 14px 0; }
 /* 🖊️ Мадалка WYSIWYG (прыгожы тэкст) */
 #ed-modal { position: fixed; inset: 0; z-index: 10001; background: rgba(0,0,0,.62); display: none; align-items: center; justify-content: center; padding: 16px; }
 /* мадалка = картка старонкі (колеры з тэмы сайта); выразная рамка+подсвет каб не злівалася з цёмным оверлэем */
-.ed-modal-box { background: var(--card-bg,#fff); color: var(--text-main,#1a1a1a); border-radius: 14px; width: min(680px,96vw); max-height: 88vh; display: flex; flex-direction: column; border: 1px solid var(--border-color,#0002); box-shadow: 0 0 0 1px var(--accent,#f97316), 0 24px 70px rgba(0,0,0,.6); overflow: hidden; }
+.ed-modal-box { background: var(--card-bg,#fff); color: var(--text-main,#1a1a1a); border-radius: 14px; width: min(880px,96vw); max-height: 88vh; display: flex; flex-direction: column; border: 1px solid var(--border-color,#0002); box-shadow: 0 0 0 1px var(--accent,#f97316), 0 24px 70px rgba(0,0,0,.6); overflow: hidden; }
 #ed-modal .ql-toolbar { border: none; border-bottom: 1px solid var(--border-color,#e5e5e5); border-radius: 14px 14px 0 0; background: color-mix(in srgb, var(--card-bg,#f7f7f8) 92%, var(--text-main,#000)); }
 #ed-modal .ql-container { border: none; flex: 1; overflow-y: auto; font-size: 1rem; color: var(--text-main,#1a1a1a); }
 #ed-modal .ql-editor { min-height: 200px; color: var(--text-main,#1a1a1a); line-height: 1.6; }
@@ -376,6 +394,9 @@ html[data-d-stamp="on"] #hero { position: relative; }
 #ed-modal .ql-toolbar button:hover .ql-stroke, #ed-modal .ql-toolbar button.ql-active .ql-stroke { stroke: var(--accent,#f97316); }
 #ed-modal .ql-toolbar button:hover .ql-fill, #ed-modal .ql-toolbar button.ql-active .ql-fill { fill: var(--accent,#f97316); }
 #ed-modal .ql-picker-options { background: var(--card-bg,#fff); color: var(--text-main,#1a1a1a); }
+/* радок загалоўка рэдактара (⛶ + Адмяніць/Захаваць) — разметку і выгляд дае кампанент
+   richtext.js, тут толькі водступ ад краёў мадалкі */
+.ed-modal-head { padding: 10px 14px 4px; }
 .ed-modal-quill { display: flex; flex-direction: column; flex: 1; min-height: 0; overflow: hidden; }
 .ed-modal-foot { display: flex; justify-content: flex-end; gap: 8px; padding: 10px 14px; border-top: 1px solid var(--border-color,#e5e5e5); }
 /* Кнопкі дыялогаў Чарнавіка = дызайн панэльнага form-modal (Адмена — ghost, Захаваць — акцэнт-заліўка);
@@ -392,7 +413,7 @@ body.ds-edit #site-sections a[href],
 body.ds-edit #site-sections .tile-item-clickable,
 body.ds-edit #site-sections article[onclick] { pointer-events: none !important; cursor: default !important; }
 /* але панэлька рэдактара секцыі (▲▼/⋯) і дыскложур ▶/▼ перад назвай — жывыя (яны ж кнопкі ў #site-sections) */
-body.ds-edit #site-sections .ds-editbar button, body.ds-edit #site-sections .ds-fold-btn, body.ds-edit #site-sections [data-cdate], body.ds-edit #site-sections .ds-more-btn, body.ds-edit #site-sections .ds-lay-btn, body.ds-edit #site-sections .ds-add-btn, body.ds-edit #site-sections .faq-question, body.ds-edit #site-sections .ds-view-btn { pointer-events: auto !important; cursor: pointer !important; } /* выключэнні = РЭДАКТАРСКІЯ і ПРАГЛЯДНЫЯ дзеянні (каляндар/+N яшчэ/Карткі-Спіс/+📂 стужка/FAQ-адказ/чытач навіны); пакупныя (кошык/бронь/чат/спасылкі) — інертныя */
+body.ds-edit #site-sections .ds-editbar button, body.ds-edit #site-sections .ds-fold-btn, body.ds-edit #site-sections [data-cdate], body.ds-edit #site-sections .ds-more-btn, body.ds-edit #site-sections .ds-lay-btn, body.ds-edit #site-sections .ds-add-btn, body.ds-edit #site-sections .faq-question, body.ds-edit #site-sections .ds-view-btn, body.ds-edit #site-sections .rx-tab { pointer-events: auto !important; cursor: pointer !important; } /* выключэнні = РЭДАКТАРСКІЯ і ПРАГЛЯДНЫЯ дзеянні (каляндар/+N яшчэ/Карткі-Спіс/+📂 стужка/FAQ-адказ/чытач навіны/пераключальнік гульні — усё гэта ПРАГЛЯД, не пакупка); пакупныя (кошык/бронь/чат/спасылкі) — інертныя */
 /* HERO і ФУТЭР — па-за #site-sections, але іх кнопкі/спасылкі ў edit таксама пакупныя/навігацыйныя →
    інертныя (рашэнне 2026-07-15: выпадковы клік «Запісацца» пры праўцы hero-тэксту адкрываў бронь);
    рэдагавальны тэкст [data-ed] (hero-загалоўкі/подпіс футэра) — не a/button, застаецца жывым */
@@ -806,3 +827,30 @@ html[data-d-shadows="flat"] .service-card:hover { transform: none; box-shadow: n
 .ds-carousel .services-folder-heading { flex: 0 0 100%; }
 
 /* 📖 Даведка наведвальніку — рэндэр і стылі ў assets/js/help-widget.js (TTZOP_HELP.block, клас .twh) */
+
+/* 🎲 РЕЛАКС на старонцы: пліткі-выбар гульні + месца пад дошку. Кампанент гульняў сам малюе дошку
+   на CSS-зменных тэмы — тут толькі абалонка і пераключальнік, каб выгляд ішоў за тэмай сайта. */
+.rx-wrap { display: flex; flex-direction: column; gap: 12px; align-items: center; }
+.rx-tabs { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; }
+.rx-tab { padding: 7px 14px; border-radius: 999px; border: 1px solid var(--border-color, #8884);
+  background: transparent; color: inherit; font: inherit; font-size: 0.86rem; cursor: pointer; opacity: .78; }
+.rx-tab:hover { opacity: 1; }
+.rx-tab.is-on { background: var(--accent, #f97316); border-color: var(--accent, #f97316); color: #fff; opacity: 1; }
+/* шырыня дошкі — пад палец: на вузкім экране амаль ва ўсю старонку, на шырокім не расцягваецца */
+.rx-board { width: min(460px, 100%); }
+.rx-hint { text-align: center; color: var(--text-muted, #888); font-size: 0.85rem; padding: 24px 0; }
+/* 📣 Прома-слот побач з дошкай: адна пазіцыя Каталога, ціхая ратацыя. На вузкім экране — пад дошкай
+   (гуляць важней за рэкламу), на шырокім — збоку, каб не адціскала поле ўніз. */
+.rx-row { display: flex; flex-wrap: wrap; gap: 18px; align-items: flex-start; justify-content: center; width: 100%; }
+.rx-promo { width: min(260px, 100%); }
+.rx-promo-lbl { font-size: 0.7rem; text-transform: uppercase; letter-spacing: .06em; color: var(--text-muted, #888); margin-bottom: 6px; }
+.rx-promo-card { display: flex; gap: 10px; align-items: center; text-decoration: none; color: inherit;
+  border: 1px solid var(--border-color, #8884); border-radius: 12px; padding: 8px; transition: opacity .25s, transform .25s; }
+.rx-promo-card:hover { transform: translateY(-2px); }
+.rx-promo-card img { width: 64px; height: 64px; object-fit: cover; border-radius: 8px; flex: 0 0 auto; }
+.rx-promo-ico { width: 64px; height: 64px; display: flex; align-items: center; justify-content: center; font-size: 1.8rem; flex: 0 0 auto; }
+.rx-promo-title { font-size: 0.9rem; font-weight: 600; line-height: 1.25; }
+.rx-promo-price { font-size: 0.85rem; color: var(--accent, #f97316); margin-top: 3px; }
+@media (max-width: 720px) { .rx-promo { width: min(420px, 100%); } }
+/* пустая секцыя Релаксу ў рэдактары: не маўклівая пустата, а падказка «што рабіць» */
+.rx-empty { text-align: center; color: var(--text-muted, #888); font-size: 0.9rem; padding: 22px 12px; line-height: 1.5; }

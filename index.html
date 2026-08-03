@@ -5,9 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="description" content="">
   <title></title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@400;600;700&family=Manrope:wght@400;500;600&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+  <!-- Самахост: шрыфты і Leaflet лакальныя — ні адзін трэці бок не бачыць IP наведвальніка -->
+  <link rel="stylesheet" href="assets/css/fonts.css">
+  <link rel="stylesheet" href="assets/vendor/leaflet/leaflet.css">
   <link rel="stylesheet" href="assets/css/themes.css">
   <link rel="stylesheet" href="assets/css/style.css">
 </head>
@@ -77,27 +77,13 @@
       <!-- Форма запісу / чат кабінета -->
       <div class="contact-form-wrap">
         <h3 data-i18n="form_title">Запісацца на сэрвіс</h3>
-        <!-- 💬 CTA у чат Кабінета (дэфолт; заяўкі трапляюць у панэль, не толькі на пошту) -->
-        <div id="contact-chat-cta" style="display:none">
+        <!-- 💬 Адзіны канал заяўкі — чат Кабінета: трапляе ў панэль, звязваецца з кліентам, ліст ідзе
+             нашым ланцугом правайдэраў. Былы Web3Forms-канал знесены 29.07 (чужы сэрвіс у HTML кожнага
+             сайта = недэклараваны суб-працэсар у Палітыцы; замены не патрабуе — чат робіць тое самае лепш). -->
+        <div id="contact-chat-cta">
           <p style="opacity:0.8;margin-bottom:16px" data-i18n="contact_chat_desc">Напішыце нам у чаце — адкажам там жа, а копія адказу прыйдзе вам на пошту.</p>
           <a href="/portal.html" class="btn btn-primary" onclick="if(window.openCabinet){openCabinet();return false}">💬 <span data-i18n="contact_chat_btn">Напісаць у чат</span></a>
         </div>
-        <!-- Web3Forms-канал АДКЛЮЧАНЫ па змаўчанні (вяртанне: settings.contactForm.web3 = true), код пакінуты знарок -->
-        <form id="booking-form" action="https://api.web3forms.com/submit" method="POST">
-          <input type="hidden" name="access_key" id="w3f-key">
-          <input type="hidden" name="subject" value="Новая заяўка з сайта">
-          <input type="text"     name="name"    required
-                 data-i18n-placeholder="form_name"    placeholder="Ваша імя">
-          <input type="tel"      name="phone"   required
-                 data-i18n-placeholder="form_phone"   placeholder="Тэлефон">
-          <!-- дадатковае поле формы: паказваецца толькі калі settings.contactForm.car !== false
-               (санацыя v4.449: аўтасэрвіс-спецыфіка ва ўніверсальным шаблоне — цяпер наладжвальна) -->
-          <input type="text"     name="car"    id="form-car-field"
-                 data-i18n-placeholder="form_car"     placeholder="Марка і мадэль аўто">
-          <textarea name="message" rows="4"
-                 data-i18n-placeholder="form_message" placeholder="Апішыце праблему"></textarea>
-          <button type="submit" class="btn btn-primary" data-i18n="form_submit">Адправіць заяўку</button>
-        </form>
       </div>
 
     </div>
@@ -138,7 +124,8 @@
     <div class="footer-col">
       <h4 data-i18n="footer_legal">Дакументы</h4>
       <ul>
-        <li><a href="/privacy" data-i18n="footer_privacy">Палітыка прыватнасці</a></li>
+        <!-- 📄 Спіс дакументаў будуецца дынамічна (_docsRenderFooter): Палітыка, Умовы, Дастаўка… -->
+        <li id="footer-docs-fallback"><a href="/privacy" data-i18n="footer_privacy">Палітыка прыватнасці</a></li>
         <li><a href="/portal.html" data-i18n="footer_portal" onclick="if(window.openCabinet){openCabinet();return false}">Мае заказы</a></li>
         <li><a href="/admin" target="_blank" rel="noopener" style="opacity:0.4;font-size:1.1rem" title="Admin">⚙</a></li>
       </ul>
@@ -148,10 +135,11 @@
   <div class="footer-bottom">
     <p id="footer-copy"></p>
     <div id="footer-social" style="margin-top:6px"></div><!-- К3b: сацсеткі з секцыі «Футэр» (Структура сайта) -->
+    <p id="footer-powered" style="margin-top:8px;font-size:0.78rem;opacity:0.65"></p><!-- 🏷 марка платформы (будуецца ў main.js: сцяг + nofollow) -->
   </div>
 </footer>
 
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="assets/vendor/leaflet/leaflet.js"></script>
 <script src="admin/version.js"></script><!-- APP_VERSION — адзіная крыніца версіі (тая ж, што ў панэлі) -->
 <script src="assets/js/reader.js"></script><!-- 📄 універсальны чытач дакумента (навіны/фактура/справаздачы) -->
 <script src="assets/js/help-widget.js"></script><!-- 📖 універсальны рэндэр падказкі (панэль/сайт/кабінет) -->
@@ -159,6 +147,7 @@
 <script src="assets/js/cdate.js"></script><!-- 📅 фірменны каляндар-папап (Чарнавік: дата навіны і інш.) -->
 <script src="assets/js/menu-icons.js"></script><!-- 🎨 адзіны SVG-набор іконак ⋯-меню (Чарнавік-оверлэй = панэль) -->
 <script src="assets/js/photoedit.js"></script><!-- ✂️ універсальны фота-рэдактар (Чарнавік: +📎 фота) -->
+<script src="assets/js/sitehost.js"></script><!-- 🌐 адзіны рэзалв «хост → site_id» (уласныя дамены кліентаў) -->
 <script src="assets/js/main.js"></script>
 </body>
 </html>

@@ -33,7 +33,6 @@ collections:
           - { label: "Кнопка 2", name: "hero_btn_secondary_local", widget: "string" }
           - { label: "Шырата (карта)", name: "mapLat", widget: "string" }
           - { label: "Даўгата (карта)", name: "mapLng", widget: "string" }
-          - { label: "Ключ Web3Forms", name: "web3formsKey", widget: "string" }
 
   - name: "sections"
     label: "📋 Секцыі сайта"

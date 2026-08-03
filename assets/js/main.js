@@ -134,7 +134,7 @@ function _applyPriceConversion() {
 }
 
 const UI_T = {
-  be: {
+  be: { rx_empty: 'Ніводная гульня не ўключана. Панэль → Структура сайта → гэтая секцыя → Папка «Гульні» → ● на патрэбных.', rx_promo: 'Таксама ў нас', rx_loading: 'Загружаем гульню…',
     tax_block_no: 'Мы пакуль не прадаём у гэту краіну', tax_block_b2b: 'У гэту краіну прадаём толькі фірмам — увядзіце падатковы нумар',
     form_country: 'Краіна', form_taxnum: 'Падатковы нумар (для фірмаў)', form_taxnum_hint: 'Ёсць нумар — рахунак без ПДВ (reverse charge)',
     tax_checking: 'правяраем…', tax_lvl_verified: '✓ пацверджана ў рэестры', tax_lvl_declared: 'запісана з вашых слоў', tax_lvl_invalid: '✗ рэестр кажа: нумар нядзейсны',
@@ -144,6 +144,7 @@ const UI_T = {
     cart_added: '🛒 У кошыку ({n})', cta_book: 'Запісацца', price_from_pfx:'ад', price_quote:'Па дамове', badge_hit:'Хіт', badge_new:'Новае', badge_promo:'Акцыя', chat_book_pfx:'Хачу запісацца: {name}', ask_btn:'Спытаць', chat_ask_pfx:'Пытанне пра: {name}', sub_btn:'Аформіць падпіску', chat_sub_pfx:'Хачу аформіць падпіску: {name}', per_month:'/мес', per_year:'/год', look_note:'Рэжым прагляду канцэптаў — гэта НЕ рэальны выгляд сайта', look_colors:'Колеры', look_designs:'Паводзіны', look_apply:'Выбраць гэты варыянт', add_to_cart: '🛒 У кошык', reader_pdfprint: 'PDF / Друк', reader_close: 'Закрыць', reader_share: 'Падзяліцца', reader_copied: 'Скапіравана', read_in_tab: 'Чытаць у новым акне', read_more: 'Чытаць далей',
     privacy_title: 'Палітыка прыватнасці', privacy_subtitle: 'Перад замовай азнаёмцеся з палітыкай прыватнасці',
     privacy_agree: 'Я азнаёміўся і згаджаюся з палітыкай прыватнасці', privacy_decline: 'Адмовіцца', privacy_continue: 'Працягнуць →',
+    docs_agree:'Я азнаёміўся і згаджаюся з дакументамі', doc_t_privacy:'Палітыка прыватнасці', doc_t_terms:'Умовы карыстання', doc_t_refund:'Вяртанне і адмова', doc_t_delivery:'Дастаўка і аплата', doc_t_other:'Дакумент',
     form_title: 'Аформіць заказ', form_subdomain: 'Жаданы паддамен', form_email: 'Ваш Email',
     form_note: 'Заўвага (неабавязкова)', form_note_ph: 'Вашы пытанні або пажаданні...',
     form_back: 'Назад', form_send_code: 'Атрымаць код →', form_sending: 'Адпраўляем...',
@@ -177,11 +178,11 @@ const UI_T = {
     done_regular: 'Дзякуй! Мы звяжамся з вамі па email <b style="color:#e8eaf0">{email}</b> у бліжэйшы час.',
     done_close: 'Закрыць',
     form_site_langs: 'Мовы сайта', form_site_langs_err: 'Выберыце хаця б адну мову',
-    cart_added_ok: '✓ Дадана!', form_err_send: 'Памылка.', form_err_conn: 'Памылка сувязі.', privacy_unavailable: 'Палітыка прыватнасці недаступная.',
+    cart_added_ok: '✓ Дадана!', privacy_unavailable: 'Палітыка прыватнасці недаступная.',
     subdomain_invalid: 'Толькі малыя літары, лічбы і злучок. Ад 3 да 30 знакаў.',
     subdomain_free: '✅ {subdomain}.ttzop.com — вольны!', subdomain_check_err: 'Памылка праверкі',
   },
-  en: {
+  en: { rx_empty: 'No games enabled yet. Panel → Site structure → this section → “Games” folder → toggle ● on the ones you want.', rx_promo: 'Also from us', rx_loading: 'Loading the game…',
     tax_block_no: "We don't sell to this country yet", tax_block_b2b: 'We sell to this country to companies only — enter a tax number',
     form_country: 'Country', form_taxnum: 'Tax number (for companies)', form_taxnum_hint: 'With a number the invoice is issued without VAT (reverse charge)',
     tax_checking: 'checking…', tax_lvl_verified: '✓ confirmed in the registry', tax_lvl_declared: 'recorded as you entered it', tax_lvl_invalid: '✗ the registry says this number is not valid',
@@ -191,6 +192,7 @@ const UI_T = {
     cart_added: '🛒 In cart ({n})', cta_book: 'Book now', price_from_pfx:'from', price_quote:'Price on request', badge_hit:'Top', badge_new:'New', badge_promo:'Sale', chat_book_pfx:'I would like to book: {name}', ask_btn:'Ask a question', chat_ask_pfx:'Question about: {name}', sub_btn:'Subscribe', chat_sub_pfx:'I would like to subscribe: {name}', per_month:'/mo', per_year:'/yr', look_note:'Concept preview mode — this is NOT the live site look', look_colors:'Colors', look_designs:'Behavior', look_apply:'Choose this look', add_to_cart: '🛒 Add to cart', reader_pdfprint: 'PDF / Print', reader_close: 'Close', reader_share: 'Share', reader_copied: 'Copied', read_in_tab: 'Read in new tab', read_more: 'Read more',
     privacy_title: 'Privacy Policy', privacy_subtitle: 'Please read our privacy policy before ordering',
     privacy_agree: 'I have read and agree to the privacy policy', privacy_decline: 'Decline', privacy_continue: 'Continue →',
+    docs_agree:'I have read and agree to the documents', doc_t_privacy:'Privacy Policy', doc_t_terms:'Terms of Service', doc_t_refund:'Refunds and returns', doc_t_delivery:'Delivery and payment', doc_t_other:'Document',
     form_title: 'Place order', form_subdomain: 'Desired subdomain', form_email: 'Your Email',
     form_note: 'Note (optional)', form_note_ph: 'Your questions or wishes...',
     form_back: 'Back', form_send_code: 'Get code →', form_sending: 'Sending...',
@@ -224,11 +226,11 @@ const UI_T = {
     done_regular: 'Thank you! We will contact you at <b style="color:#e8eaf0">{email}</b> shortly.',
     done_close: 'Close',
     form_site_langs: 'Site languages', form_site_langs_err: 'Select at least one language',
-    cart_added_ok: '✓ Added!', form_err_send: 'Error.', form_err_conn: 'Connection error.', privacy_unavailable: 'Privacy policy unavailable.',
+    cart_added_ok: '✓ Added!', privacy_unavailable: 'Privacy policy unavailable.',
     subdomain_invalid: 'Only lowercase letters, numbers and hyphens. 3 to 30 characters.',
     subdomain_free: '✅ {subdomain}.ttzop.com — available!', subdomain_check_err: 'Check error',
   },
-  uk: {
+  uk: { rx_empty: 'Жодну гру не ввімкнено. Панель → Структура сайта → ця секція → тека «Ігри» → ● на потрібних.', rx_promo: 'Також у нас', rx_loading: 'Завантажуємо гру…',
     tax_block_no: 'Ми поки не продаємо в цю країну', tax_block_b2b: 'У цю країну продаємо тільки фірмам — введіть податковий номер',
     form_country: 'Країна', form_taxnum: 'Податковий номер (для фірм)', form_taxnum_hint: 'Є номер — рахунок без ПДВ (reverse charge)',
     tax_checking: 'перевіряємо…', tax_lvl_verified: '✓ підтверджено в реєстрі', tax_lvl_declared: 'записано з ваших слів', tax_lvl_invalid: '✗ реєстр каже: номер недійсний',
@@ -238,6 +240,7 @@ const UI_T = {
     cart_added: '🛒 У кошику ({n})', cta_book: 'Записатися', price_from_pfx:'від', price_quote:'За домовленістю', badge_hit:'Хіт', badge_new:'Нове', badge_promo:'Акція', chat_book_pfx:'Хочу записатися: {name}', ask_btn:'Запитати', chat_ask_pfx:'Питання про: {name}', sub_btn:'Оформити підписку', chat_sub_pfx:'Хочу оформити підписку: {name}', per_month:'/міс', per_year:'/рік', look_note:'Режим перегляду концептів — це НЕ реальний вигляд сайту', look_colors:'Кольори', look_designs:'Поведінка', look_apply:'Обрати цей варіант', add_to_cart: '🛒 У кошик', reader_pdfprint: 'PDF / Друк', reader_close: 'Закрити', reader_share: 'Поділитися', reader_copied: 'Скопійовано', read_in_tab: 'Читати в новій вкладці', read_more: 'Читати далі',
     privacy_title: 'Політика конфіденційності', privacy_subtitle: 'Перед замовленням ознайомтесь з політикою конфіденційності',
     privacy_agree: 'Я ознайомився і погоджуюсь з політикою конфіденційності', privacy_decline: 'Відмовитися', privacy_continue: 'Продовжити →',
+    docs_agree:'Я ознайомився і погоджуюсь з документами', doc_t_privacy:'Політика конфіденційності', doc_t_terms:'Умови користування', doc_t_refund:'Повернення та відмова', doc_t_delivery:'Доставка та оплата', doc_t_other:'Документ',
     form_title: 'Оформити замовлення', form_subdomain: 'Бажаний піддомен', form_email: 'Ваш Email',
     form_note: 'Примітка (необов\'язково)', form_note_ph: 'Ваші питання або побажання...',
     form_back: 'Назад', form_send_code: 'Отримати код →', form_sending: 'Відправляємо...',
@@ -271,11 +274,11 @@ const UI_T = {
     done_regular: 'Дякуємо! Ми зв\'яжемося з вами по email <b style="color:#e8eaf0">{email}</b> найближчим часом.',
     done_close: 'Закрити',
     form_site_langs: 'Мови сайту', form_site_langs_err: 'Виберіть хоча б одну мову',
-    cart_added_ok: '✓ Додано!', form_err_send: 'Помилка.', form_err_conn: 'Помилка з\'єднання.', privacy_unavailable: 'Політика конфіденційності недоступна.',
+    cart_added_ok: '✓ Додано!', privacy_unavailable: 'Політика конфіденційності недоступна.',
     subdomain_invalid: 'Тільки малі літери, цифри і дефіс. Від 3 до 30 символів.',
     subdomain_free: '✅ {subdomain}.ttzop.com — вільний!', subdomain_check_err: 'Помилка перевірки',
   },
-  ru: {
+  ru: { rx_empty: 'Ни одна игра не включена. Панель → Структура сайта → эта секция → папка «Игры» → ● на нужных.', rx_promo: 'Также у нас', rx_loading: 'Загружаем игру…',
     tax_block_no: 'Мы пока не продаём в эту страну', tax_block_b2b: 'В эту страну продаём только фирмам — введите налоговый номер',
     form_country: 'Страна', form_taxnum: 'Налоговый номер (для фирм)', form_taxnum_hint: 'Есть номер — счёт без НДС (reverse charge)',
     tax_checking: 'проверяем…', tax_lvl_verified: '✓ подтверждено в реестре', tax_lvl_declared: 'записано с ваших слов', tax_lvl_invalid: '✗ реестр говорит: номер недействителен',
@@ -285,6 +288,7 @@ const UI_T = {
     cart_added: '🛒 В корзине ({n})', cta_book: 'Записаться', price_from_pfx:'от', price_quote:'По договорённости', badge_hit:'Хит', badge_new:'Новое', badge_promo:'Акция', chat_book_pfx:'Хочу записаться: {name}', ask_btn:'Спросить', chat_ask_pfx:'Вопрос о: {name}', sub_btn:'Оформить подписку', chat_sub_pfx:'Хочу оформить подписку: {name}', per_month:'/мес', per_year:'/год', look_note:'Режим просмотра концептов — это НЕ реальный вид сайта', look_colors:'Цвета', look_designs:'Поведение', look_apply:'Выбрать этот вариант', add_to_cart: '🛒 В корзину', reader_pdfprint: 'PDF / Печать', reader_close: 'Закрыть', reader_share: 'Поделиться', reader_copied: 'Скопировано', read_in_tab: 'Читать в новой вкладке', read_more: 'Читать далее',
     privacy_title: 'Политика конфиденциальности', privacy_subtitle: 'Перед заказом ознакомьтесь с политикой конфиденциальности',
     privacy_agree: 'Я ознакомился и соглашаюсь с политикой конфиденциальности', privacy_decline: 'Отказаться', privacy_continue: 'Продолжить →',
+    docs_agree:'Я ознакомился и соглашаюсь с документами', doc_t_privacy:'Политика конфиденциальности', doc_t_terms:'Условия использования', doc_t_refund:'Возврат и отказ', doc_t_delivery:'Доставка и оплата', doc_t_other:'Документ',
     form_title: 'Оформить заказ', form_subdomain: 'Желаемый поддомен', form_email: 'Ваш Email',
     form_note: 'Примечание (необязательно)', form_note_ph: 'Ваши вопросы или пожелания...',
     form_back: 'Назад', form_send_code: 'Получить код →', form_sending: 'Отправляем...',
@@ -318,11 +322,11 @@ const UI_T = {
     done_regular: 'Спасибо! Мы свяжемся с вами по email <b style="color:#e8eaf0">{email}</b> в ближайшее время.',
     done_close: 'Закрыть',
     form_site_langs: 'Языки сайта', form_site_langs_err: 'Выберите хотя бы один язык',
-    cart_added_ok: '✓ Добавлено!', form_err_send: 'Ошибка.', form_err_conn: 'Ошибка соединения.', privacy_unavailable: 'Политика конфиденциальности недоступна.',
+    cart_added_ok: '✓ Добавлено!', privacy_unavailable: 'Политика конфиденциальности недоступна.',
     subdomain_invalid: 'Только строчные буквы, цифры и дефис. От 3 до 30 символов.',
     subdomain_free: '✅ {subdomain}.ttzop.com — свободен!', subdomain_check_err: 'Ошибка проверки',
   },
-  pl: {
+  pl: { rx_empty: 'Nie włączono żadnej gry. Panel → Struktura witryny → ta sekcja → folder „Gry” → ● przy wybranych.', rx_promo: 'Także u nas', rx_loading: 'Ładowanie gry…',
     tax_block_no: 'Do tego kraju na razie nie sprzedajemy', tax_block_b2b: 'Do tego kraju sprzedajemy tylko firmom — podaj numer podatkowy',
     form_country: 'Kraj', form_taxnum: 'Numer podatkowy (dla firm)', form_taxnum_hint: 'Z numerem faktura bez VAT (odwrotne obciążenie)',
     tax_checking: 'sprawdzamy…', tax_lvl_verified: '✓ potwierdzony w rejestrze', tax_lvl_declared: 'zapisany zgodnie z podaniem', tax_lvl_invalid: '✗ rejestr: numer nieprawidłowy',
@@ -332,6 +336,7 @@ const UI_T = {
     cart_added: '🛒 W koszyku ({n})', cta_book: 'Umów się', price_from_pfx:'od', price_quote:'Cena do uzgodnienia', badge_hit:'Hit', badge_new:'Nowość', badge_promo:'Promocja', chat_book_pfx:'Chcę się umówić: {name}', ask_btn:'Zapytaj', chat_ask_pfx:'Pytanie o: {name}', sub_btn:'Subskrybuj', chat_sub_pfx:'Chcę wykupić subskrypcję: {name}', per_month:'/mies.', per_year:'/rok', look_note:'Tryb podglądu koncepcji — to NIE jest realny wygląd strony', look_colors:'Kolory', look_designs:'Zachowanie', look_apply:'Wybierz ten wariant', add_to_cart: '🛒 Do koszyka', reader_pdfprint: 'PDF / Drukuj', reader_close: 'Zamknij', reader_share: 'Udostępnij', reader_copied: 'Skopiowano', read_in_tab: 'Otwórz w nowej karcie', read_more: 'Czytaj dalej',
     privacy_title: 'Polityka prywatności', privacy_subtitle: 'Przed zamówieniem zapoznaj się z polityką prywatności',
     privacy_agree: 'Zapoznałem się i zgadzam się z polityką prywatności', privacy_decline: 'Odrzuć', privacy_continue: 'Kontynuuj →',
+    docs_agree:'Zapoznałem się i akceptuję dokumenty', doc_t_privacy:'Polityka prywatności', doc_t_terms:'Regulamin', doc_t_refund:'Zwroty i odstąpienie', doc_t_delivery:'Dostawa i płatność', doc_t_other:'Dokument',
     form_title: 'Złóż zamówienie', form_subdomain: 'Żądana subdomena', form_email: 'Twój Email',
     form_note: 'Uwaga (opcjonalnie)', form_note_ph: 'Twoje pytania lub życzenia...',
     form_back: 'Wstecz', form_send_code: 'Pobierz kod →', form_sending: 'Wysyłamy...',
@@ -365,11 +370,11 @@ const UI_T = {
     done_regular: 'Dziękujemy! Skontaktujemy się z Tobą przez email <b style="color:#e8eaf0">{email}</b> wkrótce.',
     done_close: 'Zamknij',
     form_site_langs: 'Języki witryny', form_site_langs_err: 'Wybierz co najmniej jeden język',
-    cart_added_ok: '✓ Dodano!', form_err_send: 'Błąd.', form_err_conn: 'Błąd połączenia.', privacy_unavailable: 'Polityka prywatności niedostępna.',
+    cart_added_ok: '✓ Dodano!', privacy_unavailable: 'Polityka prywatności niedostępna.',
     subdomain_invalid: 'Tylko małe litery, cyfry i myślnik. Od 3 do 30 znaków.',
     subdomain_free: '✅ {subdomain}.ttzop.com — wolny!', subdomain_check_err: 'Błąd sprawdzania',
   },
-  de: {
+  de: { rx_empty: 'Noch kein Spiel aktiviert. Panel → Website-Struktur → dieser Abschnitt → Ordner „Spiele“ → ● bei den gewünschten.', rx_promo: 'Auch bei uns', rx_loading: 'Spiel wird geladen…',
     tax_block_no: 'In dieses Land verkaufen wir derzeit nicht', tax_block_b2b: 'In dieses Land verkaufen wir nur an Firmen — Steuernummer eingeben',
     form_country: 'Land', form_taxnum: 'Steuernummer (für Firmen)', form_taxnum_hint: 'Mit Nummer: Rechnung ohne MwSt. (Reverse Charge)',
     tax_checking: 'wird geprüft…', tax_lvl_verified: '✓ im Register bestätigt', tax_lvl_declared: 'wie angegeben erfasst', tax_lvl_invalid: '✗ Register: Nummer ungültig',
@@ -379,6 +384,7 @@ const UI_T = {
     cart_added: '🛒 Im Warenkorb ({n})', cta_book: 'Termin buchen', price_from_pfx:'ab', price_quote:'Preis auf Anfrage', badge_hit:'Top', badge_new:'Neu', badge_promo:'Aktion', chat_book_pfx:'Ich möchte einen Termin buchen: {name}', ask_btn:'Frage stellen', chat_ask_pfx:'Frage zu: {name}', sub_btn:'Abonnieren', chat_sub_pfx:'Ich möchte abonnieren: {name}', per_month:'/Mon.', per_year:'/Jahr', look_note:'Konzept-Vorschau — NICHT das echte Erscheinungsbild der Website', look_colors:'Farben', look_designs:'Verhalten', look_apply:'Diesen Look wählen', add_to_cart: '🛒 In den Warenkorb', reader_pdfprint: 'PDF / Druck', reader_close: 'Schließen', reader_share: 'Teilen', reader_copied: 'Kopiert', read_in_tab: 'In neuem Tab öffnen', read_more: 'Weiterlesen',
     privacy_title: 'Datenschutzrichtlinie', privacy_subtitle: 'Bitte lesen Sie unsere Datenschutzrichtlinie vor der Bestellung',
     privacy_agree: 'Ich habe die Datenschutzrichtlinie gelesen und stimme zu', privacy_decline: 'Ablehnen', privacy_continue: 'Weiter →',
+    docs_agree:'Ich habe die Dokumente gelesen und stimme zu', doc_t_privacy:'Datenschutzrichtlinie', doc_t_terms:'Nutzungsbedingungen', doc_t_refund:'Rückgabe und Widerruf', doc_t_delivery:'Lieferung und Zahlung', doc_t_other:'Dokument',
     form_title: 'Bestellen', form_subdomain: 'Gewünschte Subdomain', form_email: 'Ihre E-Mail',
     form_note: 'Anmerkung (optional)', form_note_ph: 'Ihre Fragen oder Wünsche...',
     form_back: 'Zurück', form_send_code: 'Code erhalten →', form_sending: 'Wird gesendet...',
@@ -412,11 +418,11 @@ const UI_T = {
     done_regular: 'Danke! Wir werden Sie per E-Mail an <b style="color:#e8eaf0">{email}</b> in Kürze kontaktieren.',
     done_close: 'Schließen',
     form_site_langs: 'Seitensprachen', form_site_langs_err: 'Wählen Sie mindestens eine Sprache',
-    cart_added_ok: '✓ Hinzugefügt!', form_err_send: 'Fehler.', form_err_conn: 'Verbindungsfehler.', privacy_unavailable: 'Datenschutzrichtlinie nicht verfügbar.',
+    cart_added_ok: '✓ Hinzugefügt!', privacy_unavailable: 'Datenschutzrichtlinie nicht verfügbar.',
     subdomain_invalid: 'Nur Kleinbuchstaben, Ziffern und Bindestriche. 3 bis 30 Zeichen.',
     subdomain_free: '✅ {subdomain}.ttzop.com — verfügbar!', subdomain_check_err: 'Prüffehler',
   },
-  fr: {
+  fr: { rx_empty: 'Aucun jeu activé. Panneau → Structure du site → cette section → dossier « Jeux » → ● sur ceux voulus.', rx_promo: 'Également chez nous', rx_loading: 'Chargement du jeu…',
     tax_block_no: 'Nous ne vendons pas encore dans ce pays', tax_block_b2b: 'Dans ce pays, nous vendons uniquement aux entreprises — saisissez un numéro fiscal',
     form_country: 'Pays', form_taxnum: 'Numéro fiscal (pour les entreprises)', form_taxnum_hint: 'Avec un numéro : facture sans TVA (autoliquidation)',
     tax_checking: 'vérification…', tax_lvl_verified: '✓ confirmé au registre', tax_lvl_declared: 'enregistré tel que saisi', tax_lvl_invalid: '✗ registre : numéro non valide',
@@ -426,6 +432,7 @@ const UI_T = {
     cart_added: '🛒 Dans le panier ({n})', cta_book: 'Prendre RDV', price_from_pfx:'dès', price_quote:'Prix sur demande', badge_hit:'Top', badge_new:'Nouveau', badge_promo:'Promo', chat_book_pfx:'Je souhaite réserver : {name}', ask_btn:'Poser une question', chat_ask_pfx:'Question sur : {name}', sub_btn:'S\'abonner', chat_sub_pfx:'Je souhaite m\'abonner : {name}', per_month:'/mois', per_year:'/an', look_note:'Mode aperçu de concepts — ce n’est PAS l’apparence réelle du site', look_colors:'Couleurs', look_designs:'Comportement', look_apply:'Choisir ce style', add_to_cart: '🛒 Ajouter au panier', reader_pdfprint: 'PDF / Impr.', reader_close: 'Fermer', reader_share: 'Partager', reader_copied: 'Copié', read_in_tab: 'Ouvrir dans un onglet', read_more: 'Lire la suite',
     privacy_title: 'Politique de confidentialité', privacy_subtitle: 'Veuillez lire notre politique de confidentialité avant de commander',
     privacy_agree: "J'ai lu et j'accepte la politique de confidentialité", privacy_decline: 'Refuser', privacy_continue: 'Continuer →',
+    docs_agree:'J\'ai lu et j\'accepte les documents', doc_t_privacy:'Politique de confidentialité', doc_t_terms:'Conditions d\'utilisation', doc_t_refund:'Retours et remboursement', doc_t_delivery:'Livraison et paiement', doc_t_other:'Document',
     form_title: 'Passer la commande', form_subdomain: 'Sous-domaine souhaité', form_email: 'Votre Email',
     form_note: 'Remarque (facultative)', form_note_ph: 'Vos questions ou souhaits...',
     form_back: 'Retour', form_send_code: 'Recevoir le code →', form_sending: 'Envoi en cours...',
@@ -459,11 +466,11 @@ const UI_T = {
     done_regular: 'Merci ! Nous vous contacterons par email à <b style="color:#e8eaf0">{email}</b> sous peu.',
     done_close: 'Fermer',
     form_site_langs: 'Langues du site', form_site_langs_err: 'Sélectionnez au moins une langue',
-    cart_added_ok: '✓ Ajouté!', form_err_send: 'Erreur.', form_err_conn: 'Erreur de connexion.', privacy_unavailable: 'Politique de confidentialité indisponible.',
+    cart_added_ok: '✓ Ajouté!', privacy_unavailable: 'Politique de confidentialité indisponible.',
     subdomain_invalid: 'Uniquement minuscules, chiffres et tirets. 3 à 30 caractères.',
     subdomain_free: '✅ {subdomain}.ttzop.com — disponible!', subdomain_check_err: 'Erreur de vérification',
   },
-  es: {
+  es: { rx_empty: 'Ningún juego activado. Panel → Estructura del sitio → esta sección → carpeta «Juegos» → ● en los que quieras.', rx_promo: 'También ofrecemos', rx_loading: 'Cargando el juego…',
     tax_block_no: 'Todavía no vendemos a este país', tax_block_b2b: 'A este país vendemos solo a empresas — introduzca un número fiscal',
     form_country: 'País', form_taxnum: 'Número fiscal (para empresas)', form_taxnum_hint: 'Con número: factura sin IVA (inversión del sujeto pasivo)',
     tax_checking: 'comprobando…', tax_lvl_verified: '✓ confirmado en el registro', tax_lvl_declared: 'registrado según lo indicado', tax_lvl_invalid: '✗ registro: número no válido',
@@ -473,6 +480,7 @@ const UI_T = {
     cart_added: '🛒 En el carrito ({n})', cta_book: 'Reservar', price_from_pfx:'desde', price_quote:'Precio a convenir', badge_hit:'Top', badge_new:'Nuevo', badge_promo:'Oferta', chat_book_pfx:'Quiero reservar: {name}', ask_btn:'Preguntar', chat_ask_pfx:'Pregunta sobre: {name}', sub_btn:'Suscribirse', chat_sub_pfx:'Quiero suscribirme: {name}', per_month:'/mes', per_year:'/año', look_note:'Modo de vista previa de conceptos — NO es el aspecto real del sitio', look_colors:'Colores', look_designs:'Comportamiento', look_apply:'Elegir esta variante', add_to_cart: '🛒 Añadir al carrito', reader_pdfprint: 'PDF / Imprimir', reader_close: 'Cerrar', reader_share: 'Compartir', reader_copied: 'Copiado', read_in_tab: 'Abrir en pestaña nueva', read_more: 'Leer más',
     privacy_title: 'Política de privacidad', privacy_subtitle: 'Por favor, lea nuestra política de privacidad antes de pedir',
     privacy_agree: 'He leído y acepto la política de privacidad', privacy_decline: 'Rechazar', privacy_continue: 'Continuar →',
+    docs_agree:'He leído y acepto los documentos', doc_t_privacy:'Política de privacidad', doc_t_terms:'Términos de uso', doc_t_refund:'Devoluciones y reembolsos', doc_t_delivery:'Envío y pago', doc_t_other:'Documento',
     form_title: 'Realizar pedido', form_subdomain: 'Subdominio deseado', form_email: 'Tu Email',
     form_note: 'Nota (opcional)', form_note_ph: 'Tus preguntas o deseos...',
     form_back: 'Atrás', form_send_code: 'Obtener código →', form_sending: 'Enviando...',
@@ -506,11 +514,11 @@ const UI_T = {
     done_regular: '¡Gracias! Nos pondremos en contacto contigo por email en <b style="color:#e8eaf0">{email}</b> en breve.',
     done_close: 'Cerrar',
     form_site_langs: 'Idiomas del sitio', form_site_langs_err: 'Seleccione al menos un idioma',
-    cart_added_ok: '✓ Añadido!', form_err_send: 'Error.', form_err_conn: 'Error de conexión.', privacy_unavailable: 'Política de privacidad no disponible.',
+    cart_added_ok: '✓ Añadido!', privacy_unavailable: 'Política de privacidad no disponible.',
     subdomain_invalid: 'Solo minúsculas, números y guiones. De 3 a 30 caracteres.',
     subdomain_free: '✅ {subdomain}.ttzop.com — disponible!', subdomain_check_err: 'Error de verificación',
   },
-  it: {
+  it: { rx_empty: 'Nessun gioco attivato. Pannello → Struttura del sito → questa sezione → cartella «Giochi» → ● su quelli voluti.', rx_promo: 'Anche da noi', rx_loading: 'Caricamento del gioco…',
     tax_block_no: 'Non vendiamo ancora in questo paese', tax_block_b2b: 'In questo paese vendiamo solo ad aziende — inserisci il numero fiscale',
     form_country: 'Paese', form_taxnum: 'Numero fiscale (per aziende)', form_taxnum_hint: 'Con numero: fattura senza IVA (inversione contabile)',
     tax_checking: 'verifica…', tax_lvl_verified: '✓ confermato nel registro', tax_lvl_declared: 'registrato come indicato', tax_lvl_invalid: '✗ registro: numero non valido',
@@ -520,6 +528,7 @@ const UI_T = {
     cart_added: '🛒 Nel carrello ({n})', cta_book: 'Prenota', price_from_pfx:'da', price_quote:'Prezzo su richiesta', badge_hit:'Top', badge_new:'Novità', badge_promo:'Offerta', chat_book_pfx:'Vorrei prenotare: {name}', ask_btn:'Chiedi', chat_ask_pfx:'Domanda su: {name}', sub_btn:'Abbonati', chat_sub_pfx:'Vorrei abbonarmi: {name}', per_month:'/mese', per_year:'/anno', look_note:'Anteprima dei concept — NON è l’aspetto reale del sito', look_colors:'Colori', look_designs:'Comportamento', look_apply:'Scegli questa variante', add_to_cart: '🛒 Aggiungi al carrello', reader_pdfprint: 'PDF / Stampa', reader_close: 'Chiudi', reader_share: 'Condividi', reader_copied: 'Copiato', read_in_tab: 'Apri in nuova scheda', read_more: 'Leggi tutto',
     privacy_title: 'Informativa sulla privacy', privacy_subtitle: 'Leggi la nostra informativa sulla privacy prima di ordinare',
     privacy_agree: "Ho letto e accetto l'informativa sulla privacy", privacy_decline: 'Rifiuta', privacy_continue: 'Continua →',
+    docs_agree:'Ho letto e accetto i documenti', doc_t_privacy:'Informativa sulla privacy', doc_t_terms:'Termini di servizio', doc_t_refund:'Resi e rimborsi', doc_t_delivery:'Consegna e pagamento', doc_t_other:'Documento',
     form_title: 'Effettua ordine', form_subdomain: 'Sottodominio desiderato', form_email: 'La tua Email',
     form_note: 'Nota (facoltativa)', form_note_ph: 'Le tue domande o desideri...',
     form_back: 'Indietro', form_send_code: 'Ricevi codice →', form_sending: 'Invio in corso...',
@@ -553,11 +562,11 @@ const UI_T = {
     done_regular: 'Grazie! Ti contatteremo per email a <b style="color:#e8eaf0">{email}</b> a breve.',
     done_close: 'Chiudi',
     form_site_langs: 'Lingue del sito', form_site_langs_err: 'Seleziona almeno una lingua',
-    cart_added_ok: '✓ Aggiunto!', form_err_send: 'Errore.', form_err_conn: 'Errore di connessione.', privacy_unavailable: 'Informativa sulla privacy non disponibile.',
+    cart_added_ok: '✓ Aggiunto!', privacy_unavailable: 'Informativa sulla privacy non disponibile.',
     subdomain_invalid: 'Solo lettere minuscole, numeri e trattini. Da 3 a 30 caratteri.',
     subdomain_free: '✅ {subdomain}.ttzop.com — disponibile!', subdomain_check_err: 'Errore di verifica',
   },
-  pt: {
+  pt: { rx_empty: 'Nenhum jogo ativado. Painel → Estrutura do site → esta secção → pasta «Jogos» → ● nos pretendidos.', rx_promo: 'Também temos', rx_loading: 'A carregar o jogo…',
     tax_block_no: 'Ainda não vendemos para este país', tax_block_b2b: 'Para este país vendemos apenas a empresas — indique o número fiscal',
     form_country: 'País', form_taxnum: 'Número fiscal (para empresas)', form_taxnum_hint: 'Com número: fatura sem IVA (autoliquidação)',
     tax_checking: 'verificando…', tax_lvl_verified: '✓ confirmado no registo', tax_lvl_declared: 'registado conforme indicado', tax_lvl_invalid: '✗ registo: número inválido',
@@ -567,6 +576,7 @@ const UI_T = {
     cart_added: '🛒 No carrinho ({n})', cta_book: 'Agendar', price_from_pfx:'desde', price_quote:'Preço sob consulta', badge_hit:'Top', badge_new:'Novo', badge_promo:'Promoção', chat_book_pfx:'Quero agendar: {name}', ask_btn:'Perguntar', chat_ask_pfx:'Pergunta sobre: {name}', sub_btn:'Subscrever', chat_sub_pfx:'Quero subscrever: {name}', per_month:'/mês', per_year:'/ano', look_note:'Modo de pré-visualização — NÃO é a aparência real do site', look_colors:'Cores', look_designs:'Comportamento', look_apply:'Escolher esta variante', add_to_cart: '🛒 Adicionar ao carrinho', reader_pdfprint: 'PDF / Imprimir', reader_close: 'Fechar', reader_share: 'Partilhar', reader_copied: 'Copiado', read_in_tab: 'Abrir em novo separador', read_more: 'Ler mais',
     privacy_title: 'Política de privacidade', privacy_subtitle: 'Por favor, leia nossa política de privacidade antes de pedir',
     privacy_agree: 'Li e concordo com a política de privacidade', privacy_decline: 'Recusar', privacy_continue: 'Continuar →',
+    docs_agree:'Li e concordo com os documentos', doc_t_privacy:'Política de privacidade', doc_t_terms:'Termos de utilização', doc_t_refund:'Devoluções e reembolsos', doc_t_delivery:'Entrega e pagamento', doc_t_other:'Documento',
     form_title: 'Fazer pedido', form_subdomain: 'Subdomínio desejado', form_email: 'Seu Email',
     form_note: 'Nota (opcional)', form_note_ph: 'Suas perguntas ou desejos...',
     form_back: 'Voltar', form_send_code: 'Obter código →', form_sending: 'Enviando...',
@@ -600,11 +610,11 @@ const UI_T = {
     done_regular: 'Obrigado! Entraremos em contato por email em <b style="color:#e8eaf0">{email}</b> em breve.',
     done_close: 'Fechar',
     form_site_langs: 'Idiomas do site', form_site_langs_err: 'Selecione pelo menos um idioma',
-    cart_added_ok: '✓ Adicionado!', form_err_send: 'Erro.', form_err_conn: 'Erro de conexão.', privacy_unavailable: 'Política de privacidade indisponível.',
+    cart_added_ok: '✓ Adicionado!', privacy_unavailable: 'Política de privacidade indisponível.',
     subdomain_invalid: 'Apenas letras minúsculas, números e hífens. De 3 a 30 caracteres.',
     subdomain_free: '✅ {subdomain}.ttzop.com — disponível!', subdomain_check_err: 'Erro de verificação',
   },
-  zh: {
+  zh: { rx_empty: '尚未启用任何游戏。面板 → 网站结构 → 本板块 → “游戏”文件夹 → 为需要的游戏打开 ●。', rx_promo: '我们还提供', rx_loading: '正在加载游戏…',
     tax_block_no: '我们暂不向该国家/地区销售', tax_block_b2b: '该国家/地区仅向企业销售 — 请填写税号',
     form_country: '国家/地区', form_taxnum: '税号（企业）', form_taxnum_hint: '填写税号则开具不含增值税发票（反向征收）',
     tax_checking: '检查中…', tax_lvl_verified: '✓ 已在登记处确认', tax_lvl_declared: '按您填写的内容记录', tax_lvl_invalid: '✗ 登记处：该税号无效',
@@ -614,6 +624,7 @@ const UI_T = {
     cart_added: '🛒 已加入购物车（{n}）', cta_book: '立即预约', price_from_pfx:'低至', price_quote:'价格面议', badge_hit:'热门', badge_new:'新品', badge_promo:'促销', chat_book_pfx:'我想预约：{name}', ask_btn:'咨询', chat_ask_pfx:'咨询：{name}', sub_btn:'订阅', chat_sub_pfx:'我想订阅：{name}', per_month:'/月', per_year:'/年', look_note:'概念预览模式 — 这不是网站的真实外观', look_colors:'颜色', look_designs:'行为', look_apply:'选择此方案', add_to_cart: '🛒 加入购物车', reader_pdfprint: 'PDF / 打印', reader_close: '关闭', reader_share: '分享', reader_copied: '已复制', read_in_tab: '在新标签页打开', read_more: '阅读更多',
     privacy_title: '隐私政策', privacy_subtitle: '下单前请阅读我们的隐私政策',
     privacy_agree: '我已阅读并同意隐私政策', privacy_decline: '拒绝', privacy_continue: '继续 →',
+    docs_agree:'我已阅读并同意以下文件', doc_t_privacy:'隐私政策', doc_t_terms:'服务条款', doc_t_refund:'退货与退款', doc_t_delivery:'配送与付款', doc_t_other:'文件',
     form_title: '下单', form_subdomain: '所需子域名', form_email: '您的邮箱',
     form_note: '备注（可选）', form_note_ph: '您的问题或意愿...',
     form_back: '返回', form_send_code: '获取验证码 →', form_sending: '发送中...',
@@ -647,11 +658,11 @@ const UI_T = {
     done_regular: '感谢！我们将尽快通过邮箱 <b style="color:#e8eaf0">{email}</b> 与您联系。',
     done_close: '关闭',
     form_site_langs: '网站语言', form_site_langs_err: '请至少选择一种语言',
-    cart_added_ok: '✓ 已添加！', form_err_send: '错误。', form_err_conn: '连接错误。', privacy_unavailable: '隐私政策不可用。',
+    cart_added_ok: '✓ 已添加！', privacy_unavailable: '隐私政策不可用。',
     subdomain_invalid: '只能使用小写字母、数字和连字符。3至30个字符。',
     subdomain_free: '✅ {subdomain}.ttzop.com — 可用！', subdomain_check_err: '检查错误',
   },
-  ar: {
+  ar: { rx_empty: 'لم يتم تفعيل أي لعبة. اللوحة ← بنية الموقع ← هذا القسم ← مجلد «الألعاب» ← فعّل ● على ما تريد.', rx_promo: 'لدينا أيضًا', rx_loading: 'جارٍ تحميل اللعبة…',
     tax_block_no: 'لا نبيع إلى هذه الدولة حالياً', tax_block_b2b: 'نبيع في هذه الدولة للشركات فقط — أدخل الرقم الضريبي',
     form_country: 'الدولة', form_taxnum: 'الرقم الضريبي (للشركات)', form_taxnum_hint: 'مع الرقم تصدر الفاتورة بدون ضريبة القيمة المضافة',
     tax_checking: 'جارٍ التحقق…', tax_lvl_verified: '✓ مؤكد في السجل', tax_lvl_declared: 'مسجل كما أدخلته', tax_lvl_invalid: '✗ السجل: الرقم غير صالح',
@@ -661,6 +672,7 @@ const UI_T = {
     cart_added: '({n}) 🛒 في السلة', cta_book: 'احجز الآن', price_from_pfx:'ابتداءً من', price_quote:'السعر عند الطلب', badge_hit:'الأكثر طلباً', badge_new:'جديد', badge_promo:'عرض', chat_book_pfx:'أرغب في الحجز: {name}', ask_btn:'اسأل', chat_ask_pfx:'سؤال عن: {name}', sub_btn:'اشترك', chat_sub_pfx:'أرغب في الاشتراك: {name}', per_month:'/شهر', per_year:'/سنة', look_note:'وضع معاينة المفاهيم — هذا ليس المظهر الحقيقي للموقع', look_colors:'الألوان', look_designs:'السلوك', look_apply:'اختيار هذا الشكل', add_to_cart: '🛒 أضف إلى السلة', reader_pdfprint: 'PDF / طباعة', reader_close: 'إغلاق', reader_share: 'مشاركة', reader_copied: 'تم النسخ', read_in_tab: 'فتح في تبويب جديد', read_more: 'اقرأ المزيد',
     privacy_title: 'سياسة الخصوصية', privacy_subtitle: 'يرجى قراءة سياسة الخصوصية قبل الطلب',
     privacy_agree: 'لقد قرأت وأوافق على سياسة الخصوصية', privacy_decline: 'رفض', privacy_continue: '← متابعة',
+    docs_agree:'لقد قرأت ووافقت على المستندات', doc_t_privacy:'سياسة الخصوصية', doc_t_terms:'شروط الاستخدام', doc_t_refund:'الإرجاع والاسترداد', doc_t_delivery:'التوصيل والدفع', doc_t_other:'مستند',
     form_title: 'تقديم الطلب', form_subdomain: 'النطاق الفرعي المطلوب', form_email: 'بريدك الإلكتروني',
     form_note: 'ملاحظة (اختياري)', form_note_ph: 'أسئلتك أو رغباتك...',
     form_back: 'رجوع', form_send_code: '← الحصول على الرمز', form_sending: 'جارٍ الإرسال...',
@@ -694,11 +706,11 @@ const UI_T = {
     done_regular: 'شكراً! سنتواصل معك على البريد الإلكتروني <b style="color:#e8eaf0">{email}</b> قريباً.',
     done_close: 'إغلاق',
     form_site_langs: 'لغات الموقع', form_site_langs_err: 'اختر لغة واحدة على الأقل',
-    cart_added_ok: '✓ تمت الإضافة!', form_err_send: 'خطأ.', form_err_conn: 'خطأ في الاتصال.', privacy_unavailable: 'سياسة الخصوصية غير متاحة.',
+    cart_added_ok: '✓ تمت الإضافة!', privacy_unavailable: 'سياسة الخصوصية غير متاحة.',
     subdomain_invalid: 'أحرف صغيرة وأرقام وشرطات فقط. من 3 إلى 30 حرفاً.',
     subdomain_free: '✅ {subdomain}.ttzop.com — متاح!', subdomain_check_err: 'خطأ في التحقق',
   },
-  hu: {
+  hu: { rx_empty: 'Egy játék sincs bekapcsolva. Panel → Webhelystruktúra → ez a szakasz → „Játékok” mappa → ● a kívántakon.', rx_promo: 'Nálunk még', rx_loading: 'Játék betöltése…',
     tax_block_no: 'Ebbe az országba egyelőre nem értékesítünk', tax_block_b2b: 'Ebbe az országba csak cégeknek értékesítünk — adja meg az adószámot',
     form_country: 'Ország', form_taxnum: 'Adószám (cégeknek)', form_taxnum_hint: 'Adószámmal a számla áfa nélkül készül (fordított adózás)',
     tax_checking: 'ellenőrzés…', tax_lvl_verified: '✓ megerősítve a nyilvántartásban', tax_lvl_declared: 'az Ön megadása szerint rögzítve', tax_lvl_invalid: '✗ nyilvántartás: érvénytelen szám',
@@ -708,6 +720,7 @@ const UI_T = {
     cart_added: '🛒 Kosárban ({n})', cta_book: 'Időpontfoglalás', price_from_pfx:'már', price_quote:'Ár megegyezés szerint', badge_hit:'Sláger', badge_new:'Új', badge_promo:'Akció', chat_book_pfx:'Időpontot szeretnék foglalni: {name}', ask_btn:'Kérdezek', chat_ask_pfx:'Kérdés erről: {name}', sub_btn:'Előfizetés', chat_sub_pfx:'Elő szeretnék fizetni: {name}', per_month:'/hó', per_year:'/év', look_note:'Koncepció-előnézet — ez NEM a webhely valódi kinézete', look_colors:'Színek', look_designs:'Viselkedés', look_apply:'Ezt választom', add_to_cart: '🛒 Kosárba', reader_pdfprint: 'PDF / Nyomt.', reader_close: 'Bezárás', reader_share: 'Megosztás', reader_copied: 'Másolva', read_in_tab: 'Megnyitás új lapon', read_more: 'Tovább olvasom',
     privacy_title: 'Adatvédelmi irányelvek', privacy_subtitle: 'Kérjük, olvassa el adatvédelmi irányelveinket rendelés előtt',
     privacy_agree: 'Elolvastam és elfogadom az adatvédelmi irányelveket', privacy_decline: 'Elutasítás', privacy_continue: 'Folytatás →',
+    docs_agree:'Elolvastam és elfogadom a dokumentumokat', doc_t_privacy:'Adatvédelmi szabályzat', doc_t_terms:'Felhasználási feltételek', doc_t_refund:'Visszaküldés és elállás', doc_t_delivery:'Szállítás és fizetés', doc_t_other:'Dokumentum',
     form_title: 'Rendelés leadása', form_subdomain: 'Kívánt aldomain', form_email: 'Az Ön e-mail-je',
     form_note: 'Megjegyzés (nem kötelező)', form_note_ph: 'Kérdései vagy kívánságai...',
     form_back: 'Vissza', form_send_code: 'Kód kérése →', form_sending: 'Küldés folyamatban...',
@@ -741,7 +754,7 @@ const UI_T = {
     done_regular: 'Köszönjük! Hamarosan felvesszük Önnel a kapcsolatot a(z) <b style="color:#e8eaf0">{email}</b> e-mail-cíemen.',
     done_close: 'Bezárás',
     form_site_langs: 'Weboldal nyelvei', form_site_langs_err: 'Válasszon legalább egy nyelvet',
-    cart_added_ok: '✓ Hozzáadva!', form_err_send: 'Hiba.', form_err_conn: 'Kapcsolódási hiba.', privacy_unavailable: 'Az adatvédelmi irányelvek nem elérhetők.',
+    cart_added_ok: '✓ Hozzáadva!', privacy_unavailable: 'Az adatvédelmi irányelvek nem elérhetők.',
     subdomain_invalid: 'Csak kisbetűk, számok és kötőjelek. 3–30 karakter.',
     subdomain_free: '✅ {subdomain}.ttzop.com — szabad!', subdomain_check_err: 'Ellenőrzési hiba',
   },
@@ -851,8 +864,7 @@ const STATIC_I18N = {
     prices_col_service:'Паслуга', prices_col_price:'Кошт', brands_title:'Маркі з якімі працуем',
     certs_title:'Сертыфікаты і ліцэнзіі', clients_title:'Нашы партнёры', blog_title:'Карысныя артыкулы',
     faq_title:'Частыя пытанні', contact_title:'Кантакты',
-    form_title:'Запісацца на сэрвіс', form_name:'Ваша імя', form_phone:'Тэлефон',
-    form_car:'Марка і мадэль аўто', form_message:'Апішыце праблему', form_submit:'Адправіць заяўку',
+    form_title:'Запісацца на сэрвіс',
     footer_desc:'Прафесійны аўтасэрвіс', footer_nav:'Навігацыя', footer_contacts:'Кантакты',
     footer_legal:'Дакументы', footer_privacy:'Палітыка прыватнасці', footer_portal:'Мае заказы',
     maps_btn:'Адкрыць у Google Maps',
@@ -865,8 +877,7 @@ const STATIC_I18N = {
     prices_col_service:'Service', prices_col_price:'Price', brands_title:'Brands We Work With',
     certs_title:'Certificates & Licences', clients_title:'Our Partners', blog_title:'Useful Articles',
     faq_title:'Frequently Asked Questions', contact_title:'Contact Us',
-    form_title:'Book a Service', form_name:'Your name', form_phone:'Phone',
-    form_car:'Car make and model', form_message:'Describe the issue', form_submit:'Send Request',
+    form_title:'Book a Service',
     footer_desc:'Professional auto service', footer_nav:'Navigation', footer_contacts:'Contacts',
     footer_legal:'Legal', footer_privacy:'Privacy Policy', footer_portal:'My orders',
     maps_btn:'Open in Google Maps',
@@ -879,8 +890,7 @@ const STATIC_I18N = {
     prices_col_service:'Послуга', prices_col_price:'Ціна', brands_title:'Марки з якими працюємо',
     certs_title:'Сертифікати та ліцензії', clients_title:'Наші партнери', blog_title:'Корисні статті',
     faq_title:'Часті запитання', contact_title:'Контакти',
-    form_title:'Записатися на сервіс', form_name:'Ваше ім\'я', form_phone:'Телефон',
-    form_car:'Марка і модель авто', form_message:'Опишіть проблему', form_submit:'Надіслати заявку',
+    form_title:'Записатися на сервіс',
     footer_desc:'Професійний автосервіс', footer_nav:'Навігація', footer_contacts:'Контакти',
     footer_legal:'Документи', footer_privacy:'Політика конфіденційності', footer_portal:'Мої замовлення',
     maps_btn:'Відкрити в Google Maps',
@@ -893,8 +903,7 @@ const STATIC_I18N = {
     prices_col_service:'Услуга', prices_col_price:'Цена', brands_title:'Марки с которыми работаем',
     certs_title:'Сертификаты и лицензии', clients_title:'Наши партнёры', blog_title:'Полезные статьи',
     faq_title:'Часто задаваемые вопросы', contact_title:'Контакты',
-    form_title:'Записаться на сервис', form_name:'Ваше имя', form_phone:'Телефон',
-    form_car:'Марка и модель авто', form_message:'Опишите проблему', form_submit:'Отправить заявку',
+    form_title:'Записаться на сервис',
     footer_desc:'Профессиональный автосервис', footer_nav:'Навигация', footer_contacts:'Контакты',
     footer_legal:'Документы', footer_privacy:'Политика конфиденциальности', footer_portal:'Мои заказы',
     maps_btn:'Открыть в Google Maps',
@@ -907,8 +916,7 @@ const STATIC_I18N = {
     prices_col_service:'Usługa', prices_col_price:'Cena', brands_title:'Marki z którymi pracujemy',
     certs_title:'Certyfikaty i licencje', clients_title:'Nasi partnerzy', blog_title:'Pomocne artykuły',
     faq_title:'Często zadawane pytania', contact_title:'Kontakt',
-    form_title:'Umów wizytę', form_name:'Twoje imię', form_phone:'Telefon',
-    form_car:'Marka i model samochodu', form_message:'Opisz problem', form_submit:'Wyślij zgłoszenie',
+    form_title:'Umów wizytę',
     footer_desc:'Profesjonalny serwis samochodowy', footer_nav:'Nawigacja', footer_contacts:'Kontakt',
     footer_legal:'Dokumenty', footer_privacy:'Polityka prywatności', footer_portal:'Moje zamówienia',
     maps_btn:'Otwórz w Google Maps',
@@ -921,8 +929,7 @@ const STATIC_I18N = {
     prices_col_service:'Leistung', prices_col_price:'Preis', brands_title:'Marken mit denen wir arbeiten',
     certs_title:'Zertifikate & Lizenzen', clients_title:'Unsere Partner', blog_title:'Nützliche Artikel',
     faq_title:'Häufig gestellte Fragen', contact_title:'Kontakt',
-    form_title:'Termin vereinbaren', form_name:'Ihr Name', form_phone:'Telefon',
-    form_car:'Fahrzeugmarke und -modell', form_message:'Problem beschreiben', form_submit:'Anfrage senden',
+    form_title:'Termin vereinbaren',
     footer_desc:'Professioneller Kfz-Service', footer_nav:'Navigation', footer_contacts:'Kontakt',
     footer_legal:'Dokumente', footer_privacy:'Datenschutzrichtlinie', footer_portal:'Meine Bestellungen',
     maps_btn:'In Google Maps öffnen',
@@ -935,8 +942,7 @@ const STATIC_I18N = {
     prices_col_service:'Service', prices_col_price:'Prix', brands_title:'Marques avec lesquelles nous travaillons',
     certs_title:'Certificats & licences', clients_title:'Nos partenaires', blog_title:'Articles utiles',
     faq_title:'Questions fréquentes', contact_title:'Contact',
-    form_title:'Prendre rendez-vous', form_name:'Votre nom', form_phone:'Téléphone',
-    form_car:'Marque et modèle du véhicule', form_message:'Décrivez le problème', form_submit:'Envoyer la demande',
+    form_title:'Prendre rendez-vous',
     footer_desc:'Service automobile professionnel', footer_nav:'Navigation', footer_contacts:'Contact',
     footer_legal:'Documents', footer_privacy:'Politique de confidentialité', footer_portal:'Mes commandes',
     maps_btn:'Ouvrir dans Google Maps',
@@ -949,8 +955,7 @@ const STATIC_I18N = {
     prices_col_service:'Servicio', prices_col_price:'Precio', brands_title:'Marcas con las que trabajamos',
     certs_title:'Certificados y licencias', clients_title:'Nuestros socios', blog_title:'Artículos útiles',
     faq_title:'Preguntas frecuentes', contact_title:'Contacto',
-    form_title:'Reservar servicio', form_name:'Su nombre', form_phone:'Teléfono',
-    form_car:'Marca y modelo del vehículo', form_message:'Describa el problema', form_submit:'Enviar solicitud',
+    form_title:'Reservar servicio',
     footer_desc:'Servicio de automóviles profesional', footer_nav:'Navegación', footer_contacts:'Contacto',
     footer_legal:'Documentos', footer_privacy:'Política de privacidad', footer_portal:'Mis pedidos',
     maps_btn:'Abrir en Google Maps',
@@ -963,8 +968,7 @@ const STATIC_I18N = {
     prices_col_service:'Servizio', prices_col_price:'Prezzo', brands_title:'Marchi con cui lavoriamo',
     certs_title:'Certificati e licenze', clients_title:'I nostri partner', blog_title:'Articoli utili',
     faq_title:'Domande frequenti', contact_title:'Contatti',
-    form_title:'Prenota un servizio', form_name:'Il tuo nome', form_phone:'Telefono',
-    form_car:'Marca e modello del veicolo', form_message:'Descrivi il problema', form_submit:'Invia richiesta',
+    form_title:'Prenota un servizio',
     footer_desc:'Officina professionale', footer_nav:'Navigazione', footer_contacts:'Contatti',
     footer_legal:'Documenti', footer_privacy:'Informativa sulla privacy', footer_portal:'I miei ordini',
     maps_btn:'Apri in Google Maps',
@@ -977,8 +981,7 @@ const STATIC_I18N = {
     prices_col_service:'Serviço', prices_col_price:'Preço', brands_title:'Marcas com que trabalhamos',
     certs_title:'Certificados e licenças', clients_title:'Os nossos parceiros', blog_title:'Artigos úteis',
     faq_title:'Perguntas frequentes', contact_title:'Contacto',
-    form_title:'Agendar serviço', form_name:'O seu nome', form_phone:'Telefone',
-    form_car:'Marca e modelo do veículo', form_message:'Descreva o problema', form_submit:'Enviar pedido',
+    form_title:'Agendar serviço',
     footer_desc:'Oficina profissional', footer_nav:'Navegação', footer_contacts:'Contacto',
     footer_legal:'Documentos', footer_privacy:'Política de privacidade', footer_portal:'As minhas encomendas',
     maps_btn:'Abrir no Google Maps',
@@ -991,8 +994,7 @@ const STATIC_I18N = {
     prices_col_service:'服务', prices_col_price:'价格', brands_title:'合作品牌',
     certs_title:'证书与许可', clients_title:'我们的合作伙伴', blog_title:'实用文章',
     faq_title:'常见问题', contact_title:'联系我们',
-    form_title:'预约服务', form_name:'您的姓名', form_phone:'电话',
-    form_car:'车辆品牌和型号', form_message:'描述问题', form_submit:'提交申请',
+    form_title:'预约服务',
     footer_desc:'专业汽车服务', footer_nav:'导航', footer_contacts:'联系方式',
     footer_legal:'文件', footer_privacy:'隐私政策', footer_portal:'我的订单',
     maps_btn:'在Google Maps中打开',
@@ -1005,8 +1007,7 @@ const STATIC_I18N = {
     prices_col_service:'الخدمة', prices_col_price:'السعر', brands_title:'العلامات التجارية التي نعمل معها',
     certs_title:'الشهادات والتراخيص', clients_title:'شركاؤنا', blog_title:'مقالات مفيدة',
     faq_title:'الأسئلة الشائعة', contact_title:'اتصل بنا',
-    form_title:'احجز خدمة', form_name:'اسمك', form_phone:'الهاتف',
-    form_car:'ماركة وطراز السيارة', form_message:'صف المشكلة', form_submit:'إرسال الطلب',
+    form_title:'احجز خدمة',
     footer_desc:'خدمة سيارات احترافية', footer_nav:'التنقل', footer_contacts:'جهات الاتصال',
     footer_legal:'الوثائق', footer_privacy:'سياسة الخصوصية', footer_portal:'طلباتي',
     maps_btn:'فتح في خرائط Google',
@@ -1019,8 +1020,7 @@ const STATIC_I18N = {
     prices_col_service:'Szolgáltatás', prices_col_price:'Ár', brands_title:'Márkák amelyekkel dolgozunk',
     certs_title:'Tanúsítványok és licencek', clients_title:'Partnereink', blog_title:'Hasznos cikkek',
     faq_title:'Gyakran ismételt kérdések', contact_title:'Kapcsolat',
-    form_title:'Időpontfoglalás', form_name:'Az Ön neve', form_phone:'Telefon',
-    form_car:'Autó márkája és modellje', form_message:'Írja le a problémát', form_submit:'Kérelem küldése',
+    form_title:'Időpontfoglalás',
     footer_desc:'Professzionális autószerviz', footer_nav:'Navigáció', footer_contacts:'Kapcsolat',
     footer_legal:'Dokumentumok', footer_privacy:'Adatvédelmi irányelvek', footer_portal:'Rendeléseim',
     maps_btn:'Megnyitás Google Térképen',
@@ -1309,6 +1309,72 @@ async function changeSiteLang(lang) {
   initReveal(); // 🎯 ФІКС: перарэндэраныя секцыі — НОВЫЯ DOM-вузлы; без паўторнага reveal-назіральніка яны завісаюць схаванымі (.js-reveal без .in-view) → «пасля пераключэння мовы секцыі не паказваюцца»
 }
 
+// ═══ 🔎 SEO-МЕТА І STRUCTURED DATA (02.08) ═══
+// ⚠️ ЧАМУ. Замер 02.08: `meta description` пусты, `canonical` няма, schema.org няма зусім —
+// а ўсе даныя для іх у нас УЖО ЛЯЖАЦЬ (назва, адрас, гадзіны, тэлефон, каардынаты, каталог).
+// Гэта не новыя звесткі, а праекцыя таго, што ёсць, у фармат, які пошукавік паказвае багатым
+// фрагментам (адрас, гадзіны, рэйтынг, цэны прама ў выдачы).
+// 🛡️ Чыстае ДАДАВАННЕ: толькі ўстаўка тэгаў у <head>, ніводная існуючая логіка не чапаецца;
+// усё ў try/catch — памылка тут не мусіць валіць старонку.
+// ⚠️ hreflang НЕ ставім свядома: мова жыве ў localStorage, асобных URL на мову НЯМА. hreflang без
+// розных адрасоў — гэта хлусня пошукавіку, горшая за адсутнасць тэга.
+function _seoSet(sel, attrs, tag) {
+  let el = document.head.querySelector(sel);
+  if (!el) { el = document.createElement(tag); document.head.appendChild(el); }
+  for (const [k, v] of Object.entries(attrs)) el.setAttribute(k, v);
+  return el;
+}
+// ⚠️ Каталог (`_svcTree`) даязджае ПАЗЖА за метатэгі — таму запамінаем аргументы і паўтараем
+// разлік, калі дрэва загрузілася. Без гэтага прапановы ў schema.org заўсёды былі б пустыя.
+let _seoLast = null;
+function _seoRefresh() { if (_seoLast) _seoMeta(..._seoLast); }
+function _seoMeta(data, co, companyName, companyHours) {
+  _seoLast = [data, co, companyName, companyHours];
+  try {
+    const clean = v => String(v || '').replace(/\s+/g, ' ').trim();
+    // апісанне: подпіс/слоган сайта → першы асэнсаваны тэкст → назва+адрас. Без выдумкі.
+    const i = data?.i18n?.[currentLang] || {};
+    const desc = clean(i.heroSubtitle || i.aboutText || _sv(co?.about) ||
+      [companyName, _sv(co?.address)].filter(Boolean).join(' · ')).slice(0, 300);
+    if (desc) _seoSet('meta[name="description"]', { name: 'description', content: desc }, 'meta');
+    // canonical: адзін адрас старонкі без параметраў — пры адной публічнай старонцы гэта дакладна
+    _seoSet('link[rel="canonical"]', { rel: 'canonical', href: location.origin + location.pathname }, 'link');
+
+    // ── schema.org: LocalBusiness + прапановы з каталога ──
+    const phones = (co?.phones || []).map(x => clean(_sv(x?.value) || x?.value)).filter(Boolean);
+    const org = {
+      '@context': 'https://schema.org', '@type': 'LocalBusiness',
+      name: companyName, url: location.origin,
+      ...(desc ? { description: desc } : {}),
+      ...(co?.logo ? { logo: co.logo, image: co.logo } : {}),
+      ...(_sv(co?.address) ? { address: { '@type': 'PostalAddress', streetAddress: clean(_sv(co.address)) } } : {}),
+      ...(phones.length ? { telephone: phones[0] } : {}),
+      ...(data?.contactEmail ? { email: data.contactEmail } : {}),
+      ...(companyHours ? { openingHours: clean(companyHours) } : {}),
+      ...(data?.mapLat && data?.mapLng ? { geo: { '@type': 'GeoCoordinates', latitude: data.mapLat, longitude: data.mapLng } } : {}),
+    };
+    const graph = [org];
+    // прапановы — з ужо загружанага дрэва Каталога (`_svcTree`), без НІВОДНАГА новага запыту.
+    // ⚠️ Спярша я напісаў `window.siteServices` — такой зменнай у праекце няма зусім; злоўлена
+    // грэпам да выкату. Крыніца мусіць быць тая ж, што малюе карткі, інакш schema разыдзецца
+    // з тым, што чалавек бачыць на старонцы.
+    const items = (_svcTree || []).filter(n => n?.type === 'form' && n.active !== false)
+      .slice(0, 20)
+      .map(x => ({ nm: clean(_sv(x?.name) || _sv(x?.fields?.name)), pr: x?.fields?.price, cur: x?.fields?.currency }))
+      .filter(x => x.nm);
+    if (items.length) graph.push({
+      '@context': 'https://schema.org', '@type': 'OfferCatalog', name: companyName,
+      itemListElement: items.map((x, n) => ({
+        '@type': 'Offer', position: n + 1, itemOffered: { '@type': 'Service', name: x.nm },
+        ...(x.pr ? { price: String(x.pr), priceCurrency: x.cur || data?.currency || 'EUR' } : {}),
+      })),
+    });
+    const box = _seoSet('script[type="application/ld+json"][data-ttzop]',
+      { type: 'application/ld+json', 'data-ttzop': '1' }, 'script');
+    box.textContent = JSON.stringify(graph.length === 1 ? graph[0] : graph);
+  } catch (e) { /* SEO не мусіць валіць сайт */ }
+}
+
 function applyLanguage(data, selectedLang) {
   const contentLang = _getContentLang(data, selectedLang);
   currentLang = contentLang;
@@ -1339,6 +1405,7 @@ function applyLanguage(data, selectedLang) {
 
   document.title = companyName;
   _setFavicon(co?.logoIcon); // favicon браўзера з іконкі кампаніі
+  _seoMeta(data, co, companyName, companyHours);   // 🔎 description · canonical · schema.org
 
   const setText = (id, val) => { const el = document.getElementById(id); if (el && val !== undefined) el.textContent = val; };
   // гадзіны: асноўны радок + (пры іншым поясе) цьмяны «у вашым поясе: …»
@@ -1352,7 +1419,7 @@ function applyLanguage(data, selectedLang) {
   // асноўны варыянт, fallback іконка; няма лагатыпа — застаецца толькі тэкставая назва (як раней)
   const _navLogo = co?.logo || co?.logoIcon || '';
   const _navLogoEl = document.getElementById('site-logo-img');
-  if (_navLogoEl && _navLogo) _navLogoEl.innerHTML = `<img src="${_escHtml(_navLogo)}" alt="">`;
+  if (_navLogoEl && _navLogo) _navLogoEl.innerHTML = `<img src="${_escHtml(_navLogo)}" alt="${_imgAlt(siteData?.company?.name, document.title)}">`;
   setText('hero-title',      i.heroTitle || '');
   setText('hero-subtitle',   i.heroSubtitle || '');
   // Кантакты — дрэва Ф/П/ПФФ (data.contactTree); сайт сам сплюшчвае. Стары плоскі фармат — fallback
@@ -1393,6 +1460,19 @@ function applyLanguage(data, selectedLang) {
   // К3b: копірайт з секцыі «Футэр» (Структура сайта); пуста → аўта «© год кампанія» як раней
   const customCopy = _sv(siteData?.footer?.copyright);
   if (footerCopy) footerCopy.textContent = customCopy || ('© ' + new Date().getFullYear() + ' ' + companyName);
+  // 🏷 МАРКА ПЛАТФОРМЫ ў падвале — тры ўзроўні манетызацыі (go-live-plan.md §Тры ўзроўні):
+  // 1) наш паддамен + марка · 2) свой дамен + марка · 3) свой дамен, марка знятая (плата).
+  // ⚠️ СЦЯГ, а не хардкод: узровень 3 = адно поле ў наладах, без праўкі кода і без выкату.
+  // ⚠️ `rel="nofollow"` АБАВЯЗКОВЫ — аднолькавы бэклінк з сотняў кліенцкіх сайтаў без яго чытаецца
+  // Google як СХЕМА СПАСЫЛАК і б'е па нас саміх; нам патрэбны брэнд і жывыя пераходы, не SEO-вага.
+  // ⚠️ Тэкст НЕ перакладаецца свядома (як у Wix/Tilda): гэта марка, а не інтэрфейс.
+  const fpow = document.getElementById('footer-powered');
+  if (fpow) {
+    const _markOff = siteData?.footer?.poweredHide === true;          // узровень 3 — плата за зняцце
+    const _ownSite = /^(www\.)?ttzop\.com$/i.test(location.hostname); // на нашай жа вітрыне марка лішняя
+    fpow.innerHTML = (_markOff || _ownSite) ? ''
+      : 'Powered by <a href="https://ttzop.com" target="_blank" rel="nofollow noopener">TTZOP.com</a>';
+  }
   const fsoc = document.getElementById('footer-social'); // сацсеткі з секцыі «Футэр»
   if (fsoc) fsoc.innerHTML = (siteData?.footer?.socials || []).filter(x => x && x.url)
     .map(x => `<a href="${_dsEsc(x.url)}" target="_blank" rel="noopener" style="margin:0 10px">${_dsEsc(_sv(x.label) || x.url)}</a>`).join('');
@@ -1424,6 +1504,24 @@ function applyLanguage(data, selectedLang) {
 // Дадаць секцыю = запіс у спіс (нуль кода). Замяняе 9 захардкоджаных loadX + 9 HTML-кантэйнераў.
 // ════════════════════════════════════════
 // многамоўнае значэнне {be:..} АБО радок → па currentLang з fallback (прымарная → першае непустое)
+// 🖼 ALT ДЛЯ ВЫЯЎ — адзін хэлпер на ўсе выявы сайта (02.08).
+// ⚠️ Было `alt=""` зашыта ў 10 з 11 месцаў: 22 выявы з 23 на жывой старонцы не мелі апісання.
+// Гэта не толькі SEO — гэта ДАСТУПНАСЦЬ: чалавек з чытачом экрана не даведаецца, што на фота,
+// а для часткі бізнесаў у ЕС гэта ўжо юрыдычнае патрабаванне.
+// 🔑 Бяром першае асэнсаванае з таго, што і так ляжыць побач (подпіс, назва пазіцыі, назва вузла) —
+// новых палёў не заводзім. Пусты вынік — таксама слушны адказ: для чыста дэкаратыўнай выявы
+// `alt=""` правільней за прыдуманы тэкст (чытач экрана яе прапусціць, а не прачытае смецце).
+// ⚠️ ІМЯ ФАЙЛА Ў alt — ГОРШ ЗА ПУСТЫ alt. Праверка 02.08 на жывым сайце дала alt="HLQHYtcXsAApy4W.webp":
+// чытач экрана прачытае гэта ўголас па літарах, а пошукавік атрымае смецце замест сэнсу.
+// Пусты alt для выявы без апісання — сумленны адказ: чытач яе прапусціць.
+const _ALT_FILE_RE = /\.(webp|jpe?g|png|gif|avif|svg|bmp|heic)$/i;
+function _imgAlt(...vals) {
+  for (const v of vals) {
+    const t = String(_sv(v) || '').replace(/\s+/g, ' ').trim();
+    if (t && !_ALT_FILE_RE.test(t)) return _escHtml(t.slice(0, 120));
+  }
+  return '';
+}
 function _sv(v) {
   if (v && typeof v === 'object' && !Array.isArray(v)) return v[currentLang] || v[getPrimaryLang(siteData)] || Object.values(v).find(Boolean) || '';
   return v == null ? '' : v;
@@ -1442,13 +1540,13 @@ function _cardHtml(o) {
   const covs = _covsNorm(Array.isArray(o.covers) ? o.covers : (o.cover ? [o.cover] : []));
   const media = covs.length > 1
     ? `<div class="card-slider" data-cs="${_dsEsc(JSON.stringify(covs))}" style="position:relative;margin-bottom:12px;border-radius:8px;overflow:hidden">
-        <img class="post-cover" src="${_dsEsc(covs[0].u)}" alt="" loading="lazy" style="width:100%;display:block;object-fit:cover;aspect-ratio:16/9;transition:opacity 0.25s;border-radius:8px;cursor:zoom-in">
+        <img class="post-cover" src="${_dsEsc(covs[0].u)}" alt="${_imgAlt(o.title, o.name, covs[0]?.c)}" loading="lazy" style="width:100%;display:block;object-fit:cover;aspect-ratio:16/9;transition:opacity 0.25s;border-radius:8px;cursor:zoom-in">
         <div class="cs-dots" style="position:absolute;left:0;right:0;bottom:8px;display:flex;gap:6px;justify-content:center">${covs.map((_, i) => `<span data-i="${i}" style="width:8px;height:8px;border-radius:50%;background:#fff;opacity:${i ? 0.45 : 0.95};box-shadow:0 0 3px rgba(0,0,0,0.6);cursor:pointer"></span>`).join('')}</div>
         <button type="button" class="cs-prev" style="position:absolute;left:6px;top:50%;transform:translateY(-50%);width:30px;height:30px;border:none;border-radius:50%;background:rgba(0,0,0,0.35);color:#fff;font-size:1.1rem;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center">‹</button>
         <button type="button" class="cs-next" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);width:30px;height:30px;border:none;border-radius:50%;background:rgba(0,0,0,0.35);color:#fff;font-size:1.1rem;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center">›</button>
       </div>`
     : covs.length === 1
-    ? `<img class="post-cover" src="${_dsEsc(covs[0].u)}" alt="" loading="lazy" style="width:100%;border-radius:8px;margin-bottom:12px;object-fit:cover;aspect-ratio:16/9">`
+    ? `<img class="post-cover" src="${_dsEsc(covs[0].u)}" alt="${_imgAlt(o.title, o.name, covs[0]?.c)}" loading="lazy" style="width:100%;border-radius:8px;margin-bottom:12px;object-fit:cover;aspect-ratio:16/9">`
     : (o.icon ? `<div class="service-icon">${_dsEsc(o.icon)}</div>` : '');
   const meta = (o.meta || o.metaEd) ? `<div class="post-date text-muted" style="font-size:0.82rem;margin-bottom:6px"${o.metaEd || ''}>${_dsEsc(o.meta)}</div>` : '';
   // 🖊️ o.titleEd/o.textEd/o.metaEd — edit-атрыбуты. o.textHtml=true → цела сырое (richtext, не эскейпім). Пустое ў edit — для плейсхолдэра
@@ -1548,18 +1646,28 @@ async function _svcFetchTree() {
     const _look = new URLSearchParams(location.search).get('look');
     const r = await fetch(API_URL + '/content/' + SITE_REPO + '/services' + (_look ? '?draft=' + encodeURIComponent(_look) + '&cb=' + Date.now() : ''));
     const d = await r.json();
-    if (d && Array.isArray(d.nodes)) { _svcTree = d.nodes; _svcTrash = Array.isArray(d.trash) ? d.trash : []; }
+    if (d && Array.isArray(d.nodes)) { _svcTree = d.nodes; _svcTrash = Array.isArray(d.trash) ? d.trash : []; _seoRefresh(); }
   } catch (e) { /* фетч не ўдаўся — застаецца папярэдняе дрэва / застылы content з sections (fallback) */ }
 }
 // Праекцыя Каталога → карткі (АДЗІНЫ код праекцыі; былая панэльная _SITE_SOURCES.services выдалена).
 // path = ПОЎНЫ шлях папак [{id,name,active}] — id патрэбны кіраванню з Чарнавіка; name можа быць ml-аб'ектам.
 // У edit-рэжыме НЕактыўныя вузлы ўключаюцца з пазнакай hidden (цьмяныя, ● вяртае) — як пазіцыі іншых секцый.
-// 📸 фота карткі пазіцыі: АКТЫЎНЫЯ image-ФайлБлокі паддрэва (аўта-Папка «Фота» + любыя падпапкі кліента;
-// ● выкл на Папцы хавае яе паддрэва; дакументы/PDF у слайдэр не трапляюць). Парадак = парадак дрэва.
+// ═══ 📎 ФАЙЛЫ ПАДДРЭВА ВУЗЛА — АДЗІН абходчык, дзве праекцыі з яго ═══
+// ⚠️ ААП: раней тут быў адзін збор, які МОЎЧКІ адкідаў усё, што не выява (`: []`) — і PDF, прычэплены
+// да пазіцыі, на сайце проста не існаваў. Ставіць побач другі такі ж збор для дакументаў значыла б
+// два абходчыкі аднаго дрэва, якія разыдуцца пры першай жа праўцы правілаў (● выкл, парадак, _deleted).
+// Таму абходчык АДЗІН і вяртае ЎСЁ, а спажыўцы выбіраюць сваё: слайдэр — выявы, чытач — астатняе.
+// Новы куток, якому патрэбны файлы вузла, бярэ той жа `_svcFilesAll`, а не піша трэці абход.
 const _svcIsImg = x => (x.mimeType || '').startsWith('image/') || /\.(webp|jpe?g|png|gif|avif)$/i.test(x.url || '');
-const _svcFiles = (nodes, pid) => (nodes || []).filter(x => x && (x.parentId ?? null) === pid && !x._deleted && x.active !== false)
+const _svcFilesAll = (nodes, pid) => (nodes || []).filter(x => x && (x.parentId ?? null) === pid && !x._deleted && x.active !== false)
   .sort((a, b) => (a.order || 0) - (b.order || 0))
-  .flatMap(x => x.type === 'file' ? (_svcIsImg(x) ? [{ u: x.thumbUrl || x.url, f: x.url || x.thumbUrl, n: _sv(x.name) || '', c: _sv(x.description) || _sv(x.caption) || '' }] : []) : x.type === 'folder' ? _svcFiles(nodes, x.id) : []); // {u:мініяцюра, f:арыгінал, n:назва, c:апісанне} → лайтбокс
+  .flatMap(x => x.type === 'file' ? [x] : x.type === 'folder' ? _svcFilesAll(nodes, x.id) : []); // ● выкл на Папцы хавае ЎСЁ яе паддрэва
+// 📸 выявы → слайдэр карткі і лайтбокс {u:мініяцюра, f:арыгінал, n:назва, c:апісанне}
+const _svcFiles = (nodes, pid) => _svcFilesAll(nodes, pid).filter(_svcIsImg)
+  .map(x => ({ u: x.thumbUrl || x.url, f: x.url || x.thumbUrl, n: _sv(x.name) || '', c: _sv(x.description) || _sv(x.caption) || '' }));
+// 📎 усё астатняе (PDF, дакументы, прайс-лісты) → спіс для адкрыцця ў чытачы пазіцыі
+const _svcDocs = (nodes, pid) => _svcFilesAll(nodes, pid).filter(x => !_svcIsImg(x) && (x.url || ''))
+  .map(x => ({ f: x.url, n: _sv(x.name) || '', c: _sv(x.description) || _sv(x.caption) || '', z: +x.size || 0 }));
 // 🧾 ВІД ПАЗІЦЫІ — кампактнае люстэрка панэльнага ITEM_KINDS (як _secCat для SECTION_PROPS): толькі здольнасці,
 // што відаць публіцы. Каб маршрут/групавасць не «вылазілі» з дадзеных, якія від больш не выкарыстоўвае
 // (СТО з выпадковымі кропкамі маршруту). Новы від = радок тут і ў ITEM_KINDS панэлі.
@@ -1601,6 +1709,7 @@ function _svcItems(nodes) {
             const photos = ph.length ? ph : legacy;
             return photos.length ? { photos } : {};
           })(),
+          ...(() => { const d = _svcDocs(nodes, n.id); return d.length ? { docs: d } : {}; })(), // 📎 файлы-не-выявы → чытач пазіцыі
           ...(_svcKindHas(f, 'route') && Array.isArray(f._route) && f._route.length ? { route: f._route.map(p => ({ name: p.name, desc: p.desc, stay: +p.stayMin || 0, move: +p.moveMin || 0, lat: p.lat, lng: p.lng,
             ...(p.photo && (p.photo.url || p.photo.thumbUrl) ? { photo: { url: p.photo.url || '', thumbUrl: p.photo.thumbUrl || '' } } : {}) })) } : {}), // 🗺 маршрут экскурсіі → цізер + чытач плана (фота кропкі — R2)
           ...(off || hidUp ? { hidden: true } : {}),
@@ -1615,17 +1724,103 @@ function _svcItems(nodes) {
   walk(null, [], false);
   return items;
 }
-// Уліць жывую праекцыю ў source-экзэмпляры спіса секцый (in-memory, перад рэндэрам; без дрэва — застылы content як fallback)
+// 🧷 КАТАЛОГ КРЫНІЦ секцый-спасылак: `source` → як напоўніць `content` жыўцом.
+// ⚠️ ААП-ФІКС 30.07. Раней функцыя ніжэй была ЗАХАРДКОДЖАНАЯ пад адну крыніцу (`'services'`) і яшчэ
+// выходзіла цалкам пры `if (!_svcTree) return` — значыць «резалв крыніц» на справе быў «резалв
+// Каталога паслуг». Новая крыніца (Релакс) не магла стаць нашчадкам: я абышоў механізм і чытаў
+// `inst.games` наўпрост у відзе — і секцыя перастала быць звычайнай секцыяй-спасылкай. Карыстальнік
+// назваў гэта дакладна: «трэба было ўзяць ААП і паставіць іншую спасылку на змест».
+// ЦЯПЕР: новая крыніца = АДЗІН радок у гэтым каталогу; від чытае `inst.content`, як усе астатнія.
+const SRC_RESOLVERS = {
+  services: () => _svcTree ? { items: _svcItems(_svcTree) } : null,     // null = крыніца недаступная, застылы content застаецца
+  relax:    inst => ({ games: (Array.isArray(inst.games) ? inst.games : []).filter(g => g && g.on !== false && g.id)
+                        .map(g => ({ id: g.id, name: g.name || '' })) }),   // назва з панэлі: слоўнік жыве ў ленавым кампаненце
+};
+// Уліць жывую праекцыю ва ЎСЕ source-экзэмпляры (in-memory, перад рэндэрам)
 function _svcResolveSources(data) {
-  if (!_svcTree) return;
-  (Array.isArray(data?.sections) ? data.sections : []).forEach(x => { if (x && x.source === 'services') x.content = { items: _svcItems(_svcTree) }; });
+  (Array.isArray(data?.sections) ? data.sections : []).forEach(x => {
+    const fn = x && x.source && SRC_RESOLVERS[x.source];
+    if (!fn) return;
+    const c = fn(x);
+    if (c) x.content = c;                                              // крыніца маўчыць → пакідаем застылы content (fallback як раней)
+  });
 }
 // КАТАЛОГ ВЫГЛЯДАЎ (viewType → innerHTML секцыі). Класы супадаюць са style.css → кожны перавыкарыстоўваецца бясконца.
+// 🎲 РЕЛАКС: спіс актыўных гульняў + адна дошка. Наведвальнік выбірае, што гуляць; грузіцца толькі
+// тая, якую адкрылі. Склад — з КОД-каталога, у секцыі ляжаць толькі id (гл. `_relaxGamesOf`).
+// 📣 ПРОМА-СЛОТ побач з дошкай: пакуль наведвальнік гуляе, збоку ціха ідуць пазіцыі Каталога.
+// ⚠️ Змест — ТАЯ Ж праекцыя, што корміць «Нашы прапановы» (`_svcItems(_svcTree)`): другога спісу
+// тавараў не заводзім, інакш вітрына і рэклама разышліся б. Паказваем ПА АДНОЙ і мяняем рэдка —
+// гэта «ненавязліва» па задуме, а не банерная сетка. Клік вядзе ў Каталог на гэтую ж пазіцыю.
+const _RX_PROMO_MS = 9000;                                             // рэдка: чытаць паспяваеш, гуляць не замінае
+function _relaxPromoItems() {
+  const all = (typeof _svcTree !== 'undefined' && _svcTree) ? _svcItems(_svcTree) : [];
+  return all.filter(it => it && it.title && !it.hidden);               // схаваная пазіцыя не рэкламуецца
+}
+// куды вядзе клік: у секцыю-вітрыну Каталога на гэтай жа старонцы (яна ўжо ёсць — «Нашы прапановы»).
+// Асобнай старонкі пазіцыі ў нас няма, і выдумляць яе дзеля прома не трэба.
+function _relaxPromoHref() {
+  const secs = Array.isArray(siteData?._sections?.sections) ? siteData._sections.sections : [];
+  const cat = secs.find(x => x && x.source === 'services' && x.enabled !== false);
+  return cat ? '#sec-' + cat.id : '';
+}
+function _relaxPromoCard(it, href) {
+  const img = (Array.isArray(it.photos) && it.photos[0] && (it.photos[0].u || it.photos[0].f)) || '';
+  const price = _sv(it.price) ? `<div class="rx-promo-price">${_svcEsc(_sv(it.price))} ${_svcEsc(_sv(it.currency) || '')}</div>` : '';
+  const inner = (img ? `<img src="${_dsEsc(img)}" alt="${_imgAlt(it.name)}" loading="lazy">` : `<div class="rx-promo-ico">${_svcEsc(it.icon || '🛍')}</div>`)
+    + `<div class="rx-promo-body"><div class="rx-promo-title">${_svcEsc(_sv(it.title))}</div>${price}</div>`;
+  return href ? `<a class="rx-promo-card" href="${_dsEsc(href)}">${inner}</a>` : `<div class="rx-promo-card">${inner}</div>`;
+}
+function _relaxPromoStart(wrap) {
+  const slot = wrap.querySelector('.rx-promo'); if (!slot) return;
+  const items = _relaxPromoItems();
+  if (!items.length) { slot.remove(); return; }                        // няма што прапаноўваць — слота няма зусім
+  let i = 0, paused = false;
+  const href = _relaxPromoHref();
+  const draw = () => { slot.innerHTML = `<div class="rx-promo-lbl">${_svcEsc(getUI().rx_promo || '')}</div>` + _relaxPromoCard(items[i % items.length], href); };
+  draw();
+  if (items.length < 2) return;                                        // адна пазіцыя — няма чаго круціць
+  slot.addEventListener('pointerenter', () => { paused = true; });     // чытае/цэліцца ў клік — не падмяняем пад рукой
+  slot.addEventListener('pointerleave', () => { paused = false; });
+  const tick = () => {
+    // ⏸ спыняемся, калі ўкладка ў фоне ці слот не бачны: круціць нябачную рэкламу — марна паліць батарэю
+    if (!paused && document.visibilityState === 'visible' && slot.offsetParent) { i++; draw(); }
+    slot._t = setTimeout(tick, _RX_PROMO_MS);
+  };
+  slot._t = setTimeout(tick, _RX_PROMO_MS);
+}
+// від чытае `content`, як УСЕ астатнія віды: напаўненне — справа резалвера крыніцы (SRC_RESOLVERS),
+// а не самога віду. Фолбэк на сыры `games` — для выпадку, калі резалв не праходзіў (стары кэш даных).
+function _relaxGamesOf(inst) {
+  const src = Array.isArray(inst?.content?.games) ? inst.content.games
+            : (Array.isArray(inst?.games) ? inst.games : []).filter(g => g && g.on !== false && g.id);
+  return src.map(g => (typeof g === 'string' ? { id: g, name: '' } : { id: g.id, name: g.name || '' })).filter(g => g.id);
+}
 const SITE_VIEWS = {
+  // 🎲 Релакс: пліткі-выбар зверху, дошка пад імі. Дошка НЕ мантуецца тут — толькі месца пад яе:
+  // кампанент гульняў важыць больш за 200 КБ, і цягнуць яго кожнаму наведвальніку, які проста
+  // праматаў старонку, нельга. Загрузка — у `_relaxMount`, па першым дотыку да секцыі.
+  relax: inst => {
+    const ids = _relaxGamesOf(inst);
+    // ⚠️ ПУСТЫ СПІС — НЕ ПУСТЫ ЭКРАН. Раней тут быў `return ''`, і ў Чарнавіку чалавек бачыў загаловак
+    // з пустатой пад ім: ні дошкі, ні тлумачэння, ні падказкі — «нічога не працуе» (заўвага 30.07).
+    // Публіцы пустая секцыя і праўда не патрэбна (мегаправіла), а ў РЭДАКТАРЫ трэба сказаць, што
+    // рабіць — як робяць усе астатнія пустыя секцыі.
+    if (!ids.length) return _dEdit
+      ? `<div class="rx-empty">${_svcEsc(getUI().rx_empty || '')}</div>` : '';
+    const tabs = ids.map((g, i) => `<button class="rx-tab${i ? '' : ' is-on'}" data-g="${_dsEsc(g.id)}">${_svcEsc(g.name || _relaxName(g.id))}</button>`).join('');
+    // ⚠️ Спіс гульняў — У data-АТРЫБУЦЕ, а не толькі ў плітках: пры АДНОЙ актыўнай гульні пліткі не
+    // рэндэрацца (пераключаць няма чаго), і мантаж, які браў першую плітку, не знаходзіў НІЧОГА —
+    // дошка не з'яўлялася зусім (жывая заўвага 30.07: «у Чарнавіку няма гульні»).
+    return `<div class="rx-wrap" data-rx="${_dsEsc(inst.id || '')}" data-rx-ids="${_dsEsc(ids.map(g => g.id).join(','))}">`
+      + (ids.length > 1 ? `<div class="rx-tabs">${tabs}</div>` : '')
+      + `<div class="rx-row"><div class="rx-board"><div class="rx-hint">${_svcEsc(getUI().rx_loading || '…')}</div></div>`
+      + `<aside class="rx-promo" aria-label="${_dsEsc(getUI().rx_promo || '')}"></aside></div></div>`;
+  },
   // тэкст + фота (Пра нас, простыя навіны). body — гатовы HTML (richtext)
   text: inst => {
     const c = inst.content || {};
-    const img = _sv(c.image) ? `<div class="about-image"><img src="${_dsEsc(_sv(c.image))}" alt="" loading="lazy"></div>` : '';
+    const img = _sv(c.image) ? `<div class="about-image"><img src="${_dsEsc(_sv(c.image))}" alt="${_imgAlt(c.title, siteData?.company?.name)}" loading="lazy"></div>` : '';
     const bodyEd = _edAttr(inst.id, 'content.body', 'rich', getUI().ed_body); // 🖊️ цела — клік адкрывае мадалку WYSIWYG
     return `<div class="about-inner"><div class="about-content"><div class="about-text"${bodyEd}>${_sv(c.body)}</div></div>${img}</div>`;
   },
@@ -1649,7 +1844,9 @@ const SITE_VIEWS = {
       if (+_sv(it.groupMax) > 0 && it.id) btn += `<p class="dep-line" data-dep="${_dsEsc(it.id)}" data-nm="${_dsEsc(name)}" style="display:none;margin:8px 0 0;font-size:0.8rem;font-weight:600;cursor:pointer;color:var(--accent,#f97316)"></p>`;
       // 📖 чытач пазіцыі: ёсць маршрут І/АБО WYSIWYG-цела → картка клікабельная (як пост), цізер маршруту — той жа чытач
       const rk = it.id || ('i' + _i);
-      const hasReader = (Array.isArray(it.route) && it.route.length) || !!_sv(it.body);
+      // ⚠️ файлы таксама адчыняюць чытач: пазіцыя з адным толькі PDF (інструкцыя, прайс) інакш
+      // была б нeклікабельнай — файл прычэплены, а адкрыць яго няма адкуль
+      const hasReader = (Array.isArray(it.route) && it.route.length) || !!_sv(it.body) || !!(it.docs || []).length;
       if (hasReader) _siteRouteReg[rk] = it;
       if (Array.isArray(it.route) && it.route.length) {
         btn += `<p style="margin:8px 0 0;font-size:0.8rem;opacity:0.85;cursor:pointer" onclick="event.stopPropagation();openItemReader('${_dsEsc(rk)}')">🗺 <span style="text-decoration:underline dotted">${_dsEsc((ui.route_teaser || '').replace('{n}', it.route.length).replace('{t}', _fmtDurSite(_routeDur(it.route))))}</span></p>`;
@@ -1773,6 +1970,69 @@ const SITE_VIEWS = {
 };
 
 // рэндэр усіх уключаных секцый са спіса ў #site-sections + nav + хукі (кошык/маркі/курсы)
+// ── 🎲 РЕЛАКС на старонцы: ленавая загрузка кампанента + пераключальнік гульняў ─────────────
+// Назва гульні патрэбна ДА загрузкі кампанента (пліткі малююцца адразу) — таму бяром са слоўніка,
+// калі ён ужо ёсць, інакш паказваем id: пасля загрузкі пліткі перамалююцца з назвамі.
+function _relaxName(g) {
+  return (typeof window.TTZOP_GAMES_T === 'function' && window.TTZOP_GAMES_T('game_' + g + '_name')) || g;
+}
+let _relaxLibP = null;
+function _relaxLibLoad() {                                             // адзін раз на старонку
+  if (window.TTZOP_GAMES) return Promise.resolve();
+  if (_relaxLibP) return _relaxLibP;
+  _relaxLibP = new Promise((res, rej) => {
+    const sc = document.createElement('script'); sc.src = '/assets/js/relax-games.js';
+    sc.onload = () => res(); sc.onerror = rej; document.head.appendChild(sc);
+  });
+  return _relaxLibP;
+}
+// кантракт гаспадара для сайта: надпісы бярэ сам кампанент (у сайта іх няма), мова — кантэнтная
+window.TTZOP_GAMES_HOST = window.TTZOP_GAMES_HOST || { t: () => '', lang: () => currentUiLang };
+function _relaxMount(root) {
+  const wrap = root.querySelector('.rx-wrap'); if (!wrap || wrap._rxReady) return;
+  wrap._rxReady = true;
+  _relaxPromoStart(wrap);                                              // прома не чакае кампанента гульняў — гэта не пра гульні
+  const board = wrap.querySelector('.rx-board');
+  const tabs = [...wrap.querySelectorAll('.rx-tab')];
+  const first = (wrap.dataset.rxIds || '').split(',').filter(Boolean)[0] || tabs[0]?.dataset.g || '';
+  const show = gid => {
+    if (!gid) return;
+    const hostId = 'rxg-' + (wrap.dataset.rx || 'x');
+    board.innerHTML = window.gamesBodyHtml(gid, hostId);
+    window.gamesInit(hostId);
+    tabs.forEach(t => t.classList.toggle('is-on', t.dataset.g === gid));
+    tabs.forEach(t => { t.textContent = _relaxName(t.dataset.g); });    // назвы ўдакладняюцца пасля загрузкі слоўніка
+  };
+  wrap._rxShow = show;   // ⚠️ ДА любога `return` ніжэй: у edit-рэжыме функцыя выходзіць раней, і
+                         // дэлегаваны слухач не знаходзіў паказу — пліткі маўчалі (заўвага 31.07)
+  // ⚠️ Грузім ТОЛЬКІ калі секцыя трапіла ў кадр: кампанент >200 КБ, і наведвальнік, які да яе не
+  // даскроліў, не мусіць за яе плаціць. Назіральнік адключаецца пасля першага спрацавання.
+  const start = () => _relaxLibLoad().then(() => show(first)).catch(() => { board.innerHTML = ''; });
+  // 🖊️ У ЧАРНАВІКУ грузім АДРАЗУ, без чакання кадра: гэта рэдактар, і кліент толькі што ўключыў
+  // гульню — ён хоча ўбачыць вынік, а не надпіс «Загружаем…», пакуль не даскроліць (жывая заўвага
+  // 30.07: «у Чарнавіку толькі назва і апісанне»). Ленавасць патрэбна ПУБЛІЦЫ, а не рэдактару.
+  if (typeof _dEdit !== 'undefined' && _dEdit) { start(); return; }
+  if (typeof IntersectionObserver === 'function') {
+    const io = new IntersectionObserver(es => { if (es[0].isIntersecting) { io.disconnect(); start(); } }, { rootMargin: '200px' });
+    io.observe(wrap);
+  } else start();
+}
+// 🖱️ ПЕРАКЛЮЧАЛЬНІК — АДЗІН ДЭЛЕГАВАНЫ СЛУХАЧ на document, а не свой на кожнай абгортцы.
+// ⚠️ Заўвага карыстальніка 31.07 «у Чарнавіку кнопка Лініі не працуе»: слухач вешаўся на канкрэтны
+// `.rx-wrap`, а рэдактар перарэндэрвае секцыі пасля любой праўкі — новая абгортка прыходзіла без
+// слухача, і пліткі маўчалі. Дэлегат на document перажывае любы перарэндэр (той жа прыём, што ў
+// панэлі для драг-н-дропу і фокусу). Другая палова той жа заўвагі — CSS: у edit-рэжыме ўсе кнопкі
+// секцый інертныя (`pointer-events: none`, каб праўка тэксту не ператваралася ў пакупку), і плітка
+// трапіла пад агульнае правіла — дададзена ў той жа спіс выключэнняў «праглядных» дзеянняў.
+if (!window._rxTabBound) {
+  window._rxTabBound = true;
+  document.addEventListener('click', e => {
+    const b = e.target.closest?.('.rx-tab'); if (!b) return;
+    const wrap = b.closest('.rx-wrap'); if (!wrap) return;
+    e.preventDefault();
+    _relaxLibLoad().then(() => wrap._rxShow?.(b.dataset.g));
+  });
+}
 function renderDynamicSections(data) {
   const mount = document.getElementById('site-sections');
   if (!mount) return;
@@ -1866,8 +2126,8 @@ function renderDynamicSections(data) {
   const _fileTile = (f, idx, total, albId) => {
     const url = _dsEsc(_sv(f.url)); const cap = _sv(f.caption);
     // ФайлБлок = вузел sections.json → той жа радок ● ▲▼ ⓘ ⋯ (node-механізм) + рэдагавальная назва/апісанне
-    if (_dEdit) return `<div id="sec-${_dsEsc(f.id)}" class="tile-item ds-editable ds-file${f.enabled === false ? ' ds-hidden' : ''}">${_dSecBar(f.id, idx > 0, idx < total - 1, f.enabled !== false)}<img src="${url}" alt="" loading="lazy"><div class="tile-caption"${_edAttr(f.id, 'caption', 'text', _dL('Назва / апісанне', 'Name / caption'))}>${_dsEsc(cap)}</div></div>`;
-    return `<div class="tile-item tile-item-clickable" onclick="openLightbox('${albId}',${idx})">${cap ? `<div class="tile-caption">${_dsEsc(cap)}</div>` : ''}<img src="${url}" alt="" loading="lazy"></div>`;
+    if (_dEdit) return `<div id="sec-${_dsEsc(f.id)}" class="tile-item ds-editable ds-file${f.enabled === false ? ' ds-hidden' : ''}">${_dSecBar(f.id, idx > 0, idx < total - 1, f.enabled !== false)}<img src="${url}" alt="${_imgAlt(cap, f.name)}" loading="lazy"><div class="tile-caption"${_edAttr(f.id, 'caption', 'text', _dL('Назва / апісанне', 'Name / caption'))}>${_dsEsc(cap)}</div></div>`;
+    return `<div class="tile-item tile-item-clickable" onclick="openLightbox('${albId}',${idx})">${cap ? `<div class="tile-caption">${_dsEsc(cap)}</div>` : ''}<img src="${url}" alt="${_imgAlt(cap, f.name)}" loading="lazy"></div>`;
   };
   const renderKids = (pid, d) => {
     const kids = kidsOf(pid).filter(x => _dEdit || (x.kind === 'folder' ? _branchHasLeaf(x.id) : x.kind === 'file' ? true : _instHasContent(x))); // мегаправіла: пустая галіна/секцыя не публікуецца. ⚠️ EDIT-байпас: у прэв'ю-рэдактары пустыя ПАКАЗВАЕМ (каб напоўніць новую ➕ секцыю; як пустыя загалоўкі вышэй)
@@ -1884,6 +2144,7 @@ function renderDynamicSections(data) {
   };
   mount.innerHTML = renderKids(null, 0);
   _dsApplyDisplay(mount); // 🎛 ліміт паказу + тумблер Карткі/Спіс (генерычна па data-атрыбутах)
+  document.querySelectorAll('.rx-wrap').forEach(w => _relaxMount(w.parentElement || w)); // 🎲 дошкі Релаксу (ленава, гл. _relaxMount)
   _cardSlidersInit(); // 📸 слайдэры вокладак картак (генерычна: любая картка з covers 2+)
   _depBadgesInit(); // 📅 бліжэйшыя выезды на картках групавых паслуг (адзін публічны запыт)
   buildSiteNav(list.filter(x => !x.kind)); // у nav — толькі секцыі-экзэмпляры (папкі/файлы не пункты меню)
@@ -1973,7 +2234,8 @@ async function applySections() {
     const response = await fetch(API_URL + '/content/' + SITE_REPO + '/sections' + (_look ? '?draft=' + encodeURIComponent(_look) : ''));
     const data = await response.json();
     if (siteData) siteData._sections = data; // запомніць — каб перарэндэрыць пры змене мовы
-    if ((Array.isArray(data?.sections) ? data.sections : []).some(x => x && x.source)) await _svcFetchTree(); // 🧷 секцыя-спасылка → падцягнуць Каталог
+    // 🧷 Каталог падцягваем толькі калі ён патрэбны КАНКРЭТНАЙ крыніцы (Релаксу ён не патрэбны зусім)
+    if ((Array.isArray(data?.sections) ? data.sections : []).some(x => x && x.source === 'services')) await _svcFetchTree();
     _svcResolveSources(data);
     renderDynamicSections(data);
   } catch (e) {
@@ -2438,44 +2700,10 @@ function updateCabinetNav() {
   } else if (badge) { badge.style.display = 'none'; }
 }
 
-function initForm(data) {
-  const key = document.getElementById('w3f-key');
-  if (key && data.web3formsKey) key.value = data.web3formsKey;
-
-  // поле «аўто» — наладжвальнае (універсальны шаблон, не толькі аўтасэрвіс): settings.contactForm.car === false → схаваць
-  const carField = document.getElementById('form-car-field');
-  if (carField && data.contactForm?.car === false) carField.style.display = 'none';
-
-  const form = document.getElementById('booking-form');
-  if (!form) return;
-
-  // Web3Forms-канал АДКЛЮЧАНЫ па змаўчанні: заяўкі ідуць праз чат Кабінета (панэль бачыць усё);
-  // вяртанне старой формы-ліста = settings.contactForm.web3 === true (код/ключ пакінуты знарок)
-  const chatCta = document.getElementById('contact-chat-cta');
-  if (data.contactForm?.web3 !== true) {
-    form.style.display = 'none';
-    if (chatCta) chatCta.style.display = '';
-    return; // слухач submit не патрэбны
-  }
-
-  form.addEventListener('submit', async function(e) {
-    e.preventDefault();
-    const btn = form.querySelector('button[type="submit"]');
-    const originalText = btn.textContent;
-    btn.textContent = '...';
-    btn.disabled = true;
-    try {
-      const formData = new FormData(form);
-      const response = await fetch(form.action, { method: 'POST', body: formData });
-      const result = await response.json();
-      btn.textContent = result.success ? '✓' : getUI().form_err_send;
-      if (result.success) form.reset();
-    } catch (e) {
-      btn.textContent = getUI().form_err_conn;
-    }
-    setTimeout(() => { btn.textContent = originalText; btn.disabled = false; }, 3000);
-  });
-}
+// 💬 Блок кантакту — толькі CTA ў чат Кабінета, разметка статычная (index.html), JS не патрэбны.
+// Былая форма-ліст на Web3Forms знесена 29.07 разам з `initForm`: чужы POST-адрас ляжаў у HTML кожнага
+// сайта, а канал быў выключаны з часоў чата. Тут знарок НЕ засталося функцыі-заглушкі — «хвост» гэта
+// таксама код, які нехта потым будзе баяцца выдаліць.
 
 function initNavbar() {
   const burger = document.getElementById('burger');
@@ -2521,7 +2749,10 @@ function initNavbar() {
 // ФОРМА ЗАМОВЫ — МАДАЛЬНАЕ АКНО
 // ════════════════════════════════════════
 const API_URL = 'https://ttzop-api.truetensites.workers.dev';
-const SITE_REPO = window.location.hostname.split('.')[0];
+// 🌐 site_id вызначае агульны кампанент `sitehost.js` (адзін механізм на сайт/кабінет/панэль).
+// ⚠️ `let`, а не `const`: на ЎЛАСНЫМ домене кліента сінхронна яго не даведаешся — значэнне
+// удакладняецца ў `init()` ДА першай загрузкі даных (усе спажыўцы ніжэй — унутры async-функцый).
+let SITE_REPO = (window.TTZOP_SITE ? TTZOP_SITE.fast() : null) || window.location.hostname.split('.')[0];
 
 const COUNTRY_TO_LANG = {
   BY: 'be',
@@ -2560,18 +2791,22 @@ let orderEmail = '';
 let orderToken = '';       // 🛡️ білет пацверджанага email ад verify_order_code — сервер правярае яго ў register_order
 let orderPortalToken = ''; // альтэрнатыўны доказ: сесія кабінета (заказ без паўторнага кода)
 let orderDelivery = '', orderDeliveryCost = null, orderDeliveryZone = ''; // C2a/C2b: адрас + налічаны кошт + зона дастаўкі
-let privacyVersion = '';
+let privacyVersion = '';        // легасі: версія Палітыкі (сервер прымае як згоду на doc 'privacy')
+let orderConsentDocs = [];      // 📄 дакументы, з якімі кліент згаджаецца ў гэтым заказе
 
 async function openOrderModal() {
-  // Загружаем палітыку АДНЫМ запытам праз worker/KV (Фаза 1b): метаданыя + бягучы HTML разам (projection)
+  // 📄 Крок згоды будуецца з УСІХ дакументаў, што патрабуюць яе (`requiresConsent`), адной
+  // праекцыяй `/content/{site}/documents`. Легасі-сайт меў тут толькі Палітыку.
   try {
-    const res = await fetch(API_URL + '/content/' + SITE_REPO + '/privacy');
-    const meta = await res.json();
-    privacyVersion = meta?.current || '';
-    const privacyHtml = meta?.html ? meta.html : `<p>${getUI().privacy_unavailable}</p>`;
-
-    showModal('privacy', privacyHtml);
-  } catch(e) {
+    const docs = (await _docsLoad()).filter(d => d.requiresConsent !== false);
+    orderConsentDocs = docs;
+    privacyVersion = (docs.find(d => d.id === 'privacy') || docs[0] || {}).current || ''; // легасі-поле
+    const html = docs.length
+      ? docs.map(d => `<h2 style="margin:0 0 8px">${_escHtml(_docTitle(d))}</h2>${d.html || ''}`).join('<hr style="margin:24px 0;border:none;border-top:1px solid #2a2f45">')
+      : `<p>${getUI().privacy_unavailable}</p>`;
+    showModal('privacy', html);
+  } catch (e) {
+    orderConsentDocs = [];
     showModal('privacy', `<p>${getUI().privacy_unavailable}</p>`);
   }
 }
@@ -2597,7 +2832,9 @@ function showModal(step, privacyHtml = '') {
         <div style="padding:16px 24px;border-top:1px solid #2a2f45;display:flex;align-items:center;gap:16px">
           <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:0.9rem;color:#e8eaf0;flex:1">
             <input type="checkbox" id="privacy-agree-check" onchange="document.getElementById('privacy-agree-btn').disabled=!this.checked" style="width:18px;height:18px;accent-color:#f97316" />
-            ${getUI().privacy_agree}
+            ${orderConsentDocs.length > 1
+              ? getUI().docs_agree + ': ' + orderConsentDocs.map(d => _escHtml(_docTitle(d))).join(', ')
+              : getUI().privacy_agree}
           </label>
           <button onclick="closeOrderModal()" style="padding:10px 16px;background:none;border:1px solid #2a2f45;border-radius:8px;color:#6b7280;cursor:pointer;font-size:0.85rem;white-space:nowrap">${getUI().privacy_decline}</button>
           <button id="privacy-agree-btn" disabled onclick="showModal('form')" style="padding:10px 20px;background:#f97316;color:#fff;border:none;border-radius:8px;font-weight:700;cursor:pointer;font-size:0.9rem;white-space:nowrap;opacity:0.5" onmouseenter="this.style.opacity=this.disabled?'0.5':'0.9'" onmouseleave="this.style.opacity=this.disabled?'0.5':'1'">${getUI().privacy_continue}</button>
@@ -3010,7 +3247,8 @@ async function registerOrder() {
       action: 'register_order',
       repo: SITE_REPO,
       email: orderEmail,
-      privacyVersion,
+      privacyVersion,                                                            // легасі (сервер = згода на 'privacy')
+      consents: (orderConsentDocs || []).map(d => ({ docId: d.id, version: d.current })), // 📄 усе прынятыя дакументы
       cart: orderCart,
       note: orderNote,
       cartSummary,
@@ -3148,6 +3386,49 @@ function _postReaderCfg(p, key) {
     fontControls: true, siteName: _sv(siteData?.company?.name) || document.title || 'TTZOP'
   };
 }
+// ═══ 📄 ДАКУМЕНТЫ САЙТА (Палітыка · Умовы · Дастаўка…) ═══
+// Адна праекцыя `/content/{site}/documents` = метаданыя + HTML бягучых версій усіх дакументаў.
+// Назва: уласны ml-загаловак кліента → інакш назва ТЫПУ на мове наведвальніка (doc_t_*).
+let _siteDocs = null;
+function _docTitle(d) { // ⚠️ апошні фолбэк — id: пустая назва давала спасылку нулявой шырыні (нябачную)
+  return _sv(d.title) || getUI()['doc_t_' + (d.type || 'other')] || getUI().doc_t_other || String(d.id || '');
+}
+async function _docsLoad() {
+  if (_siteDocs) return _siteDocs;
+  try {
+    const r = await fetch(API_URL + '/content/' + SITE_REPO + '/documents');
+    const all = r.ok ? ((await r.json()).docs || []) : [];
+    // ⚠️ ПУСТЫ ЮРДАКУМЕНТ НЕ ПАКАЗВАЕМ — ні ў падвале, ні ў мадалцы згоды. Дакумент існуе ў
+    // рэестры з першага дня сайта (Палітыка і Умовы ствараюцца самі), але пакуль кліент не
+    // напісаў тэкст і не зрабіў версію Бягучай — паказваць няма чаго. Без гэтага гарда
+    // наведвальнік бачыў бы загаловак «Умовы карыстання» і пустэчу пад ім, а горш — «згаджаўся»
+    // з пустым дакументам. Фільтр СТАІЦЬ У ЗАГРУЗЧЫКУ: адзін гард на ўсіх спажыўцоў.
+    _siteDocs = all.filter(d => (d.html || '').replace(/<[^>]*>/g, '').trim());
+  } catch { _siteDocs = []; }
+  return _siteDocs;
+}
+function _docReaderCfg(d) { // чытач — той жа кампанент, што ў навін (reader.js), стыль дакумента
+  const ui = getUI(); // колеры — тыя ж хэлперы, што ў чытачы навін (адзін шлях рэзалву тэмы)
+  const bg = _themeColor('--card-bg', '#fff'), acc = _themeColor('--color-accent', '#f97316'), fg = readerReadableOn(bg);
+  return { title: _docTitle(d), meta: d.current ? 'v' + d.current : '', bodyHtml: d.html || '',
+    lang: currentLang, dir: document.documentElement.dir || 'ltr', style: 'site', colors: { bg, fg, accent: acc },
+    labels: { share: ui.reader_share, pdfprint: ui.reader_pdfprint, close: ui.reader_close, copied: ui.reader_copied, window: ui.read_in_tab },
+    fontControls: true, siteName: _sv(siteData?.company?.name) || document.title || '' };
+}
+function openSiteDoc(id) { const d = (_siteDocs || []).find(x => x.id === id); if (d) openReaderModal(_docReaderCfg(d)); }
+async function _docsRenderFooter() { // спіс у футэры замест адзінага пункта «Палітыка прыватнасці»
+  const fb = document.getElementById('footer-docs-fallback');
+  const docs = await _docsLoad();
+  if (!fb || !docs.length) return;                       // няма дакументаў → стары пункт застаецца
+  const ul = fb.parentNode;
+  docs.forEach(d => {
+    const li = document.createElement('li');
+    li.innerHTML = `<a href="#doc-${encodeURIComponent(d.id)}" onclick="openSiteDoc('${String(d.id).replace(/'/g, '')}');return false">${_escHtml(_docTitle(d))}</a>`;
+    ul.insertBefore(li, fb);
+  });
+  fb.remove();                                            // дынамічны спіс пабудаваны — фолбэк лішні
+}
+
 function _postUrl(key) { return location.origin + location.pathname + '#post=' + encodeURIComponent(key); } // публічны адрас паста
 function openPostReader(key) { // картка → мадалка; адрасны радок атрымлівае #post= (дып-лінк), закрыццё чысціць
   const p = _sitePostReg[key]; if (!p) return;
@@ -3175,7 +3456,7 @@ function _postDeepLinkOpen() { // старт па share-спасылцы #post={
 function _qrLibLoad() { // lazy: QR-генератар (qrcode-generator, MIT) грузіцца ТОЛЬКІ на старонцы білета — сайт не цяжэе
   return new Promise((res, rej) => {
     if (window.qrcode) return res();
-    const s = document.createElement('script'); s.src = 'https://unpkg.com/qrcode-generator@1.4.4/qrcode.js';
+    const s = document.createElement('script'); s.src = '/assets/vendor/qrcode.js';   // самахост: старонку білета адкрывае НАВЕДВАЛЬНІК
     s.onload = () => res(); s.onerror = rej; document.head.appendChild(s);
   });
 }
@@ -3234,7 +3515,17 @@ function _routeBodyHtml(it) { // цела ЧЫТАЧА ПАЗІЦЫІ: WYSIWYG-�
   // 📸 фота-сетка (усе фота карткі; <a target=_blank> — працуе і ў мадалцы, і ў акне чытача без JS)
   const phs = _covsNorm(it.photos);
   const galleryHtml = phs.length > 1 ? `<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px;margin:0 0 20px">${phs.map(c =>
-    `<a href="${_dsEsc(c.f || c.u)}" target="_blank" rel="noopener"><img src="${_dsEsc(c.u)}" alt="" loading="lazy" style="width:100%;aspect-ratio:4/3;object-fit:cover;border-radius:10px;display:block"></a>`).join('')}</div>` : '';
+    `<a href="${_dsEsc(c.f || c.u)}" target="_blank" rel="noopener"><img src="${_dsEsc(c.u)}" alt="${_imgAlt(c.name, c.caption)}" loading="lazy" style="width:100%;aspect-ratio:4/3;object-fit:cover;border-radius:10px;display:block"></a>`).join('')}</div>` : '';
+  // 📎 ФАЙЛЫ ПАЗІЦЫІ (PDF, прайс, інструкцыя) — спіс спасылак. `<a download>` няма свядома: PDF
+  // лепш адкрыць у браўзеры, а прымусовая загрузка на тэлефоне часта дае «файл не адкрываецца».
+  const docs = it.docs || [];
+  const docsHtml = docs.length ? `<div style="margin:0 0 20px">${docs.map(d => {
+    const kb = d.z ? (d.z > 1048576 ? (d.z / 1048576).toFixed(1) + ' MB' : Math.max(1, Math.round(d.z / 1024)) + ' KB') : '';
+    const nm = _dsEsc(d.n || (d.f || '').split('/').pop());
+    return `<a href="${_dsEsc(d.f)}" target="_blank" rel="noopener" style="display:flex;gap:10px;align-items:baseline;padding:10px 12px;margin-bottom:8px;border:1px solid currentColor;border-radius:10px;text-decoration:none;color:inherit">
+      <span style="flex:none">📎</span><span style="flex:1"><b>${nm}</b>${d.c ? `<div style="font-size:0.88rem;opacity:0.75;margin-top:2px">${_dsEsc(d.c)}</div>` : ''}</span>
+      ${kb ? `<span style="flex:none;font-size:0.8rem;opacity:0.6">${kb}</span>` : ''}</a>`;
+  }).join('')}</div>` : '';
   let acc = 0;
   const rows = route.map((p, i) => {
     const arr = '+' + Math.floor(acc / 60) + ':' + String(acc % 60).padStart(2, '0'); // адносны час прыбыцця
@@ -3242,7 +3533,7 @@ function _routeBodyHtml(it) { // цела ЧЫТАЧА ПАЗІЦЫІ: WYSIWYG-�
     acc += stay + move;
     const last = i === route.length - 1;
     const transfer = (!last && move) ? `<div style="margin-top:10px;font-size:0.85rem;opacity:0.6">${_dsEsc((ui.route_transfer || '').replace('{t}', _fmtDurSite(move)))}</div>` : '';
-    return `<div style="display:flex;gap:14px"><div style="display:flex;flex-direction:column;align-items:center"><div style="width:30px;height:30px;flex:none;border-radius:50%;background:${acc0};color:#fff;font:700 14px/30px system-ui,sans-serif;text-align:center">${i + 1}</div>${last ? '' : '<div style="flex:1;width:2px;background:currentColor;opacity:0.18;margin:4px 0"></div>'}</div><div style="flex:1;padding-bottom:${last ? 0 : 20}px"><div style="display:flex;align-items:baseline;gap:8px;flex-wrap:wrap"><span style="font:600 0.8rem ui-monospace,monospace;opacity:0.55">${arr}</span><strong style="font-size:1.05rem">${_dsEsc(_sv(p.name)) || _dsEsc((ui.route_stop || '') + ' ' + (i + 1))}</strong>${stay ? `<span style="font-size:0.85rem;opacity:0.6">· ${_dsEsc(_fmtDurSite(stay))}</span>` : ''}</div>${_sv(p.desc) ? `<div style="margin-top:5px;font-size:0.93rem;opacity:0.85;line-height:1.55">${_dsEsc(_sv(p.desc))}</div>` : ''}${p.photo && (p.photo.thumbUrl || p.photo.url) ? `<a href="${_dsEsc(p.photo.url || p.photo.thumbUrl)}" target="_blank" rel="noopener"><img src="${_dsEsc(p.photo.thumbUrl || p.photo.url)}" alt="" loading="lazy" style="display:block;margin-top:10px;max-width:300px;width:100%;border-radius:10px"></a>` : ''}${transfer}</div></div>`;
+    return `<div style="display:flex;gap:14px"><div style="display:flex;flex-direction:column;align-items:center"><div style="width:30px;height:30px;flex:none;border-radius:50%;background:${acc0};color:#fff;font:700 14px/30px system-ui,sans-serif;text-align:center">${i + 1}</div>${last ? '' : '<div style="flex:1;width:2px;background:currentColor;opacity:0.18;margin:4px 0"></div>'}</div><div style="flex:1;padding-bottom:${last ? 0 : 20}px"><div style="display:flex;align-items:baseline;gap:8px;flex-wrap:wrap"><span style="font:600 0.8rem ui-monospace,monospace;opacity:0.55">${arr}</span><strong style="font-size:1.05rem">${_dsEsc(_sv(p.name)) || _dsEsc((ui.route_stop || '') + ' ' + (i + 1))}</strong>${stay ? `<span style="font-size:0.85rem;opacity:0.6">· ${_dsEsc(_fmtDurSite(stay))}</span>` : ''}</div>${_sv(p.desc) ? `<div style="margin-top:5px;font-size:0.93rem;opacity:0.85;line-height:1.55">${_dsEsc(_sv(p.desc))}</div>` : ''}${p.photo && (p.photo.thumbUrl || p.photo.url) ? `<a href="${_dsEsc(p.photo.url || p.photo.thumbUrl)}" target="_blank" rel="noopener"><img src="${_dsEsc(p.photo.thumbUrl || p.photo.url)}" alt="${_imgAlt(p.name, p.desc)}" loading="lazy" style="display:block;margin-top:10px;max-width:300px;width:100%;border-radius:10px"></a>` : ''}${transfer}</div></div>`;
   }).join('');
   const gm = _routeGmapsUrl(route);
   const nameArg = `'${_dsEsc(_sv(it.title)).replace(/'/g, '&#39;')}'`;
@@ -3254,13 +3545,13 @@ function _routeBodyHtml(it) { // цела ЧЫТАЧА ПАЗІЦЫІ: WYSIWYG-�
   // ў абодвух рэжымах без дубля ініцыялізацыі (гард el.dataset.done). Кропкі — бяспечны JSON ('<'
   // экранаваны → тэг не ўставіш), подпіс маркера — праз textContent (не HTML).
   const ptsData = route.filter(p => p.lat && p.lng).map(p => ({ lat: +p.lat, lng: +p.lng, n: String(_sv(p.name) || '') }));
-  const mapBoot = ptsData.length ? `<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"><script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"><\/script><script>(function(){var P=${JSON.stringify(ptsData).replace(/</g, '\\u003c')},A=${JSON.stringify(acc0)},M=${JSON.stringify(String(ui.show_more || '')).replace(/</g, '\\u003c')};
+  const mapBoot = ptsData.length ? `<link rel="stylesheet" href="/assets/vendor/leaflet/leaflet.css"><script src="/assets/vendor/leaflet/leaflet.js"><\/script><script>(function(){var P=${JSON.stringify(ptsData).replace(/</g, '\\u003c')},A=${JSON.stringify(acc0)},M=${JSON.stringify(String(ui.show_more || '')).replace(/</g, '\\u003c')};
 function wire(el,m){var b=el.parentNode.querySelector('#rt-map-more');if(!b)return;b.style.display='';var lbl=function(){b.textContent=el.style.height==='560px'?'▲':'+ '+M+' ▼'};b.onclick=function(){el.style.height=el.style.height==='560px'?'280px':'560px';lbl();setTimeout(function(){try{m.invalidateSize()}catch(e){}},60)};lbl()}
 var n=0,t=setInterval(function(){var el=document.getElementById('rt-map');if(!el||el.dataset.done){clearInterval(t);return}if(!window.L){if(++n>100)clearInterval(t);return}clearInterval(t);el.dataset.done='1';el.style.display='';var m=L.map(el,{scrollWheelZoom:false});L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'© OpenStreetMap',maxZoom:19}).addTo(m);var ll=P.map(function(p){return[p.lat,p.lng]});ll.length>1?m.fitBounds(ll,{padding:[26,26]}):m.setView(ll[0],15);L.polyline(ll,{color:A,weight:3,opacity:0.85}).addTo(m);P.forEach(function(p,i){var d=document.createElement('div');d.textContent=p.n;L.marker([p.lat,p.lng],{icon:L.divIcon({className:'',html:'<div style="width:26px;height:26px;border-radius:50%;background:'+A+';color:#fff;font:700 13px/26px system-ui,sans-serif;text-align:center;border:2px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,0.4)">'+(i+1)+'</div>',iconSize:[26,26],iconAnchor:[13,13]})}).addTo(m).bindPopup(d)});wire(el,m);setTimeout(function(){try{m.invalidateSize()}catch(e){}},80)},100)})();<\/script>` : '';
   // канонны радок «+ яшчэ ▼» пад мапай (як у Map-секцыі панэлі): 280 ↔ 560px; уключаецца пасля мантажу мапы
   // маршрут-часткі — толькі калі маршрут ёсць (чытач пазіцыі без route = апісанне+фота+кнопка)
   const routePart = route.length ? `<div id="rt-map" style="height:280px;border-radius:12px;overflow:hidden;margin:0 0 4px;display:none"></div><div id="rt-map-more" style="display:none;text-align:center;padding:2px 0 14px;opacity:0.55;cursor:pointer;font-size:0.82rem"></div><div>${rows}</div>${gm ? `<p style="margin:16px 0 0"><a href="${gm}" target="_blank" rel="noopener" style="color:${acc0};font-size:0.9rem">${_dsEsc(ui.route_gmaps || '')} ↗</a></p>` : ''}` : '';
-  return `${richBody}${galleryHtml}${routePart}${bookBtn}${mapBoot}`;
+  return `${richBody}${galleryHtml}${docsHtml}${routePart}${bookBtn}${mapBoot}`;
 }
 function _routeReaderCfg(it) {
   const bg = _themeColor('--card-bg', '#fff'), acc = _themeColor('--color-accent', '#f97316');
@@ -3316,7 +3607,26 @@ function _renderSitePaused(lang) {
   document.body.style.cssText = 'margin:0;min-height:100vh;display:flex;align-items:center;justify-content:center;background:#fff;color:#111;font-family:system-ui,sans-serif';
   document.body.innerHTML = `<div style="text-align:center;padding:24px"><div style="font-size:64px;line-height:1;margin-bottom:18px">⏸</div><div style="font-size:1.5rem;font-weight:600">${msg}</div>${more ? `<div style="margin-top:14px;font-size:0.95rem;color:#555">${more}</div>` : ''}</div>`;
 }
+// 🌐 Дамен ужо вядзе да нас, але падключэнне яшчэ не завершана (`domain_status !== 'active'`).
+// ⚠️ Тэкст НЕ праз UI_T: моўны слоўнік жыве ў наладах САЙТА, якога мы якраз і не ведаем. Мова
+// браўзера — адзінае, што ў нас ёсць; трымаем два радкі і без залежнасцяў.
+function _renderDomainPending() {
+  const ru = /^(be|ru|uk)/i.test(navigator.language || '');
+  const t = ru ? ['Дамен яшчэ падключаецца', 'Праверце налады DNS у панэлі кіравання сайтам.']
+               : ['Domain setup in progress', 'Check the DNS records in your site control panel.'];
+  document.body.style.cssText = 'margin:0;min-height:100vh;display:flex;align-items:center;justify-content:center;background:#fff;color:#111;font-family:system-ui,sans-serif';
+  document.body.innerHTML = `<div style="text-align:center;padding:24px"><div style="font-size:64px;line-height:1;margin-bottom:18px">🌐</div><div style="font-size:1.5rem;font-weight:600">${t[0]}</div><div style="margin-top:14px;font-size:0.95rem;color:#555">${t[1]}</div></div>`;
+}
 async function init() {
+  // 🌐 УЛАСНЫ ДАМЕН: сінхронна site_id не даведаешся, таму ўдакладняем ДА першай загрузкі даных.
+  // На нашым паддамене `fast()` ужо ўсё вырашыў — сюды трапляем толькі з чужога хоста (запыт адзін
+  // на сесію, далей sessionStorage). ⚠️ `null` = DNS ужо вядзе да нас, а падключэнне не завершана:
+  // паказваем гэта чалавеку, а НЕ падстаўляем фолбэк (інакш чужы наведвальнік убачыў бы тэст-сайт).
+  if (window.TTZOP_SITE && !TTZOP_SITE.fast()) {
+    const _r = await TTZOP_SITE.resolve();
+    if (!_r) return _renderDomainPending();
+    SITE_REPO = _r;
+  }
   siteData = await loadSiteData();
   if (!siteData) return;
   // 🖊️ слайс A: рэжым праўкі на месцы — ?edit=1 + editToken (&ed=) са спасылкі 👁 уладальніка.
@@ -3359,11 +3669,12 @@ async function init() {
   if (_postDeepLinkOpen()) return; // прыйшлі па share-спасылцы #post= → старонка заменена артыкулам, астатні init не патрэбны
   if (await _ticketPageOpen()) return; // 🎫 ?ticket={id} → старонка-білет з QR і жывым статусам, астатні init не патрэбны
 
+  _docsRenderFooter(); // 📄 спіс дакументаў у футэры (не блакуе init — свой fetch, свой рэндэр)
+
   exchangeRates = await ratesPromise;
   if (exchangeRates) _applyPriceConversion();
 
   initMap(siteData);
-  initForm(siteData);
   initNavbar();
   renderCartNav();     // 🛒 сінхранізаваць навбар-іконку кошыка з localStorage пры старце
   initCabinetNav();    // 👤 наведвальнік з захаванай сесіяй → email+бэйдж непрачытаных замест кнопкі «Кабінет»
@@ -4008,16 +4319,41 @@ function _dEditBind() {
 }
 // ✓ кароткі візуальны водгук «захавана» на элеменце пасля запісу ў чарнавік
 function _edFlash(el) { if (!el || !el.isConnected) return; el.classList.add('ed-saved'); setTimeout(() => el.classList.remove('ed-saved'), 750); }
-// 🖊️ МАДАЛКА-WYSIWYG для прыгожага цела (Тэкст-секцыі, Навіны) — той жа Quill, што і ў панэлі (прывычна кліенту).
-// Quill грузіцца ЛЯНІВА толькі ў edit-рэжыме (звычайны наведвальнік не плаціць за ~200КБ).
+// 🖊️ МАДАЛКА-WYSIWYG для прыгожага цела (Тэкст-секцыі, Навіны) — **той самы кампанент**, што ў
+// панэлі: `assets/js/richtext.js`. Раней тут быў СВОЙ мантаж Quill са сваім спісам кнопак, і набор
+// ужо разышоўся з панэллю (там ёсць гісторыя ⟲⟳, буфер 📋, Tab-водступ і дадатковыя функцыі ⌄ —
+// тут не было нічога). Куток дае толькі КАНФІГ: профіль `basic`.
+// Профіль — `full`, той самы, што ў панэлі (заўвага карыстальніка 30.07: «чаму ў Чарнавіку кнопак
+// значна менш?»). Умова гэтага: класы `ql-align-*`/`ql-indent-*` і табліцы АПІСАНЫ ў style.css —
+// `quill.snow.css` на апублікаванай старонцы не грузіцца, і без іх выраўноўванне бачыў бы толькі
+// ўладальнік у рэдактары. Не пераносяцца толькі коды палёў: гэта ўласцівасць дакумента, не тэксту.
+// Quill і кампанент грузяцца ЛЯНІВА толькі ў edit-рэжыме (звычайны наведвальнік не плаціць за ~200КБ).
 let _edModalEl = null, _edModalCtx = null, _edQuill = null, _edQuillP = null;
-function _edQuillLoad() { // адзін раз падгрузіць Quill CSS+JS з unpkg (як admin)
-  if (window.Quill) return Promise.resolve();
+// Надпісы рэдактара для ЎЛАДАЛЬНІКА — па канвенцыі Чарнавіка (`_dL`: be/en), а не праз UI_T×13:
+// увесь edit-слой сайта двухмоўны, і ключы рэдактара не мусяць выбівацца з яго.
+const _RT_LBL = {
+  rt_undo: ['Адкат', 'Undo'], rt_redo: ['Паўтор', 'Redo'],
+  rt_copy: ['Капіраваць увесь тэкст', 'Copy all text'], rt_paste: ['Уставіць з буфера', 'Paste'],
+  rt_copied: ['Скапіявана', 'Copied'], rt_clip_fail: ['Не выйшла скапіяваць', 'Copy failed'],
+  rt_paste_hint: ['Браўзер не дае прачытаць буфер — націсніце {k}', 'Browser blocked clipboard read — press {k}'],
+  rt_more: ['Яшчэ', 'More'], rt_blockquote: ['Цытата', 'Quote'], rt_strike: ['Закрэслены', 'Strikethrough'],
+  rt_super: ['Надрадковы', 'Superscript'], rt_sub: ['Падрадковы', 'Subscript'],
+  rt_hr: ['Гарызантальная лінія', 'Horizontal rule'], rt_table: ['Уставіць табліцу', 'Insert table'],
+  rt_table_row: ['Дадаць радок', 'Add row'], rt_table_col: ['Дадаць слупок', 'Add column'],
+  rt_table_need_cell: ['Пастаўце курсор у ячэйку табліцы', 'Put the cursor inside a table cell'],
+  rt_full: ['Разгарнуць на ўвесь экран', 'Expand to full screen'],
+  rt_full_off: ['Згарнуць з поўнага экрана', 'Exit full screen'], btn_close: ['Закрыць', 'Close']
+};
+window.TTZOP_RT_HOST = { t: k => _dL(...(_RT_LBL[k] || [k, k])), esc: _svcEsc, alert: _dToast, toast: _dToast };
+function _edQuillLoad() { // адзін раз падгрузіць Quill CSS+JS і агульны кампанент — самахост, як у панэлі
+  if (window.Quill && window.TTZOP_RICHTEXT) return Promise.resolve();
   if (_edQuillP) return _edQuillP;
-  _edQuillP = new Promise((res, rej) => {
-    if (!document.querySelector('link[data-quill]')) { const l = document.createElement('link'); l.rel = 'stylesheet'; l.href = 'https://unpkg.com/quill@2.0.2/dist/quill.snow.css'; l.setAttribute('data-quill', '1'); document.head.appendChild(l); }
-    const s = document.createElement('script'); s.src = 'https://unpkg.com/quill@2.0.2/dist/quill.js'; s.onload = res; s.onerror = rej; document.head.appendChild(s);
-  });
+  const load = src => new Promise((res, rej) => { const s = document.createElement('script'); s.src = src; s.onload = res; s.onerror = rej; document.head.appendChild(s); });
+  _edQuillP = (async () => {
+    if (!document.querySelector('link[data-quill]')) { const l = document.createElement('link'); l.rel = 'stylesheet'; l.href = '/assets/vendor/quill/quill.snow.css'; l.setAttribute('data-quill', '1'); document.head.appendChild(l); }
+    if (!window.Quill) await load('/assets/vendor/quill/quill.js');
+    if (!window.TTZOP_RICHTEXT) await load('/assets/js/richtext.js'); // ПАСЛЯ Quill: кампанент чакае яго на мантажы
+  })();
   return _edQuillP;
 }
 // эфектыўны (скампазаваны) фон элемента: збірае паўпразрыстыя слаі фону ад el уверх да першага
@@ -4037,9 +4373,11 @@ function _edModalOpen(el) {
   const ui = getUI();
   if (!_edModalEl) {
     _edModalEl = document.createElement('div'); _edModalEl.id = 'ed-modal';
+    // ⚠️ кнопкі дзеяння — У ЗАГАЛОЎКУ, як у панэлі (радок малюе кампанент): падвал са сваім
+    // дызайнам рабіў тыя ж «Захаваць/Адмяніць» іншымі і ў іншым месцы (заўвага карыстальніка 30.07)
     _edModalEl.innerHTML = `<div class="ed-modal-box">
+      <div class="ed-modal-head"></div>
       <div class="ed-modal-quill"></div>
-      <div class="ed-modal-foot"><button type="button" class="ed-cancel" onclick="_edModalClose()">${_svcEsc(getUI().ed_cancel || 'Адмяніць')}</button><button type="button" class="ed-save" onclick="_edModalSave()">${_svcEsc(ui.ed_save || 'Захаваць')}</button></div>
     </div>`;
     document.body.appendChild(_edModalEl);
     _edModalEl.addEventListener('mousedown', e => { if (e.target === _edModalEl) _edModalClose(); }); // клік па фоне закрывае
@@ -4059,14 +4397,37 @@ function _edModalOpen(el) {
   _edModalEl.style.display = 'flex';
   _edQuillLoad().then(() => {
     const host = _edModalEl.querySelector('.ed-modal-quill');
-    if (!_edQuill) { // адзін інстанс, той жа toolbar-канфіг што ў панэлі (nodeInitRichtext)
-      _edQuill = new Quill(host, { theme: 'snow', modules: { toolbar: [[{ header: [1, 2, 3, false] }], ['bold', 'italic', 'underline'], [{ list: 'ordered' }, { list: 'bullet' }], ['link'], ['clean']] } });
+    if (!_edQuill) { // адзін інстанс; рэдактар і ўсе кнопкі — з агульнага кампанента
+      _edQuill = TTZOP_RICHTEXT.create(host, { profile: 'full' });
+      // `decorate` шукае .ql-toolbar УНУТРЫ переданага вузла — Quill паклаў яе побач з host,
+      // таму дэкаруем бацьку (мадальную скрыню), а не сам host
+      TTZOP_RICHTEXT.decorate(host.parentNode, _edQuill, {});
+    }
+    // ⛶ на ўсё акно: разгортваецца САМА мадалка рэдактара (той самы вузел, не копія) — кнопка і
+    // механізм з кампанента, куток толькі кажа, ЯКІ вузел расцягваць. Ставім тут, а не ў разметцы
+    // мадалкі: кампанент грузіцца ленава і на момант яе стварэння яго яшчэ няма.
+    const head = _edModalEl.querySelector('.ed-modal-head');
+    if (head && !head.querySelector('.node-rt-full')) {
+      head.innerHTML = TTZOP_RICHTEXT.headHtml({ buttons: [
+        { id: 'cancel', label: getUI().ed_cancel || 'Адмяніць' },
+        { id: 'save', label: getUI().ed_save || 'Захаваць', primary: true }] });
+      head.querySelector('[data-rt-btn="cancel"]').onclick = () => _edModalClose();
+      head.querySelector('[data-rt-btn="save"]').onclick = () => _edModalSave();
+      // ⚠️ вузел бяром ад САМОЙ кнопкі (`closest`), а не пошукам у #ed-modal: у разгорнутым стане
+      // скрыня жыве ў оверлэі, і пошук у мадалцы вяртаў null — згарнуць было ўжо нечым
+      head.querySelector('.node-rt-full').onclick = e => { e.preventDefault(); TTZOP_RICHTEXT.fullToggle(e.currentTarget.closest('.ed-modal-box')); };
     }
     _edQuill.root.innerHTML = html; // сыпем бягучае цела
     setTimeout(() => _edQuill.focus(), 40);
   }).catch(() => { console.warn('[ttzop] Quill load failed'); _edModalClose(); });
 }
-function _edModalClose() { if (_edModalEl) _edModalEl.style.display = 'none'; _edModalCtx = null; }
+// ⚠️ Спярша згарнуць вялікае акно: у ім мадальная скрыня ЖЫВЕ ЗА межамі #ed-modal, і схаваць адзін
+// #ed-modal было б недастаткова — рэдактар застаўся б на экране пасля «Захаваць»/«Адмяніць».
+function _edModalClose() {
+  window.TTZOP_RICHTEXT?.fullClose();
+  if (_edModalEl) _edModalEl.style.display = 'none';
+  _edModalCtx = null;
+}
 function _edModalSave() {
   if (!_edModalCtx || !_edQuill) return;
   const { el, id, path } = _edModalCtx;
