@@ -861,7 +861,7 @@ function _monitorTopChartHtml() {
 // `String(v)`), і карыстальнік бачыў у журнале «gdpr», «deploy», «quota» лацінкай. Замер 02.08:
 // воркер шле 14 відаў, каталог ведаў 8. Новы `_alertPush(env,'від',…)` = радок сюды + `al_k_від` ×13.
 const _AL_KINDS = { limit: 'al_k_limit', quota: 'al_k_quota', sentinel: 'al_k_sentinel', llm: 'al_k_llm', email: 'al_k_email', mailkey: 'al_k_mailkey', crash: 'al_k_crash', payment: 'al_k_payment', backup: 'al_k_backup', // backup — збой дзённага здымка
-  deploy: 'al_k_deploy', domain: 'al_k_domain', finance: 'al_k_finance', gdpr: 'al_k_gdpr', kv: 'al_k_kv', r2: 'al_k_r2' }; // r2 — файл не выдаліўся, сіроты ў бакеце
+  deploy: 'al_k_deploy', domain: 'al_k_domain', finance: 'al_k_finance', gdpr: 'al_k_gdpr', kv: 'al_k_kv', r2: 'al_k_r2', docs: 'al_k_docs' }; // r2 — файл не выдаліўся, сіроты ў бакеце; docs — дзейны дакумент з дзіркамі ў тэксце
 const _AL_SEV = { info: 'al_s_info', warn: 'al_s_warn', crit: 'al_s_crit' };
 const _alertsInflight = new Set();
 function _alertsSection(withSite) { // withSite=false → картка паддамена (сайт і так відны ў назве формы)
@@ -1559,6 +1559,8 @@ const FORM_SCHEMAS = {
   docSettings: { _noName: true, sections: [
     { id: 'ds-main', type: 'flat', title: 'section_main_data', editable: true,
       onEdit: (form, s) => _nodeFlatSectionEdit(form, s, 'ds-main'),
+      // 📜 умовы дакумента правяцца толькі праз новую версію (гл. `_docTermsGuard`)
+      beforeApply: (form, changes) => _docTermsGuard(form, changes),
       blocks: [
         { key: 'docTitle', label: 'docs_name', ml: true },
         // 📄 ВІД ДАКУМЕНТА — з код-каталога `DOC_TYPES` (не рукапісны спіс: новы від = адзін радок
@@ -1573,6 +1575,11 @@ const FORM_SCHEMAS = {
         { key: 'docType', label: 'docs_kind', hint: 'docs_kind_hint', type: 'select', badge: false,
           options: () => DOC_TYPES, optionLabels: () => Object.fromEntries(DOC_TYPES.map(ty => [ty, _docTypeLabel(ty)])),
           readOnly: form => !!form.fields?._sys },
+        // 📊 «N з M прынялі бягучую версію» — люстэрка сервера, рукамі не мяняецца.
+        // ⚠️ Навошта: механізм паўторнай згоды працуе сам (новая бягучая версія → банер у кабінеце),
+        // але БЕЗ ЛІЧБЫ немагчыма адказаць на пытанне «а колькі людзей яшчэ не прынялі». Пара
+        // «зроблена / мусіла быць» — той самы канон пакрыцця, што мы ўжываем да сайтаў і квот.
+        { key: '_accepted', label: 'docs_accepted', hint: 'docs_accepted_hint', readOnly: () => true, badge: false },
         { key: 'requiresConsent', label: 'docs_consent', type: 'select', options: [['yes','yes'],['no','no']] },
         // суцэльны водступ: не залежыць ад таго, што выжыве пры абмене з Word
         { key: 'indentAll', label: 'docs_indent', hint: 'docs_indent_hint', type: 'select', options: [['no','no'],['yes','yes']] }
@@ -1598,6 +1605,18 @@ const FORM_SCHEMAS = {
       columns: _DOCF_COLUMNS },
   ] },
   privacyVer: [ // форма ўнутры папкі-версіі палітыкі: апісанне + Quill-тэкст (заблакаваная — прагляд)
+    // 🚧 ПАПЯРЭДЖАННЕ «ТЭКСТ НЕ ЗАКОНЧАНЫ» — тлумачыць, чаму ў версіі няма ● і 📌.
+    // ⚠️ Схаваць кнопкі было б мала: чалавек бачыў бы, што дзеянне знікла, і не ведаў чаму —
+    // а гэта горш за забарону. Пазнакі лічым тым жа `_docUnfinished`, што і гейт (адна крыніца).
+    { type: 'custom', render: (form) => {
+      const u = _docVerUnfinished(form);
+      if (!u) return '';
+      const parts = [];
+      if (u.marks) parts.push(t('doc_todo_marks').replace('{n}', u.marks));
+      if (u.draft) parts.push(t('doc_todo_draft'));
+      return `<div style="font-size:0.82rem;line-height:1.45;background:rgba(245,158,11,0.12);border:1px solid rgba(245,158,11,0.4);border-radius:8px;padding:8px 10px">
+        <b>${escHtml(t('doc_todo_title'))}</b> ${escHtml(parts.join(' · '))}<br>${escHtml(t('doc_todo_hint'))}</div>`;
+    } },
     { key: 'description', type: 'text', label: 'change_desc', readOnly: form => _docVerReadOnly(form) },
     { key: 'text', type: 'richtext', label: 'doc_text', readOnly: form => _docVerReadOnly(form), // не «палітыкі»: дакумент бывае Умовамі, Дастаўкай і інш.
       fieldCodes: (form, s) => _docCodesFor(form, s), // { } у панэлі: коды кампаніі + уласныя гэтага дакумента
@@ -2512,6 +2531,36 @@ CONTENT_TYPES['doc-versions']       = { // 📁 «Версіі дакумент�
   canRename: false, canDelete: false, canRelocate: false, canDuplicate: false, canMoveOrder: false, // службовы кантэйнер, ствараецца кодам
   canActive: false, showActiveDot: false, canMakeCurrent: false, showCurrentDot: false, // стан — уласцівасць ВЕРСІІ, не кантэйнера
   canLayout: false, canSort: false, hasTrash: false }; // парадак версій — храналогія; змесціва службовае, Сметніца не патрэбная
+// ═══ 🚧 ДАКУМЕНТ З ДЗІРКАМІ НЕ МАЕ ПРАВА СТАЦЬ ДЗЕЙНЫМ (03.08) ═══
+// ⚠️ ЗАЎВАГА КАРЫСТАЛЬНІКА: «бачу ў Палітыцы папярэджанні, што нешта не запоўнена — а дакумент
+// Актыўны і нават Бягучы. У жыцці так быць не можа». Слушна: бягучая версія — гэта тое, што
+// паказваецца наведвальніку і пад чым ён ставіць згоду. Дзірка ў ёй — не «недаробка ў чарнавіку»,
+// а публічнае абяцанне з прабелам.
+// 🔑 Пазнакі машынна распазнавальныя, бо ставім іх МЫ САМІ (шаблоны): 20 варыянтаў, усе пачынаюцца
+// з аднаго слова, плюс блок-загатоўка. Каталог — адзіная крыніца; новы шаблон = новы радок сюды.
+// ⚠️ Правяраем і ТЭКСТ, і СТЫЛЬ нашых пазнак: тэкст кліент можа перакласці на сваю мову, а
+// заліўка перажывае рэдагаванне (Quill трымае інлайн-стылі) — разам яны накрываюць рэальныя выпадкі.
+const _DOC_TODO_WORDS = ['ЗАПОЎНІЦЬ', 'TO COMPLETE'];
+const _DOC_TODO_BLOCK = ['ГЭТА ЗАГАТОЎКА', 'ГЭТА КАРТА ПЫТАННЯЎ', 'THIS IS A STARTING DRAFT', 'THIS IS A MAP OF QUESTIONS'];
+const _DOC_TODO_STYLE = ['background:#fef3c7', 'background:#fff8e1'];
+// колькі «дзірак» у тэксце: {marks} — незапоўненыя месцы, {draft} — блок-загатоўка цалкам
+function _docUnfinished(html) {
+  const h = String(html || '');
+  if (!h) return { marks: 0, draft: false, total: 0 };
+  const txt = h.replace(/<[^>]*>/g, ' ');
+  let marks = 0;
+  for (const w of _DOC_TODO_WORDS) marks += (txt.match(new RegExp(w, 'gi')) || []).length;
+  if (!marks) for (const st of _DOC_TODO_STYLE) if (h.includes(st)) { marks = (h.split(st).length - 1); break; }
+  const draft = _DOC_TODO_BLOCK.some(b => txt.includes(b));
+  return { marks, draft, total: marks + (draft ? 1 : 0) };
+}
+// вердыкт для вузла-версіі (тэкст ляжыць у кэшы, які ўжо грузіцца для пошуку і прагляду)
+function _docVerUnfinished(form) {
+  const html = _docHtml(form?.fields?._docId, form?.fields?.version);
+  if (html === undefined) return null;          // ⚠️ яшчэ не прачыталі — не судзім (інакш блакавалі б наўслеп)
+  const u = _docUnfinished(html);
+  return u.total ? u : null;
+}
 CONTENT_TYPES['privacyVer']        = { // 📄 ВЕРСІЯ дакумента: тэкст І стан на адным вузле (былая Папка-версія знята)
   canBeLocked: false, // _locked ставіцца АЎТАМАТАМ (версію прыняў кліент) — ручны тогл забаронены (юрыдычная незваротнасць)
   canSelect: false,   // ← ад ПРОДАКФПФ: showActiveDot/canActive і showCurrentDot/canMakeCurrent — кропкі на самой версіі
@@ -2521,7 +2570,11 @@ CONTENT_TYPES['privacyVer']        = { // 📄 ВЕРСІЯ дакумента: 
   canAddFolder: false, canAddItem: false, canAddForm: false, canSort: false, // ліставая форма: апісанне + тэкст
   // ← ад ПРОДАКФПФ: hasPrint ✓ — «Падзяліцца» на версіі будуе PDF/Word з ТЭКСТУ (docHtml), не з табліц
   showActiveDot: true, // Актыўная ≠ Бягучая
-  canActive: f => !f.fields?._locked && !f.fields?._current && (f.active === false || !(f.fields?.accepted > 0)), // прынятую — нельга дэактываваць
+  // 🚧 незакончаны тэкст (пазнакі «ЗАПОЎНІЦЬ» ці блок-загатоўка) → УКЛЮЧЫЦЬ нельга; выключыць можна
+  // заўсёды (гэта рух у бяспечны бок). Тое ж правіла ніжэй для «зрабіць бягучай».
+  canActive: f => !f.fields?._locked && !f.fields?._current && (f.active === false || !(f.fields?.accepted > 0))
+    && (f.active !== false || !_docVerUnfinished(f)),
+  canMakeCurrent: f => !_docVerUnfinished(f),
   canDelete: f => !f.fields?._locked && !f.fields?._current && !(f.fields?.accepted > 0) }; // прынятую — нельга выдаляць
 // тэмы (formSchema 'theme') — БЕЗ уласнага тыпу: падаюць на CONTENT_TYPES['form'] → ПРОДАКФПФ (рух/пераназв/выдал/выбар/бягучы — усё стандартна)
 CONTENT_TYPES['security']          = { ..._formFixed }; // бяспека: фіксаваная форма
@@ -2893,7 +2946,22 @@ let privacyMeta = { current: '', versions: [] };
 let privacyLastSaved = 0;
 
 // ─── ПАЛІТЫКА ПРЫВАТНАСЦІ: П/ПФФ — Папка-0 «Версіі», версія = Папка-1, унутры форма з Quill-тэкстам ───
-let privacyState = { data: null, saving: false, selected: new Set(), expanded: new Set(), _movePanel: false, _relocateId: null, _section: 'privacyver', _editorId: 'privacy-tree-editor', _localOnly: true, _spaceOnly: true, _rootType: 'privacy-root', _formSchema: 'privacyVer', _itemHtml: null,
+// 🚧 ЧЫП РМ ДАКУМЕНТЫ: колькі ДЗЕЙНЫХ дакументаў маюць дзіркі ў тэксце. ⚠️ Гейт (ніжэй) не дае
+// зрабіць такую версію бягучай, але ўжо дзейныя (як наша Палітыка v1.3) знімаць заднім чыслом
+// нельга — сайт застаўся б наогул без дакумента. Значыць пра іх трэба ГУЧНА казаць, а не маўчаць.
+// 🔑 Праз штатны хук загалоўка `_headerExtraHtml` — той самы, што ў Заказаў і Запісаў.
+const _docsTodoChipHtml = s => {
+  // ⚠️ бягучая версія — праз `_docStore`: у Палітыкі яна ляжыць у `privacyMeta`, а не ў рэестры
+  // (першы варыянт чыпа чытаў `d.current` і моўчкі прапускаў менавіта Палітыку)
+  const bad = (docsRegistry?.docs || []).filter(d => {
+    const cur = _docStore(d.id)?.current;
+    return cur && _docUnfinished(_docHtml(d.id, cur)).total;
+  });
+  const dflt = `<div id="${s._saveStatusId || (s._section + '-save-status')}" style="font-size:0.82rem;color:var(--muted)"></div>`;
+  if (!bad.length) return dflt;
+  return dflt + `<span title="${escHtml(t('doc_todo_chip_hint'))}" style="margin-left:auto;font-size:0.8rem;font-weight:700;color:#f59e0b;background:rgba(245,158,11,0.12);border:1px solid rgba(245,158,11,0.4);border-radius:999px;padding:2px 10px">🚧 ${bad.length} ${t('doc_todo_chip')}</span>`;
+};
+let privacyState = { _headerExtraHtml: _docsTodoChipHtml, data: null, saving: false, selected: new Set(), expanded: new Set(), _movePanel: false, _relocateId: null, _section: 'privacyver', _editorId: 'privacy-tree-editor', _localOnly: true, _spaceOnly: true, _rootType: 'privacy-root', _formSchema: 'privacyVer', _itemHtml: null,
   _rootName: () => t('card_policy_versions'),
   // 📄 Новы дакумент = штатнае +📋 у папцы «Юрыдычныя дакументы» (ААП: свой сцэнар толькі для
   // назвы, механізм дадавання — агульны). Раней вісела на +📁 ўзроўню РМ, дзе папак больш няма.
@@ -2905,6 +2973,9 @@ let privacyState = { data: null, saving: false, selected: new Set(), expanded: n
     if (node.formSchema !== 'privacyVer') return;
     const doc = privacyState.data?.nodes?.find(n => n.formSchema === 'docSettings' && n.fields?._docId === node.fields?._docId);
     if (_docFieldFreeze(node, doc)) _privacyWriteMeta();
+    // 📜 умовы, што чакалі на версіі, робяцца дзейнымі РОЎНА ў гэты момант — не раней
+    const _tm = node.fields?._terms;
+    if (_tm && doc) { _DOC_TERMS.forEach(k => { if (_tm[k] !== undefined) doc.fields[k] = _tm[k]; }); nodeSave(); }
   },
   // 🏢 Цела Формы-0 = табліца агульных палёў кампаніі, ВЫШЭЙ за Папку «Юрыдычныя дакументы».
   // Штатны хук Формы-0 (`_formBodyHtml`), той самы механізм, што малюе Куб у РМ Запісы — свайго
@@ -2925,18 +2996,29 @@ let privacyState = { data: null, saving: false, selected: new Set(), expanded: n
   _formNameHtml: form => form.formSchema === 'privacyVer'
     ? _privacyFolderNameHtml(form)                       // версія: vX.X + дата + ✓прынялі (было на Папцы)
     : _rowNamePh(_formNameAny(form, privacyState), form),
-  _nodeSearchText: n => { const f = n.fields || {}; return [f.description, (_privacyHtmlCache[f.version] || '').replace(/<[^>]*>/g, ' ')].filter(Boolean).join(' '); }, // пошук унутр тэксту версіі (HTML без тэгаў) + апісання
+  _nodeSearchText: n => { const f = n.fields || {}; return [f.description, (_docHtml(f._docId, f.version) || '').replace(/<[^>]*>/g, ' ')].filter(Boolean).join(' '); }, // пошук унутр тэксту версіі (HTML без тэгаў) + апісання
   _onFilterApply: () => _privacyLoadAllText(), // дагрузіць HTML усіх версій (ленавы) перад пошукам
   _emptyHtml: () => `<div style="padding:8px 0;font-size:0.85rem;color:var(--muted)">${t('privacy_no_versions')}</div>` };
 // Кэш HTML версій па НУМАРЫ (не на вузле — renderPrivacyVersions перабудоўвае вузлы кожны раз → _html на вузле сціраўся)
 const _privacyHtmlCache = {};
+// 🔑 КЛЮЧ КЭША — «дакумент + версія», а не адзін нумар (03.08). ⚠️ Нумары версій у розных
+// дакументах СУПАДАЮЦЬ (у Палітыкі і ва Умоў ёсць свая v1.0), і кэш па голым нумары аддаваў ЧУЖЫ
+// тэкст. Горш: загрузчык браў файл заўсёды са шляху Палітыкі — значыць пошук, лічба ўжыванняў
+// кодаў і папярэджанні ва Умовах працавалі па тэксце Палітыкі. Знойдзена, калі новы чып «дакументы
+// з дзіркамі» не загарэўся: у Палітыкі `current` жыве ў `privacyMeta`, а тэкст Умоў аказаўся чужым.
+const _docHtmlKey = (docId, ver) => `${docId || 'privacy'}::${ver}`;
+const _docHtml = (docId, ver) => _privacyHtmlCache[_docHtmlKey(docId, ver)];
 async function _privacyLoadAllText() {
-  const vers = [...new Set((privacyState.data?.nodes || []).filter(n => n.formSchema === 'privacyVer').map(n => n.fields?.version).filter(v => v != null && _privacyHtmlCache[v] === undefined))];
+  const vers = (privacyState.data?.nodes || []).filter(n => n.formSchema === 'privacyVer')
+    .map(n => ({ docId: n.fields?._docId || 'privacy', v: n.fields?.version }))
+    .filter(x => x.v != null && _privacyHtmlCache[_docHtmlKey(x.docId, x.v)] === undefined)
+    .filter((x, i, arr) => arr.findIndex(y => y.docId === x.docId && y.v === x.v) === i);
   if (!vers.length) return;
-  await Promise.all(vers.map(async v => {
+  await Promise.all(vers.map(async ({ docId, v }) => {
     // ⚠️ as:'text' — версія Палітыкі гэта HTML, не JSON. Дэфолтны разбор JSON тут упаў бы,
     // а гард Response-місюзу такога не бачыць: памылка не ў тыпе вяртання, а ў РЭЖЫМЕ разбору.
-    _privacyHtmlCache[v] = await apiCall('read', { file: `content/privacy/privacy_versions/v${v}.html` },
+    // ⚠️ шлях — праз `_docVerFile`: у Палітыкі свае файлы, у астатніх дакументаў свае
+    _privacyHtmlCache[_docHtmlKey(docId, v)] = await apiCall('read', { file: _docVerFile(docId, v) },
       { as: 'text', quiet: 'тэкст версіі падгружаецца фонам; пустая — рэндэрыцца як пустая' });
   }));
   renderPrivacyVersions();
@@ -3173,11 +3255,11 @@ async function _docTemplateApply(verId) {
   const html = (_docTemplateGet(type, _settingsLang()) || '').trim();
   if (!html) { showAlert(t('doc_tpl_none')); return; }
   // ⚠️ Пытаем ІНШАЕ, калі тэкст ужо ёсць: шаблон яго ЗАТРЭ, і гэта не тое самае, што запоўніць пустое
-  const has = !!(_privacyHtmlCache[form.fields?.version] || '').replace(/<[^>]*>/g, '').trim();
+  const has = !!(_docHtml(form.fields?._docId, form.fields?.version) || '').replace(/<[^>]*>/g, '').trim();
   showConfirm(t(has ? 'doc_tpl_replace' : 'doc_tpl_confirm'), async () => {
     try { await _privacySaveText(form, html); }                // ⚠️ той самы шлях, што звычайная праўка (гонка «прынялі падчас праўкі» ўключна)
     catch (e) { if (!(e instanceof ApiError)) showAlert(t('err') + ': ' + e.message); return; }
-    _privacyHtmlCache[form.fields.version] = html;             // кэш пошуку і лічбы ўжыванняў кодаў
+    _privacyHtmlCache[_docHtmlKey(form.fields._docId, form.fields.version)] = html;             // кэш пошуку і лічбы ўжыванняў кодаў
     renderPrivacyVersions();
   }, { label: t('doc_tpl_take'), danger: has });
 }
@@ -3229,7 +3311,7 @@ function _docFieldUses(code, docId) {
     if (v.formSchema !== 'privacyVer') return;
     if (v.fields?._locked || v.fields?.accepted > 0) return;
     if (docId && v.fields?._docId !== docId) return;
-    const html = _privacyHtmlCache[v.fields?.version];
+    const html = _docHtml(v.fields?._docId, v.fields?.version);
     if (typeof html === 'string') n += html.split(needle).length - 1;
   });
   return n;
@@ -3333,6 +3415,7 @@ function _privacyBuildNodes() {
         docType: d.type || 'other',
         requiresConsent: d.requiresConsent !== false ? 'yes' : 'no',
         indentAll: d.indentAll ? 'yes' : 'no',
+        _accepted: _consentText(d.id, cur),   // 📊 «N з M прынялі бягучую» (люстэрка сервера)
         _docFields: _docFieldsSeed(d) } });
     const vfid = `pvv-${di}`;
     privacyState.data.nodes.push({ id: vfid, type: 'folder', contentType: 'doc-versions', parentId: mfid, order: 0,
@@ -3346,7 +3429,7 @@ function _privacyBuildNodes() {
         name: 'v' + v.version, active: v.active !== false,
         fields: { _vIdx: idx, _docIdx: di, _docId: d.id, version: v.version, _locked: !!v.locked, _current: isCur,
           createdAt: v.createdAt, accepted: v.locked ? String(v.acceptedCount ?? 0) : '',
-          description: v.description || '', _fieldSnap: v.fieldSnap || null }, infoNodes: [] });
+          description: v.description || '', _fieldSnap: v.fieldSnap || null, _terms: v.terms || null }, infoNodes: [] });
     });
   });
 }
@@ -3354,7 +3437,7 @@ function _privacyBuildNodes() {
 // інакш пра паламаны код даведаешся, толькі калі адкрыеш кожную.
 function _privacyVerWarn(node) {
   if (node.formSchema !== 'privacyVer') return '';
-  const html = _privacyHtmlCache[node.fields?.version];
+  const html = _docHtml(node.fields?._docId, node.fields?.version);
   if (typeof html !== 'string') return '';
   const codes = _docCodesFor(node, privacyState) || [];
   const res = TTZOP_RICHTEXT.codes.check(html, codes.map(c => c.code), codes.filter(c => c.own).map(c => c.code));
@@ -3422,6 +3505,7 @@ function _privacyCommit() {
       v.active = fl.active !== false;
       if (!v.locked) v.description = fl.fields?.description || ''; // апісанне цяпер на самім вузле версіі
       if (fl.fields?._fieldSnap) v.fieldSnap = fl.fields._fieldSnap;   // 📸 замарожаныя значэнні палёў
+      if (fl.fields?._terms) v.terms = fl.fields._terms;               // 📜 умовы, што чакаюць актывацыі
     });
     // ааП: nodeMakeCurrent ставіць fields._current → чытаем назад у `current` свайго дакумента
     const curNode = mine.find(fl => fl.fields?._current === true);
@@ -3472,6 +3556,49 @@ async function _privacySaveText(form, html) {
   }
   await apiCall('write', { file: _docVerFile(form.fields?._docId || 'privacy', ver), content: html });
   privacyLastSaved = Date.now(); // ⚠️ адзнака «захавана» — толькі пасля паспяховага запісу
+}
+// ═══ 📜 УМОВЫ ДАКУМЕНТА МЯНЯЮЦЦА ТОЛЬКІ ПРАЗ НОВУЮ ВЕРСІЮ (03.08) ═══
+// ⚠️ ПРАВІЛА КАРЫСТАЛЬНІКА: змена значэння, якое ўваходзіць ва ЎМОВЫ, не праўдзіць дзейны дакумент,
+// а нараджае новую версію — кліенты ўбачаць яе толькі калі яе актывуюць і зробяць бягучай.
+// 🔑 Параўноўваем не «ці было рэдагаванне», а «ці адрозніваецца ад БЯГУЧАЙ ВЕРСІІ»: вярнуў
+// значэнне назад — нічога не адбываецца, і форк не плодзіцца на кожны дотык.
+// ⛔ Назва дакумента ва ўмовы НЕ ўваходзіць (рашэнне карыстальніка): яна нічога не абяцае
+// наведвальніку, і форк на кожную апіску быў бы шумам.
+// ⚠️ Значэнні жывуць НА ВЕРСІІ (`_terms`), а на самім дакуменце мяняюцца толькі ў момант «зрабіць
+// бягучай» — інакш «новая версія» была б толькі на паперы, а сайт паказваў бы новыя ўмовы адразу.
+const _DOC_TERMS = ['docType', 'requiresConsent'];
+const _docTermsNow = docForm => Object.fromEntries(_DOC_TERMS.map(k => [k, String(docForm?.fields?.[k] ?? '')]));
+function _docTermsGuard(form, changes) {
+  const keys = Object.keys(changes).filter(k => _DOC_TERMS.includes(k));
+  if (!keys.length) return true;                       // не ўмовы (напр. назва) — звычайны шлях
+  const cur = _docTermsNow(form);
+  if (keys.every(k => String(changes[k]) === cur[k])) return true;  // тое ж значэнне — няма чаго форкаць
+  const store = _docStore(form.fields?._docId || 'privacy');
+  if (!store?.current) return true;                    // бягучай версіі няма — няма з чым параўноўваць
+  showConfirm(t('doc_terms_fork_ask'),
+    () => _docTermsFork(form, changes, keys[0]),
+    { label: t('doc_terms_fork_do'), danger: false });
+  return false;                                        // ⛔ у дзейную версію не пішам — «Скасаваць» вяртае поле само
+}
+async function _docTermsFork(form, changes, focusKey) {
+  const docId = form.fields?._docId || 'privacy';
+  const store = _docStore(docId);
+  const newVer = _privacyNextVersion(docId);
+  // тэкст новай версіі — КОПІЯ бягучай (правіла карыстальніка): чалавек правіць далей, а не пачынае з нуля
+  let html = '';
+  try { html = await apiCall('read', { file: _docVerFile(docId, store.current) }, { as: 'text', quiet: 'пустая бягучая версія — новая проста пачнецца з пустога тэксту' }) || ''; } catch {}
+  store.versions.push({ version: newVer, createdAt: new Date().toISOString(), description: t('doc_terms_fork_desc'),
+    active: false, terms: { ..._docTermsNow(form), ...changes } });  // ⚠️ active:false — кліенты не бачаць да актывацыі
+  try {
+    await apiCall('write', { file: _docVerFile(docId, newVer), content: html });
+    await _privacyWriteMeta();
+  } catch (e) { if (!(e instanceof ApiError)) showAlert(t('err') + ': ' + e.message); return; }
+  privacyState.data = null;                            // перабудова дрэва (той жа гард, што ў _privacySaveText)
+  await loadPrivacyEditor();
+  const _di = docsRegistry.docs.findIndex(x => x.id === docId);
+  privacyState.expanded.add(`pvf-${_di}-${store.versions.length - 1}`);
+  nodeRender();
+  showAlert(t('doc_terms_fork_done').replace('{v}', newVer));
 }
 function _privacyNextVersion(docId = 'privacy') {
   const store = _docStore(docId);
@@ -3530,27 +3657,68 @@ function renderPrivacyVersions() {
   currentNodeState = privacyState;
   if (privacyState.data?.nodes?.some(n => n.type === 'folder')) _privacyCommit(); // толькі калі ёсць рэальныя вузлы — не зачышчаць пры пустым старце
   _privacyBuildNodes();
-  editor.innerHTML = nodeRootHtml(privacyState, '', renderNodeTree(null, 0));
-  nodeInitRichtext(privacyState);
+  // ⚠️ АДХІЛЕННЕ АД КАНОНУ, ЗНЯТАЕ 03.08 (заўвага карыстальніка «зноў ААП паламаны?»): тут была
+  // ЎЛАСНАЯ копія рэндэру — `editor.innerHTML = nodeRootHtml(...)` + `nodeInitRichtext(...)`. Яна
+  // рабіла тое ж, што агульны `renderNodeEditor`, але СЛАБЕЙ: без `TTZOP_RICHTEXT.fullClose()`
+  // (адкрытае вялікае акно рэдактара заставалася сіратой) і без `_nodeInitMaps`. І галоўнае —
+  // любы, хто перамалёўваў РМ агульным шляхам, атрымліваў стары змест, бо вузлы не перабудоўваліся
+  // (жывы кейс: лічба «N з M прынялі» прыходзіла з сервера і не з'яўлялася на экране).
+  // Канон: `_renderFn` толькі МАЛЮЕ, дрэва будуецца ў load — і малюе АДЗІН механізм на ўсе РМ.
+  renderNodeEditor(privacyState);
+  if (!privacyState._consent) _consentLoadAll();   // 📊 «N з M прынялі» — ленава, адзін запыт на дакумент
 }
 
 // ⚠️ docId абавязковы ў сэнсе, а не ў сігнатуры: нумары версій у розных дакументах СУПАДАЮЦЬ
 // (у кожнага свой шэраг 1.0, 1.1…). Без фільтра па дакуменце «Умовы v1.0» лічыліся б прынятымі
 // тым, хто прыняў «Палітыку v1.0» — і замарожваліся б яшчэ да першага кліента (злоўлена жывым
 // прагонам цыклу 28.07: тэкст новай версіі не захоўваўся, бо яе адразу лічылі прынятай).
+// 📊 ТЭКСТ «N З M» для радка дакумента. ⚠️ Лічбу лічыць СЕРВЕР (`consent_stats`) — тут толькі паказ.
+// Пусты радок, пакуль адказ не прыйшоў: readOnly-поле з пустым значэннем не малюецца зусім, і гэта
+// лепш за лічбу, узятую са столі (той жа прынцып, што ў індыкатары запоўненасці моў).
+// ⛔ Бягучай версіі няма → пытанне «хто прыняў» не мае сэнсу: паказваць «0 з 13» было б няпраўдай.
+function _consentText(docId, curVer) {
+  if (!curVer) return '';
+  const st = privacyState._consent?.[docId];
+  if (!st || st.version !== curVer) return '';
+  const left = Math.max(0, (st.total || 0) - (st.accepted || 0));
+  return `${st.accepted} ${t('docs_of')} ${st.total}` + (left ? ` · ${t('docs_left').replace('{n}', left)}` : '');
+}
+async function _consentLoadAll() {
+  if (privacyState._consentLoading) return;
+  privacyState._consentLoading = true;
+  try {
+    const docs = (docsRegistry?.docs || []).filter(d => d.current);
+    if (!docs.length) return;
+    const out = {};
+    // ⚠️ адзін запыт на ДАКУМЕНТ (не на кліента!) — унутры кожнага сервер робіць адзін SQL
+    await Promise.all(docs.map(async d => { const r = await _consentStats(d.current, d.id); if (r) out[d.id] = r; }));
+    privacyState._consent = out;
+    // ⚠️ перамалёўка — УЛАСНЫМ рэндэрам РМ (`renderPrivacyVersions`), а не агульным: гэты раздзел
+    // будуе дрэва сам (`_privacyBuildNodes` + `nodeRootHtml`), і `renderNodeEditor` вузлы НЕ
+    // перабудоўвае — лічба заставалася б у стэйце нябачнай (злоўлена смоўкам адразу).
+    // `_consent` ужо выстаўлены вышэй, значыць паўторнай загрузкі не будзе.
+    if (document.getElementById('privacy-tree-editor')) renderPrivacyVersions();
+  } finally { privacyState._consentLoading = false; }
+}
+
+// 📊 КОЛЬКІ КЛІЕНТАЎ ПРЫНЯЛІ ВЕРСІЮ — адзін SQL на серверы (`consent_stats`).
+// ⚠️ БЫЛО ДВА БАГІ Ў АДНОЙ ФУНКЦЫІ (знойдзена 03.08):
+//   1) N+1 запытаў: чытаўся індэкс кліентаў, а потым privacy.json КОЖНАГА — канон гэта забараняе
+//      спісавым дзеянням, і на сотні кліентаў панэль проста вісла б;
+//   2) `if (!privRes.ok) return false` — `apiCall` вяртае разабраныя даныя, у масіва няма `.ok`,
+//      значыць функцыя МАЎКЛІВА вяртала 0 для ўсіх. Жывая праверка: у метаданых версіі 1.1 стаяла
+//      «прынялі 1», а SQL паказаў 9 з 13. Лічба, на якую глядзіць чалавек, была хлуснёй.
+// 🔑 Той самы клас, што мы лавілі раніцай (вынік apiCall як Response) — але гард яго не бачыў:
+//    тут няма `.json()`, а голы `.ok` ён свядома не лічыць доказам (бывае бізнес-поле `ok`).
 async function countClientsForVersion(version, docId = 'privacy') {
-  const idxRes = await apiCall('read', { file:'content/clients/index.json' });
-  const clients = idxRes;
-  // паралельна — раней паслядоўны цыкл вісеў пры вялікай базе
-  const flags = await Promise.all(clients.map(async client => {
-    try {
-      const privRes = await apiCall('read', { file:`content/clients/${client.id}/privacy.json` });
-      if (!privRes.ok) return false;
-      const history = privRes;
-      return history.some(p => p.version === version && (p.docId || 'privacy') === docId);
-    } catch { return false; }
-  }));
-  return flags.filter(Boolean).length;
+  const d = await apiCall('consent_stats', { version, docId },
+    { quiet: 'лічба згод — дадатковая; яе адсутнасць не мусіць спыняць працу з дакументам' });
+  return d ? (d.accepted || 0) : 0;
+}
+// «N з M» для паказу: M — кліенты, з якімі адносіны жывыя (сервер лічыць тым жа запытам)
+async function _consentStats(version, docId = 'privacy') {
+  return await apiCall('consent_stats', { version, docId },
+    { quiet: 'лічба згод — дадатковая; яе адсутнасць не мусіць спыняць працу з дакументам' });
 }
 
 async function saveLockVersion(version, count, docId = 'privacy') {
@@ -3948,7 +4116,11 @@ let testimonialsState = { data: null, saving: false, selected: new Set(), expand
 let howWeWorkState    = { data: null, saving: false, selected: new Set(), expanded: new Set(), _section: 'how_we_work' };
 let promotionsState   = { data: null, saving: false, selected: new Set(), expanded: new Set(), _section: 'promotions' };
 let pricesState       = { data: null, saving: false, selected: new Set(), expanded: new Set(), _section: 'prices' };
-let ordersState = { data: null, saving: false, selected: new Set(), expanded: new Set(), _movePanel: false, _relocateId: null, _section: 'orders', _editorId: 'orders-editor', _loadAction: 'get_orders_index', _rootType: 'orders-root', _spaceOnly: true, _formSchema: 'orders', _folderSchema: 'orders', _itemsClass: 'node-items-list', _itemHtml: null, _viewMode: 'tree', _views: () => [{ id: 'tree', ico: '🌳', title: t('appt_view_tree') }, { id: 'table', ico: '≡', title: t('ord_tree_view') }], _viewBodyHtml: () => _ordersTableBodyHtml(ordersState), _filterStatus: null, _filterSearch: '', _autoRefreshEnabled: false, _lastRefresh: null,
+// 🧩 загаловак РМ Заказы: радок «Захавана» + лічыльнік заказаў (раней быў уласны рэндэр)
+const _ordersHeaderHtml = s => `<span id="orders-save-status" style="font-size:0.82rem;color:var(--success);opacity:0;transition:opacity 0.3s"></span>` +
+  (() => { const n = (s.data?.nodes || []).filter(x => x.fields?.drawerType === 'order_client').length;
+    return n > 0 ? `<span style="font-size:0.8rem;color:var(--muted);margin-left:auto">${n} ${t('section_orders') || 'заказаў'}</span>` : ''; })();
+let ordersState = { _headerExtraHtml: _ordersHeaderHtml, data: null, saving: false, selected: new Set(), expanded: new Set(), _movePanel: false, _relocateId: null, _section: 'orders', _editorId: 'orders-editor', _loadAction: 'get_orders_index', _rootType: 'orders-root', _spaceOnly: true, _formSchema: 'orders', _folderSchema: 'orders', _itemsClass: 'node-items-list', _itemHtml: null, _viewMode: 'tree', _views: () => [{ id: 'tree', ico: '🌳', title: t('appt_view_tree') }, { id: 'table', ico: '≡', title: t('ord_tree_view') }], _viewBodyHtml: () => _ordersTableBodyHtml(ordersState), _filterStatus: null, _filterSearch: '', _autoRefreshEnabled: false, _lastRefresh: null,
   _nodeMenuExtra: (node, mid) => {
     if (node.id === 'orders-host') return _ordersRootMenuExtraHtml(mid);
     if (node.fields?.drawerType === 'date_stats') return `<div class="node-overflow-sep"></div><button class="node-overflow-item" title="${t('btn_new_order')}" onclick="nodeCloseOverflow('${mid}');_orderCreatePrompt()">+🗒</button>`;
@@ -4355,10 +4527,36 @@ function _nodeRowEl(id) { return id == null ? null : (document.getElementById('n
 function _nodeKeepScroll(id, fn) {
   const el = _nodeRowEl(id), sc = el && _nodeScrollParent(el);
   const before = sc ? el.getBoundingClientRect().top : null;
+  // 📏 ВЫШЫНЯ НЕ МАЕ ПРАВА ЎПАСЦІ РАНЕЙ ЗА ЯКАР — механізм замест сцяга па РМ (03.08).
+  // ⚠️ ПРЫЗНАННЕ: у Релаксе 30.07 гэта «вырашылі» сцягам `_noAccordion` на адным стэйце, і сёння я
+  // паўтарыў тое ж для Дакументаў. Гэта была латка: любы новы РМ з цяжкім раскрытым целам
+  // (рэдактар, мапа, дошка) прыносіць баг зноўку — што і здарылася слова ў слова.
+  // 🔑 Прычына агульная і ад раздзела не залежыць: перарэндэр згортвае суседа → старонка робіцца
+  // карацейшай за бягучую пракрутку → браўзер ПРЫЦІСКАЕ `scrollTop` да новага максімуму. Пасля
+  // гэтага якар бяссілы: кампенсаваць няма чым, месца ўжо няма.
+  // Лекі: на час перарэндэру трымаем ранейшую вышыню (`min-height`) і адпускаем яе толькі калі
+  // якар (разам з позняй дапраўкай на мантаж рэдактара) адпрацаваў.
+  const hold = sc ? (sc === document.scrollingElement ? document.body : (sc.firstElementChild || sc)) : null;
+  const keepH = hold ? Math.ceil(hold.getBoundingClientRect().height) : 0;
+  const prevMinH = hold ? hold.style.minHeight : '';
+  const release = () => { if (hold) hold.style.minHeight = prevMinH; };
+  if (hold && keepH) hold.style.minHeight = keepH + 'px';
   fn();
-  if (before == null) return;
-  const el2 = _nodeRowEl(id); if (!el2) return;              // вузел знік (выдалены/адфільтраваны) — якара няма
-  sc.scrollTop += el2.getBoundingClientRect().top - before;  // клэмп браўзера сам абмяжуе краем
+  if (before == null) { release(); return; }
+  const fix = () => {
+    const el2 = _nodeRowEl(id); if (!el2) return;            // вузел знік (выдалены/адфільтраваны) — якара няма
+    sc.scrollTop += el2.getBoundingClientRect().top - before; // клэмп браўзера сам абмяжуе краем
+  };
+  fix();
+  // ⏱ ПАЎТОРНАЯ ПРАВЕРКА ЯКАРА (03.08, заўвага карыстальніка: «раскрываю іншую версію Палітыкі —
+  // старонка скача на v1.3»). ⚠️ Прычына не ў фокусе (карыстальнік удакладніў: дастаткова, каб
+  // рэдактар быў ПРОСТА РАСКРЫТЫ): Quill мантуецца ПАСЛЯ innerHTML, і яго панэль з целам дадаюць
+  // вышыні ўжо пасля таго, як якар адпрацаваў. Вымяраць адзін раз тут прынцыпова недастаткова —
+  // трэба паправіцца, калі змест «уляжацца».
+  // 🔑 Той самы механізм на ЎСЕ РМ: любы позні прырост вышыні (рэдактар, мапа, выява) лечыцца тут,
+  // а не ў кожнай аперацыі паасобку.
+  requestAnimationFrame(fix);
+  setTimeout(() => { fix(); release(); }, 120); // Quill мантуецца не ў першым кадры; потым адпускаем вышыню
 }
 function nodeRender() { const s = currentNodeState; _nodeKeepScroll(s?.focusedId, () => s?._renderFn?.()); }
 // перарэндэр раздзела + ⓘ-драўэра (калі адкрыты) — замест nodeRender() у кантэксце ⓘ-панэлі
@@ -6104,6 +6302,13 @@ document.addEventListener('touchmove', e => { if (_dnd?.phase === 'active') e.pr
 // Загаловак секцыі: назва (+лічыльнік) + ⋯ меню толькі іконкі — агульны для Flat і Table
 // цьмяны неактыўны ⋯ — адзіны выгляд «меню без пунктаў» (вузлы/секцыі/корань): не знікае, а тлумачыць
 function _dimMenuBtnHtml() { return `<button class="node-btn-round" title="${t('no_actions')}" style="opacity:0.25;cursor:default" onclick="event.stopPropagation()">⋯</button>`; }
+// 🎨 ЭМОДЗІ Ў НАДПІСАХ ХРОМУ → SVG (кампанент `assets/js/menu-icons.js`, каталог TTZOP_ICON_EMOJI).
+// ⚠️ Заўвага з Tesla: эмодзі малюе СІСТЭМНЫ шрыфт, і без каляровага emoji-шрыфта (Tesla, шэраг
+// Linux, кіёскі) яны падаюць у манахромны контур. SVG выглядае аднолькава ўсюды і бярэ колер тэмы.
+// ⛔ Толькі для тэксту, які будуем МЫ (загалоўкі секцый, кнопкі, меню) — НІКОЛІ для назваў, што
+// напісаў кліент: там эмодзі належыць яму.
+// 🛡 Кампанент не загрузіўся → вяртаем радок як ёсць (іконкі — упрыгожванне, не ўмова працы).
+const _ico = str => (typeof window.ttIcoText === 'function' ? window.ttIcoText(str) : str);
 function _sectionHeaderHtml(titleKey, menuId, menuItems, countHtml = '', extraBtns = '', leadToggle = '') {
   if (!titleKey && !menuItems && !extraBtns && !leadToggle) return '';
   const menuHtml = menuItems ? `<div class="node-overflow" onclick="event.stopPropagation()">
@@ -6112,7 +6317,7 @@ function _sectionHeaderHtml(titleKey, menuId, menuItems, countHtml = '', extraBt
     </div>` : (menuId ? _dimMenuBtnHtml() : ''); // секцыя абвясціла меню (menuId), але пунктаў няма → цьмяны ⋯
   // leadToggle — левы дыскложур-трохкутнік ▶/▼ (як у Папкі/Формы, _toggleSpan): каноннае месца «Разгарнуць/Згарнуць»
   return `<div style="display:flex;align-items:center;gap:6px;padding-bottom:5px;border-bottom:1px solid var(--border);margin-bottom:6px">
-      ${leadToggle}<span style="font-size:0.7rem;font-weight:700;color:var(--label);text-transform:uppercase;letter-spacing:0.06em">${escHtml(t(titleKey || ''))}</span>${countHtml}
+      ${leadToggle}<span style="font-size:0.7rem;font-weight:700;color:var(--label);text-transform:uppercase;letter-spacing:0.06em;display:inline-flex;align-items:center;gap:5px">${_ico(escHtml(t(titleKey || '')))}</span>${countHtml}
       <span style="flex:1"></span>${extraBtns}${menuHtml}
     </div>`;
 }
@@ -7769,7 +7974,14 @@ function nodeInitRichtext(s) {
     (async () => {
       let html = _rtDrafts[draftKey];
       if (html == null && f.load) { try { html = await f.load(form); } catch { html = ''; } }
-      if (html) q.clipboard.dangerouslyPasteHTML(0, html);
+      // 📝 праз кампанент: ён кладзе тэкст, не чапаючы фокусу і пракруткі (гл. `setHtml`).
+      // ⚠️ ФОЛБЭК АБАВЯЗКОВЫ: панэль і кампанент — розныя файлы, і браўзер можа мець стары
+      // `richtext.js` з кэша (ці выкат разышоўся ў часе). Без фолбэку выклік новай функцыі кідаў бы
+      // выключэнне і рэдактар заставаўся б ПУСТЫ — злоўлена пробай адразу пасля праўкі.
+      if (html) {
+        if (typeof TTZOP_RICHTEXT.setHtml === 'function') TTZOP_RICHTEXT.setHtml(q, html);
+        else { try { q.clipboard.dangerouslyPasteHTML(0, html); q.setSelection(null); } catch {} }
+      }
       q.on('text-change', (d, o, source) => { if (source !== 'user') return; _rtDrafts[draftKey] = q.root.innerHTML; setDirty(true); });
     })();
     saveBtn?.addEventListener('click', async () => {
@@ -9168,6 +9380,15 @@ function nodeExpandAll(id, bool) {
       walk(targetId, expand);
       if (s._onFolderExpand && expand) toLoad.forEach(f => s._onFolderExpand(f)); // lazy-load
     }
+    // 🎯 ФОКУС — НА ТОЙ ВУЗЕЛ, З ЯКІМ ПРАЦУЕМ. ⚠️ Заўвага карыстальніка 03.08: «раскрываю іншую
+    // версію Палітыкі — рамка застаецца на старой, а старонка скача на яе». Фокус тут ставіўся
+    // ТОЛЬКІ ў галіне «Папка + разгарнуць»; для Формы (і для згортвання Папкі) не ставіўся зусім.
+    // 🔑 Гэта тлумачыць АБОДВА сімптомы адным радком: рамка не пераязджала, а якар пракруткі
+    // (`nodeRender` → `_nodeKeepScroll(s.focusedId)`) трымаў на месцы СТАРЫ вузел — таму від
+    // «вяртаўся» да яго, а свежараскрытая форма аказвалася за экранам.
+    // ⚠️ Я двойчы пайшоў не туды (вышыня рэдактара, потым акардэон) — і абодва разы гэта было
+    // лечыва сімптому. Карыстальнік спыніў: «справа не ў вышыні».
+    s.focusedId = targetId;
   }
   nodeRender();
 }
@@ -10200,9 +10421,16 @@ function renderNodeEditor(s) {
   // незахаваны тэкст не губляецца — ён жыве ў `_rtDrafts` і падхопіцца новым рэдактарам.
   TTZOP_RICHTEXT.fullClose();
   currentNodeState = s; // renderNodeTree чытае currentNodeState — мусіць адпавядаць рэндэраванаму стану (інакш у адзін editor трапляе чужое дрэва)
+  // 🧩 ХУК ЗАГАЛОЎКА `_headerExtraHtml(s)` — куток дае РАЗМЕТКУ, а не ўласны рэндэр (03.08).
+  // ⚠️ Менавіта праз зашыты загаловак ад агульнага шляху і адкалоліся тры РМ: Дакументы, Заказы і
+  // Запісы малявалі дрэва самі, бо ім патрэбны быў свой радок (лічыльнік заказаў, іншы стыль
+  // «Захавана»). Копія выходзіла слабейшая за арыгінал — без `fullClose` вялікага акна рэдактара,
+  // без `_nodeInitMaps` і без `nodeInitRichtext`, а перамалёўка агульным шляхам не абнаўляла змест.
+  // Цяпер адрозненне жыве ў КАНФІГУ стэйта, а малюе ўсіх адзін механізм.
   editor.innerHTML =
     nodeRootHtml(s,
-      `<div id="${s._saveStatusId || (s._section + '-save-status')}" style="font-size:0.82rem;color:var(--muted)"></div>`,
+      (typeof s._headerExtraHtml === 'function' ? s._headerExtraHtml(s) : '')
+        || `<div id="${s._saveStatusId || (s._section + '-save-status')}" style="font-size:0.82rem;color:var(--muted)"></div>`,
       renderNodeTree(null, 0));
   _nodeInitMaps(s); // пер-формавыя мапы (Структура кампаніі) — мантуюцца пасля innerHTML
   nodeInitRichtext(s); // richtext-палі (Quill) любога РМ — мантуюцца пасля innerHTML (раней клікаў толькі privacy асобна)
@@ -10254,19 +10482,7 @@ async function loadOrdersEditor() {
   _openPendingOrder();
 }
 
-function renderOrdersEditor() {
-  const editor = document.getElementById('orders-editor');
-  if (!editor || !ordersState.data) return;
-  currentNodeState = ordersState; // шаблон: currentNodeState мусіць паказваць на стэйт перад renderNodeTree
-  const s = ordersState; // switcher выглядаў цяпер на радку Формы-0; цела (≡ табліца) — праз _formKids+_viewBodyHtml
-  const orderCount = s.data.nodes.filter(n => n.fields?.drawerType === 'order_client').length;
-  editor.innerHTML = `
-    ${nodeRootHtml(s,
-      `<span id="orders-save-status" style="font-size:0.82rem;color:var(--success);opacity:0;transition:opacity 0.3s"></span>
-       ${orderCount > 0 ? `<span style="font-size:0.8rem;color:var(--muted);margin-left:auto">${orderCount} ${t('section_orders')||'заказаў'}</span>` : ''}`,
-      renderNodeTree(null, 0))}
-  `;
-}
+function renderOrdersEditor() { renderNodeEditor(ordersState); } // ← агульны механізм; свой загаловак — праз `_headerExtraHtml` у стэйце
 let _pendingClientOpen = null;
 let _pendingOrderOpen = null;
 let _pendingCompanyOpen = null;
@@ -10392,7 +10608,27 @@ function _topbarClockTick() {
   let time, iso;
   try { time = new Intl.DateTimeFormat('en-GB', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false, ...(tz ? { timeZone: tz } : {}) }).format(now); } catch { time = now.toLocaleTimeString(); }
   try { iso = new Intl.DateTimeFormat('en-CA', tz ? { timeZone: tz } : {}).format(now); } catch { iso = now.toISOString().slice(0, 10); } // en-CA = ISO YYYY-MM-DD → fmtDate без TZ-зруху
-  el.textContent = `${fmtDate(iso)} ${time}${tz ? ' · ' + tz : ''}`; // дата ў рэгіянальным фармаце + пояс IANA
+  // 📅 ДЗЕНЬ ТЫДНЯ скарочана (заўвага карыстальніка 03.08): «сёння панядзелак ці аўторак» — пытанне,
+  // якое ўзнікае пры кожным планаванні, а лічба даты на яго не адказвае.
+  // 🔑 Бяром з БРАЎЗЕРА (`toLocaleDateString`), а не з нашага слоўніка: сем назваў × 13 моў — гэта
+  // 91 радок, які трэба падтрымліваць, тады як браўзер ведае іх сам і адразу ў правільным склоне.
+  // ⚠️ `by` — наша лацінка, у Intl такога коду няма; там дае 'be' (кірыліца), таму лацінскія
+  // скароты трымаем самі — гэта РОЎНА той выпадак, дзе браўзер дапамагчы не можа.
+  let wd = '';
+  try {
+    // ⚠️ мова інтэрфейсу ПАНЭЛІ — `adminLang` (з ui-i18n.js). `currentUiLang` — зменная САЙТА, і
+    // мой першы варыянт узяў яе: код кідаў ReferenceError, `catch` яго глытаў, і дзень тыдня проста
+    // не з'яўляўся. Злавіў тэст, які мераў ТЭКСТ у шапцы, а не наяўнасць кода.
+    const _lang = (typeof adminLang === 'string' && adminLang) || 'be';
+    wd = _lang === 'by'
+      ? ['nd', 'pn', 'aŭ', 'sr', 'čc', 'pt', 'sb'][new Date(iso + 'T12:00:00').getDay()]
+      : new Intl.DateTimeFormat(_lang, { weekday: 'short', ...(tz ? { timeZone: tz } : {}) }).format(now);
+    wd = wd.replace(/[.,]$/, '');   // частка моў дадае кропку — у радку з часам яна лішняя
+  } catch {}
+  // ⚠️ НЕРАЗДЗЯЛЯЛЬНЫЯ прабелы (\u00A0), а не звычайныя: HTML схлопвае некалькі прабелаў у адзін,
+  // і «шырэйшы водступ» звычайнымі проста не атрымаўся б (заўвага карыстальніка 03.08 — 4 знакі).
+  const _gap = '\u00A0'.repeat(4);
+  el.textContent = `${wd ? wd.toUpperCase() + _gap : ''}${fmtDate(iso)} ${time}${tz ? ' · ' + tz : ''}`; // дзень тыдня + дата ў рэгіянальным фармаце + пояс IANA
 }
 function _companyNameStr() { // кароткая назва кампаніі (адна крыніца для тапбара і застаўкі):
   // company.name (ml-праекцыя Структуры кампаніі) → i18n.companyName.
@@ -10711,7 +10947,9 @@ function _resourceCapacity(resId) { return TTZOP_BOOKING.resourceCapacity(settin
 function _assignSegments(segs, groups, T, date, branchId) { return TTZOP_BOOKING.assignSegments(_bkCtx(), segs, groups, T, date, branchId); }
 // вольныя слоты паслугі-харэаграфіі на дату: [{time, assignments:[{segId,resourceId,from,to}]}]
 function _choreographyFreeSlots(svc, date, branchId) { return TTZOP_BOOKING.choreographyFreeSlots(_bkCtx(), svc, date, branchId); }
-let appointmentsState = {
+// 🧩 загаловак РМ Запісы: свой стыль радка «Захавана» (раней быў уласны рэндэр)
+const _apptHeaderHtml = () => `<span id="appointments-save-status" style="font-size:0.82rem;color:var(--success);opacity:0;transition:opacity 0.3s;margin-left:8px"></span>`;
+let appointmentsState = { _headerExtraHtml: _apptHeaderHtml,
   data: null, saving: false, selected: new Set(), expanded: new Set(), _movePanel: false, _relocateId: null,
   _section: 'appointments', _editorId: 'appointments-editor', _rootType: 'appt-root', _spaceOnly: true,
   _formSchema: 'appointmentDetails', _rootParentId: 'appt-host', _viewMode: 'cube', _autoRefreshEnabled: false, _lastRefresh: null, // 🧊 куб = цела РМ для ЎСІХ сайтаў (G4b ungate: i18n ×13 гатовы, флоу валідаваны)
@@ -10870,15 +11108,7 @@ async function loadAppointmentsEditor() {
   await _ensureClientsLoaded(); _cubeEnsureInit(); // цела = куб-секцыі → каталог кліентаў (строгі выбар) + ініц дата/слоты (G4b ungate: усе сайты)
   renderAppointmentsEditor();
 }
-function renderAppointmentsEditor() {
-  const editor = document.getElementById('appointments-editor');
-  if (!editor || !appointmentsState.data) return;
-  currentNodeState = appointmentsState;
-  const s = appointmentsState; // платформа: цела Формы-0 = куб-секцыі + спіс запісаў (_formBodyHtml, без перамыкача); non-platform: перамыкач 🌳/📊 на радку Формы-0
-  editor.innerHTML = nodeRootHtml(s,
-    `<span id="appointments-save-status" style="font-size:0.82rem;color:var(--success);opacity:0;transition:opacity 0.3s;margin-left:8px"></span>`,
-    renderNodeTree(null, 0));
-}
+function renderAppointmentsEditor() { renderNodeEditor(appointmentsState); } // ← агульны механізм (гл. `_headerExtraHtml`)
 function appointmentsShiftDay(delta) {
   const d = new Date((appointmentsState._scheduleDate || _isoDay()) + 'T00:00:00');
   d.setDate(d.getDate() + delta); appointmentsState._scheduleDate = _isoDay(d); renderAppointmentsEditor(); // лакальны ISO — без TZ-зруху
@@ -14288,10 +14518,28 @@ function _nodeFlatSectionEdit(form, s, secId = 'main') { // рэдагаванн
   // генерычны `lockIf(form)=>msg` блока: непустое паведамленне = поле ў мадале заблакавана (напр. view тыпу, на які спасылаюцца секцыі)
   flds.forEach(b => { const msg = b.lockIf?.(form); if (msg) { const el = document.getElementById('nfm-f-' + b.key); if (el) { el.disabled = true; el.title = msg; } } });
   modal.style.display = 'flex';
-  _nfmCustomSubmit = fields => _nodeFlatSectionApply(form, flds, fields, lang);
+  _nfmCustomSubmit = fields => _nodeFlatSectionApply(form, flds, fields, lang, main);
 }
-function _nodeFlatSectionApply(form, flds, fields, lang) {
+// 🛡 ГЕНЕРЫЧНЫ ХУК СЕКЦЫІ `beforeApply(form, changes, ctx)` — ПЕРАХОП ДА ЗАПІСУ (03.08).
+// ⚠️ Навошта механізм, а не праверка ўнутры Дакументаў: «змена значэння патрабуе пацверджання і
+// можа павярнуць працэс у інша русла» — гэта не асаблівасць юрдакументаў, а патэрн (тое ж будзе
+// патрэбна цане пасля выстаўленага рахунку, рэквізітам пасля фактуры і да т.п.). Хук вяртае
+// `false` → змены НЕ пішуцца зусім; значыць «Скасаваць» вяртае поле само сабой, без адкату.
+// ⚠️ Хук бачыць ТОЛЬКІ рэальныя змены (`changes`), а не ўвесь набор палёў: інакш кожнае адкрыццё
+// мадалкі выглядала б як праўка.
+function _nodeFlatSectionApply(form, flds, fields, lang, section) {
   const now = new Date().toISOString(), f = form.fields || (form.fields = {});
+  if (section?.beforeApply) {
+    const _chg = {};
+    flds.forEach(b => {
+      if (b.lockIf?.(form)) return;
+      const raw0 = fields[b.key];
+      const v0 = typeof raw0 === 'string' ? raw0.trim() : (raw0 == null || raw0 === '' ? '' : String(raw0));
+      const c0 = b.ml ? _mlGet(f[b.key], lang) : (f[b.key] == null ? '' : String(f[b.key]));
+      if (v0 && v0 !== c0) _chg[b.key] = v0;
+    });
+    if (Object.keys(_chg).length && section.beforeApply(form, _chg, { flds, fields, lang, section }) === false) return;
+  }
   if (!Array.isArray(f._history)) f._history = [];
   let changed = false;
   const applied = new Set(); // якія палі рэальна зменены (для генерычнага хука onApplied)
@@ -17696,7 +17944,20 @@ document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('custom-prompt-modal')?.addEventListener('click', e => { if (e.target.id === 'custom-prompt-modal') _cpmCancel(); });
   document.getElementById('custom-confirm-modal')?.addEventListener('click', e => { if (e.target.id === 'custom-confirm-modal') _ccmDismiss(); });
   document.getElementById('node-form-modal')?.addEventListener('click', e => { if (e.target === document.getElementById('node-form-modal')) nodeCloseFormModal(); });
+  _icoNavApply();   // 🎨 эмодзі меню → SVG (адзін праход; пункты меню статычныя ў разметцы)
 });
+// 🎨 ІКОНКІ ЛЕВАГА МЕНЮ. ⚠️ Яны стаяць у разметцы як эмодзі (`<span class="icon">📊</span>`), і
+// правіць іх па месцах значыла б чапаць 20+ радкоў HTML і памятаць пра гэта пры кожным новым
+// пункце. Адзін праход па DOM робіць тое ж і накрывае будучыя пункты сам.
+// 🛡 Невядомае эмодзі застаецца як было — пункт меню без іконкі горш за манахромную.
+function _icoNavApply() {
+  document.querySelectorAll('.nav-item .icon').forEach(el => {
+    const txt = (el.textContent || '').trim();
+    if (!txt) return;
+    const html = _ico(escHtml(txt));
+    if (html.includes('<svg')) el.innerHTML = html;
+  });
+}
 
 // Apply UI lang on initial page load (translates login screen)
 applyUILang();

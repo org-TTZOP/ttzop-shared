@@ -32,6 +32,13 @@
     #cab-tabs { display: flex; gap: 6px; margin-bottom: 12px; flex-shrink: 0; margin-top: 8px; }
     .cab-tab { flex: 1; padding: 9px 8px; background: var(--surface2); border: 1px solid var(--border); border-radius: var(--radius); color: var(--muted); font-family: 'Manrope', sans-serif; font-size: 0.85rem; font-weight: 600; cursor: pointer; transition: all 0.15s; }
     .cab-tab.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+    /* 🔔 ПАЗНАКА «ЁСЦЬ НЕПРАЧЫТАНАЕ» на ўкладцы. ⚠️ Рашэнне карыстальніка 03.08: пры змене
+       дакументаў пошту НЕ шлём — дастаткова кабінета, але чалавек мусіць убачыць, што яго нешта
+       чакае, нават калі ён адкрыў чат. Кропка, а не лічба: «колькі» тут нічога не дадае. */
+    .cab-tab.has-new { position: relative; }
+    .cab-tab.has-new::after { content: ''; position: absolute; top: 5px; right: 7px; width: 8px; height: 8px;
+      border-radius: 50%; background: #f59e0b; box-shadow: 0 0 0 2px var(--surface2); }
+    .cab-tab.active.has-new::after { box-shadow: 0 0 0 2px var(--accent); }
     /* картка профілю кабінета */
     .prof-name { font-family: 'Unbounded', sans-serif; font-size: 1.15rem; font-weight: 700; color: var(--text); margin-bottom: 4px; }
     .prof-row { font-size: 0.9rem; color: var(--muted); margin-top: 6px; display: flex; align-items: center; gap: 8px; }
@@ -1103,10 +1110,14 @@ function renderOrders(data) {
   const el = document.getElementById('portal-orders');
   const { orders } = data;
   // GDPR: банер прыняцця актуальнай версіі палітыкі (электронная згода даганяе вусную/старую)
-  const banner = (data.privacyAccepted === false && data.privacyVersion) ? `
+  // 🔔 пазнака на ўкладцы «Кабінет»: банер жыве ў гэтым відзе, а чалавек можа сядзець у чаце
+  // і не ведаць, што ад яго нешта чакаюць (рашэнне 03.08: замест паштовай рассылкі)
+  const _need = (data.privacyAccepted === false && !!data.privacyVersion);
+  document.getElementById('tab-cabinet')?.classList.toggle('has-new', _need);
+  const banner = _need ? `
     <div id="privacy-banner" style="border:1px solid rgba(245,158,11,0.4);background:rgba(245,158,11,0.08);border-radius:10px;padding:16px;margin-bottom:16px;font-size:0.85rem;line-height:1.5">
       <div style="margin-bottom:10px">${PT.privacy_text}</div>
-      <a href="content/privacy/privacy_versions/v${data.privacyVersion}.html" target="_blank" style="color:var(--accent)">${PT.privacy_link} ↗</a>
+      <a href="#privacy" onclick="portalOpenPrivacy();return false" style="color:var(--accent)">${PT.privacy_link} ↗</a>
       <button class="btn-primary" style="margin-top:12px;padding:10px" onclick="portalAcceptPrivacy()">${PT.privacy_accept}</button>
       <div class="error-msg" id="privacy-msg" style="min-height:0;margin-top:6px"></div>
     </div>` : '';
@@ -1132,6 +1143,26 @@ function renderOrders(data) {
   }).join('');
 }
 
+// 📄 ТЭКСТ ПАЛІТЫКІ Ў КАБІНЕЦЕ — праз той самы чытач, што паказвае дакументы на сайце.
+// ⚠️ ЗНОЙДЗЕНА 03.08: банер прасіў прыняць палітыку, а спасылка вяла на
+// `content/privacy/privacy_versions/vX.html` — гэты адрас аддае 403 з таго дня, як F4 зачыніў увесь
+// `/content/` (статыка Pages ішла ў абыход фільтра сакрэтаў). То бок чалавека прасілі пагадзіцца з
+// тэкстам, які ён фізічна не мог прачытаць — а згода без доступу да тэксту юрыдычна не згода.
+// 🔑 Тэкст бяром з ПУБЛІЧНАЙ праекцыі `{сайт}/privacy` (там ляжыць html бягучай версіі — тое ж, што
+// чытае сайт), а не з файла: адна крыніца на кабінет і на сайт.
+async function portalOpenPrivacy() {
+  try {
+    const r = await fetch(`${API}/content/${REPO}/privacy`);
+    const d = r.ok ? await r.json() : null;
+    if (d && d.html && typeof openReaderModal === 'function') {
+      openReaderModal({ title: PT.privacy_link, meta: d.current ? 'v' + d.current : '', bodyHtml: d.html,
+        style: 'site', lang: document.documentElement.lang || 'be', fontControls: true });
+      return;
+    }
+  } catch {}
+  // 🛡 фолбэк: не змаглі паказаць у чытачы — вядзем на старонку палітыкі сайта, а не ў 403
+  window.open('/privacy.html', '_blank');
+}
 async function portalAcceptPrivacy() {
   try {
     const res = await fetch(API, {
@@ -1142,6 +1173,9 @@ async function portalAcceptPrivacy() {
     if (d.ok) {
       const b = document.getElementById('privacy-banner');
       if (b) b.innerHTML = `<div style="color:var(--success);font-size:0.87rem">${PT.privacy_thanks}</div>`;
+      // 🔔 чакаць больш няма чаго — пазнака знікае адразу, а не да наступнай загрузкі кабінета
+      document.getElementById('tab-cabinet')?.classList.remove('has-new');
+      if (lastCabData) lastCabData.privacyAccepted = true;   // перамалёўка не верне банер назад
     } else {
       setMsg('privacy-msg', PT.err_conn);
     }

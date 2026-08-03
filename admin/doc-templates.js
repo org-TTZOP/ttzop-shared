@@ -38,7 +38,7 @@ window.TTZOP_DOC_TEMPLATES = {
   privacy: {
 
     be: `
-<p style="background:#fff8e1;border-left:4px solid #f5a623;padding:10px 12px"><strong>⚠️ ГЭТА ЗАГАТОЎКА — ПРАЧЫТАЙЦЕ І ПРАВЕРЦЕ.</strong> Тэкст пабудаваны па артыкулах 13-14 GDPR і апісвае тое, што сістэма робіць з данымі насамрэч. Але ён не ведае вашай краіны, вашай справы і вашых дамоў з іншымі кампаніямі. Выкрасліце тое, чаго ў вас няма, дапішыце тое, што ёсць, і зацвердзіце ў юрыста. Пасля праверкі выдаліце гэты блок.</p>
+<p style="background:#fff8e1;border-left:4px solid #f5a623;padding:10px 12px;color:#3f2d00;font-weight:700"><strong>⚠️ ГЭТА ЗАГАТОЎКА — ПРАЧЫТАЙЦЕ І ПРАВЕРЦЕ.</strong> Тэкст пабудаваны па артыкулах 13-14 GDPR і апісвае тое, што сістэма робіць з данымі насамрэч. Але ён не ведае вашай краіны, вашай справы і вашых дамоў з іншымі кампаніямі. Выкрасліце тое, чаго ў вас няма, дапішыце тое, што ёсць, і зацвердзіце ў юрыста. Пасля праверкі выдаліце гэты блок.</p>
 
 <h2>Палітыка прыватнасці</h2>
 <p>Гэты дакумент тлумачыць, якія персанальныя даныя збірае сайт <strong>{{site}}</strong>, навошта, на якой прававой падставе, колькі мы іх трымаем і як вы можаце імі кіраваць.</p>
@@ -71,7 +71,7 @@ window.TTZOP_DOC_TEMPLATES = {
   <tr><td>Версія дакумента, з якой вы згадзіліся, і час згоды</td><td>доказ, што згода была атрымана</td><td>арт. 6(1)(c) — падсправаздачнасць</td></tr>
 </table>
 <p><em>Законны інтарэс</em> у выпадках вышэй — гэта абарона сайта ад узлому і спаму і магчымасць адказаць на ваш зварот. Мы зважылі яго з вашымі правамі і лічым, што ён іх не парушае; вы можаце запярэчыць — гл. раздзел 9.</p>
-<p>Мы <strong>не збіраем</strong> асаблівых катэгорый даных (здароўе, веравызнанне, палітычныя погляды, паходжанне, біяметрыя). <strong style="color:#b45309">ЗАПОЎНІЦЬ, калі ваша дзейнасць іх патрабуе</strong> — тады гэты раздзел трэба перапісаць і назваць падставу з арт. 9 GDPR.</p>
+<p>Мы <strong>не збіраем</strong> асаблівых катэгорый даных (здароўе, веравызнанне, палітычныя погляды, паходжанне, біяметрыя). <strong style="background:#fef3c7;color:#7c2d12;padding:0 4px;border-radius:3px">ЗАПОЎНІЦЬ, калі ваша дзейнасць іх патрабуе</strong> — тады гэты раздзел трэба перапісаць і назваць падставу з арт. 9 GDPR.</p>
 
 <h3>4. Ці абавязкова падаваць даныя</h3>
 <p>Падаць даныя — ваш выбар. Але без імя, кантакту і адрасу мы <strong>не зможам</strong> прыняць заказ ці зрабіць запіс: гэта не наша прыхамаць, а ўмова, без якой дамову проста немагчыма выканаць. Калі вы не хочаце пакідаць даныя — звяжыцеся з намі іншым спосабам, і мы падкажам, што магчыма.</p>
@@ -89,7 +89,7 @@ window.TTZOP_DOC_TEMPLATES = {
   <li><strong>Пастаўшчык хмарнай інфраструктуры</strong> — хостынг сайта, база даных, сховішча файлаў.</li>
   <li><strong>Сэрвіс адпраўкі пошты</strong> — каб пацвярджэнне заказу і код уваходу да вас даехалі.</li>
   <li><strong>OpenStreetMap</strong> — толькі пліткі мапы і толькі на старонках з мапай.</li>
-  <li><strong style="color:#b45309">ЗАПОЎНІЦЬ:</strong> плацёжны сэрвіс, служба дастаўкі, бухгалтэр — калі яны ў вас ёсць.</li>
+  <li><strong style="background:#fef3c7;color:#7c2d12;padding:0 4px;border-radius:3px">ЗАПОЎНІЦЬ:</strong> плацёжны сэрвіс, служба дастаўкі, бухгалтэр — калі яны ў вас ёсць.</li>
 </ul>
 <p>Даныя могуць быць перададзены дзяржаўным органам, калі гэтага патрабуе закон.</p>
 
@@ -133,11 +133,11 @@ window.TTZOP_DOC_TEMPLATES = {
 <h3>13. Змены гэтай палітыкі</h3>
 <p>Кожная рэдакцыя захоўваецца асобнай версіяй з датай — відаць, што і калі мянялася. Пры істотных зменах мы папросім згоду нанова, і будзе зафіксавана, з якой менавіта версіяй вы згадзіліся.</p>
 
-<p style="color:#666"><em>{{orgsign}} · {{site}}</em></p>
+<p><em>{{orgsign}} · {{site}}</em></p>
 `,
 
     en: `
-<p style="background:#fff8e1;border-left:4px solid #f5a623;padding:10px 12px"><strong>⚠️ THIS IS A STARTING DRAFT — READ IT AND CHECK IT.</strong> The text follows GDPR Articles 13-14 and describes what the system actually does with data. But it knows nothing about your country, your business or your agreements with other companies. Delete what does not apply, add what does, and have a lawyer approve it. Remove this block once reviewed.</p>
+<p style="background:#fff8e1;border-left:4px solid #f5a623;padding:10px 12px;color:#3f2d00;font-weight:700"><strong>⚠️ THIS IS A STARTING DRAFT — READ IT AND CHECK IT.</strong> The text follows GDPR Articles 13-14 and describes what the system actually does with data. But it knows nothing about your country, your business or your agreements with other companies. Delete what does not apply, add what does, and have a lawyer approve it. Remove this block once reviewed.</p>
 
 <h2>Privacy Policy</h2>
 <p>This document explains what personal data the site <strong>{{site}}</strong> collects, why, on what legal basis, how long we keep it and how you can control it.</p>
@@ -170,7 +170,7 @@ Email: <a href="mailto:{{email}}">{{email}}</a> · Phone: {{phone}}</p>
   <tr><td>The document version you accepted and the time of acceptance</td><td>evidence that consent was obtained</td><td>Art. 6(1)(c) — accountability</td></tr>
 </table>
 <p><em>Legitimate interest</em> above means protecting the site from intrusion and spam and being able to answer your enquiry. We have balanced it against your rights and consider that it does not override them; you may object — see section 9.</p>
-<p>We do <strong>not</strong> collect special categories of data (health, religion, political opinions, origin, biometrics). <strong style="color:#b45309">TO COMPLETE if your business requires them</strong> — this section must then be rewritten and name a basis under Art. 9 GDPR.</p>
+<p>We do <strong>not</strong> collect special categories of data (health, religion, political opinions, origin, biometrics). <strong style="background:#fef3c7;color:#7c2d12;padding:0 4px;border-radius:3px">TO COMPLETE if your business requires them</strong> — this section must then be rewritten and name a basis under Art. 9 GDPR.</p>
 
 <h3>4. Do you have to provide data</h3>
 <p>Providing data is your choice. But without a name, contact details and address we simply <strong>cannot</strong> accept an order or make a booking — this is not our preference but a condition without which the contract cannot be performed. If you would rather not leave data, contact us another way and we will tell you what is possible.</p>
@@ -188,7 +188,7 @@ Email: <a href="mailto:{{email}}">{{email}}</a> · Phone: {{phone}}</p>
   <li><strong>Cloud infrastructure provider</strong> — site hosting, database, file storage.</li>
   <li><strong>Email delivery service</strong> — so that order confirmations and sign-in codes reach you.</li>
   <li><strong>OpenStreetMap</strong> — map tiles only, and only on pages that show a map.</li>
-  <li><strong style="color:#b45309">TO COMPLETE:</strong> payment provider, courier, accountant — if you use them.</li>
+  <li><strong style="background:#fef3c7;color:#7c2d12;padding:0 4px;border-radius:3px">TO COMPLETE:</strong> payment provider, courier, accountant — if you use them.</li>
 </ul>
 <p>Data may be disclosed to public authorities where the law requires it.</p>
 
@@ -232,7 +232,7 @@ Email: <a href="mailto:{{email}}">{{email}}</a> · Phone: {{phone}}</p>
 <h3>13. Changes to this policy</h3>
 <p>Every revision is stored as a separate dated version, so it is clear what changed and when. For significant changes we will ask for consent again, and it will be recorded which version you agreed to.</p>
 
-<p style="color:#666"><em>{{orgsign}} · {{site}}</em></p>
+<p><em>{{orgsign}} · {{site}}</em></p>
 `,
 
   },
@@ -244,7 +244,7 @@ Email: <a href="mailto:{{email}}">{{email}}</a> · Phone: {{phone}}</p>
   terms: {
 
     be: `
-<p style="background:#fff8e1;border-left:4px solid #f5a623;padding:10px 12px"><strong>⚠️ ГЭТА ЗАГАТОЎКА — ПРАЧЫТАЙЦЕ І ПРАВЕРЦЕ.</strong> Умовы — гэта дамова, а не тэкст на сайце. Абзацы, пазначаныя <strong style="color:#b45309">ЗАПОЎНІЦЬ</strong>, залежаць ад вашай краіны і вашай справы: без іх дакумент не працуе. Зацвердзіце ў юрыста і выдаліце гэты блок.</p>
+<p style="background:#fff8e1;border-left:4px solid #f5a623;padding:10px 12px;color:#3f2d00;font-weight:700"><strong>⚠️ ГЭТА ЗАГАТОЎКА — ПРАЧЫТАЙЦЕ І ПРАВЕРЦЕ.</strong> Умовы — гэта дамова, а не тэкст на сайце. Абзацы, пазначаныя <strong style="background:#fef3c7;color:#7c2d12;padding:0 4px;border-radius:3px">ЗАПОЎНІЦЬ</strong>, залежаць ад вашай краіны і вашай справы: без іх дакумент не працуе. Зацвердзіце ў юрыста і выдаліце гэты блок.</p>
 
 <h2>Умовы карыстання і продажу</h2>
 <p>Гэтыя ўмовы дзейнічаюць паміж {{company}} (далей — {{orgshort}}, «мы») і кожным, хто робіць заказ ці карыстаецца сайтам <strong>{{site}}</strong> (далей — «вы»). Афармляючы заказ, вы прымаеце гэтыя ўмовы і заключаеце з намі дамову.</p>
@@ -257,7 +257,7 @@ Email: <a href="mailto:{{email}}">{{email}}</a> · Phone: {{phone}}</p>
 
 <h3>2. Што прадаецца</h3>
 <p>Праз сайт можна замовіць тавар, замовіць паслугу, запісацца на пэўны час, аформіць падпіску або даслаць запыт на індывідуальную прапанову — у залежнасці ад таго, што выстаўлена ў каталозе.</p>
-<p>Фота і апісанні паказваюць тавар максімальна дакладна, але магчымыя нязначныя адрозненні ў адценні, вазе ці афармленні. <strong style="color:#b45309">ЗАПОЎНІЦЬ:</strong> калі ў вас ручная праца ці прадукт пад заказ — апішыце дапушчальныя адхіленні.</p>
+<p>Фота і апісанні паказваюць тавар максімальна дакладна, але магчымыя нязначныя адрозненні ў адценні, вазе ці афармленні. <strong style="background:#fef3c7;color:#7c2d12;padding:0 4px;border-radius:3px">ЗАПОЎНІЦЬ:</strong> калі ў вас ручная праца ці прадукт пад заказ — апішыце дапушчальныя адхіленні.</p>
 
 <h3>3. Як заключаецца дамова</h3>
 <ol>
@@ -269,25 +269,25 @@ Email: <a href="mailto:{{email}}">{{email}}</a> · Phone: {{phone}}</p>
 
 <h3>4. Цэны</h3>
 <p>Дзейнічае цана, паказаная на сайце ў момант афармлення заказу. Частка пазіцый можа быць пазначана як «ад» ці «па запыце» — для іх канчатковая цана называецца пасля ўдакладнення дэталяў і <strong>да пачатку працы</strong>.</p>
-<p><strong style="color:#b45309">ЗАПОЎНІЦЬ:</strong> ці ўключаны падатак у паказаную цану — гэта пытанне задаюць часцей за ўсё.</p>
+<p><strong style="background:#fef3c7;color:#7c2d12;padding:0 4px;border-radius:3px">ЗАПОЎНІЦЬ:</strong> ці ўключаны падатак у паказаную цану — гэта пытанне задаюць часцей за ўсё.</p>
 
 <h3>5. Аплата</h3>
 <p>Спосабы аплаты і тэрміны — у дакуменце «Дастаўка і аплата». Пасля пацвярджэння заказу вы атрымліваеце рэквізіты, суму і <strong>тэрмін аплаты</strong>.</p>
 <p>Калі аплата не прыходзіць да названага тэрміну, заказ адмяняецца аўтаматычна, і мы паведамляем пра гэта лістом загадзя. Гэта не штраф — проста мы не трымаем тавар бясконца; заказаць нанова можна ў любы момант.</p>
 
 <h3>6. Выкананне</h3>
-<p><strong style="color:#b45309">ЗАПОЎНІЦЬ:</strong> тэрміны выканання і дастаўкі. Калі тавар рыхтуецца пад заказ, назавіце тэрмін вырабу <strong>асобна</strong> ад тэрміну дастаўкі — гэта самае частае непаразуменне.</p>
+<p><strong style="background:#fef3c7;color:#7c2d12;padding:0 4px;border-radius:3px">ЗАПОЎНІЦЬ:</strong> тэрміны выканання і дастаўкі. Калі тавар рыхтуецца пад заказ, назавіце тэрмін вырабу <strong>асобна</strong> ад тэрміну дастаўкі — гэта самае частае непаразуменне.</p>
 <p>Пра любую затрымку паведамляем адразу, як даведаемся.</p>
 
 <h3>7. Запіс на пэўны час</h3>
 <p>Перанесці ці адмяніць запіс можна самастойна ў кабінеце — да таго моманту, які пазначаны для гэтай паслугі. Пазней звяжыцеся з намі: <a href="mailto:{{email}}">{{email}}</a>, {{phone}}.</p>
-<p><strong style="color:#b45309">ЗАПОЎНІЦЬ:</strong> што пры непрыходзе без папярэджання — ці бярэцца плата, ці губляецца перадаплата.</p>
+<p><strong style="background:#fef3c7;color:#7c2d12;padding:0 4px;border-radius:3px">ЗАПОЎНІЦЬ:</strong> што пры непрыходзе без папярэджання — ці бярэцца плата, ці губляецца перадаплата.</p>
 
 <h3>8. Падпіскі</h3>
 <p>Падпіска дзейнічае абраны перыяд (месяц ці год) і працягваецца, пакуль вы яе не спыніце. Спыніць можна ў любы момант — доступ і паслуга захоўваюцца <strong>да канца ўжо аплачанага перыяду</strong>, грошы за яго не вяртаюцца, калі не дамовіліся іначай.</p>
 
 <h3>9. Адмова і вяртанне</h3>
-<p><strong style="color:#b45309">ЗАПОЎНІЦЬ — без гэтага раздзела дакумент не працуе.</strong> Пазначце: тэрмін адмовы, у якім стане прымаецца тавар, хто плаціць за зваротную дасылку, за колькі дзён вяртаюцца грошы. У ЕС для продажу на адлегласці звычайна дзейнічаюць 14 дзён, але ёсць выключэнні — тавар пад канкрэтнага пакупніка, хуткапсавальнае, распячатаная гігіена, цалкам аказаная паслуга.</p>
+<p><strong style="background:#fef3c7;color:#7c2d12;padding:0 4px;border-radius:3px">ЗАПОЎНІЦЬ — без гэтага раздзела дакумент не працуе.</strong> Пазначце: тэрмін адмовы, у якім стане прымаецца тавар, хто плаціць за зваротную дасылку, за колькі дзён вяртаюцца грошы. У ЕС для продажу на адлегласці звычайна дзейнічаюць 14 дзён, але ёсць выключэнні — тавар пад канкрэтнага пакупніка, хуткапсавальнае, распячатаная гігіена, цалкам аказаная паслуга.</p>
 <p>Пры бракаваным ці не тым тавары дзейнічаюць іншыя правілы і іншыя тэрміны — гэта не «перадумаў», а наша неналежнае выкананне.</p>
 
 <h3>10. Кабінет і бяспека доступу</h3>
@@ -307,13 +307,13 @@ Email: <a href="mailto:{{email}}">{{email}}</a> · Phone: {{phone}}</p>
 <p>Кожная рэдакцыя захоўваецца асобнай версіяй з датай. Да ўжо зробленага заказу прымяняецца тая рэдакцыя, што дзейнічала ў момант заказу.</p>
 
 <h3>15. Права і спрэчкі</h3>
-<p><strong style="color:#b45309">ЗАПОЎНІЦЬ:</strong> права якой краіны дзейнічае і дзе разглядаюцца спрэчкі. Спярша мы заўсёды спрабуем вырашыць пытанне лістом — напішыце на <a href="mailto:{{email}}">{{email}}</a>. Правы спажыўца, гарантаваныя законам краіны яго пражывання, гэтым не абмяжоўваюцца.</p>
+<p><strong style="background:#fef3c7;color:#7c2d12;padding:0 4px;border-radius:3px">ЗАПОЎНІЦЬ:</strong> права якой краіны дзейнічае і дзе разглядаюцца спрэчкі. Спярша мы заўсёды спрабуем вырашыць пытанне лістом — напішыце на <a href="mailto:{{email}}">{{email}}</a>. Правы спажыўца, гарантаваныя законам краіны яго пражывання, гэтым не абмяжоўваюцца.</p>
 
-<p style="color:#666"><em>{{orgsign}} · {{site}}</em></p>
+<p><em>{{orgsign}} · {{site}}</em></p>
 `,
 
     en: `
-<p style="background:#fff8e1;border-left:4px solid #f5a623;padding:10px 12px"><strong>⚠️ THIS IS A STARTING DRAFT — READ IT AND CHECK IT.</strong> Terms are a contract, not just text on a page. The paragraphs marked <strong style="color:#b45309">TO COMPLETE</strong> depend on your country and your business: without them the document does not work. Have a lawyer approve it and remove this block.</p>
+<p style="background:#fff8e1;border-left:4px solid #f5a623;padding:10px 12px;color:#3f2d00;font-weight:700"><strong>⚠️ THIS IS A STARTING DRAFT — READ IT AND CHECK IT.</strong> Terms are a contract, not just text on a page. The paragraphs marked <strong style="background:#fef3c7;color:#7c2d12;padding:0 4px;border-radius:3px">TO COMPLETE</strong> depend on your country and your business: without them the document does not work. Have a lawyer approve it and remove this block.</p>
 
 <h2>Terms of Use and Sale</h2>
 <p>These terms apply between {{company}} (referred to below as {{orgshort}}, "we") and anyone who places an order or uses the site <strong>{{site}}</strong> ("you"). By placing an order you accept these terms and enter into a contract with us.</p>
@@ -326,7 +326,7 @@ Contact: <a href="mailto:{{email}}">{{email}}</a> · {{phone}}</p>
 
 <h3>2. What is sold</h3>
 <p>Through this site you can order goods, order a service, book a specific time, take out a subscription, or request an individual quote — depending on what is listed in the catalogue.</p>
-<p>Photos and descriptions show the product as accurately as possible, but slight differences in shade, weight or finish are possible. <strong style="color:#b45309">TO COMPLETE:</strong> if you make things by hand or to order, describe the acceptable variation.</p>
+<p>Photos and descriptions show the product as accurately as possible, but slight differences in shade, weight or finish are possible. <strong style="background:#fef3c7;color:#7c2d12;padding:0 4px;border-radius:3px">TO COMPLETE:</strong> if you make things by hand or to order, describe the acceptable variation.</p>
 
 <h3>3. How the contract is formed</h3>
 <ol>
@@ -338,25 +338,25 @@ Contact: <a href="mailto:{{email}}">{{email}}</a> · {{phone}}</p>
 
 <h3>4. Prices</h3>
 <p>The price shown on the site when you place the order applies. Some items may be marked "from" or "on request" — for those the final price is given once details are agreed and <strong>before work begins</strong>.</p>
-<p><strong style="color:#b45309">TO COMPLETE:</strong> whether tax is included in the displayed price — this is the most frequent question.</p>
+<p><strong style="background:#fef3c7;color:#7c2d12;padding:0 4px;border-radius:3px">TO COMPLETE:</strong> whether tax is included in the displayed price — this is the most frequent question.</p>
 
 <h3>5. Payment</h3>
 <p>Payment methods and deadlines are set out in the "Delivery and payment" document. Once your order is confirmed you receive the bank details, the amount and a <strong>payment deadline</strong>.</p>
 <p>If payment does not arrive by that date the order is cancelled automatically, and we notify you by email in advance. This is not a penalty — we simply cannot hold stock indefinitely; you are welcome to order again at any time.</p>
 
 <h3>6. Performance</h3>
-<p><strong style="color:#b45309">TO COMPLETE:</strong> your lead times for fulfilment and delivery. If goods are made to order, state the making time <strong>separately</strong> from the delivery time — this is the most common misunderstanding.</p>
+<p><strong style="background:#fef3c7;color:#7c2d12;padding:0 4px;border-radius:3px">TO COMPLETE:</strong> your lead times for fulfilment and delivery. If goods are made to order, state the making time <strong>separately</strong> from the delivery time — this is the most common misunderstanding.</p>
 <p>We tell you about any delay as soon as we know.</p>
 
 <h3>7. Booked appointments</h3>
 <p>You can reschedule or cancel a booking yourself in your account, up to the cut-off set for that service. After that, contact us: <a href="mailto:{{email}}">{{email}}</a>, {{phone}}.</p>
-<p><strong style="color:#b45309">TO COMPLETE:</strong> what happens if someone does not turn up without notice — whether a fee applies or a deposit is lost.</p>
+<p><strong style="background:#fef3c7;color:#7c2d12;padding:0 4px;border-radius:3px">TO COMPLETE:</strong> what happens if someone does not turn up without notice — whether a fee applies or a deposit is lost.</p>
 
 <h3>8. Subscriptions</h3>
 <p>A subscription runs for the chosen period (month or year) and continues until you stop it. You may stop it at any time — access and service continue <strong>to the end of the period already paid for</strong>, and that amount is not refunded unless agreed otherwise.</p>
 
 <h3>9. Cancellation and returns</h3>
-<p><strong style="color:#b45309">TO COMPLETE — the document does not work without this section.</strong> State: the withdrawal period, the condition in which goods are accepted back, who pays return postage, and within how many days money is refunded. In the EU, 14 days normally applies to distance selling, with exceptions — goods made to the buyer's specification, perishables, opened hygiene products, a service already fully performed.</p>
+<p><strong style="background:#fef3c7;color:#7c2d12;padding:0 4px;border-radius:3px">TO COMPLETE — the document does not work without this section.</strong> State: the withdrawal period, the condition in which goods are accepted back, who pays return postage, and within how many days money is refunded. In the EU, 14 days normally applies to distance selling, with exceptions — goods made to the buyer's specification, perishables, opened hygiene products, a service already fully performed.</p>
 <p>Faulty or wrong goods are governed by different rules and different time limits — that is not "changing your mind" but our failure to perform properly.</p>
 
 <h3>10. Your account and access security</h3>
@@ -376,9 +376,9 @@ Contact: <a href="mailto:{{email}}">{{email}}</a> · {{phone}}</p>
 <p>Every revision is stored as a separate dated version. An order already placed is governed by the revision in force when it was placed.</p>
 
 <h3>15. Governing law and disputes</h3>
-<p><strong style="color:#b45309">TO COMPLETE:</strong> which country's law applies and where disputes are heard. We always try to settle a matter by email first — write to <a href="mailto:{{email}}">{{email}}</a>. Statutory consumer rights in your country of residence are not limited by this.</p>
+<p><strong style="background:#fef3c7;color:#7c2d12;padding:0 4px;border-radius:3px">TO COMPLETE:</strong> which country's law applies and where disputes are heard. We always try to settle a matter by email first — write to <a href="mailto:{{email}}">{{email}}</a>. Statutory consumer rights in your country of residence are not limited by this.</p>
 
-<p style="color:#666"><em>{{orgsign}} · {{site}}</em></p>
+<p><em>{{orgsign}} · {{site}}</em></p>
 `,
 
   },
@@ -392,75 +392,75 @@ Contact: <a href="mailto:{{email}}">{{email}}</a> · {{phone}}</p>
   refund: {
 
     be: `
-<p style="background:#fff8e1;border-left:4px solid #f5a623;padding:10px 12px"><strong>⚠️ ГЭТА КАРТА ПЫТАННЯЎ, а не гатовы тэкст.</strong> Правілы вяртання амаль цалкам вызначае закон вашай краіны, і выдумляць за яго тэрміны небяспечна. Ніжэй — усе пытанні, на якія дакумент мусіць адказаць, з падказкамі. Адкажыце на кожнае, зверце з юрыстам і выдаліце гэты блок.</p>
+<p style="background:#fff8e1;border-left:4px solid #f5a623;padding:10px 12px;color:#3f2d00;font-weight:700"><strong>⚠️ ГЭТА КАРТА ПЫТАННЯЎ, а не гатовы тэкст.</strong> Правілы вяртання амаль цалкам вызначае закон вашай краіны, і выдумляць за яго тэрміны небяспечна. Ніжэй — усе пытанні, на якія дакумент мусіць адказаць, з падказкамі. Адкажыце на кожнае, зверце з юрыстам і выдаліце гэты блок.</p>
 
 <h2>Вяртанне і адмова</h2>
 <p>Дакумент тлумачыць, як адмовіцца ад заказу ў <strong>{{company}}</strong> і як вярнуць грошы.</p>
 
 <h3>1. За колькі можна перадумаць</h3>
-<p><strong style="color:#b45309">ЗАПОЎНІЦЬ:</strong> колькі дзён ад атрымання ёсць у пакупніка. У ЕС для пакупак на адлегласці гэта звычайна 14 дзён; праверце, што дзейнічае ў вас, і адкуль лічыцца тэрмін — ад заказу ці ад атрымання.</p>
+<p><strong style="background:#fef3c7;color:#7c2d12;padding:0 4px;border-radius:3px">ЗАПОЎНІЦЬ:</strong> колькі дзён ад атрымання ёсць у пакупніка. У ЕС для пакупак на адлегласці гэта звычайна 14 дзён; праверце, што дзейнічае ў вас, і адкуль лічыцца тэрмін — ад заказу ці ад атрымання.</p>
 
 <h3>2. Што нельга вярнуць</h3>
-<p><strong style="color:#b45309">ЗАПОЎНІЦЬ.</strong> Тыповыя выключэнні: зробленае пад канкрэтнага пакупніка (гравіроўка, індывідуальны памер), ежа і іншае, што хутка псуецца, распячатаная гігіена і касметыка, паслуга, якую ўжо аказалі цалкам з вашай згоды. Пералічыце толькі тое, што сапраўды пра вас — лішнія выключэнні выглядаюць як спроба ўхіліцца.</p>
+<p><strong style="background:#fef3c7;color:#7c2d12;padding:0 4px;border-radius:3px">ЗАПОЎНІЦЬ.</strong> Тыповыя выключэнні: зробленае пад канкрэтнага пакупніка (гравіроўка, індывідуальны памер), ежа і іншае, што хутка псуецца, распячатаная гігіена і касметыка, паслуга, якую ўжо аказалі цалкам з вашай згоды. Пералічыце толькі тое, што сапраўды пра вас — лішнія выключэнні выглядаюць як спроба ўхіліцца.</p>
 
 <h3>3. У якім стане прымаецца назад</h3>
-<p><strong style="color:#b45309">ЗАПОЎНІЦЬ:</strong> ці патрэбная цэлая ўпакоўка, біркі, дакумент пра куплю. ⚠️ Памятайце: у многіх краінах пакупнік мае права агледзець тавар — таму «толькі ў некранутай плёнцы» можа быць незаконным патрабаваннем.</p>
+<p><strong style="background:#fef3c7;color:#7c2d12;padding:0 4px;border-radius:3px">ЗАПОЎНІЦЬ:</strong> ці патрэбная цэлая ўпакоўка, біркі, дакумент пра куплю. ⚠️ Памятайце: у многіх краінах пакупнік мае права агледзець тавар — таму «толькі ў некранутай плёнцы» можа быць незаконным патрабаваннем.</p>
 
 <h3>4. Хто плаціць за зваротную дасылку</h3>
-<p><strong style="color:#b45309">ЗАПОЎНІЦЬ.</strong> Асобна апішыце два розныя выпадкі: пакупнік проста перадумаў — і тавар прыйшоў бракаваны ці не той. У другім выпадку выдаткі амаль заўсёды вашы.</p>
+<p><strong style="background:#fef3c7;color:#7c2d12;padding:0 4px;border-radius:3px">ЗАПОЎНІЦЬ.</strong> Асобна апішыце два розныя выпадкі: пакупнік проста перадумаў — і тавар прыйшоў бракаваны ці не той. У другім выпадку выдаткі амаль заўсёды вашы.</p>
 
 <h3>5. Як вярнуць</h3>
 <p>Напішыце нам на <a href="mailto:{{email}}">{{email}}</a> ці патэлефануйце {{phone}} — мы скажам, куды даслаць і што прыкласці. Адрас: {{address}}.</p>
-<p><strong style="color:#b45309">ЗАПОЎНІЦЬ:</strong> ці патрэбная папяровая заява, ці ёсць форма.</p>
+<p><strong style="background:#fef3c7;color:#7c2d12;padding:0 4px;border-radius:3px">ЗАПОЎНІЦЬ:</strong> ці патрэбная папяровая заява, ці ёсць форма.</p>
 
 <h3>6. Калі вернуцца грошы</h3>
-<p><strong style="color:#b45309">ЗАПОЎНІЦЬ:</strong> за колькі дзён і якім шляхам (на той жа рахунак, з якога плацілі). Пазначце, ці вяртаецца кошт першапачатковай дасылкі — гэта самае частае пытанне.</p>
+<p><strong style="background:#fef3c7;color:#7c2d12;padding:0 4px;border-radius:3px">ЗАПОЎНІЦЬ:</strong> за колькі дзён і якім шляхам (на той жа рахунак, з якога плацілі). Пазначце, ці вяртаецца кошт першапачатковай дасылкі — гэта самае частае пытанне.</p>
 
 <h3>7. Бракаваны ці не той тавар</h3>
 <p>Гэта не «вяртанне па перадуманні», а іншая сітуацыя: тут вы маеце права на замену, рамонт ці грошы, і тэрміны тут іншыя. Сфатаграфуйце праблему і напішыце нам адразу.</p>
-<p><strong style="color:#b45309">ЗАПОЎНІЦЬ:</strong> тэрмін гарантыі і што вы прапануеце першым — замену ці грошы.</p>
+<p><strong style="background:#fef3c7;color:#7c2d12;padding:0 4px;border-radius:3px">ЗАПОЎНІЦЬ:</strong> тэрмін гарантыі і што вы прапануеце першым — замену ці грошы.</p>
 
 <h3>8. Адмена паслугі ці запісу</h3>
 <p>Перанесці ці адмяніць запіс можна ў кабінеце да тэрміну, пазначанага для гэтай паслугі.
-<strong style="color:#b45309">ЗАПОЎНІЦЬ:</strong> ці ўтрымліваецца нешта пры позняй адмене і ці вяртаецца перадаплата.</p>
+<strong style="background:#fef3c7;color:#7c2d12;padding:0 4px;border-radius:3px">ЗАПОЎНІЦЬ:</strong> ці ўтрымліваецца нешта пры позняй адмене і ці вяртаецца перадаплата.</p>
 
-<p style="color:#666"><em>{{orgsign}}</em></p>
+<p><em>{{orgsign}}</em></p>
 `,
 
     en: `
-<p style="background:#fff8e1;border-left:4px solid #f5a623;padding:10px 12px"><strong>⚠️ THIS IS A MAP OF QUESTIONS, not a finished text.</strong> Return rules are set almost entirely by the law of your country, and inventing deadlines on its behalf is dangerous. Below is every question the document must answer, with hints. Answer each one, have a lawyer check it, and delete this block.</p>
+<p style="background:#fff8e1;border-left:4px solid #f5a623;padding:10px 12px;color:#3f2d00;font-weight:700"><strong>⚠️ THIS IS A MAP OF QUESTIONS, not a finished text.</strong> Return rules are set almost entirely by the law of your country, and inventing deadlines on its behalf is dangerous. Below is every question the document must answer, with hints. Answer each one, have a lawyer check it, and delete this block.</p>
 
 <h2>Returns and cancellation</h2>
 <p>This document explains how to cancel an order from <strong>{{company}}</strong> and how refunds work.</p>
 
 <h3>1. How long you have to change your mind</h3>
-<p><strong style="color:#b45309">TO COMPLETE:</strong> how many days the buyer has from receipt. In the EU this is usually 14 days for distance selling; check what applies to you, and from when the period runs — the order or the delivery.</p>
+<p><strong style="background:#fef3c7;color:#7c2d12;padding:0 4px;border-radius:3px">TO COMPLETE:</strong> how many days the buyer has from receipt. In the EU this is usually 14 days for distance selling; check what applies to you, and from when the period runs — the order or the delivery.</p>
 
 <h3>2. What cannot be returned</h3>
-<p><strong style="color:#b45309">TO COMPLETE.</strong> Typical exceptions: goods made to the buyer's specification (engraving, custom size), food and other perishables, opened hygiene and cosmetic products, a service already fully performed with the buyer's consent. List only what genuinely applies to you — surplus exceptions read as an attempt to wriggle out.</p>
+<p><strong style="background:#fef3c7;color:#7c2d12;padding:0 4px;border-radius:3px">TO COMPLETE.</strong> Typical exceptions: goods made to the buyer's specification (engraving, custom size), food and other perishables, opened hygiene and cosmetic products, a service already fully performed with the buyer's consent. List only what genuinely applies to you — surplus exceptions read as an attempt to wriggle out.</p>
 
 <h3>3. What condition goods must be in</h3>
-<p><strong style="color:#b45309">TO COMPLETE:</strong> whether the packaging, tags and proof of purchase are required. ⚠️ Remember that in many countries the buyer is entitled to inspect the goods — so "only in unopened wrapping" may be an unlawful requirement.</p>
+<p><strong style="background:#fef3c7;color:#7c2d12;padding:0 4px;border-radius:3px">TO COMPLETE:</strong> whether the packaging, tags and proof of purchase are required. ⚠️ Remember that in many countries the buyer is entitled to inspect the goods — so "only in unopened wrapping" may be an unlawful requirement.</p>
 
 <h3>4. Who pays return postage</h3>
-<p><strong style="color:#b45309">TO COMPLETE.</strong> Describe two different cases separately: the buyer simply changed their mind, versus the item arrived faulty or wrong. In the second case the cost is almost always yours.</p>
+<p><strong style="background:#fef3c7;color:#7c2d12;padding:0 4px;border-radius:3px">TO COMPLETE.</strong> Describe two different cases separately: the buyer simply changed their mind, versus the item arrived faulty or wrong. In the second case the cost is almost always yours.</p>
 
 <h3>5. How to return</h3>
 <p>Write to <a href="mailto:{{email}}">{{email}}</a> or call {{phone}} — we will tell you where to send it and what to include. Address: {{address}}.</p>
-<p><strong style="color:#b45309">TO COMPLETE:</strong> whether a written statement or a form is needed.</p>
+<p><strong style="background:#fef3c7;color:#7c2d12;padding:0 4px;border-radius:3px">TO COMPLETE:</strong> whether a written statement or a form is needed.</p>
 
 <h3>6. When the money comes back</h3>
-<p><strong style="color:#b45309">TO COMPLETE:</strong> within how many days and by what route (normally back to the method used to pay). State whether the original delivery charge is refunded — this is the most frequent question.</p>
+<p><strong style="background:#fef3c7;color:#7c2d12;padding:0 4px;border-radius:3px">TO COMPLETE:</strong> within how many days and by what route (normally back to the method used to pay). State whether the original delivery charge is refunded — this is the most frequent question.</p>
 
 <h3>7. Faulty or wrong item</h3>
 <p>This is not "changing your mind" but a different situation: here you are entitled to a replacement, a repair or your money back, and different time limits apply. Photograph the problem and write to us straight away.</p>
-<p><strong style="color:#b45309">TO COMPLETE:</strong> the warranty period, and whether you offer a replacement or a refund first.</p>
+<p><strong style="background:#fef3c7;color:#7c2d12;padding:0 4px;border-radius:3px">TO COMPLETE:</strong> the warranty period, and whether you offer a replacement or a refund first.</p>
 
 <h3>8. Cancelling a service or a booking</h3>
 <p>You can reschedule or cancel a booking in your account up to the cut-off set for that service.
-<strong style="color:#b45309">TO COMPLETE:</strong> whether anything is withheld for a late cancellation and whether a deposit is refunded.</p>
+<strong style="background:#fef3c7;color:#7c2d12;padding:0 4px;border-radius:3px">TO COMPLETE:</strong> whether anything is withheld for a late cancellation and whether a deposit is refunded.</p>
 
-<p style="color:#666"><em>{{orgsign}}</em></p>
+<p><em>{{orgsign}}</em></p>
 `,
 
   },
@@ -472,77 +472,77 @@ Contact: <a href="mailto:{{email}}">{{email}}</a> · {{phone}}</p>
   delivery: {
 
     be: `
-<p style="background:#fff8e1;border-left:4px solid #f5a623;padding:10px 12px"><strong>⚠️ ГЭТА ЗАГАТОЎКА — ПРАЧЫТАЙЦЕ І ПРАВЕРЦЕ.</strong> Тут апісана тое, што сістэма ўмее рабіць. Вашы зоны, кошты і тэрміны яна не ведае — абзацы з пазнакай <strong style="color:#b45309">ЗАПОЎНІЦЬ</strong> трэба дапісаць рукамі. Пасля праверкі выдаліце гэты блок.</p>
+<p style="background:#fff8e1;border-left:4px solid #f5a623;padding:10px 12px;color:#3f2d00;font-weight:700"><strong>⚠️ ГЭТА ЗАГАТОЎКА — ПРАЧЫТАЙЦЕ І ПРАВЕРЦЕ.</strong> Тут апісана тое, што сістэма ўмее рабіць. Вашы зоны, кошты і тэрміны яна не ведае — абзацы з пазнакай <strong style="background:#fef3c7;color:#7c2d12;padding:0 4px;border-radius:3px">ЗАПОЎНІЦЬ</strong> трэба дапісаць рукамі. Пасля праверкі выдаліце гэты блок.</p>
 
 <h2>Дастаўка і аплата</h2>
 
 <h3>1. Як можна атрымаць заказ</h3>
-<p>Дастаўка па адрасе і <strong style="color:#b45309">ЗАПОЎНІЦЬ: самавываз — ці ёсць, адкуль і ў якія гадзіны</strong>.</p>
+<p>Дастаўка па адрасе і <strong style="background:#fef3c7;color:#7c2d12;padding:0 4px;border-radius:3px">ЗАПОЎНІЦЬ: самавываз — ці ёсць, адкуль і ў якія гадзіны</strong>.</p>
 <p>Кошт дастаўкі разлічваецца па <strong>зоне</strong>, у якую трапляе ваш адрас. Каб убачыць кошт, увайдзіце ў кабінет і захавайце адрас — тады ён падставіцца ў кошык сам. Калі адрас не трапляе ні ў адну зону, кошт называецца асобна пасля вашага заказу.</p>
 
 <h3>2. Зоны і кошт</h3>
-<p><strong style="color:#b45309">ЗАПОЎНІЦЬ: пералічыце зоны і кошт дастаўкі ў кожную.</strong> Зручна табліцай — назва зоны, што ў яе ўваходзіць, кошт.</p>
+<p><strong style="background:#fef3c7;color:#7c2d12;padding:0 4px;border-radius:3px">ЗАПОЎНІЦЬ: пералічыце зоны і кошт дастаўкі ў кожную.</strong> Зручна табліцай — назва зоны, што ў яе ўваходзіць, кошт.</p>
 <p>Пры суме заказу вышэй за пэўны парог дастаўка можа быць бясплатнай — калі такі парог у вас ёсць, ён паказваецца ў кошыку аўтаматычна.</p>
 
 <h3>3. Тэрміны</h3>
-<p><strong style="color:#b45309">ЗАПОЎНІЦЬ: за колькі дзён (ці гадзін) вы дастаўляеце, у якія дні тыдня, ці ёсць інтэрвалы часу і тэрміновая дастаўка.</strong> Калі тавар рыхтуецца пад заказ, напішыце тэрмін вырабу асобна ад тэрміну дастаўкі — гэта самае частае непаразуменне.</p>
+<p><strong style="background:#fef3c7;color:#7c2d12;padding:0 4px;border-radius:3px">ЗАПОЎНІЦЬ: за колькі дзён (ці гадзін) вы дастаўляеце, у якія дні тыдня, ці ёсць інтэрвалы часу і тэрміновая дастаўка.</strong> Калі тавар рыхтуецца пад заказ, напішыце тэрмін вырабу асобна ад тэрміну дастаўкі — гэта самае частае непаразуменне.</p>
 <p>Пра затрымку паведамляем адразу, як даведаемся.</p>
 
 <h3>4. Аплата</h3>
 <p>Аплата — банкаўскім пераказам па рахунку. Пасля пацвярджэння заказу вы атрымліваеце ліст з рэквізітамі, сумай і <strong>тэрмінам аплаты</strong>.</p>
 <p>⚠️ Калі аплата не прыходзіць да названага тэрміну, заказ адмяняецца аўтаматычна. Гэта не штраф — проста мы не трымаем тавар бясконца. Заказаць нанова можна ў любы момант.</p>
-<p><strong style="color:#b45309">ЗАПОЎНІЦЬ, калі ў вас ёсць іншыя спосабы:</strong> наяўнымі пры атрыманні, картай кур'еру, аплата па факце. Пазначце таксама, калі берацца перадаплата і колькі.</p>
+<p><strong style="background:#fef3c7;color:#7c2d12;padding:0 4px;border-radius:3px">ЗАПОЎНІЦЬ, калі ў вас ёсць іншыя спосабы:</strong> наяўнымі пры атрыманні, картай кур'еру, аплата па факце. Пазначце таксама, калі берацца перадаплата і колькі.</p>
 
 <h3>5. Валюта і падаткі</h3>
-<p>Цэны паказаны ў валюце сайта. <strong style="color:#b45309">ЗАПОЎНІЦЬ: ці ўключаны падатак у цану</strong> — гэта пытанне, якое пакупнікі задаюць часцей за ўсё.</p>
+<p>Цэны паказаны ў валюце сайта. <strong style="background:#fef3c7;color:#7c2d12;padding:0 4px;border-radius:3px">ЗАПОЎНІЦЬ: ці ўключаны падатак у цану</strong> — гэта пытанне, якое пакупнікі задаюць часцей за ўсё.</p>
 
 <h3>6. Пры атрыманні</h3>
 <p>Праверце заказ пры атрыманні. Калі нешта пашкоджана ці не тое — не прымайце моўчкі: сфатаграфуйце і адразу напішыце нам на <a href="mailto:{{email}}">{{email}}</a> ці патэлефануйце {{phone}}. Так пытанне вырашаецца хутчэй за ўсё.</p>
 
 <h3>7. Калі дастаўка не адбылася</h3>
-<p><strong style="color:#b45309">ЗАПОЎНІЦЬ:</strong> што адбываецца, калі па адрасе нікога няма ці тэлефон не адказвае — паўторны выезд, яго кошт, колькі захоўваецца заказ.</p>
+<p><strong style="background:#fef3c7;color:#7c2d12;padding:0 4px;border-radius:3px">ЗАПОЎНІЦЬ:</strong> што адбываецца, калі па адрасе нікога няма ці тэлефон не адказвае — паўторны выезд, яго кошт, колькі захоўваецца заказ.</p>
 
 <h3>8. Пытанні</h3>
 <p><strong>{{company}}</strong>, {{address}} · <a href="mailto:{{email}}">{{email}}</a> · {{phone}}</p>
 
-<p style="color:#666"><em>{{orgsign}}</em></p>
+<p><em>{{orgsign}}</em></p>
 `,
 
     en: `
-<p style="background:#fff8e1;border-left:4px solid #f5a623;padding:10px 12px"><strong>⚠️ THIS IS A STARTING DRAFT — READ IT AND CHECK IT.</strong> What follows describes what the system can do. It does not know your zones, prices or lead times — the paragraphs marked <strong style="color:#b45309">TO COMPLETE</strong> must be written by you. Remove this block once reviewed.</p>
+<p style="background:#fff8e1;border-left:4px solid #f5a623;padding:10px 12px;color:#3f2d00;font-weight:700"><strong>⚠️ THIS IS A STARTING DRAFT — READ IT AND CHECK IT.</strong> What follows describes what the system can do. It does not know your zones, prices or lead times — the paragraphs marked <strong style="background:#fef3c7;color:#7c2d12;padding:0 4px;border-radius:3px">TO COMPLETE</strong> must be written by you. Remove this block once reviewed.</p>
 
 <h2>Delivery and payment</h2>
 
 <h3>1. How you can receive an order</h3>
-<p>Delivery to your address, and <strong style="color:#b45309">TO COMPLETE: collection in person — whether you offer it, from where and at what hours</strong>.</p>
+<p>Delivery to your address, and <strong style="background:#fef3c7;color:#7c2d12;padding:0 4px;border-radius:3px">TO COMPLETE: collection in person — whether you offer it, from where and at what hours</strong>.</p>
 <p>The delivery charge is calculated from the <strong>zone</strong> your address falls into. To see the charge, sign in and save your address — it is then applied in the cart automatically. If an address falls outside every zone, we quote the charge separately after you order.</p>
 
 <h3>2. Zones and charges</h3>
-<p><strong style="color:#b45309">TO COMPLETE: list your zones and the charge for each.</strong> A small table works best — zone name, what it covers, charge.</p>
+<p><strong style="background:#fef3c7;color:#7c2d12;padding:0 4px;border-radius:3px">TO COMPLETE: list your zones and the charge for each.</strong> A small table works best — zone name, what it covers, charge.</p>
 <p>Above a certain order value delivery may be free — if you have such a threshold, the cart applies it automatically.</p>
 
 <h3>3. Lead times</h3>
-<p><strong style="color:#b45309">TO COMPLETE: how many days (or hours) delivery takes, on which weekdays, whether you offer time slots or express delivery.</strong> If goods are made to order, state the making time separately from the delivery time — this is the most common misunderstanding.</p>
+<p><strong style="background:#fef3c7;color:#7c2d12;padding:0 4px;border-radius:3px">TO COMPLETE: how many days (or hours) delivery takes, on which weekdays, whether you offer time slots or express delivery.</strong> If goods are made to order, state the making time separately from the delivery time — this is the most common misunderstanding.</p>
 <p>We tell you about any delay as soon as we know.</p>
 
 <h3>4. Payment</h3>
 <p>Payment is by bank transfer against an invoice. Once your order is confirmed you receive an email with the bank details, the amount and a <strong>payment deadline</strong>.</p>
 <p>⚠️ If payment does not arrive by that date, the order is cancelled automatically. This is not a penalty — we simply cannot hold stock indefinitely. You are welcome to order again at any time.</p>
-<p><strong style="color:#b45309">TO COMPLETE if you accept other methods:</strong> cash on delivery, card to the courier, payment after the work. Also state whether you take a deposit and how much.</p>
+<p><strong style="background:#fef3c7;color:#7c2d12;padding:0 4px;border-radius:3px">TO COMPLETE if you accept other methods:</strong> cash on delivery, card to the courier, payment after the work. Also state whether you take a deposit and how much.</p>
 
 <h3>5. Currency and tax</h3>
-<p>Prices are shown in the site currency. <strong style="color:#b45309">TO COMPLETE: whether tax is included in the price</strong> — this is the question buyers ask most often.</p>
+<p>Prices are shown in the site currency. <strong style="background:#fef3c7;color:#7c2d12;padding:0 4px;border-radius:3px">TO COMPLETE: whether tax is included in the price</strong> — this is the question buyers ask most often.</p>
 
 <h3>6. On receipt</h3>
 <p>Please check your order on receipt. If something is damaged or wrong, do not accept it in silence: photograph it and write to us straight away at <a href="mailto:{{email}}">{{email}}</a> or call {{phone}}. That is by far the quickest route to a fix.</p>
 
 <h3>7. If delivery fails</h3>
-<p><strong style="color:#b45309">TO COMPLETE:</strong> what happens if nobody is at the address or the phone is not answered — a repeat attempt, its cost, and how long an order is held.</p>
+<p><strong style="background:#fef3c7;color:#7c2d12;padding:0 4px;border-radius:3px">TO COMPLETE:</strong> what happens if nobody is at the address or the phone is not answered — a repeat attempt, its cost, and how long an order is held.</p>
 
 <h3>8. Questions</h3>
 <p><strong>{{company}}</strong>, {{address}} · <a href="mailto:{{email}}">{{email}}</a> · {{phone}}</p>
 
-<p style="color:#666"><em>{{orgsign}}</em></p>
+<p><em>{{orgsign}}</em></p>
 `,
 
   },

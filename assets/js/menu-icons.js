@@ -90,3 +90,86 @@ window.TTZOP_mIco = function (id, opts) {
   const sz = opts.size || 16;
   return `<svg${cls} viewBox="0 0 16 16" width="${sz}" height="${sz}" fill="none" style="display:block;pointer-events:none;margin:0 auto${col}">${p}</svg>`;
 };
+
+// ═══ 🔤 ЭМОДЗІ → ІКОНКА: замена ў НАДПІСАХ хрому (03.08) ═══
+// ⚠️ Заўвага з Tesla: «амаль усе іконкі на загалоўках Папак і Форм чорна-белыя». Гэты набор ужо
+// вырашыў тое ж для ⋯-меню і дыялогаў (гл. шапку файла), але надпісы раздзелаў, секцый і кнопак
+// ідуць з `ui-i18n.js`, дзе іконка — гэта ЭМОДЗІ ў тэксце (замер 03.08: 76 унікальных, 1861
+// ужыванне). Іх нельга замяніць па месцах: яны жывуць у 13 моўных блоках і дадаюцца новымі радкамі.
+// 🔑 Таму замена — АДНЫМ праходам па гатовым надпісе (`ttIcoText`), а каталог `EMOJI` кажа, які
+// эмодзі якой іконцы адпавядае. Новая пара = адзін радок; невядомае эмодзі застаецца як было
+// (няпоўны каталог — не паломка, а проста «яшчэ не дайшлі рукі»).
+// ⛔ НЕ ЎЖЫВАЦЬ на дадзеных кліента: калі чалавек напісаў 🎉 у назве сваёй папкі — гэта ЯГО тэкст,
+// а не наша іконка. Замена робіцца толькі там, дзе HTML будуем мы самі.
+// ⚠️ Вынік — HTML, значыць у атрыбут (`title="…"`) яго класці нельга: там эмодзі бяскрыўдны.
+window.TTZOP_ICON_EMOJI = {
+  '➕': 'addForm', '✕': 'close', '✎': 'rename', '✏': 'rename', '🗑': 'del', '🔍': 'search',
+  '⚙': 'design', '📋': 'copy', '📄': 'filePdf', '📝': 'desc', '📅': 'calendar', '⏰': 'clock',
+  '⏳': 'hourglass', '⏸': 'pause', '▶': 'play', '✅': 'ok', '✓': 'ok', '✔': 'ok', '❌': 'no',
+  '⛔': 'no', '🚫': 'no', '⚠': 'warn', '👥': 'users', '💬': 'chat', '🛒': 'cart', '🚀': 'rocket',
+  '📦': 'box', '📎': 'clip', '📊': 'chart', '🔁': 'repeat', '🔄': 'reset', '↻': 'reset',
+  '↺': 'restore', '🖨': 'print', '🌐': 'translate', '👁': 'eye', '📷': 'photo', '✂': 'cut',
+  '✉': 'mail', '🔒': 'lock', '📤': 'share', '⬇': 'download', '📁': 'move', '🖊': 'rename',
+  '💰': 'money', '🧪': 'flask', '📜': 'scroll', '🗒': 'note', '🚚': 'truck', '🧱': 'blocks',
+  '📈': 'trend', '🎨': 'palette', '🖥': 'screen', '🎲': 'dice', '👤': 'user', '🧭': 'compass',
+  'ⓘ': 'info', '🎯': 'target', '🔧': 'wrench', '👑': 'crown', '📞': 'phone',
+};
+// іконкі, якіх у наборы ⋯-меню не было (ён закрываў толькі меню і дыялогі)
+Object.assign(window.TTZOP_MENU_ICONS, {
+  close:'<path d="M4 4l8 8M12 4l-8 8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>',
+  search:'<circle cx="7" cy="7" r="4.2" stroke="currentColor" stroke-width="1.4"/><path d="M10.1 10.1 13.4 13.4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>',
+  calendar:'<rect x="2.5" y="3.6" width="11" height="9.9" rx="1.3" stroke="currentColor" stroke-width="1.4"/><path d="M2.5 6.6h11M5.6 2.4v2.4M10.4 2.4v2.4" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/>',
+  clock:'<circle cx="8" cy="8.4" r="5.2" stroke="currentColor" stroke-width="1.4"/><path d="M8 5.6v2.9l2 1.3" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>',
+  hourglass:'<path d="M4.6 2.4h6.8M4.6 13.6h6.8M5.6 2.4c0 3 4.8 3.4 4.8 5.6s-4.8 2.6-4.8 5.6" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/><path d="M10.4 2.4c0 3-4.8 3.4-4.8 5.6" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>',
+  pause:'<path d="M6 3.4v9.2M10 3.4v9.2" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>',
+  play:'<path d="M5.4 3.2 12 8l-6.6 4.8Z" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/>',
+  ok:'<path d="M3.4 8.4 6.4 11.4 12.6 4.8" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>',
+  no:'<circle cx="8" cy="8" r="5.6" stroke="currentColor" stroke-width="1.4"/><path d="M4.6 11.4 11.4 4.6" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>',
+  warn:'<path d="M8 2.6 14 13H2Z" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/><path d="M8 6.4v3.1M8 11.2v.3" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>',
+  users:'<circle cx="6.2" cy="6" r="2.4" stroke="currentColor" stroke-width="1.35"/><path d="M2.2 13c0-2.2 1.8-3.7 4-3.7s4 1.5 4 3.7" stroke="currentColor" stroke-width="1.35" stroke-linecap="round"/><path d="M11 4.3a2.3 2.3 0 0 1 0 3.9M11.6 9.7c1.5.5 2.4 1.7 2.4 3.3" stroke="currentColor" stroke-width="1.25" stroke-linecap="round"/>',
+  cart:'<path d="M1.8 2.8h1.9l2 8h7l1.5-5.9H4.2" stroke="currentColor" stroke-width="1.35" stroke-linecap="round" stroke-linejoin="round"/><circle cx="6.6" cy="13" r="1" stroke="currentColor" stroke-width="1.2"/><circle cx="11.4" cy="13" r="1" stroke="currentColor" stroke-width="1.2"/>',
+  rocket:'<path d="M6.6 9.4S6.1 5.6 9.4 2.7c2.4 0 3.9 1.5 3.9 3.9-2.9 3.3-6.7 2.8-6.7 2.8Z" stroke="currentColor" stroke-width="1.35" stroke-linejoin="round"/><path d="m6.6 9.4-2.4 2.4M4.7 6.9 2.8 8.2l1.4 1.4M9.1 11.3l1.4 1.4 1.3-1.9" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/>',
+  box:'<path d="M2.6 5.4 8 2.6l5.4 2.8v5.9L8 14.1 2.6 11.3Z" stroke="currentColor" stroke-width="1.35" stroke-linejoin="round"/><path d="M2.6 5.4 8 8.2l5.4-2.8M8 8.2v5.9" stroke="currentColor" stroke-width="1.25" stroke-linejoin="round"/>',
+  clip:'<path d="M11.2 6.3 6.9 10.6a1.55 1.55 0 0 0 2.2 2.2l4.4-4.4a3.1 3.1 0 0 0-4.4-4.4L4.4 8.7" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>',
+  chart:'<path d="M2.6 13.4h10.8" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/><path d="M4.6 13.4V9.6M8 13.4V4.6M11.4 13.4V7.4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>',
+  repeat:'<path d="M3.2 6.4A3.4 3.4 0 0 1 6.6 3h5.2" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/><path d="M9.9 1.5 12.4 3 9.9 4.5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/><path d="M12.8 9.6A3.4 3.4 0 0 1 9.4 13H4.2" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/><path d="M6.1 11.5 3.6 13l2.5 1.5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>',
+  print:'<path d="M4.6 6.2V2.7h6.8v3.5" stroke="currentColor" stroke-width="1.35" stroke-linejoin="round"/><rect x="2.6" y="6.2" width="10.8" height="4.9" rx="1.2" stroke="currentColor" stroke-width="1.35"/><path d="M4.8 9.6h6.4v3.7H4.8Z" stroke="currentColor" stroke-width="1.35" stroke-linejoin="round"/>',
+  cut:'<circle cx="4.6" cy="11.9" r="1.6" stroke="currentColor" stroke-width="1.3"/><circle cx="11.4" cy="11.9" r="1.6" stroke="currentColor" stroke-width="1.3"/><path d="M5.7 10.8 12 2.6M10.3 10.8 4 2.6" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/>',
+  money:'<circle cx="8" cy="8" r="5.6" stroke="currentColor" stroke-width="1.4"/><path d="M8 4.8v6.4M9.9 6.2A2 2 0 0 0 8 5.6h-.4a1.5 1.5 0 0 0 0 3h.8a1.5 1.5 0 0 1 0 3H8a2 2 0 0 1-1.9-.6" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/>',
+  flask:'<path d="M6.4 2.4h3.2M7 2.4v3.9L3.6 12a1.2 1.2 0 0 0 1 1.9h6.8a1.2 1.2 0 0 0 1-1.9L9 6.3V2.4" stroke="currentColor" stroke-width="1.35" stroke-linejoin="round"/><path d="M5.4 9.6h5.2" stroke="currentColor" stroke-width="1.25"/>',
+  scroll:'<path d="M4.2 2.8h6.2a1.4 1.4 0 0 1 1.4 1.4v8a1.6 1.6 0 0 1-1.6 1.6H5.4A1.6 1.6 0 0 1 3.8 12.2V4.2" stroke="currentColor" stroke-width="1.35" stroke-linejoin="round"/><path d="M5.9 5.9h4.2M5.9 8.2h4.2M5.9 10.5h2.6" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/>',
+  note:'<rect x="3.4" y="2.6" width="9.2" height="10.8" rx="1.3" stroke="currentColor" stroke-width="1.4"/><path d="M5.8 5.6h4.4M5.8 8h4.4M5.8 10.4h2.4" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/>',
+  truck:'<path d="M1.8 4.4h7v6.2h-7Z" stroke="currentColor" stroke-width="1.35" stroke-linejoin="round"/><path d="M8.8 6.8h2.6l2.4 2.2v1.6h-5Z" stroke="currentColor" stroke-width="1.35" stroke-linejoin="round"/><circle cx="4.6" cy="11.8" r="1.2" stroke="currentColor" stroke-width="1.25"/><circle cx="11.2" cy="11.8" r="1.2" stroke="currentColor" stroke-width="1.25"/>',
+  blocks:'<rect x="2.4" y="2.6" width="5" height="4.4" rx="0.8" stroke="currentColor" stroke-width="1.35"/><rect x="8.6" y="2.6" width="5" height="4.4" rx="0.8" stroke="currentColor" stroke-width="1.35"/><rect x="5.5" y="8.6" width="5" height="4.4" rx="0.8" stroke="currentColor" stroke-width="1.35"/>',
+  trend:'<path d="M2.4 11.6 6.2 7.8l2.4 2.4 4.8-5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M10.6 5.2h2.8V8" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>',
+  palette:'<path d="M8 2.4a5.6 5.6 0 1 0 0 11.2c.9 0 1.3-.6 1.3-1.2 0-.9-.7-1.2-.7-1.9 0-.6.5-1.1 1.2-1.1h1.1A3.5 3.5 0 0 0 14 5.9C13.6 3.8 11 2.4 8 2.4Z" stroke="currentColor" stroke-width="1.35" stroke-linejoin="round"/><circle cx="5.6" cy="6.2" r="0.9" fill="currentColor"/><circle cx="9" cy="5.2" r="0.9" fill="currentColor"/>',
+  screen:'<rect x="1.9" y="3" width="12.2" height="8" rx="1.3" stroke="currentColor" stroke-width="1.4"/><path d="M5.8 13.4h4.4M8 11v2.4" stroke="currentColor" stroke-width="1.35" stroke-linecap="round"/>',
+  dice:'<rect x="2.6" y="2.6" width="10.8" height="10.8" rx="2" stroke="currentColor" stroke-width="1.4"/><circle cx="5.8" cy="5.8" r="0.95" fill="currentColor"/><circle cx="10.2" cy="10.2" r="0.95" fill="currentColor"/><circle cx="8" cy="8" r="0.95" fill="currentColor"/>',
+  user:'<circle cx="8" cy="5.8" r="2.6" stroke="currentColor" stroke-width="1.4"/><path d="M2.8 13.4c0-2.6 2.3-4.2 5.2-4.2s5.2 1.6 5.2 4.2" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>',
+  compass:'<circle cx="8" cy="8" r="5.6" stroke="currentColor" stroke-width="1.4"/><path d="m10.6 5.4-1.5 3.7-3.7 1.5 1.5-3.7Z" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/>',
+  info:'<circle cx="8" cy="8" r="5.6" stroke="currentColor" stroke-width="1.4"/><path d="M8 7.2v4M8 4.7v.3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>',
+  target:'<circle cx="8" cy="8" r="5.4" stroke="currentColor" stroke-width="1.35"/><circle cx="8" cy="8" r="2.8" stroke="currentColor" stroke-width="1.3"/><circle cx="8" cy="8" r="0.9" fill="currentColor"/>',
+  wrench:'<path d="M10.4 2.6a3.4 3.4 0 0 0-2.9 5.1L3 12.2l1.6 1.6 4.5-4.4a3.4 3.4 0 0 0 4.2-4.5l-1.9 1.9-1.6-1.6Z" stroke="currentColor" stroke-width="1.35" stroke-linejoin="round"/>',
+  crown:'<path d="M2.6 12.2h10.8M3.1 11 2.3 5.2l3.2 2.3L8 3.6l2.5 3.9 3.2-2.3-.8 5.8Z" stroke="currentColor" stroke-width="1.35" stroke-linejoin="round"/>',
+  phone:'<path d="M3.1 2.6h2.4L7 6 5.5 7.2a7.8 7.8 0 0 0 3.3 3.3L10 9l3.4 1.5v2.4c0 .8-.7 1.4-1.5 1.4C6.5 13.9 2.1 9.5 1.7 4.1c0-.8.6-1.5 1.4-1.5Z" stroke="currentColor" stroke-width="1.35" stroke-linejoin="round"/>',
+  mail:'<rect x="1.9" y="3.6" width="12.2" height="8.8" rx="1.2" stroke="currentColor" stroke-width="1.4"/><path d="m2.2 4.6 5.8 3.9 5.8-3.9" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/>',
+});
+// адзін праход па надпісе: усе вядомыя эмодзі → SVG таго ж памеру, што тэкст побач
+window.ttIcoText = (function () {
+  let RE = null;
+  return function (str) {
+    if (str == null) return str;
+    const s = String(str);
+    if (!s) return s;
+    if (!RE) { // ⚠️ рэгулярка будуецца З КАТАЛОГА, а не пішацца рукамі: новы радок каталога не можа
+      // застацца «напалову жывым» (іконка ёсць, замена яе не бачыць) — гэта клас «дзве крыніцы спісу»
+      const keys = Object.keys(window.TTZOP_ICON_EMOJI).sort((a, b) => b.length - a.length);
+      RE = new RegExp('(' + keys.map(k => k.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|') + ')\uFE0F?', 'g');
+    }
+    return s.replace(RE, (m, k) => {
+      const p = window.TTZOP_MENU_ICONS[window.TTZOP_ICON_EMOJI[k]];
+      // 1em — іконка роўная тэксту побач (загаловак, кнопка, пункт меню) і не ламае вёрстку
+      return p ? `<svg viewBox="0 0 16 16" width="1em" height="1em" fill="none" style="display:inline-block;vertical-align:-0.13em;flex-shrink:0" aria-hidden="true">${p}</svg>` : m;
+    });
+  };
+})();

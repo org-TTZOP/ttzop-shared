@@ -36,7 +36,14 @@ window.TTZOP_RT_HOST = window.TTZOP_RT_HOST || {};
     basic: [[{ header: [1, 2, 3, false] }], ['bold', 'italic', 'underline'], [{ list: 'ordered' }, { list: 'bullet' }], ['link'], ['clean']],
     full: [[{ header: [1, 2, 3, false] }], ['bold', 'italic', 'underline'],
       [{ list: 'ordered' }, { list: 'bullet' }], [{ indent: '-1' }, { indent: '+1' }],
-      [{ align: '' }, { align: 'center' }, { align: 'right' }, { align: 'justify' }], ['link'], ['clean']]
+      [{ align: '' }, { align: 'center' }, { align: 'right' }, { align: 'justify' }],
+      // 🎨 КОЛЕР ТЭКСТУ І ФОН — пытанне карыстальніка 03.08: «калі фон і колер можна мяняць у HTML,
+      // чаму ў панэлі рэдактара такіх кнопак няма?». Адказ быў сумны: проста не ўключылі — модуль у
+      // Quill убудаваны, як і табліца. Уключаем ПАРУ (колер + фон), а не адзін колер: сёння мы
+      // роўна на гэтым і напароліся — тэкст, які задае толькі колер, маўкліва разлічвае на белую
+      // старонку і знікае на цёмнай (блок-папярэджанне ў Палітыцы), і наадварот.
+      [{ color: [] }, { background: [] }],
+      ['link'], ['clean']]
   };
 
   // ⇥ ТАБУЛЯЦЫЯ, ЯКАЯ ПЕРАЖЫВАЕ ЗАХАВАННЕ.
@@ -127,6 +134,21 @@ window.TTZOP_RT_HOST = window.TTZOP_RT_HOST || {};
         q.history.cutoff();
       } catch { say(t('rt_paste_hint').replace('{k}', pasteKey())); }
     };
+  }
+
+  // 🎨 КНОПКІ КОЛЕРУ — ПАДПІСАНЫЯ. ⚠️ Заўвага карыстальніка 03.08: «гэта стандартныя іконкі? Іх цяжка
+  // зразумець, што яны датычацца колераў». Так: Quill малюе дробны контур («А» з рыскай і маркер), і
+  // без падказкі яны чытаюцца як нешта тэкставае. Правім ДЗВЮМА рэчамі, а не адной:
+  //   • `title` — тлумачыць словамі (той жа слоўнік, што ўвесь кампанент);
+  //   • тоўстая каляровая рыска ў іконцы (CSS) — паказвае, што кнопка пра КОЛЕР, і адразу выдае
+  //     бягучае значэнне. Адной падказкі мала: яна з'яўляецца толькі пры навядзенні.
+  function colorHints(host) {
+    const set = (sel, key) => {
+      const el = host.querySelector(sel);
+      if (el && !el.getAttribute('title')) el.setAttribute('title', t(key));
+    };
+    set('.ql-toolbar .ql-color', 'rt_color');
+    set('.ql-toolbar .ql-background', 'rt_bg');
   }
 
   // ═══ ▾ ДАДАТКОВЫЯ ФУНКЦЫІ РЭДАКТАРА ═══
@@ -389,6 +411,11 @@ window.TTZOP_RT_HOST = window.TTZOP_RT_HOST || {};
        што глядзіш падстаўлены тэкст, а не правіш зыходны (заўвага карыстальніка 29.07) */
     .ql-toolbar .rt-clip button:hover svg, .ql-toolbar .rt-preview button:hover svg,
     .ql-toolbar .rt-preview button.ql-active svg { color: var(--accent, #f97316); }
+    /* 🎨 кнопкі колеру: рыска-паказальнік тоўстая, каб было відаць, што кнопка ПРА КОЛЕР
+       і які колер выбраны зараз (стандартная рыска Quill — валасінка і на цёмным губляецца) */
+    .ql-toolbar .ql-color .ql-color-label, .ql-toolbar .ql-background .ql-color-label { stroke-width: 4 !important; }
+    .ql-toolbar .ql-color svg, .ql-toolbar .ql-background svg { width: 20px; height: 20px; }
+    .ql-toolbar .ql-color:hover .ql-stroke, .ql-toolbar .ql-background:hover .ql-stroke { stroke: var(--accent, #f97316); }
     .rt-menu { position: absolute; top: 100%; z-index: 60; min-width: 230px; font-size: 0.84rem;
       background: var(--surface, var(--card-bg, #fff)); border: 1px solid var(--border, var(--border-color, rgba(0,0,0,.18)));
       border-radius: 8px; box-shadow: 0 8px 24px rgba(0,0,0,.4); }
@@ -434,6 +461,33 @@ window.TTZOP_RT_HOST = window.TTZOP_RT_HOST || {};
   // decorate(host, q, opts) — агульныя кнопкі радка; opts.codes = () => [{code,label,value}]
   //   уключае { } і 👁 (толькі там, дзе куток сапраўды мае палі дакумента).
   window.TTZOP_RICHTEXT = {
+    // 📝 УКЛАСЦІ ТЭКСТ, НЕ ЧАПАЮЧЫ НІ ФОКУСУ, НІ ПРАКРУТКІ (03.08).
+    // ⚠️ ЖЫВЫ КЕЙС: у панэлі раскрываеш адну версію дакумента — старонка скача да той, што была
+    // раскрыта ПЕРШАЙ. Прычына ў `dangerouslyPasteHTML`: ён ставіць курсор у канец тэксту і бярэ
+    // DOM-фокус, а браўзер сам пракручвае да фокусу. Пры перарэндэры мантуюцца ЎСЕ раскрытыя
+    // рэдактары — від цягнула да першага з іх.
+    // 🔑 Здымаць фокус ПАСЛЯ — не лекі: пракрутка адбываецца ПАДЧАС укладання. Таму:
+    //   1) кладзём праз `setContents(convert(...))` — гэты шлях наогул не чапае DOM-вылучэння;
+    //   2) `'silent'` — не будзім `text-change` (інакш чарнавік лічыўся б праўкай чалавека);
+    //   3) фолбэк на стары шлях + вяртанне пракруткі, калі версія Quill не дала `convert`.
+    // ⚠️ Сігнатура `convert` розная ў Quill 1 і 2 — спрабуем абедзве, а не прывязваемся да версіі.
+    setHtml(q, html) {
+      if (!q || html == null) return false;
+      const sc = document.scrollingElement, keep = sc ? sc.scrollTop : null;
+      const restore = () => { if (keep != null && sc && sc.scrollTop !== keep) sc.scrollTop = keep; };
+      const put = (d) => { if (!d) return false; q.setContents(d, 'silent'); return true; };
+      let done = false;
+      try { done = put(q.clipboard.convert({ html: String(html) })); } catch (e) {}
+      if (!done) { try { done = put(q.clipboard.convert(String(html))); } catch (e) {} }
+      if (!done) { try { q.clipboard.dangerouslyPasteHTML(0, String(html), 'silent'); done = true; } catch (e) {} }
+      try {
+        q.setSelection(null);
+        const ae = document.activeElement;
+        if (ae && (q.root === ae || q.root.contains(ae))) ae.blur();
+      } catch (e) {}
+      restore();
+      return done;
+    },
     TOOLBAR, TAB, EXTRA,
     ensureStyle,
     create(el, opts) {
@@ -443,11 +497,22 @@ window.TTZOP_RT_HOST = window.TTZOP_RT_HOST || {};
       // стандартны <table>, таму ў абодва бакі перажывае абмен з Word, у адрозненне ад уласных
       // класаў. Аб'яднанне ячэек убудаваны модуль не ўмее (патрэбна асобная бібліятэка), але
       // тыповы юрыдычны выпадак (тэрміны, спіс суб-працэсараў) закрываецца і так.
-      return new Quill(el, { theme: 'snow', modules: { table: true, toolbar: TOOLBAR[opts.profile] || TOOLBAR.full } });
+      const q = new Quill(el, { theme: 'snow', modules: { table: true, toolbar: TOOLBAR[opts.profile] || TOOLBAR.full } });
+      // 🔤 ПРАВЕРКА ПРАВАПІСУ БРАЎЗЕРА — ВЫКЛЮЧАНА. ⚠️ Знойдзена на Tesla (Linux-Chromium, 03.08):
+      // рэдактар падкрэсліваў чырвоным ЎВЕСЬ тэкст, у тым ліку англійскі — значыць слоўніка ў
+      // браўзера няма ніводнага, і «праверка» ператвараецца ў суцэльны чырвоны шум над юрыдычным
+      // дакументам. Гэта не пра беларускую мову: сайт вядзецца на 13 мовах, і браўзер, у якім ёсць
+      // адзін слоўнік, падкрэсліваў бы 12 астатніх моў як памылкі.
+      // 🎯 Месца адно — агульны кампанент: тая ж праўка накрывае і панэль, і Чарнавік на сайце.
+      q.root.setAttribute('spellcheck', 'false');
+      q.root.setAttribute('autocorrect', 'off');
+      q.root.setAttribute('autocapitalize', 'off');
+      return q;
     },
     decorate(host, q, opts) {
       opts = opts || {};
       ensureStyle();
+      colorHints(host);
       historyButtons(host, q);
       extraButton(host, q);
       clipButtons(host, q);
