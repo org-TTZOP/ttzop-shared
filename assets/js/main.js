@@ -177,7 +177,7 @@ const UI_T = {
     done_subdomain: 'Дзякуй! Ваш сайт <b style="color:#f97316">{domain}</b> ствараецца.<br>Вы атрымаеце ліст на <b style="color:#e8eaf0">{email}</b> калі ён будзе гатовы.',
     done_regular: 'Дзякуй! Мы звяжамся з вамі па email <b style="color:#e8eaf0">{email}</b> у бліжэйшы час.',
     done_close: 'Закрыць',
-    form_site_langs: 'Мовы сайта', form_site_langs_err: 'Выберыце хаця б адну мову',
+    form_site_langs: 'Мовы сайта', form_site_langs_hint: 'Кожная мова трапляе ў пошук асобнай старонкай — але толькі пасля таго, як яе запоўняць. Незапоўненая мова ў пошук не ідзе (і не шкодзіць астатнім): панэль пакажа, чаго не хапае.', form_site_langs_err: 'Выберыце хаця б адну мову',
     cart_added_ok: '✓ Дадана!', privacy_unavailable: 'Палітыка прыватнасці недаступная.',
     subdomain_invalid: 'Толькі малыя літары, лічбы і злучок. Ад 3 да 30 знакаў.',
     subdomain_free: '✅ {subdomain}.ttzop.com — вольны!', subdomain_check_err: 'Памылка праверкі',
@@ -225,7 +225,7 @@ const UI_T = {
     done_subdomain: 'Thank you! Your site <b style="color:#f97316">{domain}</b> is being created.<br>You will receive an email at <b style="color:#e8eaf0">{email}</b> when it\'s ready.',
     done_regular: 'Thank you! We will contact you at <b style="color:#e8eaf0">{email}</b> shortly.',
     done_close: 'Close',
-    form_site_langs: 'Site languages', form_site_langs_err: 'Select at least one language',
+    form_site_langs: 'Site languages', form_site_langs_hint: 'Each language becomes its own page in search — but only once you fill it in. An empty language stays out of search (and does not harm the others): the panel shows what is missing.', form_site_langs_err: 'Select at least one language',
     cart_added_ok: '✓ Added!', privacy_unavailable: 'Privacy policy unavailable.',
     subdomain_invalid: 'Only lowercase letters, numbers and hyphens. 3 to 30 characters.',
     subdomain_free: '✅ {subdomain}.ttzop.com — available!', subdomain_check_err: 'Check error',
@@ -273,7 +273,7 @@ const UI_T = {
     done_subdomain: 'Дякуємо! Ваш сайт <b style="color:#f97316">{domain}</b> створюється.<br>Ви отримаєте лист на <b style="color:#e8eaf0">{email}</b> коли він буде готовий.',
     done_regular: 'Дякуємо! Ми зв\'яжемося з вами по email <b style="color:#e8eaf0">{email}</b> найближчим часом.',
     done_close: 'Закрити',
-    form_site_langs: 'Мови сайту', form_site_langs_err: 'Виберіть хоча б одну мову',
+    form_site_langs: 'Мови сайту', form_site_langs_hint: 'Кожна мова стає окремою сторінкою в пошуку — але лише після того, як її заповнять. Незаповнена мова в пошук не потрапляє (і не шкодить іншим): панель покаже, чого бракує.', form_site_langs_err: 'Виберіть хоча б одну мову',
     cart_added_ok: '✓ Додано!', privacy_unavailable: 'Політика конфіденційності недоступна.',
     subdomain_invalid: 'Тільки малі літери, цифри і дефіс. Від 3 до 30 символів.',
     subdomain_free: '✅ {subdomain}.ttzop.com — вільний!', subdomain_check_err: 'Помилка перевірки',
@@ -321,7 +321,7 @@ const UI_T = {
     done_subdomain: 'Спасибо! Ваш сайт <b style="color:#f97316">{domain}</b> создаётся.<br>Вы получите письмо на <b style="color:#e8eaf0">{email}</b> когда он будет готов.',
     done_regular: 'Спасибо! Мы свяжемся с вами по email <b style="color:#e8eaf0">{email}</b> в ближайшее время.',
     done_close: 'Закрыть',
-    form_site_langs: 'Языки сайта', form_site_langs_err: 'Выберите хотя бы один язык',
+    form_site_langs: 'Языки сайта', form_site_langs_hint: 'Каждый язык становится отдельной страницей в поиске — но только после того, как его заполнят. Незаполненный язык в поиск не идёт (и не вредит остальным): панель покажет, чего не хватает.', form_site_langs_err: 'Выберите хотя бы один язык',
     cart_added_ok: '✓ Добавлено!', privacy_unavailable: 'Политика конфиденциальности недоступна.',
     subdomain_invalid: 'Только строчные буквы, цифры и дефис. От 3 до 30 символов.',
     subdomain_free: '✅ {subdomain}.ttzop.com — свободен!', subdomain_check_err: 'Ошибка проверки',
@@ -369,7 +369,7 @@ const UI_T = {
     done_subdomain: 'Dziękujemy! Twoja strona <b style="color:#f97316">{domain}</b> jest tworzona.<br>Otrzymasz email na <b style="color:#e8eaf0">{email}</b> gdy będzie gotowa.',
     done_regular: 'Dziękujemy! Skontaktujemy się z Tobą przez email <b style="color:#e8eaf0">{email}</b> wkrótce.',
     done_close: 'Zamknij',
-    form_site_langs: 'Języki witryny', form_site_langs_err: 'Wybierz co najmniej jeden język',
+    form_site_langs: 'Języki witryny', form_site_langs_hint: 'Każdy język staje się osobną stroną w wyszukiwarce — ale dopiero po wypełnieniu. Pusty język nie trafia do wyszukiwarki (i nie szkodzi pozostałym): panel pokaże, czego brakuje.', form_site_langs_err: 'Wybierz co najmniej jeden język',
     cart_added_ok: '✓ Dodano!', privacy_unavailable: 'Polityka prywatności niedostępna.',
     subdomain_invalid: 'Tylko małe litery, cyfry i myślnik. Od 3 do 30 znaków.',
     subdomain_free: '✅ {subdomain}.ttzop.com — wolny!', subdomain_check_err: 'Błąd sprawdzania',
@@ -417,7 +417,7 @@ const UI_T = {
     done_subdomain: 'Danke! Ihre Website <b style="color:#f97316">{domain}</b> wird erstellt.<br>Sie erhalten eine E-Mail an <b style="color:#e8eaf0">{email}</b>, wenn sie fertig ist.',
     done_regular: 'Danke! Wir werden Sie per E-Mail an <b style="color:#e8eaf0">{email}</b> in Kürze kontaktieren.',
     done_close: 'Schließen',
-    form_site_langs: 'Seitensprachen', form_site_langs_err: 'Wählen Sie mindestens eine Sprache',
+    form_site_langs: 'Seitensprachen', form_site_langs_hint: 'Jede Sprache wird zu einer eigenen Seite in der Suche — aber erst, wenn sie befüllt ist. Eine leere Sprache kommt nicht in die Suche (und schadet den anderen nicht): das Panel zeigt, was fehlt.', form_site_langs_err: 'Wählen Sie mindestens eine Sprache',
     cart_added_ok: '✓ Hinzugefügt!', privacy_unavailable: 'Datenschutzrichtlinie nicht verfügbar.',
     subdomain_invalid: 'Nur Kleinbuchstaben, Ziffern und Bindestriche. 3 bis 30 Zeichen.',
     subdomain_free: '✅ {subdomain}.ttzop.com — verfügbar!', subdomain_check_err: 'Prüffehler',
@@ -465,7 +465,7 @@ const UI_T = {
     done_subdomain: 'Merci ! Votre site <b style="color:#f97316">{domain}</b> est en cours de création.<br>Vous recevrez un email à <b style="color:#e8eaf0">{email}</b> quand il sera prêt.',
     done_regular: 'Merci ! Nous vous contacterons par email à <b style="color:#e8eaf0">{email}</b> sous peu.',
     done_close: 'Fermer',
-    form_site_langs: 'Langues du site', form_site_langs_err: 'Sélectionnez au moins une langue',
+    form_site_langs: 'Langues du site', form_site_langs_hint: 'Chaque langue devient une page distincte dans la recherche — mais seulement une fois remplie. Une langue vide n’entre pas dans la recherche (et ne nuit pas aux autres) : le panneau indique ce qui manque.', form_site_langs_err: 'Sélectionnez au moins une langue',
     cart_added_ok: '✓ Ajouté!', privacy_unavailable: 'Politique de confidentialité indisponible.',
     subdomain_invalid: 'Uniquement minuscules, chiffres et tirets. 3 à 30 caractères.',
     subdomain_free: '✅ {subdomain}.ttzop.com — disponible!', subdomain_check_err: 'Erreur de vérification',
@@ -513,7 +513,7 @@ const UI_T = {
     done_subdomain: '¡Gracias! Tu sitio <b style="color:#f97316">{domain}</b> está siendo creado.<br>Recibirás un email en <b style="color:#e8eaf0">{email}</b> cuando esté listo.',
     done_regular: '¡Gracias! Nos pondremos en contacto contigo por email en <b style="color:#e8eaf0">{email}</b> en breve.',
     done_close: 'Cerrar',
-    form_site_langs: 'Idiomas del sitio', form_site_langs_err: 'Seleccione al menos un idioma',
+    form_site_langs: 'Idiomas del sitio', form_site_langs_hint: 'Cada idioma se convierte en una página propia en el buscador, pero solo cuando se completa. Un idioma vacío no entra en el buscador (y no perjudica a los demás): el panel muestra qué falta.', form_site_langs_err: 'Seleccione al menos un idioma',
     cart_added_ok: '✓ Añadido!', privacy_unavailable: 'Política de privacidad no disponible.',
     subdomain_invalid: 'Solo minúsculas, números y guiones. De 3 a 30 caracteres.',
     subdomain_free: '✅ {subdomain}.ttzop.com — disponible!', subdomain_check_err: 'Error de verificación',
@@ -561,7 +561,7 @@ const UI_T = {
     done_subdomain: "Grazie! Il tuo sito <b style=\"color:#f97316\">{domain}</b> è in creazione.<br>Riceverai un'email all'indirizzo <b style=\"color:#e8eaf0\">{email}</b> quando sarà pronto.",
     done_regular: 'Grazie! Ti contatteremo per email a <b style="color:#e8eaf0">{email}</b> a breve.',
     done_close: 'Chiudi',
-    form_site_langs: 'Lingue del sito', form_site_langs_err: 'Seleziona almeno una lingua',
+    form_site_langs: 'Lingue del sito', form_site_langs_hint: 'Ogni lingua diventa una pagina a sé nei motori di ricerca, ma solo dopo che è stata compilata. Una lingua vuota non entra nella ricerca (e non danneggia le altre): il pannello mostra cosa manca.', form_site_langs_err: 'Seleziona almeno una lingua',
     cart_added_ok: '✓ Aggiunto!', privacy_unavailable: 'Informativa sulla privacy non disponibile.',
     subdomain_invalid: 'Solo lettere minuscole, numeri e trattini. Da 3 a 30 caratteri.',
     subdomain_free: '✅ {subdomain}.ttzop.com — disponibile!', subdomain_check_err: 'Errore di verifica',
@@ -609,7 +609,7 @@ const UI_T = {
     done_subdomain: 'Obrigado! Seu site <b style="color:#f97316">{domain}</b> está sendo criado.<br>Você receberá um email em <b style="color:#e8eaf0">{email}</b> quando estiver pronto.',
     done_regular: 'Obrigado! Entraremos em contato por email em <b style="color:#e8eaf0">{email}</b> em breve.',
     done_close: 'Fechar',
-    form_site_langs: 'Idiomas do site', form_site_langs_err: 'Selecione pelo menos um idioma',
+    form_site_langs: 'Idiomas do site', form_site_langs_hint: 'Cada idioma torna-se uma página própria na pesquisa — mas só depois de preenchido. Um idioma vazio não entra na pesquisa (e não prejudica os outros): o painel mostra o que falta.', form_site_langs_err: 'Selecione pelo menos um idioma',
     cart_added_ok: '✓ Adicionado!', privacy_unavailable: 'Política de privacidade indisponível.',
     subdomain_invalid: 'Apenas letras minúsculas, números e hífens. De 3 a 30 caracteres.',
     subdomain_free: '✅ {subdomain}.ttzop.com — disponível!', subdomain_check_err: 'Erro de verificação',
@@ -657,7 +657,7 @@ const UI_T = {
     done_subdomain: '感谢！您的网站 <b style="color:#f97316">{domain}</b> 正在创建中。<br>准备好后，我们将发送邮件至 <b style="color:#e8eaf0">{email}</b>。',
     done_regular: '感谢！我们将尽快通过邮箱 <b style="color:#e8eaf0">{email}</b> 与您联系。',
     done_close: '关闭',
-    form_site_langs: '网站语言', form_site_langs_err: '请至少选择一种语言',
+    form_site_langs: '网站语言', form_site_langs_hint: '每种语言在搜索中都会成为独立页面——但只有在填写内容之后。未填写的语言不会进入搜索（也不会影响其他语言）：面板会显示缺少什么。', form_site_langs_err: '请至少选择一种语言',
     cart_added_ok: '✓ 已添加！', privacy_unavailable: '隐私政策不可用。',
     subdomain_invalid: '只能使用小写字母、数字和连字符。3至30个字符。',
     subdomain_free: '✅ {subdomain}.ttzop.com — 可用！', subdomain_check_err: '检查错误',
@@ -705,7 +705,7 @@ const UI_T = {
     done_subdomain: 'شكراً! موقعك <b style="color:#f97316">{domain}</b> قيد الإنشاء.<br>ستتلقى بريداً إلكترونياً على <b style="color:#e8eaf0">{email}</b> عندما يكون جاهزاً.',
     done_regular: 'شكراً! سنتواصل معك على البريد الإلكتروني <b style="color:#e8eaf0">{email}</b> قريباً.',
     done_close: 'إغلاق',
-    form_site_langs: 'لغات الموقع', form_site_langs_err: 'اختر لغة واحدة على الأقل',
+    form_site_langs: 'لغات الموقع', form_site_langs_hint: 'كل لغة تصبح صفحة مستقلة في نتائج البحث — لكن فقط بعد تعبئتها. اللغة الفارغة لا تدخل نتائج البحث (ولا تضر باللغات الأخرى): ستعرض لوحة التحكم ما ينقص.', form_site_langs_err: 'اختر لغة واحدة على الأقل',
     cart_added_ok: '✓ تمت الإضافة!', privacy_unavailable: 'سياسة الخصوصية غير متاحة.',
     subdomain_invalid: 'أحرف صغيرة وأرقام وشرطات فقط. من 3 إلى 30 حرفاً.',
     subdomain_free: '✅ {subdomain}.ttzop.com — متاح!', subdomain_check_err: 'خطأ في التحقق',
@@ -753,7 +753,7 @@ const UI_T = {
     done_subdomain: 'Köszönjük! A(z) <b style="color:#f97316">{domain}</b> weboldala létrehozás alatt áll.<br>Értesítjük e-mailben a(z) <b style="color:#e8eaf0">{email}</b> címen, amikor elkészül.',
     done_regular: 'Köszönjük! Hamarosan felvesszük Önnel a kapcsolatot a(z) <b style="color:#e8eaf0">{email}</b> e-mail-cíemen.',
     done_close: 'Bezárás',
-    form_site_langs: 'Weboldal nyelvei', form_site_langs_err: 'Válasszon legalább egy nyelvet',
+    form_site_langs: 'Weboldal nyelvei', form_site_langs_hint: 'Minden nyelv külön oldallá válik a keresőben — de csak azután, hogy kitöltötték. Az üres nyelv nem kerül be a keresőbe (és nem árt a többinek): a panel megmutatja, mi hiányzik.', form_site_langs_err: 'Válasszon legalább egy nyelvet',
     cart_added_ok: '✓ Hozzáadva!', privacy_unavailable: 'Az adatvédelmi irányelvek nem elérhetők.',
     subdomain_invalid: 'Csak kisbetűk, számok és kötőjelek. 3–30 karakter.',
     subdomain_free: '✅ {subdomain}.ttzop.com — szabad!', subdomain_check_err: 'Ellenőrzési hiba',
@@ -1277,6 +1277,14 @@ function _getContentLang(data, selectedLang) {
   return active.includes(selectedLang) ? selectedLang : getPrimaryLang(data);
 }
 
+// 🌍 АДРАС МОЎНАЙ ВЕРСІІ — адно месца пабудовы (тыя ж правілы, што ў роўтэры і sitemap):
+// асноўная мова жыве на чыстым адрасе, астатнія — з `?lang=`. Іншыя параметры (utm, ed, draft)
+// захоўваюцца: спасылка на мову не мусіць губляць кантэкст, у якім чалавек прыйшоў.
+function _langHref(data, code) {
+  const u = new URL(location.href);
+  if (code === getPrimaryLang(data)) u.searchParams.delete('lang'); else u.searchParams.set('lang', code);
+  return u.pathname + (u.search || '') + u.hash;
+}
 function renderSiteLangDropdown(data, selectedLang) {
   const container = document.getElementById('site-lang-picker');
   if (!container) return;
@@ -1286,10 +1294,14 @@ function renderSiteLangDropdown(data, selectedLang) {
   const curDef = SITE_LANGS.find(l => l.code === selectedLang) || { label: selEntry?.label || selectedLang.toUpperCase(), name: selEntry?.name || selectedLang };
   const items = activeLangs.map(sl => {
     const def = SITE_LANGS.find(l => l.code === sl.code) || { label: sl.label || sl.code.toUpperCase(), name: sl.name || sl.label || sl.code };
-    return `<button class="lang-dd-item${sl.code === selectedLang ? ' active' : ''}" onclick="changeSiteLang('${sl.code}')">
+    // ⚠️ САПРАЎДНАЯ СПАСЫЛКА, а не кнопка: пошукавы бот ходзіць па `href` і не націскае `onclick`.
+    // Пакуль тут была кнопка, моўныя версіі сайта былі для яго проста НЕДАСЯЖНЫЯ — колькі б мы ні
+    // клалі hreflang у <head>. `return false` пакідае звыклы імгненны пераход без перазагрузкі.
+    return `<a class="lang-dd-item${sl.code === selectedLang ? ' active' : ''}" href="${_langHref(data, sl.code)}"
+      hreflang="${sl.code === 'by' ? 'be-Latn' : sl.code}" onclick="changeSiteLang('${sl.code}');return false">
       <span class="lang-dd-code">${def.label}</span>
       <span class="lang-dd-name">${def.name}</span>
-    </button>`;
+    </a>`;
   }).join('');
   container.innerHTML = `
     <button class="lang-dd-btn" onclick="toggleLangDropdown(event)">${curDef.label} <span class="dd-arrow">▾</span></button>
@@ -1301,9 +1313,13 @@ function toggleLangDropdown(e) {
   document.querySelector('#site-lang-picker .lang-dd-menu')?.classList.toggle('open');
 }
 
-async function changeSiteLang(lang) {
+async function changeSiteLang(lang, fromHistory) {
   if (!siteData) return;
   document.querySelector('#site-lang-picker .lang-dd-menu')?.classList.remove('open');
+  // 🌍 АДРАС — ЧАСТКА СТАНУ: без гэтага чалавек не можа падзяліцца старонкай на сваёй мове, а
+  // «назад» пасля пераключэння вяртаў бы на іншы сайт замест папярэдняй мовы.
+  // `fromHistory` — прыйшлі з popstate, адрас ужо слушны, паўторна не пішам.
+  if (!fromHistory) { try { history.pushState({ lang }, '', _langHref(siteData, lang)); } catch {} }
   applyLanguage(siteData, lang);
   await applySections(); // перарэндэр секцый на новай мове праз ТОЙ ЖА шлях, што старт (свежы фетч+рэндэр)
   initReveal(); // 🎯 ФІКС: перарэндэраныя секцыі — НОВЫЯ DOM-вузлы; без паўторнага reveal-назіральніка яны завісаюць схаванымі (.js-reveal без .in-view) → «пасля пераключэння мовы секцыі не паказваюцца»
@@ -1337,8 +1353,11 @@ function _seoMeta(data, co, companyName, companyHours) {
     const desc = clean(i.heroSubtitle || i.aboutText || _sv(co?.about) ||
       [companyName, _sv(co?.address)].filter(Boolean).join(' · ')).slice(0, 300);
     if (desc) _seoSet('meta[name="description"]', { name: 'description', content: desc }, 'meta');
-    // canonical: адзін адрас старонкі без параметраў — пры адной публічнай старонцы гэта дакладна
-    _seoSet('link[rel="canonical"]', { rel: 'canonical', href: location.origin + location.pathname }, 'link');
+    // canonical: адрас БЯГУЧАЙ МОВЫ. ⚠️ Раней тут стаяў `location.pathname` без параметраў — і пасля
+    // з'яўлення моўных адрасоў гэта стала другой крыніцай праўды: роўтэр кладзе ў сыры HTML
+    // `?lang=pl`, а JS пры гідрацыі ціха перапісваў яго на асноўны — то бок сам казаў пошукавіку
+    // «польскай старонкі не існуе, гэта копія». Цяпер абодва будуюць адрас адным правілам.
+    _seoSet('link[rel="canonical"]', { rel: 'canonical', href: location.origin + _langHref(data, currentLang) }, 'link');
 
     // ── schema.org: LocalBusiness + прапановы з каталога ──
     const phones = (co?.phones || []).map(x => clean(_sv(x?.value) || x?.value)).filter(Boolean);
@@ -2907,6 +2926,7 @@ function showModal(step, privacyHtml = '') {
           </div>
           <div style="margin-bottom:16px">
             <label style="display:block;font-size:0.8rem;font-weight:600;color:#6b7280;text-transform:uppercase;letter-spacing:0.07em;margin-bottom:8px">${getUI().form_site_langs}</label>
+            <div style="font-size:0.78rem;color:#9ca3af;line-height:1.5;margin:-2px 0 8px">${getUI().form_site_langs_hint}</div>
             <div style="display:flex;flex-wrap:wrap;gap:6px" id="order-langs-grid">
               ${SITE_LANGS.map(l => `
                 <button type="button" data-lang="${l.code}"
@@ -3640,13 +3660,25 @@ async function init() {
   const primary = getPrimaryLang(siteData);
   const saved = localStorage.getItem('ttzop_lang');
   const activeLangs = (siteData.languages || []).filter(l => l.active).map(l => l.code);
+  // 🌍 ПАРАДАК КРЫНІЦ: адрас → памяць браўзера → мова наведвальніка → асноўная сайта.
+  // ⚠️ Адрас ПЕРШЫ і гэта прынцыпова: спасылка `?lang=pl` мусіць адкрыць польскую нават таму, хто
+  // раней глядзеў сайт па-беларуску (інакш `localStorage` моўчкі перакрывае тое, што чалавеку
+  // прыслалі, і пошукавік на той жа старонцы бачыць іншую мову, чым абяцае адрас).
+  const urlLang = (_qs.get('lang') || '').trim();
   let selectedLang;
-  if (saved && activeLangs.includes(saved)) {
+  if (urlLang && activeLangs.includes(urlLang)) {
+    selectedLang = urlLang;
+  } else if (saved && activeLangs.includes(saved)) {
     selectedLang = saved;
   } else {
     const detected = await detectLangByIp(activeLangs);
     selectedLang = detected || primary;
   }
+  // ⏪ «назад/наперад» браўзера мяняе мову, а не выкідвае з сайта
+  addEventListener('popstate', () => {
+    const l = (new URLSearchParams(location.search).get('lang') || '').trim() || getPrimaryLang(siteData);
+    if (siteData && l !== currentLang) changeSiteLang(activeLangs.includes(l) ? l : getPrimaryLang(siteData), true);
+  });
 
   if (siteData.paused) { _renderSitePaused(selectedLang); return; } // ⏸ сайт прыпынены → белая старонка, кантэнт не рэндэрыцца (сцяг settings.paused, сіметрычна watermark)
 

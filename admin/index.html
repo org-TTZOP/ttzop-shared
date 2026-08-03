@@ -1610,7 +1610,13 @@ const FORM_SCHEMAS = {
     { key: 'uiLang',     type: 'select', label: 'lang_interface', badge: false,
       options: () => KNOWN_LANGS.map(k => k.code),
       optionLabels: () => Object.fromEntries(KNOWN_LANGS.map(k => [k.code, `${k.label} — ${k.name}`])),
-      visible: form => !form?.fields?._known }
+      visible: form => !form?.fields?._known },
+    // 🌍 СТАН У ПОШУКУ — не налада, а ЛЮСТЭРКА рэальнасці: чытаецца з сервера (`lang_fill`),
+    // рукамі не мяняецца. ⚠️ Навошта чалавеку гэты радок: мова трапляе ў пошук асобным адрасам
+    // толькі калі яе САПРАЎДЫ перакладзены. Без бачнага стану кліент дадаў бы пяць моў, пабачыў бы
+    // іх у спісе і лічыў, што сайт «на пяці мовах» — а ў пошуку іх не было б, і чаму — незразумела.
+    // Гэта і адказ на пытанне «а чаму мая мова знікла»: яна не знікла, яе яшчэ не запоўнілі.
+    { key: '_seo', type: 'text', label: 'lang_seo', readOnly: () => true, badge: false }
   ]
 };
 FORM_SCHEMAS.lang._noName = true; // назва рэдагуецца праз палі label/name, не праз form.name
@@ -17134,6 +17140,7 @@ function _langsBuildNodes() {
       name: lang.label || lang.code || '—', active: lang.active !== false,
       fields: { _idx: i, label: lang.label || '', name: lang.name || '', dateFormat: lang.dateFormat || 'DD.MM.YYYY',
         uiLang: lang.uiLang || 'en', _known: isKnown,
+        _seo: _langSeoText(lang.code),   // 🌍 стан у пошуку (люстэрка сервера, гл. `_langSeoText`)
         _current: lang.code === _primaryCode() } }); // ааП: Бягучая праз fields._current, не _langIsPrimary
   });
   s.data = { nodes };
@@ -17141,6 +17148,27 @@ function _langsBuildNodes() {
 }
 // nodes → settings.languages (БЕЗ запісу на сервер). Выклікаецца і перад кожным
 // рэндэрам: генерычныя node-функцыі робяць render да save, інакш змены губляюцца
+// 🌍 СТАН МОВЫ Ў ПОШУКУ — тэкст для радка Формы-мовы. ⚠️ Лічбу НЕ лічым тут: вердыкт («ці трапляе
+// мова ў пошук») жыве ў воркеры (`_seoLangs`), і той самы адказ чытаюць роўтэр (hreflang) і
+// `sitemap.xml`. Палічыць яго яшчэ раз у панэлі значыла б завесці ЧАЦВЁРТУЮ крыніцу праўды — і
+// першы ж разыход даў бы найгоршы для чалавека вынік: панэль кажа «у пошуку», а ў пошуку няма.
+function _langSeoText(code) {
+  const f = languagesState._fill;
+  if (!f) return '';                                   // яшчэ не прыйшло — лепш пуста, чым няпраўда
+  const pct = f.fill?.[code];
+  if (pct === undefined) return '';
+  if ((f.seoLangs || []).includes(code)) return `${t('lang_seo_in')} · ${pct}%`;
+  return pct > 0 ? `${t('lang_seo_out')} · ${pct}% ${t('lang_seo_need').replace('{n}', f.min)}`
+                 : t('lang_seo_empty');
+}
+async function _langsLoadFill() {
+  if (languagesState._fillLoading) return;
+  languagesState._fillLoading = true;
+  try {
+    const d = await apiCall('lang_fill', {}, { quiet: 'індыкатар — прыемнае дадатковае; яго адсутнасць не мусіць спыняць працу з мовамі' });
+    if (d) { languagesState._fill = d; renderLanguages(); }
+  } finally { languagesState._fillLoading = false; }
+}
 function _langsCommit() {
   const s = languagesState;
   if (!s.data?.nodes) return;
@@ -17176,6 +17204,7 @@ function renderLanguages() {
   if (!editor) return;
   currentNodeState = languagesState;
   _langsCommit();      // спачатку зафіксаваць лакальныя змены вузлоў у settings
+  if (!languagesState._fill) _langsLoadFill();   // 🌍 стан моў у пошуку — ленава, адзін запыт на сесію
   _langsBuildNodes();  // потым перабудаваць дрэва ўжо з актуальных settings (Форма-0 + Валюта + Мовы)
   renderNodeEditor(languagesState);
   if (editor) editor.onmousedown = () => { currentNodeState = languagesState; }; // канон _editorId: інакш фокус/клікі не працуюць

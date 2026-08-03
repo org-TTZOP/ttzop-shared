@@ -77,17 +77,33 @@ Disallow: /content/
 Sitemap: ${origin}/sitemap.xml
 `, { headers: _seoHdrs('text/plain; charset=utf-8') });
   }
-  // sitemap: сайт — адна публічная старонка (мова жыве ў localStorage, асобных URL няма),
-  // таму карта сумленна складаецца з яе адной. Дадасца URL на мову — дадасца радок сюды.
+  // 🌍 sitemap: радок на КОЖНУЮ моўную версію + узаемныя альтэрнатывы ў кожным радку.
+  // ⚠️ Мовы бяром з `seoLangs` — гатовага вердыкту сервера «мова САПРАЎДЫ перакладзена»
+  // (`_seoLangs` у воркеры). Тут не паўтараецца ні спіс моў, ні парог: карта, hreflang у HTML і
+  // індыкатар у панэлі мусяць казаць адно і тое ж, інакш пошукавік бачыць супярэчнасць і
+  // ігнаруе кластар цалкам. Няма адказу ад API → карта з адной старонкі, як раней (fail-open).
   let lastmod = new Date().toISOString().slice(0, 10);
+  let langs = [], primary = '';
   try {
     const site = host.split('.')[0];
-    const r = await fetch(`${API_URL}/content/${site}/sections`, { cf: { cacheTtl: 3600 } });
-    if (r.ok) { const t = r.headers.get('last-modified'); if (t) lastmod = new Date(t).toISOString().slice(0, 10); }
+    const [rs, rc] = await Promise.all([
+      fetch(`${API_URL}/content/${site}/sections`, { cf: { cacheTtl: 3600 } }),
+      fetch(`${API_URL}/content/${site}/settings`, { cf: { cacheTtl: 300 } }),
+    ]);
+    if (rs.ok) { const t = rs.headers.get('last-modified'); if (t) lastmod = new Date(t).toISOString().slice(0, 10); }
+    if (rc.ok) { const d = await rc.json(); langs = Array.isArray(d?.seoLangs) ? d.seoLangs : []; primary = d?.primaryLang || langs[0] || ''; }
   } catch { /* fail-open: дата сённяшняя — карта ўсё роўна слушная */ }
+  if (!langs.length) langs = [primary || 'be'];
+  const bcp = c => (c === 'by' ? 'be-Latn' : c);
+  const href = c => `${origin}/${c === primary ? '' : `?lang=${encodeURIComponent(c)}`}`;
+  const alts = langs.map(c => `    <xhtml:link rel="alternate" hreflang="${bcp(c)}" href="${href(c)}"/>`).join('\n')
+    + `\n    <xhtml:link rel="alternate" hreflang="x-default" href="${href(primary)}"/>`;
+  const urls = langs.map(c => `  <url><loc>${href(c)}</loc><lastmod>${lastmod}</lastmod><changefreq>weekly</changefreq><priority>${c === primary ? '1.0' : '0.9'}</priority>
+${alts}
+  </url>`).join('\n');
   return new Response(`<?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-  <url><loc>${origin}/</loc><lastmod>${lastmod}</lastmod><changefreq>weekly</changefreq><priority>1.0</priority></url>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:xhtml="http://www.w3.org/1999/xhtml">
+${urls}
 </urlset>
 `, { headers: _seoHdrs('application/xml; charset=utf-8') });
 }
