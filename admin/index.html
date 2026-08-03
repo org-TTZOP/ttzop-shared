@@ -887,7 +887,7 @@ async function _alertsLoad(site, key, form) {
     const d = res;
     form.fields._alerts = Array.isArray(d?.alerts) ? d.alerts : [];
     form.fields._alertsCrit48 = d?.crit48 ?? 0;
-    if (currentNodeState === monitorState) renderNodeEditor(monitorState);
+    _renderIfVisible(monitorState);
   } catch { form.fields._alerts = []; } finally { _alertsInflight.delete(key); }
 }
 function _alertsSummaryHtml(form) { // зводка ў загалоўку: крытычных за 48 гадзін
@@ -979,7 +979,7 @@ async function _deployReload(fresh) { // перачытаць ЖЫВЫЯ вер�
     const d = res;
     if (Array.isArray(d?.rows)) monitorState._deploy = d.rows;
   } catch {}
-  if (currentNodeState === monitorState) renderNodeEditor(monitorState);
+  _renderIfVisible(monitorState);
 }
 function _depPoll() { // палінг да зраўнання версій: інакш «Абноўлена» ёсць, а табліца хвіліну старая
   const b = monitorState._depBusy;
@@ -990,7 +990,7 @@ function _depPoll() { // палінг да зраўнання версій: ін
     // ✅ «гатова» = зраўнялася МЭТА гэтага выкату, а не ўсе ступені: інакш пры адстаўшай суседняй
     // ступені (напр. legacy, якую мы не выкатвалі) палінг круціўся б поўныя 6 хв дарма
     const done = !_deployRows().some(r => _depBusyRow(r) && _depBehind(r));
-    if (done || Date.now() - b.at > _DEP_WAIT_MS) { monitorState._depBusy = null; if (currentNodeState === monitorState) renderNodeEditor(monitorState); return; }
+    if (done || Date.now() - b.at > _DEP_WAIT_MS) { monitorState._depBusy = null; _renderIfVisible(monitorState); return; }
     _depPoll();
   }, _DEP_POLL_MS);
 }
@@ -1030,7 +1030,7 @@ async function _deployRelease(mode, sites, msg, busy) { // пацверджан�
       if (d.error) { showAlert(_srvErrText({ ok: true, status: 200 }, d, t('dep_err'))); return; } // бізнес-адмова ў целе 200
       // ⏳ табліца адразу кажа «выкат ідзе…» і сама перачытваецца да зраўнання версій — раней пасля
       // «Абноўлена» яна хвіліну паказвала старое, і выглядала, быццам нічога не адбылося
-      if (busy) { monitorState._depBusy = { ...busy, at: Date.now() }; if (currentNodeState === monitorState) renderNodeEditor(monitorState); _depPoll(); }
+      if (busy) { monitorState._depBusy = { ...busy, at: Date.now() }; _renderIfVisible(monitorState); _depPoll(); }
       showAlert(t('dep_started'));
     } catch (e) { showAlert(t('err_connection')); }
   }, { label: t('dep_rel_btn'), danger: false });
@@ -1084,7 +1084,7 @@ async function _backupLoad(form) {
   try {
     const d = await apiCall('backup_list', { limit: 60 });
     form.fields._backups = Array.isArray(d?.rows) ? d.rows : []; // лічбы як ёсць — колер малюе render слупка
-    if (currentNodeState === monitorState) renderNodeEditor(monitorState);
+    _renderIfVisible(monitorState);
   } catch { form.fields._backups = []; } finally { _bakInflight = false; }
 }
 function _backupSummaryHtml(form) { // зводка: калі быў апошні здымак і ці быў ён чысты
@@ -1142,7 +1142,7 @@ async function _apiTopupApply(fields) {
   try {
     const d = await apiCall('add_api_topup', { usd, note: fields.note || '' });
     monitorState._apiBalance = d.apiBalance; monitorState._apiTopups = d.topups;
-    if (currentNodeState === monitorState) renderNodeEditor(monitorState);
+    _renderIfVisible(monitorState);
   } catch (e) { if (!(e instanceof ApiError)) showAlert(t('err_save')); } // транспартную ўжо паказаў apiCall
 }
 // 🧾 КОД-КАТАЛОГ ВІДАЎ ПАЗІЦЫІ КАТАЛОГА (люстэрка SITE_VIEW_TYPES для секцый): від = набор ЗДОЛЬНАСЦЯЎ,
@@ -10172,6 +10172,25 @@ async function loadNodeEditor(s) {
   s._renderFn();
 }
 
+// 🖼 ПЕРАМАЛЁЎКА ПАСЛЯ ЛЕНАВАЙ ЗАГРУЗКІ — ПА БАЧНАСЦІ, А НЕ ПА ФОКУСЕ (03.08).
+// ⚠️ ЖЫВЫ КЕЙС (заўвага карыстальніка): «часта пры перазагрузцы старонка грузіцца без даных, яшчэ
+// раз перазагружаю — даныя з'яўляюцца». Даныя пры гэтым ПРЫХОДЗЯЦЬ (замерана: get_dashboard 4.6 КБ,
+// backup_list 2.1 КБ) — не даязджаў РЭНДЭР. Кожны ленавы загрузчык заканчваўся ўмовай
+// `if (currentNodeState === xState) renderNodeEditor(xState)`, а `currentNodeState` — гэта ФОКУС, і
+// яго перахопліваюць іншыя РМ, пакуль нашы запыты ляцяць. Прайграў гонку → перамалёўкі няма, даныя
+// ляжаць у стэйце нябачныя, і выратоўвае толькі новая перазагрузка (іншы таймінг).
+// 🔑 Правільнае пытанне — не «ці я ў фокусе», а «ці бачыць мяне чалавек»: рэдактар ёсць у DOM і не
+// схаваны. Тады гонка немагчымая ў прынцыпе: хто б ні прыйшоў першым, бачны РМ перамалюецца.
+// ⚠️ `currentNodeState` пры гэтым выстаўляецца на бачны стэйт: рэндэр-хелперы чытаюць яго ўнутры,
+// і без гэтага перамалёўка ішла б з чужым кантэкстам.
+function _renderIfVisible(s) {
+  if (!s) return false;
+  const ed = s._editorId ? document.getElementById(s._editorId) : null;
+  if (!ed || !ed.offsetParent) return false;   // не на экране — перамалюецца сама пры адкрыцці РМ
+  currentNodeState = s;
+  renderNodeEditor(s);
+  return true;
+}
 function renderNodeEditor(s) {
   const editor = document.getElementById(s._editorId);
   if (!editor || !s.data) return;
@@ -14632,7 +14651,7 @@ async function _finTurnoverLoad(form) {
     form.fields._finSummary = d?.payload?.summary || [];
   } catch { form.fields._finTurnover = []; } // збой не мусіць пакідаць секцыю ў вечным «загружаецца»
   _finTurnoverInflight = false;
-  if (currentNodeState === financeState) renderNodeEditor(financeState);
+  _renderIfVisible(financeState);
 }
 // Зводка над табліцай: колькі краін і колькі з іх ужо ў зоне ранняй трывогі (≥85% ад парога)
 function _finTurnoverSummaryHtml(form) {
@@ -14659,7 +14678,7 @@ async function _trLedgerLoad(sub, form) {
     form.fields._trLedger = (Array.isArray(d?.ledger) ? d.ledger : [])
       .map(r => ({ at: r.at, kind: (+r.d > 0 ? 'grant' : 'spend'), d: r.d, ref: r.ref || r.src || '' }));
     if (d) { form.fields.trUsed = d.used ?? form.fields.trUsed; form.fields.trMax = d.max ?? form.fields.trMax; form.fields.trCredits = d.credits ?? form.fields.trCredits; } // абнавіць зводку+бэйдж
-    if (currentNodeState === monitorState) renderNodeEditor(monitorState);
+    _renderIfVisible(monitorState);
   } catch { form.fields._trLedger = []; } finally { _trLedgerInflight.delete(sub); }
 }
 // Зводка астатку ў загалоўку Table-секцыі (headerExtra): «Бясплатных N/5 · крэдытаў X»
@@ -15017,7 +15036,7 @@ async function _monitorLoadDashboard() {
     monitorState._apiBalance = dash?.apiBalance || null; // 💰 баланс нашага праплачанага API (чып + зводка табліцы)
     monitorState._apiTopups = dash?.apiTopups || []; // 💰 рэестр папаўненняў для Table-секцыі «Папаўненні API»
     monitorState._dashLoaded = true;
-    if (currentNodeState === monitorState) renderNodeEditor(monitorState);
+    _renderIfVisible(monitorState);
     if (monitorState.expanded.has('mf-overview')) pingMonitorSites();
   } finally { monitorState._dashLoading = false; }
 }
@@ -15104,7 +15123,7 @@ async function _monitorLoadHistory() {
     monitorState._histLoaded = true;
     if (!monitorState._chartOpen) monitorState._chartOpen = new Map();
     Object.keys(_MON_CHART_FOLDERS).concat('mch-all').forEach(fid => monitorState._chartOpen.set(fid + '::_mhist', true)); // 📊 дыяграма адкрыта па змаўчанні (+ агульная секцыя Формы-0)
-    if (currentNodeState === monitorState) renderNodeEditor(monitorState);
+    _renderIfVisible(monitorState);
   } finally { monitorState._histLoading = false; }
 }
 async function _monitorLoadStats() {
@@ -15212,7 +15231,7 @@ async function _monitorLoadStats() {
     }
     monitorState.data.nodes = newNodes;
     monitorState._statsLoaded = true;
-    if (currentNodeState === monitorState) renderNodeEditor(monitorState);
+    _renderIfVisible(monitorState);
   } finally { monitorState._statsLoading = false; }
 }
 
@@ -15240,7 +15259,7 @@ async function pingMonitorSites() {
       }
     }));
   }
-  if (currentNodeState === monitorState) renderNodeEditor(monitorState);
+  _renderIfVisible(monitorState);
 }
 
 // Навігацыя з маніторынгу прама ў заказ — праз агульны механізм _pendingOrderOpen (раскрывае дату+заказ і скролiць)
@@ -15261,7 +15280,7 @@ function monitorDeleteSite(sub, clientId, orderId, nodeId) {
 async function _monitorDoDelete(sub, clientId, orderId, nodeId) {
   const node = (monitorState.data?.nodes || []).find(n => n.id === nodeId); // аптымістычна: пазначаем «выдаляем»
   if (node && !/^⏳/.test(node.name || '')) node.name = '⏳ ' + (node.name || sub);
-  if (currentNodeState === monitorState) renderNodeEditor(monitorState);
+  _renderIfVisible(monitorState);
   try {
     const res = await apiCall('delete_subdomain', { subdomain: sub, clientId, orderId });
     const data = res;
