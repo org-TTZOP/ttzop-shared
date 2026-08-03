@@ -41,8 +41,15 @@ const _seoHdrs = (ct) => ({ 'Content-Type': ct, 'Cache-Control': 'public, max-ag
 // ⚠️ Рэгулярка ніжэй — НЕ другая крыніца, а рэжым дэградацыі: калі API не адказаў, нашы ўласныя
 // паддамены ўсё роўна не мусяць трапіць у пошук (кліенцкі ў гэтым выпадку лічым адкрытым).
 const _OURS_RE = /-test\d*$|^ttzop-test/;
-async function _noIndex(url) {
-  const sub = url.hostname.split('.')[0];
+// 🌐 РЭАЛЬНЫ ХОСТ САЙТА, а не той, які бачыць функцыя. ⚠️ Роўтэр праксіруе на `{project}.pages.dev`
+// і выразае `Host` (інакш Pages адхіляе чужы Host → 403), таму `url.hostname` тут — УНУТРАНАЕ імя.
+// Жывы кейс 03.08: `sitemap.xml` кожнага кліента паказваў на `https://ttzop-shared.pages.dev/`, а
+// `robots.txt` лічыў сайт нашым службовым і аддаваў `Disallow: /` — то бок закрываў КЛІЕНЦКІ сайт ад
+// пошуку цалкам. Статус і Content-Type пры гэтым былі бездакорныя, таму праверкі гэтага не бачылі.
+// Роўтэр перадае праўду загалоўкам; фолбэк на `url` — для прамога зваротy да Pages (без роўтэра).
+const _realHost = (request, url) => (request.headers.get('x-ttzop-host') || url.hostname).toLowerCase();
+async function _noIndex(host) {
+  const sub = host.split('.')[0];
   try {
     const r = await fetch(`${API_URL}/content/${sub}/settings`, { cf: { cacheTtl: 300 } });
     if (r.ok) {
@@ -53,10 +60,10 @@ async function _noIndex(url) {
   return _OURS_RE.test(sub);
 }
 
-async function _seoFiles(url) {
-  const origin = url.origin;
+async function _seoFiles(url, host) {
+  const origin = `https://${host}`;   // адрас, па якім сайт рэальна адкрываюць, а не ўнутраны pages.dev
   if (url.pathname === '/robots.txt') {
-    if (await _noIndex(url)) {
+    if (await _noIndex(host)) {
       return new Response(`User-agent: *\nDisallow: /\n`, { headers: _seoHdrs('text/plain; charset=utf-8') });
     }
     // ⚠️ /admin і /portal.html зачыняем ад індэксацыі свядома: панэль кіравання і кабінет кліента
@@ -74,7 +81,7 @@ Sitemap: ${origin}/sitemap.xml
   // таму карта сумленна складаецца з яе адной. Дадасца URL на мову — дадасца радок сюды.
   let lastmod = new Date().toISOString().slice(0, 10);
   try {
-    const site = url.hostname.split('.')[0];
+    const site = host.split('.')[0];
     const r = await fetch(`${API_URL}/content/${site}/sections`, { cf: { cacheTtl: 3600 } });
     if (r.ok) { const t = r.headers.get('last-modified'); if (t) lastmod = new Date(t).toISOString().slice(0, 10); }
   } catch { /* fail-open: дата сённяшняя — карта ўсё роўна слушная */ }
@@ -89,7 +96,7 @@ export async function onRequest(context) {
   const url = new URL(context.request.url);
   const path = decodeURIComponent(url.pathname);
   if (path === '/robots.txt' || path === '/sitemap.xml') {
-    try { return await _seoFiles(url); } catch { return context.next(); } // 🛡️ горш за сённяшняе не будзе
+    try { return await _seoFiles(url, _realHost(context.request, url)); } catch { return context.next(); } // 🛡️ горш за сённяшняе не будзе
   }
   // ═══ 🚧 САПРАЎДНЫ 404 ═══
   // ⚠️ Было: /якая-заўгодна-лухта → HTTP 200 + галоўная старонка. Гэта «мяккі 404»: пошукавік
