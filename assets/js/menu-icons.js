@@ -113,6 +113,11 @@ window.TTZOP_ICON_EMOJI = {
   '💰': 'money', '🧪': 'flask', '📜': 'scroll', '🗒': 'note', '🚚': 'truck', '🧱': 'blocks',
   '📈': 'trend', '🎨': 'palette', '🖥': 'screen', '🎲': 'dice', '👤': 'user', '🧭': 'compass',
   'ⓘ': 'info', '🎯': 'target', '🔧': 'wrench', '👑': 'crown', '📞': 'phone',
+  // ── чыпы-метрыкі на загалоўках Папак/Форм (04.08): фаза 1 іх не ўзяла, бо яны будуюцца не з
+  // `ui-i18n.js`, а рукамі ў хуках `_formNameHtml`/`_folderNameHtml`. Цяпер ідуць праз `TTZOP_chip` ──
+  '💳': 'card', '💾': 'save', '💽': 'disk', '🌍': 'world', '⭐': 'star', '✍': 'pen',
+  '👻': 'ghost', '🚨': 'alarm', '📧': 'mail', '✗': 'close', // ✗ offline — просты крыж, а не «забаронена» (🚫)
+  '🆕': 'fresh', '👀': 'eye', // статусы заказу: астатнія сем ужо былі ў каталогу, гэтыя два падалі ў эмодзі
 };
 // іконкі, якіх у наборы ⋯-меню не было (ён закрываў толькі меню і дыялогі)
 Object.assign(window.TTZOP_MENU_ICONS, {
@@ -153,11 +158,91 @@ Object.assign(window.TTZOP_MENU_ICONS, {
   crown:'<path d="M2.6 12.2h10.8M3.1 11 2.3 5.2l3.2 2.3L8 3.6l2.5 3.9 3.2-2.3-.8 5.8Z" stroke="currentColor" stroke-width="1.35" stroke-linejoin="round"/>',
   phone:'<path d="M3.1 2.6h2.4L7 6 5.5 7.2a7.8 7.8 0 0 0 3.3 3.3L10 9l3.4 1.5v2.4c0 .8-.7 1.4-1.5 1.4C6.5 13.9 2.1 9.5 1.7 4.1c0-.8.6-1.5 1.4-1.5Z" stroke="currentColor" stroke-width="1.35" stroke-linejoin="round"/>',
   mail:'<rect x="1.9" y="3.6" width="12.2" height="8.8" rx="1.2" stroke="currentColor" stroke-width="1.4"/><path d="m2.2 4.6 5.8 3.9 5.8-3.9" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/>',
+  // ── чыпы-метрыкі загалоўкаў (04.08). Малюнак тут БОЛЬШ схематычны, чым у меню: чып жыве на 0.72rem
+  // (≈11px), і дробныя дэталі на такім памеры зліваюцца ў пляму — правяралася вокам на радку сайта ──
+  card:'<rect x="1.8" y="3.6" width="12.4" height="8.8" rx="1.6" stroke="currentColor" stroke-width="1.4"/><path d="M1.8 6.6h12.4" stroke="currentColor" stroke-width="1.5"/><path d="M4.2 9.8h2.6" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/>',
+  save:'<path d="M2.6 4.1q0-1.5 1.5-1.5h6.6L13.4 5.4v6.5q0 1.5-1.5 1.5H4.1q-1.5 0-1.5-1.5Z" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/><path d="M5.2 2.6h5v3.2h-5Z" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/><path d="M5 9.2h6v4.2H5Z" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/>',
+  disk:'<circle cx="8" cy="8" r="5.6" stroke="currentColor" stroke-width="1.4"/><circle cx="8" cy="8" r="1.5" stroke="currentColor" stroke-width="1.3"/><path d="M8 2.4a5.6 5.6 0 0 1 4.9 2.9" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/>',
+  // 🌍 «увесь свет» ≠ 🌐 translate (той — меридыяны): тут контур мацерыкоў, каб два глобусы ў адным
+  // радку (расход перакладаў × агульная квота пошты) не чыталіся як адна і тая ж лічба
+  world:'<circle cx="8" cy="8" r="5.6" stroke="currentColor" stroke-width="1.4"/><path d="M4.1 5.2q1.3.9 2.4.3t1.9.5-.4 2.1-2 .5-1.5 1.4.9 2.2" stroke="currentColor" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round" fill="none"/><path d="M11.9 5.4q-1.4.5-1.2 1.7t1.9 1.1" stroke="currentColor" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round" fill="none"/>',
+  star:'<path d="M8 2.2 9.8 6l4.1.5-3 2.8.8 4.1L8 11.5 4.3 13.4l.8-4.1-3-2.8L6.2 6Z" stroke="currentColor" stroke-width="1.35" stroke-linejoin="round"/>',
+  pen:'<path d="M10.6 2.9 13.1 5.4 5.9 12.6l-3.3.7.7-3.3z" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/><path d="M9.4 4.1 11.9 6.6" stroke="currentColor" stroke-width="1.3"/>',
+  ghost:'<path d="M3.4 13.4V7.2a4.6 4.6 0 0 1 9.2 0v6.2l-1.5-1.2-1.5 1.2-1.6-1.2-1.6 1.2-1.5-1.2Z" stroke="currentColor" stroke-width="1.35" stroke-linejoin="round"/><circle cx="6.4" cy="7" r="0.85" fill="currentColor"/><circle cx="9.6" cy="7" r="0.85" fill="currentColor"/>',
+  alarm:'<path d="M4 10.6V7.4a4 4 0 1 1 8 0v3.2l1.2 1.5H2.8Z" stroke="currentColor" stroke-width="1.35" stroke-linejoin="round"/><path d="M6.6 12.1a1.5 1.5 0 0 0 2.8 0" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/>',
+  // 🆕 «новае» — іскра, а не надпіс NEW: літары на 11px не чытаюцца і не перакладаюцца на 13 моў
+  fresh:'<path d="M8 1.9 9.5 6.5 14.1 8 9.5 9.5 8 14.1 6.5 9.5 1.9 8 6.5 6.5Z" stroke="currentColor" stroke-width="1.35" stroke-linejoin="round"/>',
 });
+
+// ═══ 🏷 ЧЫП ЗАГАЛОЎКА — АДЗІНЫ БУДАЎНІК метрык-пазнак (04.08) ═══
+// ⚠️ Быў Ctrl-C/Ctrl-V: кожны чып пісаў рукамі `font-size:0.72rem;color:{тры тэрнарнікі};margin-left:6px;
+// white-space:nowrap` — і стылі ўжо разышліся (0.72rem у радку сайта, 0.75rem у Аглядзе, `margin` то
+// ёсць, то не), а эмодзі ў іх заставаўся эмодзі: фаза 1 бачыла толькі надпісы з `ui-i18n.js`.
+// 🔑 ГАЛОЎНАЕ ТУТ — МЯЖА, і яна механічная, а не «не забыцца»: `ico` — НАША іконка (ідзе праз каталог),
+// `text` — ЗАЎСЁДЫ даныя (заўсёды экрануецца). Прагнаць увесь загаловак праз `ttIcoText` нельга: у ім
+// назва, якую пісаў кліент, і яго 🎉 у імені папкі — гэта ЯГО тэкст, а не наша іконка.
+// 🎨 КОЛЕР ІКОНКІ ЧЫПА — ДВА РЭЖЫМЫ, і мяжа паміж імі не «густ», а НАЯЎНАСЦЬ СІГНАЛУ:
+//   · тон нясе СТАН (warn/crit/ok ці яўны колер) → іконка бярэ колер тону. Чырвонае «квота
+//     вычарпана» мусіць застацца чырвоным у любой схеме — стан пераважвае аздабленне;
+//   · тон НЕЙТРАЛЬНЫ (mute/fg/пуста) → сігналу няма, і колер аддаецца СХЕМЕ іконак (`mi-<id>`).
+// ⚠️ Спярша я аддаў колер тону заўсёды — і ў «Каляровай» схеме ўвесь радок Формы стаў шэры
+// (заўвага карыстальніка 04.08). Шэры — гэта таксама сцвярджэнне («усё спакойна»), і рабіць яго
+// адзіным магчымым выглядам значыла адабраць у схемы тое, чым яна кіруе.
+window.TTZOP_CHIP_TONES = { mute:'var(--muted)', fg:'var(--fg)', accent:'var(--accent)', ok:'#22c55e', warn:'#f59e0b', crit:'#ef4444' };
+// 📊 парог → тон АДНЫМ месцам: кожны чып-лічнік пісаў свой ланцуг тэрнарнікаў, і межы разыходзіліся
+// (70/90 у файлах, 60/85 у KV, «max-20» у пошце) без ніводнай прычыны, акрамя парадку напісання.
+window.TTZOP_chipTone = function (used, max, o) {
+  if (!max) return 'mute';                       // без ліміту няма і парога — проста лічба
+  o = o || {};
+  const pct = (Number(used) / Number(max)) * 100;
+  return pct >= (o.crit == null ? 100 : o.crit) ? 'crit' : pct >= (o.warn == null ? 70 : o.warn) ? 'warn' : 'mute';
+};
+// 🔤 надпіс з `ui-i18n.js` часта ўжо нясе іконку першым токенам («✅ Пацверджаны»). Расшчапленне
+// рабілася рукамі ў двух месцах — цяпер яно ў МЕХАНІЗМЕ: `label` сам дзеліцца на ico+text.
+// ⚠️ Дзелім толькі калі першы токен РЭАЛЬНА знак, а не слова: інакш «Новы заказ» страціў бы слова.
+// 🔑 Правіла па СУТНАСЦІ, а не па спісе дыяпазонаў: «знак» = у токене няма ніводнай літары і лічбы.
+// Спіс кодавых блокаў тут ужо падводзіў — 🆕 (U+1F195) не трапляе ў «эмодзі» 1F300–1FAFF, і
+// расшчапленне ціха не спрацоўвала. Новы эмодзі з любога будучага блока працуе сам.
+const _CHIP_WORD_RE = /[\p{L}\p{N}]/u;
+window.TTZOP_chipSplit = function (label) {
+  const s = String(label == null ? '' : label).trim();
+  const i = s.indexOf(' ');
+  if (i <= 0) return { ico: '', text: label };
+  const head = s.slice(0, i);
+  return _CHIP_WORD_RE.test(head) ? { ico: '', text: label } : { ico: head, text: s.slice(i + 1) };
+};
+window.TTZOP_chip = function (o) {
+  if (!o) return '';
+  if (o.label != null) { const p = window.TTZOP_chipSplit(o.label); o = { ...o, ico: o.ico || p.ico, text: p.text }; }
+  const has = o.text != null && o.text !== '';
+  if (!has && !o.ico) return '';                 // пусты чып не месца займае, а знікае
+  const esc = s => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  const col = window.TTZOP_CHIP_TONES[o.tone] || o.tone || 'var(--muted)';
+  // тон нясе стан? (усё, апроч нейтральных mute/fg) — тады схема іконак у колер НЕ ўмешваецца
+  const stateful = !!o.tone && o.tone !== 'mute' && o.tone !== 'fg';
+  // ⚠️ `icoColor` — ЯЎНЫ колер іконкі, толькі для прэв'ю ЧУЖОЙ схемы (`_pvHeadHtml`): клас
+  // `mi-<id>` дае колер БЯГУЧАЙ схемы, і ўсе тры прэв'ю выглядалі б аднолькава. Тая ж пастка і
+  // той жа выхад, што ў `_icoFolder(col)`
+  let ico = o.ico ? window.ttIcoText(esc(o.ico), { scheme: !stateful && !o.icoColor }) : '';
+  if (ico && o.icoColor && !stateful) ico = `<span style="color:${esc(o.icoColor)};display:inline-flex">${ico}</span>`;
+  const txt = has ? esc(o.text) : '';
+  const box = o.outline ? 'border:1px solid currentColor;border-radius:10px;padding:0 7px;opacity:0.9;' : '';
+  const ttl = o.title ? ` title="${esc(o.title)}"` : '';
+  // `lead` — чып ПЕРАД назвай (⭐ уласны сайт): адступ мусіць быць з другога боку, інакш ён
+  // адсоўвае сам сябе ад краю радка замест таго, каб аддзяліцца ад назвы
+  const gap = o.lead ? 'margin-right:6px' : 'margin-left:6px';
+  // 🏷 клас-пазнака `tt-chip` — каб чып быў ПАЗНАВАЛЬНЫ ў DOM. Без яе праверка вымушана мераць
+  // «любы дробны span з эмодзі» і трапляе ў чужое (надпісы з `ui-i18n.js` таксама нясуць эмодзі):
+  // тэст мераў бы не тое, што сцвярджае. Класу няма ў CSS — ён падпіс, а не стыль.
+  return `<span class="tt-chip" style="font-size:0.72rem;color:${col};${gap};white-space:nowrap;display:inline-flex;align-items:center;gap:3px;${box}${o.dim ? 'opacity:0.5;' : ''}"${ttl}>${ico}${txt}</span>`;
+};
 // адзін праход па надпісе: усе вядомыя эмодзі → SVG таго ж памеру, што тэкст побач
+// `opts.scheme` — дадаць клас `mi mi-<id>`, каб колерам іконкі кіравала СХЕМА (як у ⋯-меню і
+// бакавога меню). Па змаўчанні НЕ дадаецца: у кнопках і загалоўках іконка мусіць пераймаць колер
+// свайго кантэксту (danger-чырвоны, акцэнт актыўнага) — там клас біўся б з ім.
 window.ttIcoText = (function () {
   let RE = null;
-  return function (str) {
+  return function (str, opts) {
     if (str == null) return str;
     const s = String(str);
     if (!s) return s;
@@ -166,10 +251,11 @@ window.ttIcoText = (function () {
       const keys = Object.keys(window.TTZOP_ICON_EMOJI).sort((a, b) => b.length - a.length);
       RE = new RegExp('(' + keys.map(k => k.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|') + ')\uFE0F?', 'g');
     }
+    const sch = !!(opts && opts.scheme);
     return s.replace(RE, (m, k) => {
-      const p = window.TTZOP_MENU_ICONS[window.TTZOP_ICON_EMOJI[k]];
+      const id = window.TTZOP_ICON_EMOJI[k], p = window.TTZOP_MENU_ICONS[id];
       // 1em — іконка роўная тэксту побач (загаловак, кнопка, пункт меню) і не ламае вёрстку
-      return p ? `<svg viewBox="0 0 16 16" width="1em" height="1em" fill="none" style="display:inline-block;vertical-align:-0.13em;flex-shrink:0" aria-hidden="true">${p}</svg>` : m;
+      return p ? `<svg${sch ? ` class="mi mi-${id}"` : ''} viewBox="0 0 16 16" width="1em" height="1em" fill="none" style="display:inline-block;vertical-align:-0.13em;flex-shrink:0" aria-hidden="true">${p}</svg>` : m;
     });
   };
 })();

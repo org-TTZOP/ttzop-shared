@@ -3448,7 +3448,7 @@ function _privacyFolderNameHtml(folder) {
   const date = f.createdAt ? fmtDate(f.createdAt) : '';
   return `<span class="node-folder-name">${escHtml(_nodeName(folder))}</span>${_privacyVerWarn(folder)}
     <span style="font-size:0.78rem;color:var(--muted);margin-left:6px">${date}</span>
-    ${f.accepted ? `<span style="font-size:0.8rem;color:var(--success);font-weight:600;margin-left:6px" title="${t('th_accepted')}">✓${f.accepted}</span>` : ''}`;
+    ${f.accepted ? _chip({ ico: '✓', text: f.accepted, tone: 'ok', title: t('th_accepted') }) : ''}`;
 }
 // ⋯: ➕ на Папцы «Версіі дакумента», прагляд/пералік — на самой Форме-версіі; астатнім нічога.
 function _privacyMenuExtraHtml(node) {
@@ -4259,9 +4259,9 @@ function _clientsFolderNameHtml(folder, childCount) {
   if (folder.contentType === 'client-sub') {
     const titles = { orders: t('section_orders'), history: t('client_history'), privacy: t('section_privacy_acc') };
     const count = f._kind === 'orders' ? (f.orders?.length ?? 0) : (f._loaded === false ? null : childCount);
-    return `<span class="node-folder-name">${escHtml(titles[f._kind] || _nodeName(folder))}</span>${count === null ? '' : `<span style="font-size:0.78rem;color:var(--muted);margin-left:4px">(${count})</span>`}`;
+    return `<span class="node-folder-name">${escHtml(titles[f._kind] || _nodeName(folder))}</span>${count === null ? '' : _countHtml(count)}`;
   }
-  return `<span class="node-folder-name">${escHtml(_nodeName(folder))}</span><span style="font-size:0.78rem;color:var(--muted);margin-left:4px">(${childCount})</span>`;
+  return `<span class="node-folder-name">${escHtml(_nodeName(folder))}</span>${_countHtml(childCount)}`;
 }
 
 function _clientsFormNameHtml(form) {
@@ -4558,7 +4558,12 @@ function _nodeKeepScroll(id, fn) {
   requestAnimationFrame(fix);
   setTimeout(() => { fix(); release(); }, 120); // Quill мантуецца не ў першым кадры; потым адпускаем вышыню
 }
-function nodeRender() { const s = currentNodeState; _nodeKeepScroll(s?.focusedId, () => s?._renderFn?.()); }
+// ⚠️ ЯКАР БОЛЬШ НЕ ТУТ: ён пераехаў УНУТР `renderNodeEditor` — адзінай кропкі, дзе рэндэр рэальна
+// адбываецца. Прычына (пытанне карыстальніка 03.08 «ці ва ўсіх РМ будзе працаваць?»): праз
+// `nodeRender()` ішло 98 выклікаў, а міма яго — яшчэ 65 прамых `renderNodeEditor(...)` і некалькі
+// `_renderFn()`. Механізм у ВЫКЛІКАЎЦЫ пакрывае толькі тых, хто пра яго ведае; механізм у РЭНДЭРЫ
+// не абмінеш ніяк.
+function nodeRender() { const s = currentNodeState; s?._renderFn?.(); }
 // перарэндэр раздзела + ⓘ-драўэра (калі адкрыты) — замест nodeRender() у кантэксце ⓘ-панэлі
 function _nodeRefresh() { nodeRender(); if (document.getElementById('info-drawer')?.style.display === 'flex') renderInfoDrawerTree(); }
 // 💾 Debounce захавання: хуткія праўкі палёў (onblur кожнага поля) склейваюцца ў 1 KV-запіс
@@ -4646,7 +4651,7 @@ let sectionsState = {
   _folderNameHtml: (folder, c) => { // секцыя: іконка+назва праз getSection* (без падвойнай іконкі); унутраныя папкі — _folderLabel
     // folder.name першы — пераназванне карыстальніка (sections.{key}_name) мусіць перамагаць аўтамоўную назву (фікс v4.557: рэнейм «нічога не мяняў на экране»)
     const label = folder._secKey ? (getSectionIcon(folder._secKey) + ' ' + (folder.name || getSectionName(folder._secKey))) : _folderLabel(folder);
-    return `<span class="node-folder-name">${escHtml(label)}</span><span style="font-size:0.78rem;color:var(--muted);margin-left:4px">(${c})</span>`;
+    return `<span class="node-folder-name">${escHtml(label)}</span>${_countHtml(c)}`;
   },
   _renderFn: () => { currentNodeState = sectionsState; renderNodeEditor(sectionsState); },
   _saveFn: () => _sectionsSave(),
@@ -4931,7 +4936,7 @@ let siteSectionsState = {
   _drawerTrash: () => _nodeTrashHtml(siteSectionsState), // ⓘ Папкі-0 паказвае Сметніцу (localOnly-шлях драўэра)
   _formNameHtml: form => _siteSecName(form),
   // 🎛 вар. б (2026-07-07): шэрая пазнака ▸ на згорнутым-на-сайце раздзеле + тогл у ⋯
-  _folderNameHtml: (folder, c) => `<span class="node-folder-name">${escHtml(_folderLabel(folder))}</span>${folder.fields?._siteCollapsed ? ` <span style="opacity:0.5" title="${escHtml(t('st_col_yes'))}">▸</span>` : ''}<span style="font-size:0.78rem;color:var(--muted);margin-left:4px">(${c})</span>`,
+  _folderNameHtml: (folder, c) => `<span class="node-folder-name">${escHtml(_folderLabel(folder))}</span>${folder.fields?._siteCollapsed ? ` <span style="opacity:0.5" title="${escHtml(t('st_col_yes'))}">▸</span>` : ''}${_countHtml(c)}`,
   _nodeMenuExtra: (node, mid) => (node.type === 'folder' && node.contentType === 'sitepage-folder')
     ? `<button class="node-overflow-item" title="${t('st_collapsed')}: ${t(node.fields?._siteCollapsed ? 'st_col_yes' : 'st_col_no')}" onclick="_siteFolderFoldToggle('${node.id}');nodeCloseOverflow('${mid}')">${node.fields?._siteCollapsed ? '▸' : '▾'}</button>` : '',
   _renderFn: () => { currentNodeState = siteSectionsState; renderNodeEditor(siteSectionsState); _siteGamesInit(); },
@@ -5077,7 +5082,7 @@ function _siteSecName(form) { // назва радка: іконка тыпу + 
   const title = _mlGet(f.title, _settingsLang()) || t('vt_' + view);
   const srcTarget = { services: 'sec-host' }[form._source]; // бэдж крыніцы: клік → корань Каталога (дрэва пад Формай-0)
   const src = srcTarget
-    ? ` <span style="font-size:0.72rem;color:var(--muted);border:1px solid var(--border);border-radius:6px;padding:0 6px;cursor:pointer;white-space:nowrap" onclick="event.stopPropagation();_navToNode('sections','${srcTarget}',{})" title="${escHtml(t('ss_source_' + form._source))}">⚙ ${escHtml(t('ss_source_' + form._source))} ↗</span>` : '';
+    ? ` <span style="cursor:pointer" onclick="event.stopPropagation();_navToNode('sections','${srcTarget}',{})">${_chip({ ico: '⚙', outline: true, title: t('ss_source_' + form._source), text: t('ss_source_' + form._source) + ' \u2197' })}</span>` : '';
   return `${icon} ${escHtml(title)}${src}`;
 }
 function _siteSectionsSave() { // дрэва → sections.sections (той жа аб'ект, што піша стары РМ) → debounce-запіс sections.json
@@ -5461,7 +5466,7 @@ function _folderNodeHtml(folder, s, fi, total, childrenAreSide, depth) {
   const folderSel = s.selected.has(folder.id);
   const parts = _nodeRowBtns(folder, s);
   const { toggleHtml, iconHtml, checkBtn, layoutBtn, activeDot, currentDot, lockIcon, descHtml } = parts;
-  const nameHtml = s._folderNameHtml ? s._folderNameHtml(folder, childCount) : `<span class="node-folder-name">${escHtml(_folderLabel(folder))}</span><span style="font-size:0.78rem;color:var(--muted);margin-left:4px">(${childCount})</span>`;
+  const nameHtml = s._folderNameHtml ? s._folderNameHtml(folder, childCount) : `<span class="node-folder-name">${escHtml(_folderLabel(folder))}</span>${_countHtml(childCount)}`;
   const bodyHtml = isOpen ? `<div class="node-folder-body">${nodeExpandedHtml(folder, s, {depth})}</div>` : '';
   if (childrenAreSide) {
     // Картка-папка: ▼▼ праз sideToggleBtn (як Form-картка), ↻ схавана (не патрэбна ў картцы)
@@ -6309,6 +6314,14 @@ function _dimMenuBtnHtml() { return `<button class="node-btn-round" title="${t('
 // напісаў кліент: там эмодзі належыць яму.
 // 🛡 Кампанент не загрузіўся → вяртаем радок як ёсць (іконкі — упрыгожванне, не ўмова працы).
 const _ico = str => (typeof window.ttIcoText === 'function' ? window.ttIcoText(str) : str);
+// 🏷 ЧЫП загалоўка (метрыка/статус побач з назвай) — механізм у тым жа кампаненце, тут толькі аліяс.
+// ⛔ Новы чып пішацца ТОЛЬКІ праз `_chip` — эмодзі рукамі ў шаблонным радку абыходзіць каталог іконак
+// і мяжу «наша іконка / чужы тэкст» (гард `check-chip.sh`).
+const _chip = o => (typeof window.TTZOP_chip === 'function' ? window.TTZOP_chip(o) : '');
+const _chipTone = (used, max, o) => (typeof window.TTZOP_chipTone === 'function' ? window.TTZOP_chipTone(used, max, o) : 'mute');
+// 🔢 лічыльнік дзяцей «(N)» на загалоўку Папкі — той жа Ctrl-C/Ctrl-V, што і чыпы (8 аднолькавых
+// радкоў з `0.78rem;margin-left:4px`). Асобны хэлпер, бо гэта не метрыка са станам, а частка НАЗВЫ.
+function _countHtml(n, col) { return n == null || n === '' ? '' : `<span style="font-size:0.78rem;color:${col || 'var(--muted)'};margin-left:4px">(${escHtml(String(n))})</span>`; }
 function _sectionHeaderHtml(titleKey, menuId, menuItems, countHtml = '', extraBtns = '', leadToggle = '') {
   if (!titleKey && !menuItems && !extraBtns && !leadToggle) return '';
   const menuHtml = menuItems ? `<div class="node-overflow" onclick="event.stopPropagation()">
@@ -8809,11 +8822,14 @@ function _icoFilter(active) {
 function _icoShare() { // «Падзяліцца» — эплаўскі квадрацік са стрэлкай угору (замест 📤, жывая заўвага)
   return `<svg viewBox="0 0 14 16" width="14" height="16" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round" style="pointer-events:none;display:block;margin:0 auto"><path d="M4.5 6H3.2Q2.4 6 2.4 6.8V13.2Q2.4 14 3.2 14H10.8Q11.6 14 11.6 13.2V6.8Q11.6 6 10.8 6H9.5"/><path d="M7 10V2.2M4.6 4.4 7 2l2.4 2.4"/></svg>`;
 }
-function _icoFolder() {
-  return `<svg viewBox="0 0 14 12" width="1em" height="0.86em" fill="#f59e0b" style="pointer-events:none;display:inline-block;vertical-align:middle;flex-shrink:0"><path d="M0 4L0 1Q0 0 1 0L5 0L6 4L14 4L14 11Q14 12 13 12L1 12Q0 12 0 11Z"/></svg>`;
+// 📁 Іконка ПАПКІ. ⚠️ Колер ідзе праз СХЕМУ (клас `mi-typeFolder`), а не зашыты ў svg: гэта самая
+// частая іконка на экране, і схема, якая абяцае «монахром», пакідала яе жоўтай — прэв'ю схемы
+// паказвала б адно, а панэль малявала б іншае. Той жа кантракт, што ў ⋯-меню і бакавога меню.
+function _icoFolder(col) {
+  return `<svg class="mi mi-typeFolder" viewBox="0 0 14 12" width="1em" height="0.86em" fill="currentColor" style="pointer-events:none;display:inline-block;vertical-align:middle;flex-shrink:0${col ? ';color:' + col : ''}"><path d="M0 4L0 1Q0 0 1 0L5 0L6 4L14 4L14 11Q14 12 13 12L1 12Q0 12 0 11Z"/></svg>`;
 }
-function _icoFolderOpen() {
-  return `<svg viewBox="0 0 14 12" width="1em" height="0.86em" fill="#f59e0b" style="pointer-events:none;display:inline-block;vertical-align:middle;flex-shrink:0"><path d="M0 4L0 1Q0 0 1 0L5 0L6 4L14 4L14 9L0 9Z" fill-opacity="0.55"/><path d="M0 6L14 6L14 11Q14 12 13 12L1 12Q0 12 0 11Z"/></svg>`;
+function _icoFolderOpen(col) {
+  return `<svg class="mi mi-typeFolder" viewBox="0 0 14 12" width="1em" height="0.86em" fill="currentColor" style="pointer-events:none;display:inline-block;vertical-align:middle;flex-shrink:0${col ? ';color:' + col : ''}"><path d="M0 4L0 1Q0 0 1 0L5 0L6 4L14 4L14 9L0 9Z" fill-opacity="0.55"/><path d="M0 6L14 6L14 11Q14 12 13 12L1 12Q0 12 0 11Z"/></svg>`;
 }
 function _statusDotHtml(statusClass, label, color) {
   return `<span class="${statusClass}" title="${escHtml(label)}" style="display:inline-block;width:9px;height:9px;border-radius:50%;background:${color || 'currentColor'};flex-shrink:0"></span>`;
@@ -8830,11 +8846,11 @@ function _nodeParentIsSide(s, node) {
 }
 
 // Іконка ФОРМЫ (парытэт з папкай): згорнута — нізкая картка, разгорнута — высокая з радкамі
-function _icoForm() {
-  return `<svg viewBox="0 0 12 12" width="0.95em" height="0.95em" fill="none" stroke="#60a5fa" stroke-width="1.4" style="pointer-events:none;display:inline-block;vertical-align:middle;flex-shrink:0"><rect x="1.5" y="3.5" width="9" height="5" rx="1"/></svg>`;
+function _icoForm(col) {
+  return `<svg class="mi mi-typeForm" viewBox="0 0 12 12" width="0.95em" height="0.95em" fill="none" stroke="currentColor" stroke-width="1.4" style="pointer-events:none;display:inline-block;vertical-align:middle;flex-shrink:0${col ? ';color:' + col : ''}"><rect x="1.5" y="3.5" width="9" height="5" rx="1"/></svg>`;
 }
-function _icoFormOpen() {
-  return `<svg viewBox="0 0 12 12" width="0.95em" height="0.95em" fill="none" stroke="#60a5fa" stroke-width="1.2" style="pointer-events:none;display:inline-block;vertical-align:middle;flex-shrink:0"><rect x="1.5" y="1" width="9" height="10" rx="1"/><line x1="3.5" y1="3.5" x2="8.5" y2="3.5"/><line x1="3.5" y1="6" x2="8.5" y2="6"/><line x1="3.5" y1="8.5" x2="8.5" y2="8.5"/></svg>`;
+function _icoFormOpen(col) {
+  return `<svg class="mi mi-typeForm" viewBox="0 0 12 12" width="0.95em" height="0.95em" fill="none" stroke="currentColor" stroke-width="1.2" style="pointer-events:none;display:inline-block;vertical-align:middle;flex-shrink:0${col ? ';color:' + col : ''}"><rect x="1.5" y="1" width="9" height="10" rx="1"/><line x1="3.5" y1="3.5" x2="8.5" y2="3.5"/><line x1="3.5" y1="6" x2="8.5" y2="6"/><line x1="3.5" y1="8.5" x2="8.5" y2="8.5"/></svg>`;
 }
 // SVG-набор іконак ⋯-меню пераехаў у АГУЛЬНЫ assets/js/menu-icons.js (адзін кампанент: панэль + сайт/Чарнавік,
 // як reader.js/cdate.js). Тут — толькі спасылка, без дубля (крыніца праўды адна на ўсе тры куткі).
@@ -8855,10 +8871,21 @@ const ICON_SCHEMES = {
        // бакавое меню (навігацыя РМ) — тыя ж хады, што несла эмодзі-разметка
        navMonitor:'#60a5fa', navTest:'#a78bfa', navGeneral:'#94a3b8', navPrivacy:'#fbbf24', navClients:'#38bdf8',
        navOrders:'#f59e0b', navAppointments:'#34d399', navDelivery:'#f472b6', navSitepage:'#f97316', navSections:'#fbbf24',
-       navReports:'#4ade80', navLanguages:'#38bdf8', navTheme:'#ec4899', navPanelview:'#94a3b8', navRelax:'#a78bfa', navUsers:'#a3b3c9', navChats:'#60a5fa' },
+       navReports:'#4ade80', navLanguages:'#38bdf8', navTheme:'#ec4899', navPanelview:'#94a3b8', navRelax:'#a78bfa', navUsers:'#a3b3c9', navChats:'#60a5fa',
+       // тыпы вузлоў у дрэве: былі зашытыя ў _icoFolder/_icoForm і схеме не падпарадкоўваліся —
+       // манахромная B пакідала папку жоўтай, і прэв'ю схемы паказвала не тое, што малюе панэль
+       typeFolder:'#f59e0b', typeForm:'#60a5fa',
+       // 🏷 іконкі ЧЫПАЎ на загалоўках (метрыкі і статусы). Колер адсюль дзейнічае, толькі пакуль
+       // тон нейтральны: чып з warn/crit малюецца колерам СТАНУ — гл. `stateful` у TTZOP_chip
+       save:'#38bdf8', mail:'#a78bfa', disk:'#34d399', chart:'#4ade80', world:'#38bdf8', star:'#fbbf24',
+       pen:'#f472b6', ghost:'#94a3b8', money:'#22c55e', card:'#f59e0b', alarm:'#ef4444', fresh:'#38bdf8',
+       ok:'#22c55e', no:'#ef4444', close:'#94a3b8', pause:'#94a3b8', play:'#4ade80', box:'#fbbf24',
+       users:'#38bdf8', cart:'#f59e0b', rocket:'#f97316', clock:'#a3b3c9', calendar:'#34d399' },
   B: {},
   C: { addFolder:'#f59e0b', move:'#f59e0b', share:'#f97316', translate:'#f97316', del:'#ef4444', refresh:'#94a3b8',
-       filePdf:'#ef4444', link:'#f97316', navChats:'#f97316' }, // якары: небяспека/спасылка/жывая перапіска
+       filePdf:'#ef4444', link:'#f97316', navChats:'#f97316',
+       typeFolder:'#f59e0b', alarm:'#ef4444', no:'#ef4444', money:'#f97316',
+       }, // якары: небяспека/спасылка/жывая перапіска; Папка — якар навігацыі, Форма шэрая
 };
 const ICON_SCHEME_IDS = ['A', 'B', 'C'];
 let _iconScheme = 'A'; // дэфолт з каробкі — каляровая (A); перакрываецца localStorage/сервернымі prefs
@@ -8979,7 +9006,31 @@ function _pvNavHtml(sc) { // макет сайдбара; першы радок 
   }).join('');
   return `<div style="width:162px;flex:0 0 auto;background:var(--surface);border:1px solid var(--border);border-radius:11px;padding:6px">${rows}</div>`;
 }
-// цела Формы-схемы (секцыя-прэв'ю): апісанне + ДВЕ вобласці — бакавое меню (злева) і ⋯-меню — у колерах гэтай схемы
+// 🏷 прэв'ю ЗАГАЛОЎКАЎ Папкі і Формы — трэцяя вобласць (заўвага карыстальніка 04.08: у прэв'ю не было
+// відаць роўна таго месца, дзе іконак найбольш). Радкі будуюцца ТЫМІ Ж хэлперамі, што і жывое дрэва
+// (`_icoFolder`/`_icoForm` + `_chip` + `_countHtml`) — інакш прэв'ю малявала б чыпы ДРУГІМ кодам
+// і ціха разышлося б з панэллю (клас «дзве крыніцы аднаго значэння»).
+// ⚠️ Чыпы тут наўмысна ў ТОНАХ (шэры/жоўты/чырвоны), а не ў колерах схемы: стан пераважвае аздабленне,
+// і чалавек мусіць бачыць у прэв'ю праўду — «чырвонае застанецца чырвоным у любой схеме».
+// рэпрэзентатыўны набор: нейтральны · папярэджанне · крытычны — усе тры тоны разам.
+// ⚠️ Нейтральны нясе `mi` — ЯГО колер бярэ схема, і роўна гэта прэв'ю мусіць паказаць;
+// два астатнія — стан, яны аднолькавыя ва ўсіх схемах, і гэта таксама праўда пра механізм
+const PV_HEAD_CHIPS = [
+  { ico: '💾', text: '540/1000', tone: 'mute', mi: 'save' }, { ico: '📧', text: '78/90', tone: 'warn' }, { ico: '⚠', text: '3', tone: 'crit' },
+];
+function _pvHeadHtml(sc) {
+  const col = id => _pvColor(sc, id);
+  const row = (icoHtml, name, chips, cnt) => `<div style="display:flex;align-items:center;gap:5px;padding:5px 7px;border-radius:7px;background:var(--surface2);font-size:0.82rem">
+      <span style="opacity:0.6">▼</span>${icoHtml}<span style="white-space:nowrap">${escHtml(name)}</span>${cnt != null ? _countHtml(cnt) : ''}${chips}</div>`;
+  // ⚠️ колер перадаём ЯЎНА (`_icoFolder(col)`): у прэв'ю паказваем НЕ бягучую схему, а тую, пра якую
+  // гэтая Форма — клас `mi-typeFolder` даў бы колер актыўнай, і ўсе тры прэв'ю выглядалі б аднолькава
+  const chips = PV_HEAD_CHIPS.map(c => _chip(c.mi ? { ...c, icoColor: col(c.mi) } : c)).join('');
+  return `<div style="width:250px;flex:0 0 auto;background:var(--surface);border:1px solid var(--border);border-radius:11px;padding:6px;display:flex;flex-direction:column;gap:5px">
+      ${row(_icoFolderOpen(col('typeFolder')), t('pv_head_folder'), '', 3)}
+      ${row(_icoFormOpen(col('typeForm')), t('pv_head_form'), chips)}
+    </div>`;
+}
+// цела Формы-схемы (секцыя-прэв'ю): апісанне + ТРЫ вобласці — бакавое меню, ⋯-меню і загалоўкі — у колерах гэтай схемы
 function _pvSchemeBody(form) {
   const sc = form.fields?._scheme || 'A';
   const descKey = { A: 'pv_a_desc', B: 'pv_b_desc', C: 'pv_c_desc' }[sc] || 'pv_a_desc';
@@ -8988,6 +9039,7 @@ function _pvSchemeBody(form) {
     <div style="display:flex;gap:16px;flex-wrap:wrap;align-items:flex-start">
       <div><div style="${cap}">${escHtml(t('pv_prev_nav'))}</div>${_pvNavHtml(sc)}</div>
       <div><div style="${cap}">${escHtml(t('pv_prev_menu'))}</div>${_pvMenuHtml(sc)}</div>
+      <div><div style="${cap}">${escHtml(t('pv_prev_head'))}</div>${_pvHeadHtml(sc)}</div>
     </div>`;
 }
 FORM_SCHEMAS.pvScheme = { sections: [{ type: 'table', title: 'pv_preview', dataKey: '_pvPreview', bodyFn: form => _pvSchemeBody(form) }] }; // адна секцыя-прэв'ю (Table-продак з bodyFn)
@@ -9814,7 +9866,7 @@ function _trashTreeHtml(cfg) {
       <span class="node-folder-toggle${rootOpen?' open':''}" style="cursor:pointer" onclick="_trashViewToggle('${rootId}');${rerender}">▶</span>
       <span style="display:flex;align-items:center">🗑</span>
       <span class="node-folder-name">${escHtml(rootName)}</span>
-      <span style="font-size:0.78rem;color:var(--muted);margin-left:4px">(${topCount})</span>
+      ${_countHtml(topCount)}
       ${expandBtn(rootId, folderIds)}
     </div>
     ${rootOpen ? `<div class="node-folder-body">${kidsHtml(null)}</div>` : ''}
@@ -10359,7 +10411,7 @@ function nodeRootHtml(s, headerExtra = '', bodyHtml = '') {
   const refreshHtml = cap('hasRefresh') ? _nodeRefreshToolbarHtml(s) : '';
   const rootName = typeof s._rootName === 'function' ? s._rootName() : s._rootName;
   const rootCount = s.data?.nodes?.filter(n => n.type === 'folder' && (n.parentId ?? null) === null).length ?? 0;
-  const nameHtml = rootName ? `<span class="node-folder-name">${escHtml(rootName)}</span><span style="font-size:0.78rem;color:var(--muted);margin-left:4px">(${rootCount})</span>` : '';
+  const nameHtml = rootName ? `<span class="node-folder-name">${escHtml(rootName)}</span>${_countHtml(rootCount)}` : '';
   const toggleBtn = _toggleSpan(isOpen, 'nodeToggleRoot()'); // ааП: _toggleSpan з ПРОДАКФПФ
   return `<div class="node-folder${isOpen?' is-open':''}" id="nf-root-${s._section}">
     <div class="node-folder-header">
@@ -10415,6 +10467,18 @@ function _renderIfVisible(s) {
 function renderNodeEditor(s) {
   const editor = document.getElementById(s._editorId);
   if (!editor || !s.data) return;
+  // ⚓ ЯКАР ПРАКРУТКІ — ТУТ, а не ў выклікаўцаў: любы шлях (nodeRender, прамы выклік з кутка,
+  // ленавая загрузка) атрымлівае яго аўтаматычна. `_rendering` — ахова ад двайной абгорткі, калі
+  // выклікаўца ўсё ж абгарнуў сам.
+  if (!s._rendering) {
+    s._rendering = true;
+    try { _nodeKeepScroll(s.focusedId, () => _renderNodeEditorBody(s, editor)); }
+    finally { s._rendering = false; }
+    return;
+  }
+  _renderNodeEditorBody(s, editor);
+}
+function _renderNodeEditorBody(s, editor) {
   // ⛶ Вялікае акно трымае ЖЫВЫ вузел дрэва ў сябе. Замена innerHTML пры адкрытым акне пакідала
   // яго сіратой: у DOM з'яўляўся другі рэдактар, а пры ✕ вузел вяртаўся ў ужо мёртвую памятку
   // (злоўлена смоўкам — 2 хосты замест 1). Таму спярша вяртаем на месца, потым перамалёўваем;
@@ -10971,7 +11035,7 @@ let appointmentsState = { _headerExtraHtml: _apptHeaderHtml,
   _treeSortExtra: (pid, kids) => kids.some(k => k.fields?.drawerType === 'appt_item') ? [{ key: '_time', label: t('appt_time'), get: n => n.fields?.time || '' }] : [],
   _childrenSort: (a, b) => _apptChildrenSort(a, b),
   _formNameHtml: form => { if (form.id === 'appt-host') return escHtml(t('nav_appointments')); const f = form.fields || {}; return escHtml([_apptTimeText(f.time, _apptPrimaryResId(f), f.date), f.serviceName, f.clientName].filter(Boolean).join(' · ')) || `<span style="color:var(--muted)">—</span>`; }, // Форма-0 = назва РМ, запісы = час(HQ+лакальны)·паслуга·кліент
-  _folderNameHtml: (folder, cnt) => `<span class="node-folder-name">${escHtml(_nodeName(folder))}</span><span style="font-size:0.78rem;color:var(--muted);margin-left:4px">(${cnt})</span>`,
+  _folderNameHtml: (folder, cnt) => `<span class="node-folder-name">${escHtml(_nodeName(folder))}</span>${_countHtml(cnt)}`,
   _drawerRelated: node => node?.formSchema === 'appointmentDetails' ? _apptCardHtml(node.fields) // ⓘ-drawer запісу = картка вокселя
     : node?.contentType === 'appt-date' ? _apptDayScheduleCard(node) : '', // ⓘ-drawer Папкі-дня = графік працы філіяла(-ў) на гэты дзень
   _onFocus: node => { // клік па Форме-Запісі → падсвяціць адпаведны кубік у Кубе (куб і спіс — адны даныя, два выгляды)
@@ -12593,7 +12657,7 @@ function _ordersFolderNameHtml(folder, childCount) {
         ${folder.fields.email ? `<span style="font-size:0.72rem;color:var(--muted);max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escHtml(folder.fields.email)}</span>` : ''}`;
     }
     return `<span class="node-folder-name">${escHtml(_nodeName(folder))}</span>
-      ${posCount ? `<span style="font-size:0.78rem;color:var(--muted);margin-left:4px">(${posCount})</span>` : ''}
+      ${posCount ? `${_countHtml(posCount)}` : ''}
       ${loading ? `<span style="font-size:0.7rem;color:var(--muted);margin-left:6px">···</span>`
         : folder.fields.status ? `<span class="node-form-badge ${statClass}" style="margin-left:6px">${escHtml(statLabel)}</span>` : ''}
       ${(() => { const a = folder.fields.amount, c = folder.fields.cartTotal;
@@ -12607,7 +12671,7 @@ function _ordersFolderNameHtml(folder, childCount) {
   const _dTotal = _dOrders.reduce((s, n) => s + (parseFloat(n.fields.amount) || 0), 0);
   const _dCur = (_dOrders[0]?.fields.amount || '').replace(/[\d.]/g, '').trim();
   const _dSumHtml = _dTotal > 0 ? `<span style="font-size:0.78rem;color:var(--accent);font-weight:600;margin-left:6px">${_dTotal}${_dCur ? ' ' + _dCur : ''}</span>` : '';
-  return `<span class="node-folder-name">${escHtml(_nodeName(folder))}</span><span style="font-size:0.78rem;color:var(--muted);margin-left:4px">(${childCount})</span>${_dSumHtml}`;
+  return `<span class="node-folder-name">${escHtml(_nodeName(folder))}</span>${_countHtml(childCount)}${_dSumHtml}`;
 }
 async function _lazyLoadOrderFolder(folder) {
   if (folder.fields?.drawerType === 'date_stats' && !folder.fields._loaded) {
@@ -15088,40 +15152,47 @@ let monitorState = {
       // 🏷️ бэдж статусу на РАДКУ (жывая заўвага 2026-07-10): стан сайта бачны без разгортвання формы
       const chipCol = col !== 'var(--fg)' ? col : 'var(--muted)';
       const stLblRaw = t('order_' + status), stLbl = stLblRaw === 'order_' + status ? status : stLblRaw; // невядомы статус → як ёсць (t() вяртае ключ)
-      const stBadge = status ? `<span style="font-size:0.72rem;color:${chipCol};border:1px solid currentColor;border-radius:10px;padding:0 7px;margin-left:8px;white-space:nowrap;opacity:0.9">${escHtml(stLbl)}</span>` : '';
+      const stBadge = status ? _chip({ label: stLbl, tone: chipCol, outline: true }) : ''; // `label` — надпіс сам дзеліцца на знак+слова
       // 🌐 бэйдж расходу перакладаў: засталося бясплатных за месяц + купленых крэдытаў (чырвоны пры 0)
       const ff = form.fields || {}, trLeft = Math.max(0, (+ff.trMax || 5) - (+ff.trUsed || 0)), trCred = +ff.trCredits || 0;
-      const trBadge = `<span style="font-size:0.72rem;color:${trLeft <= 0 && trCred <= 0 ? '#ef4444' : 'var(--muted)'};margin-left:6px;white-space:nowrap" title="${escHtml(t('tr_client_badge_title'))}">🌐${trLeft}+${trCred}</span>`;
-      const star = form.fields?._self ? `<span title="${escHtml(t('mon_self_site'))}">⭐ </span>` : ''; // ⭐ уласны сайт платформы
+      const trBadge = _chip({ ico: '🌐', text: `${trLeft}+${trCred}`, tone: trLeft <= 0 && trCred <= 0 ? 'crit' : 'mute', title: t('tr_client_badge_title') });
+      const star = form.fields?._self ? _chip({ ico: '⭐', title: t('mon_self_site'), lead: true }) : ''; // ⭐ уласны сайт платформы
       // 🌍 дзённы расход пошты ЎСЁЙ платформы — толькі на ⭐-радку (гэта не пер-сайтавая лічба):
       // пер-сайтавыя квоты нічога не значаць, калі агульны ліміт правайдэра вычарпаны
       const mg = form.fields?._self ? monitorState._mailGlobal : null;
-      const mgBadge = mg && mg.max ? `<span style="font-size:0.72rem;color:${mg.used >= mg.max ? '#ef4444' : (mg.used >= mg.max - 20 ? '#f59e0b' : 'var(--muted)')};margin-left:6px;white-space:nowrap" title="${escHtml(t('mail_global_title'))}">🌍${mg.used}/${mg.max}</span>` : '';
+      // ⚠️ парог тут не «70%», а «засталося менш за 20 лістоў» — абсалютны запас, бо мяжа правайдэра
+      // рухомая (360 сёння, 500 заўтра): працэнт ад плаваючай столі нічога не кажа пра рэальны рэзерв
+      const mgBadge = mg && mg.max ? _chip({ ico: '🌍', text: `${mg.used}/${mg.max}`, title: t('mail_global_title'),
+        tone: mg.used >= mg.max ? 'crit' : mg.used >= mg.max - 20 ? 'warn' : 'mute' }) : '';
       // 👻 фантом: заказ ёсць, а даных сайта няма (не створаны / знесены міма teardown). Паказваем
       // яўна — маўклівы прапуск такіх радкоў і рабіў спіс паддаменаў недаверлівым
-      const ghost = form.fields?._phantom ? `<span style="opacity:0.5;margin-left:6px;font-size:0.72rem;white-space:nowrap" title="${escHtml(t('mon_phantom'))}">👻 ${escHtml(t('mon_phantom_lbl'))}</span>` : '';
+      const ghost = form.fields?._phantom ? _chip({ ico: '👻', text: t('mon_phantom_lbl'), title: t('mon_phantom'), dim: true }) : '';
       // 📧 бэйдж дзённай квоты лістоў сайта (той жа рытм, што 🌐): чырвоны, калі вычарпана —
       // «кліент не атрымае пацверджання» мусіць быць відаць з карткі, а не толькі з алертаў
       const mMax = +ff.mailMax || 0, mUsed = Math.min(+ff.mailToday || 0, mMax || 999);
-      const mailBadge = mMax ? `<span style="font-size:0.72rem;color:${mUsed >= mMax ? '#ef4444' : 'var(--muted)'};margin-left:6px;white-space:nowrap" title="${escHtml(t('mail_quota_title'))}">📧${mUsed}/${mMax}</span>` : '';
+      const mailBadge = mMax ? _chip({ ico: '📧', text: `${mUsed}/${mMax}`, title: t('mail_quota_title'), tone: _chipTone(mUsed, mMax) }) : '';
       // 🚨 чып крытычных алертаў за 48 гадзін (lік з get_dashboard, адзін групавы запыт) — «што гарыць зараз»
       const al48 = +(form.fields?.alerts48) || 0;
-      const alBadge = al48 ? `<span style="font-size:0.72rem;color:#ef4444;margin-left:6px;white-space:nowrap" title="${escHtml(t('alerts_badge_title'))}">⚠${al48}</span>` : '';
+      const alBadge = al48 ? _chip({ ico: '⚠', text: al48, tone: 'crit', title: t('alerts_badge_title') }) : '';
       // ✍️ пісьмовы трафік сайта за суткі (audit_log). Канон «сігнал на вінаваты аб'ект»: чып 💾 на
       // загалоўку кажа, што бюджэт платформы гарыць, а гэты — ХТО яго паліць. Паказваем ад 20 падзей:
       // адзінкавыя праўкі — шум, а не сігнал. ⚠️ Гэта доля трафіку, не дакладныя KV-мутацыі (гл. падказку).
       const wrN = +(form.fields?.writesToday) || 0;
-      const wrBadge = wrN >= 20 ? `<span style="font-size:0.72rem;color:${wrN >= 300 ? '#ef4444' : wrN >= 100 ? '#f59e0b' : 'var(--muted)'};margin-left:6px;white-space:nowrap" title="${escHtml(t('mon_writes_chip').replace('{n}', wrN))}">✍${wrN}</span>` : '';
+      // парогі тут АБСАЛЮТНЫЯ (100/300 падзей), а не працэнт: ліміту на пісьмовы трафік сайта няма —
+      // ёсць толькі назіранне «колькі ён паліць з агульнага бюджэту платформы»
+      const wrBadge = wrN >= 20 ? _chip({ ico: '✍', text: wrN, title: t('mon_writes_chip').replace('{n}', wrN),
+        tone: wrN >= 300 ? 'crit' : wrN >= 100 ? 'warn' : 'mute' }) : '';
       // 💽 памер файлаў сайта ў R2: лічба з начнога абыходу бакета + жывая дэльта на загрузцы/выдаленні.
       // Ліміт неабавязковы (пуста = без столі) — тады паказваем толькі занятае, без «/M».
       const r2b = +(form.fields?.r2Mb) || 0, r2u = +(form.fields?.r2Bytes) || 0;
-      const r2Mb = r2u / 1048576, r2Pct = r2b ? (r2Mb / r2b) * 100 : 0;
-      const r2Badge = r2u ? `<span style="font-size:0.72rem;color:${r2Pct >= 90 ? '#ef4444' : r2Pct >= 70 ? '#f59e0b' : 'var(--muted)'};margin-left:6px;white-space:nowrap" title="${escHtml(t('lim_r2_title'))}">💽${r2Mb < 10 ? r2Mb.toFixed(1) : Math.round(r2Mb)}${r2b ? '/' + r2b : ''} MB</span>` : '';
+      const r2Mb = r2u / 1048576; // працэнт ад ліміту лічыць _chipTone — тут толькі сама лічба
+      const r2Badge = r2u ? _chip({ ico: '💽', title: t('lim_r2_title'), tone: _chipTone(r2Mb, r2b, { warn: 70, crit: 90 }),
+        text: `${r2Mb < 10 ? r2Mb.toFixed(1) : Math.round(r2Mb)}${r2b ? '/' + r2b : ''} MB` }) : '';
       // 📊 бізнес-запісы сайта (кліенты+заказы+запісы). Ліміт неабавязковы; падказка разбівае па табліцах,
       // бо «1200 запісаў» без разбіўкі нічога не кажа пра тое, што менавіта расце.
       const rw = form.fields?.rows || null, rwMax = +(form.fields?.rowsMax) || 0;
-      const rwPct = rw && rwMax ? (rw.total / rwMax) * 100 : 0;
-      const rwBadge = rw && rw.total ? `<span style="font-size:0.72rem;color:${rwPct >= 90 ? '#ef4444' : rwPct >= 70 ? '#f59e0b' : 'var(--muted)'};margin-left:6px;white-space:nowrap" title="${escHtml(t('lim_rows_title').replace('{c}', rw.clients).replace('{o}', rw.orders).replace('{a}', rw.appts))}">📊${rw.total}${rwMax ? '/' + rwMax : ''}</span>` : '';
+      const rwBadge = rw && rw.total ? _chip({ ico: '📊', text: `${rw.total}${rwMax ? '/' + rwMax : ''}`, tone: _chipTone(rw.total, rwMax, { warn: 70, crit: 90 }),
+        title: t('lim_rows_title').replace('{c}', rw.clients).replace('{o}', rw.orders).replace('{a}', rw.appts) }) : '';
       return `${star}${pingDot}<span style="color:${col}">${escHtml(_nodeName(form)||'—')}</span>${ghost}${stBadge}${trBadge}${mailBadge}${r2Badge}${rwBadge}${wrBadge}${mgBadge}${alBadge}`;
     }
     return escHtml(_nodeName(form)||'—');
@@ -15136,25 +15207,31 @@ let monitorState = {
       const off = kids.filter(k => k.fields?.online === false).length;
       const chips = Object.entries(cnt).map(([s, n]) => {
         const raw = t('order_' + s), lbl = raw === 'order_' + s ? s : raw; // невядомы статус → як ёсць
-        return `<span title="${escHtml(lbl)}: ${n}" style="font-size:0.75rem">${escHtml(lbl.split(' ')[0])}${n}</span>`; // першы токен лэйбла = смайл статусу
-      }).join('') + (off ? `<span style="color:#ef4444;font-size:0.75rem" title="offline: ${off}">✗${off}</span>` : '');
+        return _chip({ ico: window.TTZOP_chipSplit(lbl).ico, text: n, title: `${lbl}: ${n}` }); // знак статусу — праз механізм, не split рукамі
+      }).join('') + (off ? _chip({ ico: '✗', text: off, tone: 'crit', title: `offline: ${off}` }) : '');
       // 🌐 расход AI-перакладаў за месяц (Haiku: $1/M уваход + $5/M выхад — тыя ж цэны, што ў разліку ліміту)
       const sp = monitorState._trSpend;
       const trUsd = sp ? (((sp.inTok || 0) * 1 + (sp.outTok || 0) * 5) / 1e6).toFixed(2) : '0';
-      const trChip = sp && sp.n ? `<span style="font-size:0.75rem" title="${escHtml(t('tr_month_stat').replace('{n}', sp.n).replace('{tok}', (sp.inTok || 0) + (sp.outTok || 0)).replace('{usd}', trUsd))}">🌐${sp.n}·$${trUsd}</span>` : '';
+      const trChip = sp && sp.n ? _chip({ ico: '🌐', text: `${sp.n}·$${trUsd}`,
+        title: t('tr_month_stat').replace('{n}', sp.n).replace('{tok}', (sp.inTok || 0) + (sp.outTok || 0)).replace('{usd}', trUsd) }) : '';
       // 💰 баланс нашага праплачанага API (заўсёды бачны; клік = дадаць папаўненне). Чырвоны пры нізкім.
       const bal = monitorState._apiBalance;
-      const balChip = bal ? `<span style="font-size:0.75rem;color:${bal.left < 1 ? '#ef4444' : bal.left < 3 ? '#f59e0b' : 'inherit'}" title="${escHtml(t('api_bal_title').replace('{topup}', bal.topup.toFixed(2)).replace('{spent}', bal.spent.toFixed(2)))}">💰$${bal.left.toFixed(2)}</span>` : ''; // індыкатар астатку; папаўненне — праз Table «Папаўненні API» у Аглядзе
+      // ⚠️ парог — АСТАТАК У ДОЛАРАХ ($1/$3), не працэнт: столі ў балансу няма, ёсць толькі «на колькі
+      // хопіць». Індыкатар астатку; папаўненне — праз Table «Папаўненні API» у Аглядзе
+      const balChip = bal ? _chip({ ico: '💰', text: `$${bal.left.toFixed(2)}`, tone: bal.left < 1 ? 'crit' : bal.left < 3 ? 'warn' : 'fg',
+        title: t('api_bal_title').replace('{topup}', bal.topup.toFixed(2)).replace('{spent}', bal.spent.toFixed(2)) }) : '';
       // 💾 KV-МУТАЦЫІ ЗА СУТКІ — адзіны вузкі рэсурс free-tier (1000/дзень на ЎСЕ сайты; замер 26.07
       // паказаў 760 пры адным актыўным сайце). Астатняе — 90-99% запасу, таму чып менавіта на гэта.
       // Парог відаць ВОКАМ на Аглядзе, а не толькі ў радку статыстыкі ўнутры Папкі «Cloudflare».
       const kvS = monitorState._cfKv;
-      const kvPct = kvS ? Math.round((kvS.mut / 1000) * 100) : 0;
-      const kvChip = kvS ? `<span style="font-size:0.75rem;color:${kvPct >= 85 ? '#ef4444' : kvPct >= 60 ? '#f59e0b' : 'inherit'}" title="${escHtml(t('mon_kv_chip').replace('{used}', kvS.mut).replace('{limit}', '1000').replace('{w}', kvS.writes || 0).replace('{d}', kvS.deletes || 0).replace('{l}', kvS.lists || 0))}">💾${kvS.mut}/1000</span>` : '';
+      // ⚠️ парогі 60/85 нізкія знарок: калі ўбачыш чырвоны на 90%, дзень ужо страчаны — да ліміту
+      // застаецца гадзіна працы. Астатнія рэсурсы мераюцца 70/90, гэты — раней
+      const kvChip = kvS ? _chip({ ico: '💾', text: `${kvS.mut}/1000`, tone: _chipTone(kvS.mut, 1000, { warn: 60, crit: 85 }),
+        title: t('mon_kv_chip').replace('{used}', kvS.mut).replace('{limit}', '1000').replace('{w}', kvS.writes || 0).replace('{d}', kvS.deletes || 0).replace('{l}', kvS.lists || 0) }) : '';
       const allChips = chips + kvChip + trChip + balChip;
-      if (allChips) extra = `<span style="margin-left:8px;display:inline-flex;gap:7px;align-items:center">${allChips}</span>`;
+      if (allChips) extra = `<span style="margin-left:2px;display:inline-flex;align-items:center">${allChips}</span>`; // адступы нясуць самі чыпы (_chip), тут — толькі радок
     }
-    return `<span class="node-folder-name">${escHtml(_folderLabel(folder))}</span>${extra}<span style="font-size:0.78rem;color:var(--muted);margin-left:4px">(${c})</span>`;
+    return `<span class="node-folder-name">${escHtml(_folderLabel(folder))}</span>${extra}${_countHtml(c)}`;
   },
   _renderFn: () => { currentNodeState = monitorState; renderNodeEditor(monitorState); }
 };
@@ -16073,7 +16150,7 @@ function _lookBodyHtml() {
     <span style="flex-basis:100%;height:1px;background:var(--border);margin:2px 0"></span>
     <button id="look-pub-btn" class="btn-sm" onclick="_sitePublish(this)" ${_draftAnyDirty() ? '' : 'disabled'} style="background:var(--accent);color:#fff;font-weight:700;border-color:var(--accent);${_draftAnyDirty() ? '' : 'opacity:.4;cursor:default'}" title="${_draftAnyDirty() ? '' : escHtml(t('look_uptodate'))}">🚀 ${t('look_publish')}</button>
     <button id="look-reset-btn" class="btn-sm" onclick="_siteResetDraft()" ${_draftAnyDirty() ? '' : 'disabled'} style="color:var(--error);${_draftAnyDirty() ? '' : 'opacity:.4;cursor:default'}" title="${_draftAnyDirty() ? '' : escHtml(t('look_uptodate'))}">✕ ${t('look_reset')}</button>
-    ${_draftAnyDirty() ? '' : `<span style="font-size:0.8rem;color:var(--muted)">✓ ${t('look_uptodate')}</span>`}
+    ${_draftAnyDirty() ? '' : _chip({ ico: '✓', text: t('look_uptodate') })}
     <span style="flex-basis:100%;font-size:0.8rem;color:var(--muted)">${t('look_publish_hint')}</span>
     <span style="flex-basis:100%;font-size:0.8rem;color:var(--muted)">${t('look_hint')}</span></div>`;
 }
