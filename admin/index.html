@@ -5477,6 +5477,15 @@ function _nodeRowRightHtml(parts, extras) {
   return `${parts.pickBtn || ''}${cells}${dot}${parts.viewsBtn || ''}${refreshHtml}${parts.infoBtn}${layoutBtn}${stackBtns}${sideTgl}${parts.overflowHtml}`;
 }
 
+// 🏷 НАЗВА РАДКА + ПАЗНАКА СІГНАЛУ — адзін будаўнік на ўсе тры месцы (радок Папкі, радок Формы,
+// картка Формы). Хук назвы клікаўся ў трох месцах паасобку, і любая дабаўка (пазнака бэйджа)
+// патрабавала б памятаць пра ўсе тры — класічны Ctrl-C/Ctrl-V, які моўчкі разыходзіцца.
+function _nodeNameHtml(node, s, childCount) {
+  const own = node.type === 'folder'
+    ? (s._folderNameHtml ? s._folderNameHtml(node, childCount) : `<span class="node-folder-name">${escHtml(_folderLabel(node))}</span>${_countHtml(childCount)}`)
+    : (s._formNameHtml ? s._formNameHtml(node) : _rowNamePh(_formNameAny(node, s), node));
+  return own + _navMarkHtml(node, s);
+}
 function _folderNodeHtml(folder, s, fi, total, childrenAreSide, depth) {
   const nodes = s.data.nodes;
   const isOpen = s.expanded.has(folder.id);
@@ -5485,7 +5494,7 @@ function _folderNodeHtml(folder, s, fi, total, childrenAreSide, depth) {
   const folderSel = s.selected.has(folder.id);
   const parts = _nodeRowBtns(folder, s);
   const { toggleHtml, iconHtml, checkBtn, layoutBtn, activeDot, currentDot, lockIcon, descHtml } = parts;
-  const nameHtml = s._folderNameHtml ? s._folderNameHtml(folder, childCount) : `<span class="node-folder-name">${escHtml(_folderLabel(folder))}</span>${_countHtml(childCount)}`;
+  const nameHtml = _nodeNameHtml(folder, s, childCount);
   const bodyHtml = isOpen ? `<div class="node-folder-body">${nodeExpandedHtml(folder, s, {depth})}</div>` : '';
   if (childrenAreSide) {
     // Картка-папка: ▼▼ праз sideToggleBtn (як Form-картка), ↻ схавана (не патрэбна ў картцы)
@@ -5857,7 +5866,7 @@ function nodeFormRowHtml(form, schema) {
     ${toggleHtml}
     ${iconHtml}${checkBtn}${layoutBtn}${activeDot}
     <div style="flex:1;display:flex;align-items:center;gap:4px;min-width:0">
-      <span style="font-size:0.85rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;cursor:pointer">${s._formNameHtml ? s._formNameHtml(form) : _rowNamePh(_formNameAny(form, s), form)}</span>
+      <span style="font-size:0.85rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;cursor:pointer">${_nodeNameHtml(form, s)}</span>
       ${currentDot}${lockIcon}${descHtml}
     </div>
     ${_nodeRowRightHtml(parts, { cells, dot })}
@@ -5878,7 +5887,7 @@ function nodeFormCardHtml(form, schema, s) {
         <span style="flex:1"></span>
         <span style="display:flex;gap:2px" onclick="event.stopPropagation()">${_nodeRowRightHtml(parts, { layoutBtn, stackBtns: '', refreshHtml: '', sideToggleBtn })}</span>
       </div>
-      <span class="node-folder-name" style="display:flex;align-items:center;gap:6px">${activeDot}${s._formNameHtml ? s._formNameHtml(form) : _rowNamePh(_formNameAny(form, s), form)}${currentDot}${lockIcon}${dot}${descHtml}</span>
+      <span class="node-folder-name" style="display:flex;align-items:center;gap:6px">${activeDot}${_nodeNameHtml(form, s)}${currentDot}${lockIcon}${dot}${descHtml}</span>
     </div>
     ${isOpen ? `<div class="node-folder-body">${nodeExpandedHtml(form, s, {card: true})}</div>` : ''}
   </div>`;
@@ -8898,7 +8907,7 @@ const ICON_SCHEMES = {
        // тон нейтральны: чып з warn/crit малюецца колерам СТАНУ — гл. `stateful` у TTZOP_chip
        save:'#38bdf8', mail:'#a78bfa', disk:'#34d399', chart:'#4ade80', world:'#38bdf8', star:'#fbbf24',
        pen:'#f472b6', ghost:'#94a3b8', money:'#22c55e', card:'#f59e0b', alarm:'#ef4444', fresh:'#38bdf8',
-       ok:'#22c55e', no:'#ef4444', close:'#94a3b8', pause:'#94a3b8', play:'#4ade80', box:'#fbbf24',
+       works:'#f59e0b', ok:'#22c55e', no:'#ef4444', close:'#94a3b8', pause:'#94a3b8', play:'#4ade80', box:'#fbbf24',
        users:'#38bdf8', cart:'#f59e0b', rocket:'#f97316', clock:'#a3b3c9', calendar:'#34d399' },
   B: {},
   C: { addFolder:'#f59e0b', move:'#f59e0b', share:'#f97316', translate:'#f97316', del:'#ef4444', refresh:'#94a3b8',
@@ -9006,19 +9015,81 @@ function _navIconsApply() { // эмодзі ў .icon → SVG (колер бяр�
 // Такому радку не патрэбны ні `calc`, ні `warm`: механізм робіць усё сам.
 const NAV_BADGES = {
   chats:        { tone: 'crit', calc: () => _chatUnread, title: () => t('nav_chats') },
-  privacy:      { tone: 'warn', calc: () => _docsTodoCount(), warm: () => _docsBadgeWarm(), title: () => t('doc_todo_chip_hint') },
-  orders:       { tone: 'accent', since: 'orders',       title: () => t('nav_badge_new') },
-  appointments: { tone: 'accent', since: 'appointments', title: () => t('nav_badge_new') },
+  // 🚧 Дакументы: сігналіць БЯГУЧАЯ версія з дзіркамі ў тэксце — яе бачыць наведвальнік сайта.
+  // Лічба бэйджа = колькі такіх версій яшчэ не разгледжана; чып вядзе да канкрэтнага радка.
+  privacy:      { tone: 'warn', ico: '🚧', warm: () => _docsBadgeWarm(), title: () => t('doc_todo_chip_hint'),
+                  state: () => privacyState,
+                  mark: n => n.formSchema === 'privacyVer' && _docStore(n.fields?._docId || 'privacy')?.current === n.fields?.version && !!_docVerUnfinished(n) },
+  // 🆕 Заказы і Запісы: сігналіць тое, што з'явілася пасля апошняга «ўсё разгледжана» І чаго
+  // чалавек яшчэ не раскрываў. Сервернай лічбы хапае, пакуль дрэва не загружана; як толькі яно ёсць,
+  // лічыцца ТАЯ Ж метка, што відаць на радках.
+  orders:       { tone: 'accent', ico: '🆕', since: 'orders', title: () => t('nav_badge_new'),
+                  state: () => ordersState,
+                  mark: n => n.fields?.drawerType === 'order_client' && _navIsNew('orders', n.fields?.createdAt) },
+  appointments: { tone: 'accent', ico: '🆕', since: 'appointments', title: () => t('nav_badge_new'),
+                  state: () => appointmentsState,
+                  mark: n => n.formSchema === 'appointmentDetails' && _navIsNew('appointments', n.createdAt || n.fields?.createdAt) },
 };
+// ── 🔎 СІГНАЛ ДАВОДЗІЦЬ ДА МЕСЦА: метка на вузле — АДЗІНАЯ крыніца, бэйдж — сума па дрэве ──
+// ⚠️ Заўвага карыстальніка 04.08: «на РМ Дакументы вісіць бэйдж — раскрыў, і далей цяжка знайсці
+// крыніцу». Лічба без шляху да радка — палова справы. Таму: `mark(node)` кажа, ці сігналіць вузел;
+// радок нясе чып, КОЖНАЯ Папка над ім — лічбу нашчадкаў (інакш згорнутая папка хавае праблему),
+// а бэйдж у меню — тая ж сума. Дзвюх крыніц лічбы няма ў прынцыпе.
+// 🔑 «Убачыў» — гэта РАСКРЫЎ КАНКРЭТНЫ вузел (`_navAckNode` з `nodeToggleExpand`), а не «зайшоў у
+// РМ»: заход у раздзел нічога не паказвае, калі праблема ляжыць у згорнутай папцы.
+const _navAckAll = () => _rmPrefGet('nav')?.ack || {};
+const _navIsNew = (scope, createdAt) => !!createdAt && String(createdAt) > String(_navSeenAll()[scope] || '');
+const _navAcked = (page, id) => !!_navAckAll()[page]?.[id];
+function _navBadgeFor(s) { // чый гэта РМ: [page, cfg] з каталога па стэйце
+  for (const [page, cfg] of Object.entries(NAV_BADGES)) if (cfg.mark && cfg.state?.() === s) return [page, cfg];
+  return [];
+}
+const _navMarked = (cfg, page, node, s) => { try { return !!cfg.mark(node, s) && !_navAcked(page, node.id); } catch { return false; } };
+function _navMarkCountIn(cfg, page, s, parentId) { // колькі сігнальных у ПАДДРЭВЕ вузла
+  let n = 0;
+  for (const k of (s.data?.nodes || [])) {
+    if (k.parentId !== parentId) continue;
+    n += (_navMarked(cfg, page, k, s) ? 1 : 0) + _navMarkCountIn(cfg, page, s, k.id);
+  }
+  return n;
+}
+const _navMarkTotal = (cfg, page, s) => (s.data?.nodes || []).reduce((a, k) => a + (_navMarked(cfg, page, k, s) ? 1 : 0), 0);
+// чып на радку: свой сігнал → іконка; Папка/Форма з сігнальнымі нашчадкамі → іконка з лічбай
+function _navMarkHtml(node, s) {
+  const [page, cfg] = _navBadgeFor(s);
+  if (!cfg) return '';
+  if (_navMarked(cfg, page, node, s)) return ' ' + _chip({ ico: cfg.ico || '⚠', tone: cfg.tone, title: cfg.title?.() });
+  const n = _navMarkCountIn(cfg, page, s, node.id);
+  return n ? ' ' + _chip({ ico: cfg.ico || '⚠', text: String(n), tone: cfg.tone, title: cfg.title?.() }) : '';
+}
+// раскрыў вузел → сігнал зняты назаўжды (для гэтага чалавека). ⚠️ Спіс адзнак трымае ТОЛЬКІ тое,
+// што яшчэ сігналіць: як толькі РМ выходзіць у нуль, спіс чысціцца — інакш ён рос бы без канца.
+function _navAckNode(s, node) {
+  const [page, cfg] = _navBadgeFor(s);
+  if (!cfg || !_navMarked(cfg, page, node, s)) return;
+  const all = _navAckAll();
+  const ack = { ...all, [page]: { ...(all[page] || {}), [node.id]: 1 } };
+  const left = _navMarkTotalWithAck(cfg, page, s, ack);
+  if (!left) delete ack[page];                        // усё разгледжана — адзнакі больш не патрэбныя
+  _rmPrefSet('nav', { ...(_rmPrefGet('nav') || {}), ack });
+  if (!left) _navSeenAdvance(page, s);                // ⚠️ пасля запісу ack: абодва кладуцца ў адзін ключ `nav`
+  _navBadgeApply(page);
+}
+const _navMarkTotalWithAck = (cfg, page, s, ack) => (s.data?.nodes || [])
+  .reduce((a, k) => { try { return a + (cfg.mark(k, s) && !ack[page]?.[k.id] ? 1 : 0); } catch { return a; } }, 0);
+
 // ── «Новае з апошняга візіту»: агульная частка каталога (нішто з гэтага не ведае пра Заказы) ──
 let _navNew = {}, _navBadgeTimer = null;  // скоп → лічба з сервера; таймер фонавага абнаўлення
 const _navSeenAll = () => _rmPrefGet('nav')?.seen || {};
-function _navSeenMark(page) {          // чалавек адкрыў РМ → усё, што было да гэтай секунды, ён бачыў
+// ⚠️ Адкрыццё РМ бэйдж НЕ гасіць: заход у раздзел нічога не паказвае, калі праблема ляжыць у
+// згорнутай папцы (жывая заўвага 04.08 пра Дакументы). Гасіць — раскрыццё КАНКРЭТНАГА вузла.
+// Адлік `seen` рухаецца толькі калі раздзел выйшаў у НУЛЬ: тады спіс адзнак становіцца лішнім і
+// зносіцца, а «новае» пачынае лічыцца ад гэтага моманту. Так спіс не расце без канца.
+function _navSeenAdvance(page, s) {
   const cfg = NAV_BADGES[page]; if (!cfg?.since) return;
   const seen = { ..._navSeenAll(), [cfg.since]: new Date().toISOString() };
   _rmPrefSet('nav', { ...(_rmPrefGet('nav') || {}), seen });
   _navNew[cfg.since] = 0;
-  _navBadgeApply(page);
 }
 // адзін запыт на ЎСЕ скопы разам (два бэйджы — не два запыты)
 async function _navNewFetch() {
@@ -9038,8 +9109,15 @@ async function _navNewFetch() {
 function _navBadgeApply(page) {
   const cfg = NAV_BADGES[page]; if (!cfg) return;
   const ic = document.querySelector(`.nav-item[data-page="${page}"] .icon`); if (!ic) return;
-  // крыніца можа быць яшчэ не загружана — гэта не памылка, проста няма чаго паказваць
-  let n = 0; try { n = Number(cfg.since ? _navNew[cfg.since] : cfg.calc()) || 0; } catch { n = 0; }
+  // ⚠️ ПРЫЯРЫТЭТ КРЫНІЦ: калі дрэва РМ загружана — лічым ЯГО (тая ж метка, што відаць вокам на
+  // радках, значыць бэйдж і дрэва не могуць разысціся). Сервер (`since`) патрэбны толькі пакуль
+  // раздзел не адкрывалі; `calc` — для сігналаў, што наогул не жывуць у дрэве (чаты).
+  // Крыніца можа быць яшчэ не загружана — гэта не памылка, проста няма чаго паказваць.
+  let n = 0;
+  try {
+    n = cfg.mark && cfg.state?.()?.data ? _navMarkTotal(cfg, page, cfg.state())
+      : Number(cfg.since ? _navNew[cfg.since] : cfg.calc?.()) || 0;
+  } catch { n = 0; }
   let el = ic.querySelector('.tt-badge');
   if (n <= 0) { if (el) el.remove(); return; }
   if (!el) { ic.style.position = 'relative'; el = document.createElement('span'); el.className = 'tt-badge'; ic.appendChild(el); }
@@ -10098,6 +10176,7 @@ function nodeToggleExpand(id) {
   const s = currentNodeState;
   const node = s.data.nodes.find(n => n.id === id);
   if (!node) return;
+  _navAckNode(s, node); // 🔔 «убачыў» = РАСКРЫЎ гэты вузел (не «зайшоў у РМ»); бэйдж перасумуецца сам
   if (node.type === 'folder') {
     if (s.expanded.has(id) && !_rtGuardCollapse(s, id, () => { s.expanded.delete(id); _closeDesc(s, id); s.focusedId = id; nodeRender(); })) return;
     const pid = node.parentId ?? null;
@@ -17950,7 +18029,6 @@ document.querySelectorAll('.nav-item').forEach(item => {
     }
     if (AUTOSAVE_PAGES.has(currentPage)) saveSettingsAndSections();
     currentPage = item.dataset.page;
-    _navSeenMark(currentPage); // 🔔 адкрыў РМ — значыць убачыў; бэйдж гасне тут, а не «неяк потым»
     document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
     document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
     item.classList.add('active');

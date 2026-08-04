@@ -120,10 +120,12 @@ window.TTZOP_ICON_EMOJI = {
   // `ui-i18n.js`, а рукамі ў хуках `_formNameHtml`/`_folderNameHtml`. Цяпер ідуць праз `TTZOP_chip` ──
   '💳': 'card', '💾': 'save', '💽': 'disk', '🌍': 'world', '⭐': 'star', '✍': 'pen',
   '👻': 'ghost', '🚨': 'alarm', '📧': 'mail', '✗': 'close', // ✗ offline — просты крыж, а не «забаронена» (🚫)
+  '🚧': 'works', // 🚧 «не закончана» — свая іконка, не ⚠: гэта не памылка, а недаробленае месца
   '🆕': 'fresh', '👀': 'eye', // статусы заказу: астатнія сем ужо былі ў каталогу, гэтыя два падалі ў эмодзі
 };
 // іконкі, якіх у наборы ⋯-меню не было (ён закрываў толькі меню і дыялогі)
 Object.assign(window.TTZOP_MENU_ICONS, {
+  works:'<path d="M2.4 5.2h11.2v5.6H2.4Z" stroke="currentColor" stroke-width="1.35" stroke-linejoin="round"/><path d="M4.2 10.8 7 5.2M8 10.8 10.8 5.2" stroke="currentColor" stroke-width="1.2"/><path d="M3.2 10.8v2.6M12.8 10.8v2.6" stroke="currentColor" stroke-width="1.35" stroke-linecap="round"/>',
   close:'<path d="M4 4l8 8M12 4l-8 8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>',
   search:'<circle cx="7" cy="7" r="4.2" stroke="currentColor" stroke-width="1.4"/><path d="M10.1 10.1 13.4 13.4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>',
   calendar:'<rect x="2.5" y="3.6" width="11" height="9.9" rx="1.3" stroke="currentColor" stroke-width="1.4"/><path d="M2.5 6.6h11M5.6 2.4v2.4M10.4 2.4v2.4" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/>',
