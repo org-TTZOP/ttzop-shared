@@ -9000,14 +9000,46 @@ function _navIconsApply() { // эмодзі ў .icon → SVG (колер бяр�
 // Цяпер РМ дае толькі ЛІЧБУ і ТОН, малюе навігацыя. Новы сігнал = адзін радок каталога.
 // 🔑 `warm` — неабавязковы: РМ сам вырашае, як ДЁШАВА падняць свой лік да адкрыцця (даныя раздзела
 // грузяцца лена, і без гэтага бэйдж загарэўся б толькі пасля заходу — тая ж дзірка, што і чып).
+// 🔔 `since:'<скоп>'` — тыповы выпадак «новае, чаго я яшчэ не бачыў»: лічбу дае СЕРВЕР
+// (`counts_since`, каталог скопаў `NEW_SINCE_SCOPES`), момант візіту жыве ў АСАБІСТЫХ наладах
+// карыстальніка (`rm.nav.seen`, D1) — значыць лічба ў кожнага свая і ідзе за ім на любую прыладу.
+// Такому радку не патрэбны ні `calc`, ні `warm`: механізм робіць усё сам.
 const NAV_BADGES = {
-  chats:   { tone: 'crit', calc: () => _chatUnread, title: () => t('nav_chats') },
-  privacy: { tone: 'warn', calc: () => _docsTodoCount(), warm: () => _docsBadgeWarm(), title: () => t('doc_todo_chip_hint') },
+  chats:        { tone: 'crit', calc: () => _chatUnread, title: () => t('nav_chats') },
+  privacy:      { tone: 'warn', calc: () => _docsTodoCount(), warm: () => _docsBadgeWarm(), title: () => t('doc_todo_chip_hint') },
+  orders:       { tone: 'accent', since: 'orders',       title: () => t('nav_badge_new') },
+  appointments: { tone: 'accent', since: 'appointments', title: () => t('nav_badge_new') },
 };
+// ── «Новае з апошняга візіту»: агульная частка каталога (нішто з гэтага не ведае пра Заказы) ──
+let _navNew = {}, _navBadgeTimer = null;  // скоп → лічба з сервера; таймер фонавага абнаўлення
+const _navSeenAll = () => _rmPrefGet('nav')?.seen || {};
+function _navSeenMark(page) {          // чалавек адкрыў РМ → усё, што было да гэтай секунды, ён бачыў
+  const cfg = NAV_BADGES[page]; if (!cfg?.since) return;
+  const seen = { ..._navSeenAll(), [cfg.since]: new Date().toISOString() };
+  _rmPrefSet('nav', { ...(_rmPrefGet('nav') || {}), seen });
+  _navNew[cfg.since] = 0;
+  _navBadgeApply(page);
+}
+// адзін запыт на ЎСЕ скопы разам (два бэйджы — не два запыты)
+async function _navNewFetch() {
+  const seen = _navSeenAll(), since = {}; let first = false;
+  for (const cfg of Object.values(NAV_BADGES)) {
+    if (!cfg.since) continue;
+    // ⚠️ ПЕРШЫ ЗАХОД: адліку няма — пазначаем «бачыў усё» ЗАРАЗ, а не паказваем усю гісторыю.
+    // Бэйдж кажа «з'явілася, пакуль цябе не было», і 500 старых заказаў гэтаму не адпавядаюць.
+    if (!seen[cfg.since]) { seen[cfg.since] = new Date().toISOString(); first = true; }
+    since[cfg.since] = seen[cfg.since];
+  }
+  if (first) _rmPrefSet('nav', { ...(_rmPrefGet('nav') || {}), seen });
+  if (!Object.keys(since).length) return;
+  const r = await apiCall('counts_since', { since }, { quiet: 'фонавы лічыльнік бэйджаў — маўчыць, чалавек нічога не прасіў' });
+  if (r?.counts) _navNew = { ..._navNew, ...r.counts };
+}
 function _navBadgeApply(page) {
   const cfg = NAV_BADGES[page]; if (!cfg) return;
   const ic = document.querySelector(`.nav-item[data-page="${page}"] .icon`); if (!ic) return;
-  let n = 0; try { n = Number(cfg.calc()) || 0; } catch { n = 0; } // крыніца можа быць яшчэ не загружана — гэта не памылка
+  // крыніца можа быць яшчэ не загружана — гэта не памылка, проста няма чаго паказваць
+  let n = 0; try { n = Number(cfg.since ? _navNew[cfg.since] : cfg.calc()) || 0; } catch { n = 0; }
   let el = ic.querySelector('.tt-badge');
   if (n <= 0) { if (el) el.remove(); return; }
   if (!el) { ic.style.position = 'relative'; el = document.createElement('span'); el.className = 'tt-badge'; ic.appendChild(el); }
@@ -9016,12 +9048,18 @@ function _navBadgeApply(page) {
   try { const ttl = cfg.title?.(); if (ttl) el.title = ttl; } catch {}
 }
 function _navBadgesApply() { Object.keys(NAV_BADGES).forEach(_navBadgeApply); }
-async function _navBadgesWarm() { // фонавы падагрэў пасля ўваходу; збой аднаго РМ не спыняе астатніх
-  await Promise.all(Object.entries(NAV_BADGES).map(async ([page, cfg]) => {
-    if (!cfg.warm) return;
-    try { await cfg.warm(); } catch {}
-    _navBadgeApply(page);
-  }));
+// Фонавы падагрэў: збой аднаго РМ не спыняе астатніх. ⚠️ Ідэмпатэнтны і танны — таму ім жа
+// абнаўляюцца лічбы па таймеры (`warm` РМ бярэ ўжо закэшаванае, скопы — адзін лёгкі SQL-запыт).
+async function _navBadgesWarm() {
+  await Promise.all([
+    _navNewFetch().catch(() => {}),
+    ...Object.entries(NAV_BADGES).map(async ([page, cfg]) => {
+      if (!cfg.warm) return;
+      try { await cfg.warm(); } catch {}
+      _navBadgeApply(page);
+    }),
+  ]);
+  _navBadgesApply();
 }
 _iconSchemeInject(); // ужыць схему адразу пры загрузцы (да ўваходу — з localStorage/дэфолт A)
 _navIconsApply();    // сайдбар малюецца разметкай (не рэндэрам) → падмяняем іконкі раз, адразу пасля разбору
@@ -13021,7 +13059,10 @@ function showPanel() {
   _perfSplash(); // 🎬 3D-застаўка назвы кампаніі + замер рэальнага FPS (вердыкт _perfWeak)
   _chatPollUnread(); // чаты: палінг непрачытаных (бэдж на імені карыстальніка + іконцы РМ)
   if (!_chatPollTimer) _chatPollTimer = setInterval(_chatPollUnread, 60000);
-  _navBadgesWarm();  // 🔔 сігналы на іконках РМ — відаць БЕЗ адкрыцця раздзела (фонам, не блакуе ўваход)
+  // 🔔 сігналы на іконках РМ — відаць БЕЗ адкрыцця раздзела (фонам, не блакуе ўваход). Той жа тэмп,
+  // што ў чатаў: новы заказ мусіць даехаць да вока без перазагрузкі старонкі.
+  _rmPrefReady(() => _navBadgesWarm());   // ⚠️ адлік «апошні візіт» жыве ў профілі — да яго адказу лічыць няма ад чаго
+  if (!_navBadgeTimer) _navBadgeTimer = setInterval(_navBadgesWarm, 60000);
   _panelShown = true;
   _topbarLogoUpdate(); // назва кампаніі замест паддамена (settings ужо загружаны)
   _topbarClockTick();
@@ -17909,6 +17950,7 @@ document.querySelectorAll('.nav-item').forEach(item => {
     }
     if (AUTOSAVE_PAGES.has(currentPage)) saveSettingsAndSections();
     currentPage = item.dataset.page;
+    _navSeenMark(currentPage); // 🔔 адкрыў РМ — значыць убачыў; бэйдж гасне тут, а не «неяк потым»
     document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
     document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
     item.classList.add('active');
