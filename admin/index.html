@@ -90,6 +90,8 @@
     #topbar-section .tb-sec-desc { font-size: 0.72rem; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 520px; }
     /* ── Чаты: бэдж непрачытаных + бурбалкі дыялога ── */
     .chat-badge { background: #ef4444; color: #fff; border-radius: 9px; font-size: 0.62rem; font-weight: 700; padding: 1px 5px; min-width: 14px; text-align: center; display: inline-block; line-height: 1.4; }
+    /* 🔔 БЭЙДЖ НА ІКОНЦЫ РМ — адзін клас на ўсе сігналы навігацыі (колер дае ТОН з каталога, не CSS) */
+    .tt-badge { position: absolute; top: -7px; right: -11px; color: #fff; border-radius: 9px; font-size: 0.62rem; font-weight: 700; padding: 1px 5px; min-width: 14px; text-align: center; line-height: 1.4; pointer-events: none; }
     .chat-stream { display: flex; flex-direction: column; gap: 6px; max-height: 420px; overflow-y: auto; padding: 6px 2px; }
     .chat-msg { max-width: 78%; padding: 7px 10px; border-radius: 12px; font-size: 0.88rem; line-height: 1.4; word-break: break-word; }
     .chat-msg.mine { align-self: flex-end; background: rgba(59,130,246,0.16); border: 1px solid rgba(59,130,246,0.25); }
@@ -518,7 +520,7 @@
         <div class="nav-item" data-page="relax"><span class="icon">🎲</span> <span data-i18n="nav_relax">Релакс</span></div><!-- 🎲 міні-гульні: звычайны РМ Ф/П/ПФФ, дошка — Table-секцыя з bodyFn (як Куб) -->
 
         <div class="nav-item" data-page="users" id="nav-users" style="display:none"><span class="icon">👤</span> <span data-i18n="nav_users">Карыстальнікі</span></div><!-- бачны толькі owner/canManageUsers (3-4) -->
-        <div class="nav-item" data-page="chats" id="nav-chats"><span class="icon" style="position:relative">💬<span id="nav-chats-badge" class="chat-badge" style="position:absolute;top:-7px;right:-11px;display:none"></span></span> <span data-i18n="nav_chats">Чаты</span></div><!-- бэдж на іконцы (у вузкім сайдбары слова схавана; бэдж унутры .icon не ломіць правіла span:last-child) -->
+        <div class="nav-item" data-page="chats" id="nav-chats"><span class="icon">💬</span> <span data-i18n="nav_chats">Чаты</span></div><!-- бэдж непрачытаных малюе АГУЛЬНЫ механізм NAV_BADGES (быў зашыты span — адзін жывы прыклад замест механізму) -->
 
       </div>
     </div>
@@ -2946,22 +2948,36 @@ let privacyMeta = { current: '', versions: [] };
 let privacyLastSaved = 0;
 
 // ─── ПАЛІТЫКА ПРЫВАТНАСЦІ: П/ПФФ — Папка-0 «Версіі», версія = Папка-1, унутры форма з Quill-тэкстам ───
-// 🚧 ЧЫП РМ ДАКУМЕНТЫ: колькі ДЗЕЙНЫХ дакументаў маюць дзіркі ў тэксце. ⚠️ Гейт (ніжэй) не дае
+// 🚧 СІГНАЛ РМ ДАКУМЕНТЫ: колькі ДЗЕЙНЫХ дакументаў маюць дзіркі ў тэксце. ⚠️ Гейт (ніжэй) не дае
 // зрабіць такую версію бягучай, але ўжо дзейныя (як наша Палітыка v1.3) знімаць заднім чыслом
 // нельга — сайт застаўся б наогул без дакумента. Значыць пра іх трэба ГУЧНА казаць, а не маўчаць.
-// 🔑 Праз штатны хук загалоўка `_headerExtraHtml` — той самы, што ў Заказаў і Запісаў.
-const _docsTodoChipHtml = s => {
-  // ⚠️ бягучая версія — праз `_docStore`: у Палітыкі яна ляжыць у `privacyMeta`, а не ў рэестры
-  // (першы варыянт чыпа чытаў `d.current` і моўчкі прапускаў менавіта Палітыку)
-  const bad = (docsRegistry?.docs || []).filter(d => {
+// 🔑 Сігнал жыве на ІКОНЦЫ РМ (каталог `NAV_BADGES`) — раней ён вісеў чыпам на загалоўку Формы-0
+// праз `_headerExtraHtml`, і яго бачыў толькі той, хто ўжо адкрыў раздзел (04.08 — заўвага пра ААП:
+// сігнал навігацыі жыве ў навігацыі, а два шляхі да адной рэчы разыходзяцца).
+// ⚠️ бягучая версія — праз `_docStore`: у Палітыкі яна ляжыць у `privacyMeta`, а не ў рэестры
+// (першы варыянт чыпа чытаў `d.current` і моўчкі прапускаў менавіта Палітыку)
+const _docsTodoCount = () => (docsRegistry?.docs || []).filter(d => {
+  const cur = _docStore(d.id)?.current;
+  return cur && _docUnfinished(_docHtml(d.id, cur)).total;
+}).length;
+// 🔥 Падагрэў для бэйджа: рэестр + тэкст ТОЛЬКІ бягучых версій (астатнія бэйджу не патрэбныя —
+// падцягне сам РМ пры адкрыцці). Некалькі лёгкіх `read` замест поўнай загрузкі раздзела.
+async function _docsBadgeWarm() {
+  if (!privacyMeta.versions?.length) {
+    const j = await apiCall('read', { file: 'content/privacy/privacy.json' },
+      { quiet: 'фонавы падагрэў бэйджа — маўчыць, бо карыстальнік нічога не прасіў' });
+    if (j) privacyMeta = j;
+  }
+  await _docsRegistryLoad();
+  await Promise.all((docsRegistry.docs || []).map(async d => {
     const cur = _docStore(d.id)?.current;
-    return cur && _docUnfinished(_docHtml(d.id, cur)).total;
-  });
-  const dflt = `<div id="${s._saveStatusId || (s._section + '-save-status')}" style="font-size:0.82rem;color:var(--muted)"></div>`;
-  if (!bad.length) return dflt;
-  return dflt + `<span title="${escHtml(t('doc_todo_chip_hint'))}" style="margin-left:auto;font-size:0.8rem;font-weight:700;color:#f59e0b;background:rgba(245,158,11,0.12);border:1px solid rgba(245,158,11,0.4);border-radius:999px;padding:2px 10px">🚧 ${bad.length} ${t('doc_todo_chip')}</span>`;
-};
-let privacyState = { _headerExtraHtml: _docsTodoChipHtml, data: null, saving: false, selected: new Set(), expanded: new Set(), _movePanel: false, _relocateId: null, _section: 'privacyver', _editorId: 'privacy-tree-editor', _localOnly: true, _spaceOnly: true, _rootType: 'privacy-root', _formSchema: 'privacyVer', _itemHtml: null,
+    if (!cur || _docHtml(d.id, cur) !== undefined) return;
+    const html = await apiCall('read', { file: _docVerFile(d.id, cur) },
+      { as: 'text', quiet: 'фонавы падагрэў бэйджа' });
+    if (html != null) _privacyHtmlCache[_docHtmlKey(d.id, cur)] = html;
+  }));
+}
+let privacyState = { data: null, saving: false, selected: new Set(), expanded: new Set(), _movePanel: false, _relocateId: null, _section: 'privacyver', _editorId: 'privacy-tree-editor', _localOnly: true, _spaceOnly: true, _rootType: 'privacy-root', _formSchema: 'privacyVer', _itemHtml: null,
   _rootName: () => t('card_policy_versions'),
   // 📄 Новы дакумент = штатнае +📋 у папцы «Юрыдычныя дакументы» (ААП: свой сцэнар толькі для
   // назвы, механізм дадавання — агульны). Раней вісела на +📁 ўзроўню РМ, дзе папак больш няма.
@@ -3649,12 +3665,12 @@ async function _privacyRecount(version, docId = 'privacy') { // ⚠️ пера�
   } catch (e) { showAlert(t('err_count') + ': ' + e.message); }
 }
 function renderPrivacyVersions() {
+  _navBadgeApply('privacy'); // 🔔 сігнал на іконцы РМ жыве і пасля праўкі тэксту/версіі, не толькі пры ўваходзе
   const editor = document.getElementById('privacy-tree-editor');
   if (!editor) return;
   const hasActiveCurrent = privacyMeta.current && privacyMeta.versions && privacyMeta.versions.some(v => v.version === privacyMeta.current);
   const warningEl = document.getElementById('privacy-no-current-warning');
   if (warningEl) warningEl.style.display = hasActiveCurrent ? 'none' : 'block';
-  currentNodeState = privacyState;
   if (privacyState.data?.nodes?.some(n => n.type === 'folder')) _privacyCommit(); // толькі калі ёсць рэальныя вузлы — не зачышчаць пры пустым старце
   _privacyBuildNodes();
   // ⚠️ АДХІЛЕННЕ АД КАНОНУ, ЗНЯТАЕ 03.08 (заўвага карыстальніка «зноў ААП паламаны?»): тут была
@@ -3664,6 +3680,9 @@ function renderPrivacyVersions() {
   // любы, хто перамалёўваў РМ агульным шляхам, атрымліваў стары змест, бо вузлы не перабудоўваліся
   // (жывы кейс: лічба «N з M прынялі» прыходзіла з сервера і не з'яўлялася на экране).
   // Канон: `_renderFn` толькі МАЛЮЕ, дрэва будуецца ў load — і малюе АДЗІН механізм на ўсе РМ.
+  // ⚠️ Уласнага `currentNodeState = privacyState` тут больш НЯМА: фокус выстаўляе агульны рэндэр і
+  // ён жа не крадзе яго ў схаванага РМ (правіла 04.08 у `_renderNodeEditorBody`). Раней радок стаяў
+  // бязумоўна, і змена мовы перацягвала фокус на нябачныя Дакументы.
   renderNodeEditor(privacyState);
   if (!privacyState._consent) _consentLoadAll();   // 📊 «N з M прынялі» — ленава, адзін запыт на дакумент
 }
@@ -8869,7 +8888,7 @@ const ICON_SCHEMES = {
        // дзеянні дыялогаў + фарматы файлаў (мадалка «Падзяліцца»)
        download:'#94a3b8', copy:'#a3b3c9', chat:'#60a5fa', filePdf:'#ef4444', fileXls:'#22c55e', fileCsv:'#60a5fa', link:'#38bdf8',
        // бакавое меню (навігацыя РМ) — тыя ж хады, што несла эмодзі-разметка
-       navMonitor:'#60a5fa', navTest:'#a78bfa', navGeneral:'#94a3b8', navPrivacy:'#fbbf24', navClients:'#38bdf8',
+       navMonitor:'#60a5fa', navFinance:'#22c55e', navTest:'#a78bfa', navGeneral:'#94a3b8', navPrivacy:'#fbbf24', navClients:'#38bdf8',
        navOrders:'#f59e0b', navAppointments:'#34d399', navDelivery:'#f472b6', navSitepage:'#f97316', navSections:'#fbbf24',
        navReports:'#4ade80', navLanguages:'#38bdf8', navTheme:'#ec4899', navPanelview:'#94a3b8', navRelax:'#a78bfa', navUsers:'#a3b3c9', navChats:'#60a5fa',
        // тыпы вузлоў у дрэве: былі зашытыя ў _icoFolder/_icoForm і схеме не падпарадкоўваліся —
@@ -8961,7 +8980,7 @@ function _mIcoBig(id, size) { return window.TTZOP_mIco(id, { cls: 'mi mi-' + id,
 function _mIcoColored(id, col) { const p = MENU_ICONS[id]; return p ? `<svg viewBox="0 0 16 16" width="16" height="16" fill="none" style="display:block;pointer-events:none;margin:0 auto;color:${col || 'var(--label)'}">${p}</svg>` : ''; }
 // ── БАКАВОЕ МЕНЮ: page → іконка (код-каталог). Разметка трымала эмодзі → на Тэсле (Chromium без каляровага
 // emoji-шрыфту) выпадалі ў контур, і схема іконак іх не бачыла. Новы РМ = адзін радок тут ──
-const NAV_ICONS = { monitor:'navMonitor', 'ppff-test':'navTest', general:'navGeneral', privacy:'navPrivacy',
+const NAV_ICONS = { monitor:'navMonitor', finance:'navFinance', 'ppff-test':'navTest', general:'navGeneral', privacy:'navPrivacy',
   clients:'navClients', orders:'navOrders', appointments:'navAppointments', delivery:'navDelivery',
   sitepage:'navSitepage', sections:'navSections', reports:'navReports', languages:'navLanguages',
   theme:'navTheme', panelview:'navPanelview', relax:'navRelax', users:'navUsers', chats:'navChats' };
@@ -8972,6 +8991,37 @@ function _navIconsApply() { // эмодзі ў .icon → SVG (колер бяр�
     [...ic.childNodes].forEach(n => { if (n.nodeType === 3) n.remove(); }); // зняць эмодзі-тэкст; БЭДЖ-элемент (чаты) не чапаем
     ic.insertAdjacentHTML('afterbegin', _mIco(id));
   });
+}
+
+// ── 🔔 БЭЙДЖ НА ІКОНЦЫ РМ: сігнал «тут нешта чакае ўвагі» ──
+// ⚠️ Гэты сігнал належыць НАВІГАЦЫІ: яго сэнс — убачыць, НЕ адкрываючы РМ. Шляхоў было два —
+// зашыты span чатаў у разметцы (адзін жывы прыклад, не механізм) і чып дакументаў праз
+// `_headerExtraHtml` на Форме-0 (бачны толькі таму, хто ўжо зайшоў, значыць як сігнал не працаваў).
+// Цяпер РМ дае толькі ЛІЧБУ і ТОН, малюе навігацыя. Новы сігнал = адзін радок каталога.
+// 🔑 `warm` — неабавязковы: РМ сам вырашае, як ДЁШАВА падняць свой лік да адкрыцця (даныя раздзела
+// грузяцца лена, і без гэтага бэйдж загарэўся б толькі пасля заходу — тая ж дзірка, што і чып).
+const NAV_BADGES = {
+  chats:   { tone: 'crit', calc: () => _chatUnread, title: () => t('nav_chats') },
+  privacy: { tone: 'warn', calc: () => _docsTodoCount(), warm: () => _docsBadgeWarm(), title: () => t('doc_todo_chip_hint') },
+};
+function _navBadgeApply(page) {
+  const cfg = NAV_BADGES[page]; if (!cfg) return;
+  const ic = document.querySelector(`.nav-item[data-page="${page}"] .icon`); if (!ic) return;
+  let n = 0; try { n = Number(cfg.calc()) || 0; } catch { n = 0; } // крыніца можа быць яшчэ не загружана — гэта не памылка
+  let el = ic.querySelector('.tt-badge');
+  if (n <= 0) { if (el) el.remove(); return; }
+  if (!el) { ic.style.position = 'relative'; el = document.createElement('span'); el.className = 'tt-badge'; ic.appendChild(el); }
+  el.textContent = n > 99 ? '99+' : String(n);
+  el.style.background = (window.TTZOP_CHIP_TONES || {})[cfg.tone] || cfg.tone || 'var(--muted)'; // тон адтуль жа, што ў чыпаў
+  try { const ttl = cfg.title?.(); if (ttl) el.title = ttl; } catch {}
+}
+function _navBadgesApply() { Object.keys(NAV_BADGES).forEach(_navBadgeApply); }
+async function _navBadgesWarm() { // фонавы падагрэў пасля ўваходу; збой аднаго РМ не спыняе астатніх
+  await Promise.all(Object.entries(NAV_BADGES).map(async ([page, cfg]) => {
+    if (!cfg.warm) return;
+    try { await cfg.warm(); } catch {}
+    _navBadgeApply(page);
+  }));
 }
 _iconSchemeInject(); // ужыць схему адразу пры загрузцы (да ўваходу — з localStorage/дэфолт A)
 _navIconsApply();    // сайдбар малюецца разметкай (не рэндэрам) → падмяняем іконкі раз, адразу пасля разбору
@@ -10484,6 +10534,7 @@ function _renderNodeEditorBody(s, editor) {
   // (злоўлена смоўкам — 2 хосты замест 1). Таму спярша вяртаем на месца, потым перамалёўваем;
   // незахаваны тэкст не губляецца — ён жыве ў `_rtDrafts` і падхопіцца новым рэдактарам.
   TTZOP_RICHTEXT.fullClose();
+  const keep = currentNodeState;  // чый быў фокус да нас (гл. правіла ў канцы функцыі)
   currentNodeState = s; // renderNodeTree чытае currentNodeState — мусіць адпавядаць рэндэраванаму стану (інакш у адзін editor трапляе чужое дрэва)
   // 🧩 ХУК ЗАГАЛОЎКА `_headerExtraHtml(s)` — куток дае РАЗМЕТКУ, а не ўласны рэндэр (03.08).
   // ⚠️ Менавіта праз зашыты загаловак ад агульнага шляху і адкалоліся тры РМ: Дакументы, Заказы і
@@ -10498,6 +10549,13 @@ function _renderNodeEditorBody(s, editor) {
       renderNodeTree(null, 0));
   _nodeInitMaps(s); // пер-формавыя мапы (Структура кампаніі) — мантуюцца пасля innerHTML
   nodeInitRichtext(s); // richtext-палі (Quill) любога РМ — мантуюцца пасля innerHTML (раней клікаў толькі privacy асобна)
+  // 🎯 МАЛЯВАЦЬ СХАВАНЫ РМ МОЖНА, КРАСЦІ ФОКУС — НЕ (04.08). `currentNodeState` вышэй патрэбны
+  // рэндэру (renderNodeTree чытае яго), але калі рэдактар не на экране — гэта не выбар чалавека, а
+  // пабочны эфект чужога праходу: змена мовы малюе ЎСЕ РМ, ленавы дазагрузчык — свой. Хто застаўся
+  // ў фокусе, той і мусіць у ім застацца, інакш наступнае дзеянне (дадаць папку, захаваць) сыходзіць
+  // не ў той стэйт. Жывы кейс: падагрэў бэйджа даў Дакументам даныя → змена мовы перацягнула фокус
+  // на схаваны РМ → у Релаксе перастала дадавацца паліца. Правіла агульнае, таму жыве ТУТ.
+  if (keep && keep !== s && !editor.offsetParent) currentNodeState = keep;
 }
 
 async function _sectionLoad(s, action, editor) {
@@ -12963,6 +13021,7 @@ function showPanel() {
   _perfSplash(); // 🎬 3D-застаўка назвы кампаніі + замер рэальнага FPS (вердыкт _perfWeak)
   _chatPollUnread(); // чаты: палінг непрачытаных (бэдж на імені карыстальніка + іконцы РМ)
   if (!_chatPollTimer) _chatPollTimer = setInterval(_chatPollUnread, 60000);
+  _navBadgesWarm();  // 🔔 сігналы на іконках РМ — відаць БЕЗ адкрыцця раздзела (фонам, не блакуе ўваход)
   _panelShown = true;
   _topbarLogoUpdate(); // назва кампаніі замест паддамена (settings ужо загружаны)
   _topbarClockTick();
@@ -17117,12 +17176,16 @@ function _chatFailClear(fid, pid) { const d = _chatDraft(pid); d.failed = []; d.
 // ── 🔔 Званочак: палінг непрачытаных (60с) + бэджы ў тапбары і бакавым меню ──
 let _chatPollTimer = null;
 let _chatUnreadPrev = 0; // папярэдні лічыльнік — каб заўважыць НОВАЕ ўваходнае і абнавіць адкрыты РМ Чаты
+let _chatUnread = 0;     // бягучы лічыльнік — крыніца для бэйджаў (каталог NAV_BADGES чытае яго)
 async function _chatPollUnread() {
   try {
     const res = await apiCall('chat_unread', {}, { quiet: 'фонавы палінг лічыльніка — мадалка кожныя N секунд была б катастрофай' });
 
     const n = res.unread || 0;
-    ['user-chat-badge', 'nav-chats-badge'].forEach(id => { const el = document.getElementById(id); if (el) { el.textContent = n; el.style.display = n ? '' : 'none'; } });
+    _chatUnread = n;
+    _navBadgeApply('chats'); // 🔔 іконка РМ — праз агульны механізм (свайго шляху ў чатаў больш няма)
+    // бэдж каля імя карыстальніка — іншае месца (тапбар), корміцца з той жа лічбы
+    const ub = document.getElementById('user-chat-badge'); if (ub) { ub.textContent = n; ub.style.display = n ? '' : 'none'; }
     // новае ўваходнае пры АДКРЫТЫМ РМ Чаты → перабудаваць спіс (новы чатнік/стужка не «застываюць» —
     // жывая заўвага 2026-07-04: паведамленне наведвальніка прыйшло ў стары спіс, адказ губляўся)
     if (n > _chatUnreadPrev && currentPage === 'chats' && chatsState.data
@@ -18021,20 +18084,11 @@ document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('custom-prompt-modal')?.addEventListener('click', e => { if (e.target.id === 'custom-prompt-modal') _cpmCancel(); });
   document.getElementById('custom-confirm-modal')?.addEventListener('click', e => { if (e.target.id === 'custom-confirm-modal') _ccmDismiss(); });
   document.getElementById('node-form-modal')?.addEventListener('click', e => { if (e.target === document.getElementById('node-form-modal')) nodeCloseFormModal(); });
-  _icoNavApply();   // 🎨 эмодзі меню → SVG (адзін праход; пункты меню статычныя ў разметцы)
 });
-// 🎨 ІКОНКІ ЛЕВАГА МЕНЮ. ⚠️ Яны стаяць у разметцы як эмодзі (`<span class="icon">📊</span>`), і
-// правіць іх па месцах значыла б чапаць 20+ радкоў HTML і памятаць пра гэта пры кожным новым
-// пункце. Адзін праход па DOM робіць тое ж і накрывае будучыя пункты сам.
-// 🛡 Невядомае эмодзі застаецца як было — пункт меню без іконкі горш за манахромную.
-function _icoNavApply() {
-  document.querySelectorAll('.nav-item .icon').forEach(el => {
-    const txt = (el.textContent || '').trim();
-    if (!txt) return;
-    const html = _ico(escHtml(txt));
-    if (html.includes('<svg')) el.innerHTML = html;
-  });
-}
+// 🎨 ІКОНКІ ЛЕВАГА МЕНЮ малюе `_navIconsApply` (каталог `NAV_ICONS`, вышэй). ⚠️ Тут жыў ДРУГІ шлях
+// `_icoNavApply` — праход па эмодзі-тэксце з `el.innerHTML = …`. Ён быў бяссільны толькі таму, што
+// першы механізм паспяваў зняць тэкст раней; варта было парадку змяніцца — і ён сцёр бы змест
+// `.icon` разам з бэйджам. Дзве крыніцы аднаго не сінхранізуюць, адну зносяць (04.08).
 
 // Apply UI lang on initial page load (translates login screen)
 applyUILang();

@@ -56,6 +56,9 @@ window.TTZOP_MENU_ICONS = {
   secMap:'<path d="M2.6 4.6 6 3.4l4 1.4 3.4-1.2v8l-3.4 1.2-4-1.4L2.6 12.6Z" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/><path d="M6 3.4v8.4M10 4.8v8.4" stroke="currentColor" stroke-width="1.2"/>',
   secPalette:'<path d="M8 2.6a5.4 5.4 0 1 0 0 10.8c1.2 0 1.2-1 .6-1.6-.6-.6-.2-1.6.8-1.6h1.4a2.6 2.6 0 0 0 2.6-2.6C13.4 4.6 11 2.6 8 2.6Z" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/><circle cx="5.6" cy="6.6" r="0.9" fill="currentColor"/><circle cx="8.4" cy="5.4" r="0.9" fill="currentColor"/>',
   // ── БАКАВОЕ МЕНЮ (навігацыя РМ): былі эмодзі ў разметцы → на Тэсле монахромны контур і схема іх не бачыла ──
+  // 💰 Фінансы: банкнота з манетай. ⚠️ Іконкі не было зусім — пункт трымаўся на запасным праходзе
+  // па эмодзі, які 04.08 знесены як другая крыніца. Каталог мусіць пакрываць УСЕ пункты меню.
+  navFinance:'<rect x="1.9" y="4.2" width="12.2" height="7.6" rx="1.4" stroke="currentColor" stroke-width="1.4"/><circle cx="8" cy="8" r="2" stroke="currentColor" stroke-width="1.35"/><path d="M4.3 6.2v3.6M11.7 6.2v3.6" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/>',
   navMonitor:'<rect x="2.4" y="2.6" width="11.2" height="10.8" rx="1.5" stroke="currentColor" stroke-width="1.4"/><path d="M5.2 10.6V7.4M8 10.6V5.4M10.8 10.6V8.6" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>',
   navTest:'<path d="M6.2 2.6h3.6M6.8 2.6v3.9L4.3 11.6q-.5 1.8 1.4 1.8h4.6q1.9 0 1.4-1.8L9.2 6.5V2.6" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/><path d="M5.4 9.4h5.2" stroke="currentColor" stroke-width="1.25"/>',
   navGeneral:'<circle cx="8" cy="8" r="2.1" stroke="currentColor" stroke-width="1.4"/><path d="M8 1.9v1.6M8 12.5v1.6M1.9 8h1.6M12.5 8h1.6M3.7 3.7l1.15 1.15M11.15 11.15l1.15 1.15M12.3 3.7l-1.15 1.15M4.85 11.15 3.7 12.3" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/>',
